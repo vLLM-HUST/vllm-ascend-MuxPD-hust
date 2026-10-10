@@ -4,6 +4,7 @@ Run each endpoint separately, first with one request at a time, then with two
 concurrent requests. The long-prompt pair is dispatched after a counting request
 has emitted its first content event. Text differences are reported, not assumed
 to be either numerical drift or a state bug. This is not a latency benchmark.
+Use --baseline-only to capture a reference for later --baseline-report reuse.
 """
 
 from __future__ import annotations
@@ -257,7 +258,7 @@ def load_baseline(path, args, test_cases):
     contents = Path(path).read_bytes()
     source = json.loads(contents)
     if source.get("complete") is not True:
-        raise ValueError("Baseline report must have completed both endpoint runs")
+        raise ValueError("Baseline report must be complete")
     for name in ("model", "repeats"):
         if source.get("parameters", {}).get(name) != getattr(args, name):
             raise ValueError(f"Baseline report has incompatible {name}")
@@ -333,7 +334,7 @@ async def main(args):
     }
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
-    targets = [("candidate", args.candidate_url)]
+    targets = [] if args.baseline_only else [("candidate", args.candidate_url)]
     if args.baseline_report:
         report["endpoints"].append(
             load_baseline(args.baseline_report, args, test_cases)
@@ -381,7 +382,12 @@ if __name__ == "__main__":
         "--baseline-report",
         help="Reuse a completed compatible baseline endpoint from this JSON report",
     )
-    parser.add_argument("--candidate-url", required=True)
+    parser.add_argument(
+        "--baseline-only",
+        action="store_true",
+        help="Capture only --baseline-url for later --baseline-report reuse",
+    )
+    parser.add_argument("--candidate-url")
     parser.add_argument("--output", required=True)
     parser.add_argument("--model", default="Qwen3.5-35B-A3B")
     parser.add_argument("--repeats", type=int, default=2)
@@ -390,4 +396,13 @@ if __name__ == "__main__":
     arguments = parser.parse_args()
     if arguments.repeats < 1 or arguments.timeout <= 0:
         parser.error("repeats and timeout must be positive")
+    if arguments.baseline_only:
+        if not arguments.baseline_url:
+            parser.error("--baseline-only requires --baseline-url")
+        if arguments.candidate_url or arguments.require_exact:
+            parser.error(
+                "--baseline-only cannot use --candidate-url or --require-exact"
+            )
+    elif not arguments.candidate_url:
+        parser.error("--candidate-url is required unless --baseline-only is set")
     raise SystemExit(asyncio.run(main(arguments)))

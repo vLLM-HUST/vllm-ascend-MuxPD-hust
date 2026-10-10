@@ -1,0 +1,3001 @@
+{
+  "schema_version": 1,
+  "started_at_utc": "2026-10-10T03:02:23.491461+00:00",
+  "model": "Qwen3.5-35B-A3B",
+  "base_url": "http://127.0.0.1:8002",
+  "synthetic_inputs_only": true,
+  "timing_note": "SSE event gaps are not individual-token TBT samples.",
+  "tests": [
+    {
+      "name": "initial_health",
+      "started_at_utc": "2026-10-10T03:02:23.613343+00:00",
+      "passed": true,
+      "http_status": 200,
+      "response": "",
+      "duration_s": 0.011063383892178535
+    },
+    {
+      "name": "greedy_arithmetic",
+      "started_at_utc": "2026-10-10T03:02:23.624437+00:00",
+      "passed": true,
+      "http_status": 200,
+      "response": {
+        "id": "chatcmpl-bda01dcc70591f5a",
+        "object": "chat.completion",
+        "created": 1791601343,
+        "model": "Qwen3.5-35B-A3B",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "42",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": null
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": null,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.1.dev1+gd0f22d2bd-tp4-ep-6478b181",
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 31,
+          "completion_tokens": 3,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "metrics": null
+      },
+      "usage": {
+        "prompt_tokens": 28,
+        "total_tokens": 31,
+        "completion_tokens": 3,
+        "prompt_tokens_details": null
+      },
+      "duration_s": 1.2278696689754725
+    },
+    {
+      "name": "concurrent_chinese_0",
+      "started_at_utc": "2026-10-10T03:02:24.852424+00:00",
+      "passed": true,
+      "events": [
+        {
+          "elapsed_s": 0.3619579297956079,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "role": "assistant",
+                  "content": ""
+                },
+                "logprobs": null,
+                "finish_reason": null
+              }
+            ],
+            "prompt_token_ids": null,
+            "prompt_text": null
+          }
+        },
+        {
+          "elapsed_s": 0.36206521186977625,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "计算机"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 0.6798206169623882,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "缓存"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 0.9698076399508864,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "是一种"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 1.2625958849675953,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "位于"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 1.5550820818170905,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "处理器"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 1.858040280872956,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "与"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 2.0978552878368646,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "主"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 2.3327870168723166,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "内存"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 2.567685464862734,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "之间"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 2.8040751558728516,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "的高速"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 3.0429806928150356,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "存储"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 3.2807285429444164,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "区域"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 3.524506196845323,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "，"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 3.7617645668797195,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "用于"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 3.9976072658319026,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "临时"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 4.232301469892263,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "存放"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 4.468587057897821,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "频繁"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 4.700794546864927,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "访问"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 4.935109781799838,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "的数据"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 5.168244620785117,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "，"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 5.399052778957412,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "以减少"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 5.632797470781952,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "数据"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 5.867048644926399,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "读取"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 6.109587320825085,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "延迟"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 6.3511605258099735,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "并"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 6.592302301898599,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "提升"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 6.837817642837763,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "系统"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 7.08421963499859,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "整体"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 7.330431351903826,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "运行"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 7.576124096987769,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "效率"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 7.826531806960702,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "。"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 8.070165756857023,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": ""
+                },
+                "logprobs": null,
+                "finish_reason": "stop",
+                "stop_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 8.070240108994767,
+          "data": {
+            "id": "chatcmpl-b69ece8b9f627a96",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [],
+            "usage": {
+              "prompt_tokens": 20,
+              "total_tokens": 52,
+              "completion_tokens": 32
+            },
+            "system_fingerprint": "vllm-0.1.dev1+gd0f22d2bd-tp4-ep-6478b181"
+          }
+        }
+      ],
+      "content_event_times_s": [
+        0.36206521186977625,
+        0.6798206169623882,
+        0.9698076399508864,
+        1.2625958849675953,
+        1.5550820818170905,
+        1.858040280872956,
+        2.0978552878368646,
+        2.3327870168723166,
+        2.567685464862734,
+        2.8040751558728516,
+        3.0429806928150356,
+        3.2807285429444164,
+        3.524506196845323,
+        3.7617645668797195,
+        3.9976072658319026,
+        4.232301469892263,
+        4.468587057897821,
+        4.700794546864927,
+        4.935109781799838,
+        5.168244620785117,
+        5.399052778957412,
+        5.632797470781952,
+        5.867048644926399,
+        6.109587320825085,
+        6.3511605258099735,
+        6.592302301898599,
+        6.837817642837763,
+        7.08421963499859,
+        7.330431351903826,
+        7.576124096987769,
+        7.826531806960702
+      ],
+      "done": true,
+      "finish_reasons": [
+        "stop"
+      ],
+      "usage": {
+        "prompt_tokens": 20,
+        "total_tokens": 52,
+        "completion_tokens": 32
+      },
+      "http_status": 200,
+      "done_at_s": 8.070296769961715,
+      "response_text": "计算机缓存是一种位于处理器与主内存之间的高速存储区域，用于临时存放频繁访问的数据，以减少数据读取延迟并提升系统整体运行效率。",
+      "duration_s": 8.075455483980477,
+      "ttft_s": 0.36206521186977625,
+      "max_content_event_gap_s": 0.3177554050926119
+    },
+    {
+      "name": "concurrent_chinese_1",
+      "started_at_utc": "2026-10-10T03:02:24.852887+00:00",
+      "passed": true,
+      "events": [
+        {
+          "elapsed_s": 1.8572163628414273,
+          "data": {
+            "id": "chatcmpl-bbaf235e0164195f",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "role": "assistant",
+                  "content": ""
+                },
+                "logprobs": null,
+                "finish_reason": null
+              }
+            ],
+            "prompt_token_ids": null,
+            "prompt_text": null
+          }
+        },
+        {
+          "elapsed_s": 1.8573058848269284,
+          "data": {
+            "id": "chatcmpl-bbaf235e0164195f",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "天空"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 2.09712279192172,
+          "data": {
+            "id": "chatcmpl-bbaf235e0164195f",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "通常"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 2.332074160920456,
+          "data": {
+            "id": "chatcmpl-bbaf235e0164195f",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "呈现"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 2.566920167999342,
+          "data": {
+            "id": "chatcmpl-bbaf235e0164195f",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "蓝色"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 2.803361380007118,
+          "data": {
+            "id": "chatcmpl-bbaf235e0164195f",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "是因为"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 3.042252735933289,
+          "data": {
+            "id": "chatcmpl-bbaf235e0164195f",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "大气"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 3.2800138478633016,
+          "data": {
+            "id": "chatcmpl-bbaf235e0164195f",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "层"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 3.523765150923282,
+          "data": {
+            "id": "chatcmpl-bbaf235e0164195f",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "中的"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 3.76101829088293,
+          "data": {
+            "id": "chatcmpl-bbaf235e0164195f",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "气体"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 3.9968579499982297,
+          "data": {
+            "id": "chatcmpl-bbaf235e0164195f",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "分子"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 4.231493231840432,
+          "data": {
+            "id": "chatcmpl-bbaf235e0164195f",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "对"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 4.467699698871002,
+          "data": {
+            "id": "chatcmpl-bbaf235e0164195f",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "太"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 4.700071220984682,
+          "data": {
+            "id": "chatcmpl-bbaf235e0164195f",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "阳光"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 4.934369155904278,
+          "data": {
+            "id": "chatcmpl-bbaf235e0164195f",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "中"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 5.167495664907619,
+          "data": {
+            "id": "chatcmpl-bbaf235e0164195f",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "波长"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 5.398335902951658,
+          "data": {
+            "id": "chatcmpl-bbaf235e0164195f",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "较短"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 5.632083135889843,
+          "data": {
+            "id": "chatcmpl-bbaf235e0164195f",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "的"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 5.866283898008987,
+          "data": {
+            "id": "chatcmpl-bbaf235e0164195f",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "蓝光"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 6.108839314896613,
+          "data": {
+            "id": "chatcmpl-bbaf235e0164195f",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "散射"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 6.350437229964882,
+          "data": {
+            "id": "chatcmpl-bbaf235e0164195f",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "作用"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 6.591607915936038,
+          "data": {
+            "id": "chatcmpl-bbaf235e0164195f",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "更强"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 6.837115257978439,
+          "data": {
+            "id": "chatcmpl-bbaf235e0164195f",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "，"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 7.0834972688462585,
+          "data": {
+            "id": "chatcmpl-bbaf235e0164195f",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "这种现象"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 7.329598042881116,
+          "data": {
+            "id": "chatcmpl-bbaf235e0164195f",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "被称为"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 7.575389670906588,
+          "data": {
+            "id": "chatcmpl-bbaf235e0164195f",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "瑞"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 7.825758669991046,
+          "data": {
+            "id": "chatcmpl-bbaf235e0164195f",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "利"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 8.069394549820572,
+          "data": {
+            "id": "chatcmpl-bbaf235e0164195f",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "散射"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 8.314700546907261,
+          "data": {
+            "id": "chatcmpl-bbaf235e0164195f",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "。"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 8.555856922874227,
+          "data": {
+            "id": "chatcmpl-bbaf235e0164195f",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": ""
+                },
+                "logprobs": null,
+                "finish_reason": "stop",
+                "stop_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 8.555936794029549,
+          "data": {
+            "id": "chatcmpl-bbaf235e0164195f",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [],
+            "usage": {
+              "prompt_tokens": 21,
+              "total_tokens": 50,
+              "completion_tokens": 29
+            },
+            "system_fingerprint": "vllm-0.1.dev1+gd0f22d2bd-tp4-ep-6478b181"
+          }
+        }
+      ],
+      "content_event_times_s": [
+        1.8573058848269284,
+        2.09712279192172,
+        2.332074160920456,
+        2.566920167999342,
+        2.803361380007118,
+        3.042252735933289,
+        3.2800138478633016,
+        3.523765150923282,
+        3.76101829088293,
+        3.9968579499982297,
+        4.231493231840432,
+        4.467699698871002,
+        4.700071220984682,
+        4.934369155904278,
+        5.167495664907619,
+        5.398335902951658,
+        5.632083135889843,
+        5.866283898008987,
+        6.108839314896613,
+        6.350437229964882,
+        6.591607915936038,
+        6.837115257978439,
+        7.0834972688462585,
+        7.329598042881116,
+        7.575389670906588,
+        7.825758669991046,
+        8.069394549820572,
+        8.314700546907261
+      ],
+      "done": true,
+      "finish_reasons": [
+        "stop"
+      ],
+      "usage": {
+        "prompt_tokens": 21,
+        "total_tokens": 50,
+        "completion_tokens": 29
+      },
+      "http_status": 200,
+      "done_at_s": 8.555992635898292,
+      "response_text": "天空通常呈现蓝色是因为大气层中的气体分子对太阳光中波长较短的蓝光散射作用更强，这种现象被称为瑞利散射。",
+      "duration_s": 8.556676610838622,
+      "ttft_s": 1.8573058848269284,
+      "max_content_event_gap_s": 0.25036899908445776
+    },
+    {
+      "name": "concurrent_chinese_2",
+      "started_at_utc": "2026-10-10T03:02:24.853249+00:00",
+      "passed": true,
+      "events": [
+        {
+          "elapsed_s": 1.857497788965702,
+          "data": {
+            "id": "chatcmpl-bd5df4c7fb125fb6",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "role": "assistant",
+                  "content": ""
+                },
+                "logprobs": null,
+                "finish_reason": null
+              }
+            ],
+            "prompt_token_ids": null,
+            "prompt_text": null
+          }
+        },
+        {
+          "elapsed_s": 1.8575657110195607,
+          "data": {
+            "id": "chatcmpl-bd5df4c7fb125fb6",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "长江"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 2.097226283978671,
+          "data": {
+            "id": "chatcmpl-bd5df4c7fb125fb6",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "是中国"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 2.332155152922496,
+          "data": {
+            "id": "chatcmpl-bd5df4c7fb125fb6",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "第一"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 2.5670742010697722,
+          "data": {
+            "id": "chatcmpl-bd5df4c7fb125fb6",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "长河"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 2.8034412020351738,
+          "data": {
+            "id": "chatcmpl-bd5df4c7fb125fb6",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "、"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 3.0423630489967763,
+          "data": {
+            "id": "chatcmpl-bd5df4c7fb125fb6",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "世界"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 3.280096198897809,
+          "data": {
+            "id": "chatcmpl-bd5df4c7fb125fb6",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "第三"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 3.5238828230649233,
+          "data": {
+            "id": "chatcmpl-bd5df4c7fb125fb6",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "长河"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 3.7611336330883205,
+          "data": {
+            "id": "chatcmpl-bd5df4c7fb125fb6",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "，"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 3.9969783721026033,
+          "data": {
+            "id": "chatcmpl-bd5df4c7fb125fb6",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "发"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 4.23168426589109,
+          "data": {
+            "id": "chatcmpl-bd5df4c7fb125fb6",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "源于"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 4.467958403984085,
+          "data": {
+            "id": "chatcmpl-bd5df4c7fb125fb6",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "青藏高原"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 4.7001616230700165,
+          "data": {
+            "id": "chatcmpl-bd5df4c7fb125fb6",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "，"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 4.934487707912922,
+          "data": {
+            "id": "chatcmpl-bd5df4c7fb125fb6",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "自"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 5.167610187083483,
+          "data": {
+            "id": "chatcmpl-bd5df4c7fb125fb6",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "西"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 5.398424854967743,
+          "data": {
+            "id": "chatcmpl-bd5df4c7fb125fb6",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "向东"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 5.632162207039073,
+          "data": {
+            "id": "chatcmpl-bd5df4c7fb125fb6",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "流经"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 5.866429810877889,
+          "data": {
+            "id": "chatcmpl-bd5df4c7fb125fb6",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "十"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 6.108955017058179,
+          "data": {
+            "id": "chatcmpl-bd5df4c7fb125fb6",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "一个"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 6.350540122017264,
+          "data": {
+            "id": "chatcmpl-bd5df4c7fb125fb6",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "省市"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 6.591662196908146,
+          "data": {
+            "id": "chatcmpl-bd5df4c7fb125fb6",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "后"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 6.837192920036614,
+          "data": {
+            "id": "chatcmpl-bd5df4c7fb125fb6",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "注入"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 7.083589921006933,
+          "data": {
+            "id": "chatcmpl-bd5df4c7fb125fb6",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "东海"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 7.329803067957982,
+          "data": {
+            "id": "chatcmpl-bd5df4c7fb125fb6",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "，"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 7.5754933229181916,
+          "data": {
+            "id": "chatcmpl-bd5df4c7fb125fb6",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "被誉为"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 7.825905773090199,
+          "data": {
+            "id": "chatcmpl-bd5df4c7fb125fb6",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "中华民族"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 8.069702876964584,
+          "data": {
+            "id": "chatcmpl-bd5df4c7fb125fb6",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "的母亲"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 8.314596595009789,
+          "data": {
+            "id": "chatcmpl-bd5df4c7fb125fb6",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "河"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 8.555993455927819,
+          "data": {
+            "id": "chatcmpl-bd5df4c7fb125fb6",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "。"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 8.792072599055246,
+          "data": {
+            "id": "chatcmpl-bd5df4c7fb125fb6",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": ""
+                },
+                "logprobs": null,
+                "finish_reason": "stop",
+                "stop_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 8.792148991022259,
+          "data": {
+            "id": "chatcmpl-bd5df4c7fb125fb6",
+            "object": "chat.completion.chunk",
+            "created": 1791601344,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [],
+            "usage": {
+              "prompt_tokens": 18,
+              "total_tokens": 48,
+              "completion_tokens": 30
+            },
+            "system_fingerprint": "vllm-0.1.dev1+gd0f22d2bd-tp4-ep-6478b181"
+          }
+        }
+      ],
+      "content_event_times_s": [
+        1.8575657110195607,
+        2.097226283978671,
+        2.332155152922496,
+        2.5670742010697722,
+        2.8034412020351738,
+        3.0423630489967763,
+        3.280096198897809,
+        3.5238828230649233,
+        3.7611336330883205,
+        3.9969783721026033,
+        4.23168426589109,
+        4.467958403984085,
+        4.7001616230700165,
+        4.934487707912922,
+        5.167610187083483,
+        5.398424854967743,
+        5.632162207039073,
+        5.866429810877889,
+        6.108955017058179,
+        6.350540122017264,
+        6.591662196908146,
+        6.837192920036614,
+        7.083589921006933,
+        7.329803067957982,
+        7.5754933229181916,
+        7.825905773090199,
+        8.069702876964584,
+        8.314596595009789,
+        8.555993455927819
+      ],
+      "done": true,
+      "finish_reasons": [
+        "stop"
+      ],
+      "usage": {
+        "prompt_tokens": 18,
+        "total_tokens": 48,
+        "completion_tokens": 30
+      },
+      "http_status": 200,
+      "done_at_s": 8.792203961871564,
+      "response_text": "长江是中国第一长河、世界第三长河，发源于青藏高原，自西向东流经十一个省市后注入东海，被誉为中华民族的母亲河。",
+      "duration_s": 8.792535448912531,
+      "ttft_s": 1.8575657110195607,
+      "max_content_event_gap_s": 0.2504124501720071
+    },
+    {
+      "name": "long_prompt_2305_tokens",
+      "started_at_utc": "2026-10-10T03:02:33.646415+00:00",
+      "passed": true,
+      "events": [
+        {
+          "elapsed_s": 0.3893741420470178,
+          "data": {
+            "id": "cmpl-af2a2f202ea8888e",
+            "object": "text_completion",
+            "created": 1791601353,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "text": "iew",
+                "logprobs": null,
+                "finish_reason": null,
+                "stop_reason": null,
+                "prompt_token_ids": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 0.6209476960357279,
+          "data": {
+            "id": "cmpl-af2a2f202ea8888e",
+            "object": "text_completion",
+            "created": 1791601353,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "text": " us",
+                "logprobs": null,
+                "finish_reason": null,
+                "stop_reason": null,
+                "prompt_token_ids": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 0.8650958470534533,
+          "data": {
+            "id": "cmpl-af2a2f202ea8888e",
+            "object": "text_completion",
+            "created": 1791601353,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "text": "ome",
+                "logprobs": null,
+                "finish_reason": null,
+                "stop_reason": null,
+                "prompt_token_ids": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 1.1073432671837509,
+          "data": {
+            "id": "cmpl-af2a2f202ea8888e",
+            "object": "text_completion",
+            "created": 1791601353,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "text": "_c",
+                "logprobs": null,
+                "finish_reason": null,
+                "stop_reason": null,
+                "prompt_token_ids": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 1.351248913211748,
+          "data": {
+            "id": "cmpl-af2a2f202ea8888e",
+            "object": "text_completion",
+            "created": 1791601353,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "text": "($",
+                "logprobs": null,
+                "finish_reason": null,
+                "stop_reason": null,
+                "prompt_token_ids": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 1.5921811831649393,
+          "data": {
+            "id": "cmpl-af2a2f202ea8888e",
+            "object": "text_completion",
+            "created": 1791601353,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "text": " K",
+                "logprobs": null,
+                "finish_reason": null,
+                "stop_reason": null,
+                "prompt_token_ids": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 1.8344059721566737,
+          "data": {
+            "id": "cmpl-af2a2f202ea8888e",
+            "object": "text_completion",
+            "created": 1791601353,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "text": "ink",
+                "logprobs": null,
+                "finish_reason": null,
+                "stop_reason": null,
+                "prompt_token_ids": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 2.07147627719678,
+          "data": {
+            "id": "cmpl-af2a2f202ea8888e",
+            "object": "text_completion",
+            "created": 1791601353,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "text": "ener",
+                "logprobs": null,
+                "finish_reason": null,
+                "stop_reason": null,
+                "prompt_token_ids": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 2.308069432154298,
+          "data": {
+            "id": "cmpl-af2a2f202ea8888e",
+            "object": "text_completion",
+            "created": 1791601353,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "text": " name",
+                "logprobs": null,
+                "finish_reason": null,
+                "stop_reason": null,
+                "prompt_token_ids": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 2.544985304120928,
+          "data": {
+            "id": "cmpl-af2a2f202ea8888e",
+            "object": "text_completion",
+            "created": 1791601353,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "text": ".h",
+                "logprobs": null,
+                "finish_reason": null,
+                "stop_reason": null,
+                "prompt_token_ids": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 2.7978449270594865,
+          "data": {
+            "id": "cmpl-af2a2f202ea8888e",
+            "object": "text_completion",
+            "created": 1791601353,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "text": "****************",
+                "logprobs": null,
+                "finish_reason": null,
+                "stop_reason": null,
+                "prompt_token_ids": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 3.0380503011401743,
+          "data": {
+            "id": "cmpl-af2a2f202ea8888e",
+            "object": "text_completion",
+            "created": 1791601353,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "text": "SE",
+                "logprobs": null,
+                "finish_reason": null,
+                "stop_reason": null,
+                "prompt_token_ids": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 3.2786185331642628,
+          "data": {
+            "id": "cmpl-af2a2f202ea8888e",
+            "object": "text_completion",
+            "created": 1791601353,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "text": "value",
+                "logprobs": null,
+                "finish_reason": null,
+                "stop_reason": null,
+                "prompt_token_ids": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 3.5129196371417493,
+          "data": {
+            "id": "cmpl-af2a2f202ea8888e",
+            "object": "text_completion",
+            "created": 1791601353,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "text": " use",
+                "logprobs": null,
+                "finish_reason": null,
+                "stop_reason": null,
+                "prompt_token_ids": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 3.747150450013578,
+          "data": {
+            "id": "cmpl-af2a2f202ea8888e",
+            "object": "text_completion",
+            "created": 1791601353,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "text": "const",
+                "logprobs": null,
+                "finish_reason": null,
+                "stop_reason": null,
+                "prompt_token_ids": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 3.984064541058615,
+          "data": {
+            "id": "cmpl-af2a2f202ea8888e",
+            "object": "text_completion",
+            "created": 1791601353,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "text": "of",
+                "logprobs": null,
+                "finish_reason": null,
+                "stop_reason": null,
+                "prompt_token_ids": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 4.221641487209126,
+          "data": {
+            "id": "cmpl-af2a2f202ea8888e",
+            "object": "text_completion",
+            "created": 1791601353,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "text": "ific",
+                "logprobs": null,
+                "finish_reason": null,
+                "stop_reason": null,
+                "prompt_token_ids": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 4.459585592150688,
+          "data": {
+            "id": "cmpl-af2a2f202ea8888e",
+            "object": "text_completion",
+            "created": 1791601353,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "text": "arr",
+                "logprobs": null,
+                "finish_reason": null,
+                "stop_reason": null,
+                "prompt_token_ids": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 4.696785149164498,
+          "data": {
+            "id": "cmpl-af2a2f202ea8888e",
+            "object": "text_completion",
+            "created": 1791601353,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "text": "",
+                "logprobs": null,
+                "finish_reason": null,
+                "stop_reason": null,
+                "prompt_token_ids": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 4.931120264111087,
+          "data": {
+            "id": "cmpl-af2a2f202ea8888e",
+            "object": "text_completion",
+            "created": 1791601353,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "text": "",
+                "logprobs": null,
+                "finish_reason": null,
+                "stop_reason": null,
+                "prompt_token_ids": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 5.1581904392223805,
+          "data": {
+            "id": "cmpl-af2a2f202ea8888e",
+            "object": "text_completion",
+            "created": 1791601353,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "text": "�Ԝ",
+                "logprobs": null,
+                "finish_reason": null,
+                "stop_reason": null,
+                "prompt_token_ids": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 5.393603536998853,
+          "data": {
+            "id": "cmpl-af2a2f202ea8888e",
+            "object": "text_completion",
+            "created": 1791601353,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "text": "\n",
+                "logprobs": null,
+                "finish_reason": null,
+                "stop_reason": null,
+                "prompt_token_ids": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 5.633281669113785,
+          "data": {
+            "id": "cmpl-af2a2f202ea8888e",
+            "object": "text_completion",
+            "created": 1791601353,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "text": "",
+                "logprobs": null,
+                "finish_reason": null,
+                "stop_reason": null,
+                "prompt_token_ids": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 5.861122701084241,
+          "data": {
+            "id": "cmpl-af2a2f202ea8888e",
+            "object": "text_completion",
+            "created": 1791601353,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "text": "\n",
+                "logprobs": null,
+                "finish_reason": null,
+                "stop_reason": null,
+                "prompt_token_ids": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 6.088432730175555,
+          "data": {
+            "id": "cmpl-af2a2f202ea8888e",
+            "object": "text_completion",
+            "created": 1791601353,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "text": "",
+                "logprobs": null,
+                "finish_reason": null,
+                "stop_reason": null,
+                "prompt_token_ids": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 6.317593761021271,
+          "data": {
+            "id": "cmpl-af2a2f202ea8888e",
+            "object": "text_completion",
+            "created": 1791601353,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "text": "<think>",
+                "logprobs": null,
+                "finish_reason": null,
+                "stop_reason": null,
+                "prompt_token_ids": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 6.551726831123233,
+          "data": {
+            "id": "cmpl-af2a2f202ea8888e",
+            "object": "text_completion",
+            "created": 1791601353,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "text": "\n",
+                "logprobs": null,
+                "finish_reason": null,
+                "stop_reason": null,
+                "prompt_token_ids": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 6.779347737086937,
+          "data": {
+            "id": "cmpl-af2a2f202ea8888e",
+            "object": "text_completion",
+            "created": 1791601353,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "text": "Thinking",
+                "logprobs": null,
+                "finish_reason": null,
+                "stop_reason": null,
+                "prompt_token_ids": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 7.007213829085231,
+          "data": {
+            "id": "cmpl-af2a2f202ea8888e",
+            "object": "text_completion",
+            "created": 1791601353,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "text": " Process",
+                "logprobs": null,
+                "finish_reason": null,
+                "stop_reason": null,
+                "prompt_token_ids": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 7.235093091148883,
+          "data": {
+            "id": "cmpl-af2a2f202ea8888e",
+            "object": "text_completion",
+            "created": 1791601353,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "text": ":",
+                "logprobs": null,
+                "finish_reason": null,
+                "stop_reason": null,
+                "prompt_token_ids": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 7.463090046076104,
+          "data": {
+            "id": "cmpl-af2a2f202ea8888e",
+            "object": "text_completion",
+            "created": 1791601353,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "text": "\n\n",
+                "logprobs": null,
+                "finish_reason": null,
+                "stop_reason": null,
+                "prompt_token_ids": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 7.688705988228321,
+          "data": {
+            "id": "cmpl-af2a2f202ea8888e",
+            "object": "text_completion",
+            "created": 1791601353,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "text": "1",
+                "logprobs": null,
+                "finish_reason": "length",
+                "stop_reason": null,
+                "prompt_token_ids": null,
+                "token_ids": null
+              }
+            ]
+          }
+        },
+        {
+          "elapsed_s": 7.688787700142711,
+          "data": {
+            "id": "cmpl-af2a2f202ea8888e",
+            "object": "text_completion",
+            "created": 1791601353,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [],
+            "usage": {
+              "prompt_tokens": 2305,
+              "total_tokens": 2337,
+              "completion_tokens": 32
+            },
+            "system_fingerprint": "vllm-0.1.dev1+gd0f22d2bd-tp4-ep-6478b181"
+          }
+        }
+      ],
+      "content_event_times_s": [
+        0.3893741420470178,
+        0.6209476960357279,
+        0.8650958470534533,
+        1.1073432671837509,
+        1.351248913211748,
+        1.5921811831649393,
+        1.8344059721566737,
+        2.07147627719678,
+        2.308069432154298,
+        2.544985304120928,
+        2.7978449270594865,
+        3.0380503011401743,
+        3.2786185331642628,
+        3.5129196371417493,
+        3.747150450013578,
+        3.984064541058615,
+        4.221641487209126,
+        4.459585592150688,
+        5.1581904392223805,
+        5.393603536998853,
+        5.861122701084241,
+        6.317593761021271,
+        6.551726831123233,
+        6.779347737086937,
+        7.007213829085231,
+        7.235093091148883,
+        7.463090046076104,
+        7.688705988228321
+      ],
+      "done": true,
+      "finish_reasons": [
+        "length"
+      ],
+      "usage": {
+        "prompt_tokens": 2305,
+        "total_tokens": 2337,
+        "completion_tokens": 32
+      },
+      "http_status": 200,
+      "done_at_s": 7.688844141084701,
+      "response_text": "iew usome_c($ Kinkener name.h****************SEvalue useconstofificarr�Ԝ\n\n<think>\nThinking Process:\n\n1",
+      "duration_s": 7.689218569081277,
+      "ttft_s": 0.3893741420470178,
+      "max_content_event_gap_s": 0.6986048470716923,
+      "input_token_count": 2305,
+      "input_sha256": "da5adc5e1cf756865f1cf97824e8381e32064d289fb0b7113c96b2110f472aa9"
+    },
+    {
+      "name": "cancel_long_generation",
+      "started_at_utc": "2026-10-10T03:02:41.336192+00:00",
+      "passed": true,
+      "events": [
+        {
+          "elapsed_s": 0.3274420159868896,
+          "data": {
+            "id": "chatcmpl-a7e3923b063c1362",
+            "object": "chat.completion.chunk",
+            "created": 1791601361,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "role": "assistant",
+                  "content": ""
+                },
+                "logprobs": null,
+                "finish_reason": null
+              }
+            ],
+            "prompt_token_ids": null,
+            "prompt_text": null
+          }
+        },
+        {
+          "elapsed_s": 0.327529258094728,
+          "data": {
+            "id": "chatcmpl-a7e3923b063c1362",
+            "object": "chat.completion.chunk",
+            "created": 1791601361,
+            "model": "Qwen3.5-35B-A3B",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "#"
+                },
+                "logprobs": null,
+                "finish_reason": null,
+                "token_ids": null
+              }
+            ]
+          }
+        }
+      ],
+      "content_event_times_s": [
+        0.327529258094728
+      ],
+      "done": false,
+      "finish_reasons": [],
+      "usage": null,
+      "http_status": 200,
+      "cancellation_requested_at_s": 0.327529258094728,
+      "response_text": "#",
+      "stream_closed_at_s": 0.32792869699187577,
+      "duration_s": 0.32793002715334296,
+      "ttft_s": 0.327529258094728,
+      "max_content_event_gap_s": null
+    },
+    {
+      "name": "health_after_cancel",
+      "started_at_utc": "2026-10-10T03:02:41.664160+00:00",
+      "passed": true,
+      "http_status": 200,
+      "response": "",
+      "duration_s": 0.0030553170945495367
+    },
+    {
+      "name": "greedy_after_cancel",
+      "started_at_utc": "2026-10-10T03:02:41.667242+00:00",
+      "passed": true,
+      "http_status": 200,
+      "response": {
+        "id": "chatcmpl-866fdba3e9909e8a",
+        "object": "chat.completion",
+        "created": 1791601361,
+        "model": "Qwen3.5-35B-A3B",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "42",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": null
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": null,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.1.dev1+gd0f22d2bd-tp4-ep-6478b181",
+        "usage": {
+          "prompt_tokens": 28,
+          "total_tokens": 31,
+          "completion_tokens": 3,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "metrics": null
+      },
+      "usage": {
+        "prompt_tokens": 28,
+        "total_tokens": 31,
+        "completion_tokens": 3,
+        "prompt_tokens_details": null
+      },
+      "duration_s": 1.0120741340797395
+    }
+  ],
+  "concurrent_chinese_wall_s": 8.793580332072452,
+  "duration_s": 19.18801667005755,
+  "passed": true,
+  "finished_at_utc": "2026-10-10T03:02:42.679513+00:00"
+}
