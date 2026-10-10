@@ -1,0 +1,36 @@
+{
+  "recorded_date": "2026-10-10",
+  "timezone": "Asia/Shanghai",
+  "host_commits": {
+    "vllm-hust": "d0f22d2bda562156e4dbf433ce645e1769b4f804",
+    "vllm-ascend-hust": "03766ac696fde5ab1980d80ca0b8543d3580c989"
+  },
+  "installed_distributions": {
+    "torch": "2.10.0+cpu",
+    "torch-npu": "2.10.0.post4",
+    "triton": "3.5.0",
+    "triton-ascend": "3.2.2",
+    "transformers": "5.14.1",
+    "numpy": "1.26.4",
+    "fastapi": "0.136.3",
+    "greenlet": "3.5.6",
+    "vllm": "0.1.dev1+gd0f22d2bd.empty",
+    "vllm-ascend": "0.1.dev1+g03766ac69.d20261010"
+  },
+  "hardware": "Ascend 910B2",
+  "visible_physical_devices": [
+    4,
+    5,
+    6,
+    7
+  ],
+  "model": "Qwen3.5-35B-A3B",
+  "dtype": "bfloat16",
+  "tensor_parallel_size": 2,
+  "expert_parallel": true,
+  "cann_environment": "cann-9.1.0",
+  "runtime_api_compatibility_selector": {
+    "VLLM_VERSION": "0.25.1"
+  },
+  "note": "Actual source versions are the host commits; VLLM_VERSION is an Ascend adapter API selector. Original baseline used physical devices 4,5; initial serial run used 6,7."
+}
