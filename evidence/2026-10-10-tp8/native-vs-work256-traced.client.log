@@ -1,0 +1,296 @@
+{"baseline_reused_from": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8/native-correctness.json"}
+{"endpoint_finished": "candidate", "base_url": "http://127.0.0.1:8002"}
+{
+  "endpoints": {
+    "baseline": {
+      "request_count": 16,
+      "oracle_failures": [],
+      "repeat_stability": [
+        {
+          "mode": "isolated",
+          "case": "arithmetic",
+          "samples": 2,
+          "distinct_texts": 1
+        },
+        {
+          "mode": "isolated",
+          "case": "counting",
+          "samples": 2,
+          "distinct_texts": 1
+        },
+        {
+          "mode": "isolated",
+          "case": "extract_distinct",
+          "samples": 2,
+          "distinct_texts": 1
+        },
+        {
+          "mode": "isolated",
+          "case": "long_extract",
+          "samples": 2,
+          "distinct_texts": 1
+        },
+        {
+          "mode": "paired",
+          "case": "arithmetic",
+          "samples": 2,
+          "distinct_texts": 1
+        },
+        {
+          "mode": "paired",
+          "case": "counting",
+          "samples": 2,
+          "distinct_texts": 1
+        },
+        {
+          "mode": "paired",
+          "case": "extract_distinct",
+          "samples": 2,
+          "distinct_texts": 1
+        },
+        {
+          "mode": "paired",
+          "case": "long_extract",
+          "samples": 2,
+          "distinct_texts": 1
+        }
+      ],
+      "isolated_vs_paired_text_matches": [
+        {
+          "repeat": 0,
+          "case": "arithmetic",
+          "exact_text_match": true
+        },
+        {
+          "repeat": 0,
+          "case": "counting",
+          "exact_text_match": true
+        },
+        {
+          "repeat": 0,
+          "case": "extract_distinct",
+          "exact_text_match": true
+        },
+        {
+          "repeat": 0,
+          "case": "long_extract",
+          "exact_text_match": true
+        },
+        {
+          "repeat": 1,
+          "case": "arithmetic",
+          "exact_text_match": true
+        },
+        {
+          "repeat": 1,
+          "case": "counting",
+          "exact_text_match": true
+        },
+        {
+          "repeat": 1,
+          "case": "extract_distinct",
+          "exact_text_match": true
+        },
+        {
+          "repeat": 1,
+          "case": "long_extract",
+          "exact_text_match": true
+        }
+      ]
+    },
+    "candidate": {
+      "request_count": 16,
+      "oracle_failures": [],
+      "repeat_stability": [
+        {
+          "mode": "isolated",
+          "case": "arithmetic",
+          "samples": 2,
+          "distinct_texts": 1
+        },
+        {
+          "mode": "isolated",
+          "case": "counting",
+          "samples": 2,
+          "distinct_texts": 1
+        },
+        {
+          "mode": "isolated",
+          "case": "extract_distinct",
+          "samples": 2,
+          "distinct_texts": 1
+        },
+        {
+          "mode": "isolated",
+          "case": "long_extract",
+          "samples": 2,
+          "distinct_texts": 1
+        },
+        {
+          "mode": "paired",
+          "case": "arithmetic",
+          "samples": 2,
+          "distinct_texts": 1
+        },
+        {
+          "mode": "paired",
+          "case": "counting",
+          "samples": 2,
+          "distinct_texts": 1
+        },
+        {
+          "mode": "paired",
+          "case": "extract_distinct",
+          "samples": 2,
+          "distinct_texts": 1
+        },
+        {
+          "mode": "paired",
+          "case": "long_extract",
+          "samples": 2,
+          "distinct_texts": 1
+        }
+      ],
+      "isolated_vs_paired_text_matches": [
+        {
+          "repeat": 0,
+          "case": "arithmetic",
+          "exact_text_match": true
+        },
+        {
+          "repeat": 0,
+          "case": "counting",
+          "exact_text_match": true
+        },
+        {
+          "repeat": 0,
+          "case": "extract_distinct",
+          "exact_text_match": true
+        },
+        {
+          "repeat": 0,
+          "case": "long_extract",
+          "exact_text_match": true
+        },
+        {
+          "repeat": 1,
+          "case": "arithmetic",
+          "exact_text_match": true
+        },
+        {
+          "repeat": 1,
+          "case": "counting",
+          "exact_text_match": true
+        },
+        {
+          "repeat": 1,
+          "case": "extract_distinct",
+          "exact_text_match": true
+        },
+        {
+          "repeat": 1,
+          "case": "long_extract",
+          "exact_text_match": true
+        }
+      ]
+    }
+  },
+  "cross_endpoint_text_matches": [
+    {
+      "repeat": 0,
+      "mode": "isolated",
+      "case": "arithmetic",
+      "exact_text_match": true
+    },
+    {
+      "repeat": 0,
+      "mode": "isolated",
+      "case": "counting",
+      "exact_text_match": true
+    },
+    {
+      "repeat": 0,
+      "mode": "isolated",
+      "case": "extract_distinct",
+      "exact_text_match": true
+    },
+    {
+      "repeat": 0,
+      "mode": "isolated",
+      "case": "long_extract",
+      "exact_text_match": true
+    },
+    {
+      "repeat": 0,
+      "mode": "paired",
+      "case": "arithmetic",
+      "exact_text_match": true
+    },
+    {
+      "repeat": 0,
+      "mode": "paired",
+      "case": "counting",
+      "exact_text_match": true
+    },
+    {
+      "repeat": 0,
+      "mode": "paired",
+      "case": "extract_distinct",
+      "exact_text_match": true
+    },
+    {
+      "repeat": 0,
+      "mode": "paired",
+      "case": "long_extract",
+      "exact_text_match": true
+    },
+    {
+      "repeat": 1,
+      "mode": "isolated",
+      "case": "arithmetic",
+      "exact_text_match": true
+    },
+    {
+      "repeat": 1,
+      "mode": "isolated",
+      "case": "counting",
+      "exact_text_match": true
+    },
+    {
+      "repeat": 1,
+      "mode": "isolated",
+      "case": "extract_distinct",
+      "exact_text_match": true
+    },
+    {
+      "repeat": 1,
+      "mode": "isolated",
+      "case": "long_extract",
+      "exact_text_match": true
+    },
+    {
+      "repeat": 1,
+      "mode": "paired",
+      "case": "arithmetic",
+      "exact_text_match": true
+    },
+    {
+      "repeat": 1,
+      "mode": "paired",
+      "case": "counting",
+      "exact_text_match": true
+    },
+    {
+      "repeat": 1,
+      "mode": "paired",
+      "case": "extract_distinct",
+      "exact_text_match": true
+    },
+    {
+      "repeat": 1,
+      "mode": "paired",
+      "case": "long_extract",
+      "exact_text_match": true
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "label": "tp8-traced-calibration-not-performance",
+  "parameters": {
+    "base_url": "http://127.0.0.1:8002",
+    "model": "Qwen3.5-35B-A3B",
+    "label": "tp8-traced-calibration-not-performance",
+    "output": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8/traced-calibration.json",
+    "requests": 1,
+    "repeats": 1,
+    "input_lengths": "12000",
+    "output_tokens": 8,
+    "warmup_output_tokens": 8,
+    "arrival_interval": 0.12,
+    "ttft_slo": 2.0,
+    "tpot_slo": 0.1
+  },
+  "runs": [
+    {
+      "repeat": 0,
+      "wall_s": 0.5131584387272596,
+      "output_tokens_per_s": 15.589727063325071,
+      "request_goodput_per_s": 1.948715882915634,
+      "slo_attainment": 1.0,
+      "ttft_p50_s": 0.37805326469242573,
+      "ttft_p95_s": 0.37805326469242573,
+      "tpot_p50_s": 0.018717086474810327,
+      "tpot_p95_s": 0.018717086474810327,
+      "requests": [
+        {
+          "index": 0,
+          "input_tokens": 12000,
+          "arrival_delay_s": 0.0,
+          "usage": {
+            "prompt_tokens": 12000,
+            "total_tokens": 12008,
+            "completion_tokens": 8
+          },
+          "duration_s": 0.5095446314662695,
+          "ttft_s": 0.37805326469242573,
+          "tpot_s": 0.018717086474810327,
+          "sse_content_event_times_s": [
+            0.37805326469242573,
+            0.3868694547563791,
+            0.40590799506753683,
+            0.4438665444031358,
+            0.4814397543668747,
+            0.509072870016098
+          ],
+          "max_content_event_gap_s": 0.037958549335598946,
+          "text_sha256": "52e855dd2709c8cf08b45727bc6b8f5ca5c8a820c30ffd4c49cad2e8f9990efb",
+          "slo_met": true
+        }
+      ]
+    }
+  ]
+}

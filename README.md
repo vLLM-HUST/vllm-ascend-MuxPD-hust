@@ -22,11 +22,17 @@ batch；串行策略具有在线延迟估计和等待阈值。实验 worker 使�
 lane 的临时 workspace。设备并行程度必须由
 NPU profiler 验证，不能由 Python 协程或调度 trace 推断。
 
-最新 TP4 调优加入独立 decode 图、完整 P 编译、按 cohort token 工作量分配层数，
+TP4 调优加入独立 decode 图、完整 P 编译、按 cohort token 工作量分配层数，
 并减少连续 D 的 host 调用与事件依赖。两组负载各六轮测量的聚合吞吐高于
 原生 graph 基线；自然语言 16/16 对照一致，但部分合成序列仍有差异，且部分
 延迟指标未改善。完整结果与限制见 [TP4 性能报告](docs/performance-tp4.md)。
 这不是对任意负载或全部指标不退化的保证，也不是论文硬件分区的实现。
+
+八卡 TP8 迁移验证复用同一配置：每方每负载六轮，混合负载吞吐基本持平
+（177.302 → 177.314 tokens/s），decode-heavy 为 243.153 → 244.002 tokens/s。
+阶段波动大于合并收益，不能宣称稳定加速；mixed 的请求平均 TPOT P95 上升
+0.87%。自然语言 16/16 对照一致，合成用例文本 33/56 一致。
+方法、原始回执及输出稳定性限制见 [TP8 实验报告](docs/performance-tp8.md)。
 
 早期 [TP2 验证](evidence/2026-10-10/README.md) 和
 [TP4 eager 验证](evidence/2026-10-10-tp4/README.md) 保留原始回执与未取得收益的结果。
@@ -38,7 +44,7 @@ NPU profiler 验证，不能由 Python 协程或调度 trace 推断。
 |---|---|
 | vllm-hust | `d0f22d2bda562156e4dbf433ce645e1769b4f804` |
 | vllm-ascend-hust | `03766ac696fde5ab1980d80ca0b8543d3580c989` |
-| 模型 / 设备 | Qwen3.5-35B-A3B / Ascend 910B2，BF16，TP2+EP、TP4+EP |
+| 模型 / 设备 | Qwen3.5-35B-A3B / Ascend 910B2，BF16，TP2+EP、TP4+EP、TP8+EP |
 | 执行 | V1 NPU runner，同步，纯文本；eager 或显式 decode graph |
 | 底层依赖 | 复用已运行环境，不重新解析 torch / torch-npu / CANN |
 
@@ -60,24 +66,29 @@ ASCEND_RT_VISIBLE_DEVICES=2,3 scripts/serve-qwen35.sh \
   --batch-admission-policy-config '{"trace_path":"local-results/serial-{pid}.jsonl"}'
 ```
 
-默认监听 `127.0.0.1:8002`。示例使用本机逻辑 NPU `2,3`（物理 `6,7`），
-原服务使用逻辑 `0,1`；启动前需停止占用所选设备的旧进程。脚本显式关闭 chunked prefill、
+默认监听 `127.0.0.1:8002`。示例使用逻辑 NPU `2,3`；实际可见编号以当前容器为准，
+设备重新挂载后不要沿用旧逻辑/物理映射。启动前需停止占用所选设备的旧进程。脚本显式关闭 chunked prefill、
 async scheduling 和 prefix caching，并将 token budget 设置为完整 16K 上下文。
 **Qwen3.5 的 Mamba `align` 模式本身会拆 prefill**，因此使用 `none`。
 这会改变缓存条件，性能比较必须保留相同缓存设置的对照组。
 
 启动脚本默认 TP=2；四卡使用 `ASCEND_RT_VISIBLE_DEVICES=0,1,2,3 MUXPD_TP_SIZE=4`。
-TP4 会占用本机全部四张 NPU，需先停止两个 TP2 服务。完整启动与复测命令见
+TP4 占用所选四张 NPU，TP8 占用八张，不能与占用相同设备的服务同时运行。
+早期四卡环境的完整启动与复测命令见
 [TP4 记录](evidence/2026-10-10-tp4/README.md#reproduction)。
 
 独立 decode 图使用以下入口。P 保持完整 prompt，不进入设备图；D 使用自己
 的静态输入、workspace 和捕获流；两者共享模型权重与 KV。该入口关闭详细 trace，
 启用自适应层配额、prefill-first、完整 P 编译和 262144 layer-tokens 工作量预算。
-该配置在本机 TP4 测量；其他 TP 或模型需重新验证。图的收益应与同样开启 decode 图的原生服务比较，
-调查与逐项证据见 [TP4 性能报告](docs/performance-tp4.md)。
+该配置已在本机 TP4 和 TP8 测量；其他 TP 或模型需重新验证。图的收益应与同样开启 decode 图的原生服务比较，
+调查与逐项证据见 [TP4 性能报告](docs/performance-tp4.md) 和 [TP8 实验报告](docs/performance-tp8.md)。
 
 ```bash
 ASCEND_RT_VISIBLE_DEVICES=0,1,2,3 MUXPD_TP_SIZE=4 \
+  scripts/serve-qwen35-decode-graph.sh
+
+# 八卡：与上面的四卡示例择一启动。
+ASCEND_RT_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 MUXPD_TP_SIZE=8 \
   scripts/serve-qwen35-decode-graph.sh
 ```
 

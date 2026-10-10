@@ -1,0 +1,150 @@
+{
+  "recorded_at": "2026-10-10T05:32:55.373714+00:00",
+  "api_pid": 15848,
+  "api_argv": [
+    "/root/workspace/.venv/bin/python",
+    "-m",
+    "vllm.entrypoints.openai.api_server",
+    "--model",
+    "/root/workspace/models/Qwen3.5-35B-A3B",
+    "--served-model-name",
+    "Qwen3.5-35B-A3B",
+    "--host",
+    "127.0.0.1",
+    "--port",
+    "8000",
+    "--tensor-parallel-size",
+    "8",
+    "--enable-expert-parallel",
+    "--dtype",
+    "bfloat16",
+    "--max-model-len",
+    "16384",
+    "--max-num-seqs",
+    "8",
+    "--max-num-batched-tokens",
+    "16384",
+    "--gpu-memory-utilization",
+    "0.85",
+    "--language-model-only",
+    "--no-enable-prefix-caching",
+    "--mamba-cache-mode",
+    "none",
+    "--no-async-scheduling",
+    "--no-enforce-eager",
+    "--compilation-config",
+    "{\"mode\":3,\"cudagraph_mode\":\"FULL_DECODE_ONLY\",\"cudagraph_capture_sizes\":[1,2,4,8],\"max_cudagraph_capture_size\":8}",
+    "--enable-chunked-prefill"
+  ],
+  "environment_allowlist": {
+    "VLLM_VERSION": "0.25.1",
+    "VLLM_USE_V2_MODEL_RUNNER": "0",
+    "ASCEND_RT_VISIBLE_DEVICES": "0,1,2,3,4,5,6,7",
+    "VLLM_WORKER_MULTIPROC_METHOD": "spawn",
+    "LD_PRELOAD": "/usr/lib64/libjemalloc.so.2:",
+    "PYTHONPATH": "/root/workspace/vllm-hust:/root/workspace/vllm-ascend-hust:/usr/local/Ascend/cann-9.1.0/python/site-packages:/usr/local/Ascend/cann-9.1.0/opp/built-in/op_impl/ai_core/tbe:/usr/local/Ascend/ascend-toolkit/latest/python/site-packages:/usr/local/Ascend/ascend-toolkit/latest/opp/built-in/op_impl/ai_core/tbe:",
+    "VLLM_PLUGINS": "ascend,ascend_kv_connector,ascend_model,ascend_model_loader",
+    "OMP_NUM_THREADS": "8"
+  },
+  "source_commit": "3eb6f2ea0dea5b95109435182d106ff1ce15e8cd",
+  "cpu_stat_before": "usage_usec 1320768825\nuser_usec 891216843\nsystem_usec 429551981\nnr_periods 4596\nnr_throttled 2\nthrottled_usec 4336590\n",
+  "client_runs": [
+    {
+      "argv": [
+        "/root/workspace/.venv/bin/python",
+        "scripts/benchmark_serving.py",
+        "--base-url",
+        "http://127.0.0.1:8000",
+        "--label",
+        "native-tp8-initial-mixed",
+        "--output",
+        "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8/native-initial-mixed.json"
+      ],
+      "started_at": "2026-10-10T05:32:55.381440+00:00",
+      "returncode": 0,
+      "finished_at": "2026-10-10T05:33:14.462416+00:00",
+      "client_log": "local-results/tp8/native-initial-mixed.client.log",
+      "output": "local-results/tp8/native-initial-mixed.json",
+      "output_sha256": "610b90bad21e0975da89860b8bdff707ebdc2198c9f827c892fc9b6b97a506ed"
+    },
+    {
+      "argv": [
+        "/root/workspace/.venv/bin/python",
+        "scripts/benchmark_serving.py",
+        "--base-url",
+        "http://127.0.0.1:8000",
+        "--label",
+        "native-tp8-initial-decode-heavy",
+        "--input-lengths",
+        "128",
+        "--arrival-interval",
+        "0",
+        "--output",
+        "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8/native-initial-decode-heavy.json"
+      ],
+      "started_at": "2026-10-10T05:33:14.464761+00:00",
+      "returncode": 0,
+      "finished_at": "2026-10-10T05:33:21.889247+00:00",
+      "client_log": "local-results/tp8/native-initial-decode-heavy.client.log",
+      "output": "local-results/tp8/native-initial-decode-heavy.json",
+      "output_sha256": "41098c75cff88e17005546aee6f095f8299d5a61e062b2eaed22fc2671c404f7"
+    },
+    {
+      "argv": [
+        "/root/workspace/.venv/bin/python",
+        "scripts/compare_outputs.py",
+        "--baseline-url",
+        "http://127.0.0.1:8000",
+        "--baseline-only",
+        "--repeats",
+        "2",
+        "--output",
+        "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8/native-correctness.json"
+      ],
+      "started_at": "2026-10-10T05:33:21.891239+00:00",
+      "returncode": 0,
+      "finished_at": "2026-10-10T05:33:33.417470+00:00",
+      "client_log": "local-results/tp8/native-correctness.client.log",
+      "output": "local-results/tp8/native-correctness.json",
+      "output_sha256": "0f6f42d787e954f6c280fa336afeabdc37cd46ca21354448f48db66d496cfbc8"
+    },
+    {
+      "argv": [
+        "/root/workspace/.venv/bin/python",
+        "scripts/check_decode_graph_serving.py",
+        "--baseline-url",
+        "http://127.0.0.1:8000",
+        "--baseline-only",
+        "--repeats",
+        "2",
+        "--output",
+        "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8/native-serving.json"
+      ],
+      "started_at": "2026-10-10T05:33:33.419757+00:00",
+      "returncode": 0,
+      "finished_at": "2026-10-10T05:33:44.691459+00:00",
+      "client_log": "local-results/tp8/native-serving.client.log",
+      "output": "local-results/tp8/native-serving.json",
+      "output_sha256": "b670bb7ec50556cecfebcceb97c566c3ecd8f188f3c8f2da886345528f4bf84b"
+    },
+    {
+      "argv": [
+        "/root/workspace/.venv/bin/python",
+        "scripts/probe_graph_state_reuse.py",
+        "--base-url",
+        "http://127.0.0.1:8000",
+        "--repeats",
+        "2",
+        "--output",
+        "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8/native-state-reuse.json"
+      ],
+      "started_at": "2026-10-10T05:33:44.694168+00:00",
+      "returncode": 0,
+      "finished_at": "2026-10-10T05:33:55.479483+00:00",
+      "client_log": "local-results/tp8/native-state-reuse.client.log",
+      "output": "local-results/tp8/native-state-reuse.json",
+      "output_sha256": "35b70f309c633b5a7e5f0ef79c39fa7d739cc89a743644b6dab63c7a0a7fbdf2"
+    }
+  ],
+  "cpu_stat_after": "usage_usec 1907138983\nuser_usec 1367832934\nsystem_usec 539306048\nnr_periods 5197\nnr_throttled 2\nthrottled_usec 4336590\n"
+}
