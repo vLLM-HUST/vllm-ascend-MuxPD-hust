@@ -9,21 +9,29 @@ MuxWise 的阶段分离机制。用户显式选择 MuxPD 调度器后，prefill 
 | 层次 | 行为 | 当前状态 |
 | --- | --- | --- |
 | 同阶段批次调度 | 完整 prefill；decode 与 prefill 使用不同批次；共享原引擎内的缓存管理 | 第一版实现路径；端到端正确性和性能以测试回执为准 |
-| 串行执行 | 每次运行一个同阶段批次；目标配置为 TP=2、EP 开启 | 当前默认接入路径；没有实现空间并发 |
+| 串行执行 | 每次运行一个同阶段批次 | 组件默认接入路径；没有实现空间并发 |
 | `layered` 执行 | 双 runner 分别执行完整 P/D 批次，在层边界交错；一次 scheduler transaction 等待两个阶段均完成 | 已实现；单次完整 P 期间只产生一轮 D 结果 |
-| `decoupled` 执行 | P 的完整输入和中间状态跨引擎迭代保留；每轮 D 独立采样、输出，P 使用固定或自适应层数配额 | 已实现协议及生命周期回归；固定配额的设备进度、取消与 API 回执见下文链接 |
+| `decoupled` 执行 | P 的完整输入和中间状态跨引擎迭代保留；每轮 D 独立采样、输出，P 使用固定、token-work 或 deadline 层数配额 | 已实现；TP2/TP4 的设备进度、取消与 API 回执见下文链接 |
 | `stream_mode=fenced` | 每个层片段通过事件建立跨流依赖，保留阶段执行隔离 | 双 runner 默认路径；不宣称设备 kernel 同时执行 |
-| `stream_mode=overlap` | 实验性独立流、workspace 和集合通信事件门控，取消普通层边界的跨流依赖 | 固定 TP2+EP、8 层配额的设备 profile 已观测 P/D compute 区间重叠；其他条件仍需验证 |
+| `stream_mode=overlap` | 独立流与 workspace；`shared` 通信组使用事件门控，`isolated` 为 P 新建 TP/EP 通信组 | eager 实验路径；shared 有 TP2/TP4 证据，isolated 已验证指定 TP4+EP 配置；不支持 graph |
+| `decode_graph=true` | 独立 D runner 捕获和重放原生 ACL graph；P 始终使用 graph mode `NONE` | 仅 decoupled fenced；指定 TP4+EP 配置已验证，完整 P 另有可选 FX 编译 |
 | NPU 资源分区 | 分别控制 P/D 的 Cube / Vector 资源 | 尚未接入控核；待逐算子支持与 profiler 验证 |
-| SLO 自适应分区 | 用本机延迟数据和争用测量选择分区及每轮 prefill 层数 | 待实现与校准；不能使用 NVIDIA 的回归参数 |
+| 层数自适应与资源预测 | 已有 token-work 基础配额、本机 EWMA/deadline 层数配额及 prefill-first | 尚无论文的硬件分区预测器、在线争用修正或 SLO 保证；不能使用 NVIDIA 的回归参数 |
 
 串行同阶段调度消除了 mixed batch 和 token chunk，但长 prefill 仍会阻塞
 decode。它是接入与对照基础，不能称为完整 MuxWise，也不能据此声称改善了
 TBT 或实现了算力隔离。实验性双 runner 不自动意味着并发安全或性能更好。
 
 serial 对原生同阶段批次耗时更新 EWMA。layered 使用固定 `layers_per_slice`；
-decoupled 默认同样固定，可显式启用下述 TTFT 层数配额。P 等待阈值也受已有
+decoupled 默认同样固定，可显式启用下述工作量和 TTFT 层数配额。P 等待阈值也受已有
 pending cohort 和可用 KV 容量约束，不是请求到达至首 token 的硬上界。
+
+组件默认与调优脚本不同：`adaptive_layers`、`prefill_first`、`decode_graph`、
+`compile_full_prefill` 默认均为 `false`，`prefill_layer_token_budget` 默认为 `0`。
+[`serve-qwen35-decode-graph.sh`](../scripts/serve-qwen35-decode-graph.sh) 显式选择
+fenced graph、上述四个开关及 `262144` 的工作量预算，并捕获 D batch size
+1/2/4/8。该组合的验证范围和延迟取舍见 [TP4 性能报告](performance-tp4.md)，
+不能据此认为单独开启某个选项或任意负载都会改善性能。
 
 ## 固定参考版本
 
@@ -66,9 +74,11 @@ workspace、采样状态及 graph 的静态缓冲区；不能因为模型权重�
 [`DecoupledMuxPDNPUWorker`](../src/vllm_muxpd/decoupled_worker.py)。每次最多保留
 一个 prefill cohort。首次使用原生 scheduler 为整个 prompt 分配 KV，并保存
 P 子输出的完整 token 成本；worker 为 P 保存可继续执行的调用栈、输入和中间状态。
-D 使用另一个 runner。fenced 后端先完成当轮 D forward，随后推进 P 的
-`layers_per_slice` 层；overlap 后端交替发射 D/P 的完整模型层，避免 P 的首个
-collective 必须等待整个 D 网络的最后一个 collective。每轮只采样 D 和本轮完成的 P。
+D 使用另一个 runner。若本轮同时有 P 和 D，fenced 后端先完成 D forward，
+随后推进 P 的当轮层数配额。shared overlap 交替发射 D/P 的完整模型层，
+避免共享 communicator 把整个 D 网络串在 P 前面；isolated overlap 先提交
+P 的整个层片段，再提交 D，二者使用独立通信组。下述 prefill-first 可在调度
+阶段选择一次 P-only 步骤。每轮只采样 D 和本轮完成的 P。
 若当轮没有 D，worker 一次运行剩余 P 层，避免空闲时人为拖长 TTFT。
 
 原生调度在发射完整 P 时已经增加 `num_computed_tokens`，但此时尚未完成
@@ -85,7 +95,8 @@ forward 或产生首 token。本插件显式记录 pending cohort，后续迭代
 | `muxpd_prefill_cohort_id` | 单调递增的 cohort 标识，用于拒绝错序回执 |
 | `muxpd_finish_prefill` / `muxpd_pause_prefill` | 无 D 或层数配额要求时完成剩余 P / 防御性暂停控制 |
 | `muxpd_completed_prefill_ids` / `muxpd_cancelled_prefill_ids` | worker 的完成及取消 ACK；二者不相交 |
-| `muxpd_prefill_layers_completed` / `muxpd_prefill_layers_total` | worker 已提交的层边界计数及总层数；不单独表示设备任务已完成 |
+| `muxpd_prefill_layers_completed` / `muxpd_prefill_layers_total` | worker 已提交的层数及模型总层数；不单独表示设备任务已完成 |
+| `muxpd_prefill_progress_source` | `none` 表示无 P；`layer_hooks` 表示逐层 hook；`full_forward_return` 仅用于获准编译的新 P 完整 forward 成功返回 |
 
 worker 回执只包含当轮 D 和本轮完成 P 的样本。scheduler 先校验 cohort、
 样本行及 ACK，再分别调用原生 `update_from_output()` 回收 D 子输出和已保存
@@ -97,11 +108,28 @@ worker 回执只包含当轮 D 和本轮完成 P 的样本。scheduler 先校验
 worker 和 sampler：该步骤可能继续最后一个 P，或传递取消 ACK。批次队列路径
 可能跳过零 token worker 调用，因此拒绝使用 `schedule_batch()`。
 
-## 可选 TTFT 层数配额
+## 可选层数配额与 prefill-first
+
+`prefill_layer_token_budget` 是非负整数，默认为 `0`；非零值只允许用于
+`execution=decoupled`。它对应 artifact 按 token 工作量决定层数的机制。
+基础配额为：
+
+```text
+budget = 0: base_layers = layers_per_slice
+budget > 0: base_layers = max(layers_per_slice,
+                             min(model_layers, budget // cohort_full_prefill_tokens))
+```
+
+实际配额再限制到剩余层数。分母是原始 cohort 的完整 P token 总数，包含抢占
+重算时需要重放的已生成 token；不会随着层数推进或部分取消而缩小。调度预览
+使用候选请求总量，KV 分配后按实际接纳的 cohort 重新计算。该预算不改变完整
+prompt 的 token admission，也不是硬工作量上限：配置层数下限和 deadline
+都可能要求执行更多层。没有 D 时仍一次完成剩余 P；暂停和整组取消不推进层数。
 
 `adaptive_layers` 默认为 `false`，只能与 `execution=decoupled` 同时使用。
-启用后先观测独立完整 P 和独立 D 的耗时；两类有效样本未齐备时保持固定
-`layers_per_slice`。采样窗口是 host 从 schedule 到 worker 回执的墙钟时间，
+启用后先观测独立完整 P 和独立 D 的耗时；两类有效样本未齐备时使用上述基础
+配额，只有工作量预算为 `0` 时才保持固定 `layers_per_slice`。
+采样窗口是 host 从 schedule 到 worker 回执的墙钟时间，
 包含调度、通信和采样开销，不是 profiler 的逐层 kernel 时长。混合 P/D、
 悬挂 P 的后续步骤、取消及晚到 abort 不用于这两类独立延迟校准。
 
@@ -112,17 +140,29 @@ P 样本按 token 数的二次幂范围分桶，同桶不同长度先归一到�
 没有逐层区分 full attention / Mamba，也没有建模当前 batch 大小的争用。
 
 调度器用 cohort 中最早请求的到达时间和 `ttft_slo_ms` 计算剩余 TTFT 预算，
-扣除估计剩余 P 耗时，再计算还容得下几轮 D。每轮至少执行 `layers_per_slice`
-层；预算越紧，P 配额越大，必要时完成全部剩余层。无 D 时仍直接完成 P。
+扣除估计剩余 P 耗时，再计算还容得下几轮 D。配额取上述基础配额与 deadline
+所需层数的较大值，再限制到剩余层数；预算越紧，必要时完成全部剩余层。
 该策略优先缩短 P 被多轮 D 延后的时间，可能增加 fenced 模式的 D 输出间隔，
 因此它不是 TPOT 上界，也不是论文的 contention guard 或资源分区预测器。
+
+`prefill_first` 默认 `false`，要求 decoupled、fenced 和 `adaptive_layers=true`。
+若新 P 的预览配额足以完成整个模型，可以在原生 token 记账前选择 P-only，
+避免它先等待一轮完整 D。非零工作量预算可在 EWMA 尚未校准时触发这个选择；
+否则需要已校准的 deadline 估计。被延后的已有 D 记为债务，下一轮有可运行
+D 时先偿还，再接纳新 P。完整 prompt 占满 token 容量而被选为 P-only 时
+同样记债，即使它的首 token 立即结束也不能让后续 P 连续越过 D。取消、
+抢占和请求 ID 复用会清理相应债务；P 的 KV 分配失败时回退以保持 D 推进。
+trace 区分 `token_budget_prefill_first`、`deadline_prefill_first` 和
+`full_budget_prefill_first`，不能把所有 P-only 步骤都解释成 deadline 决策。
 
 trace 中 `decode_slo_feasible_without_prefill` 仅检查独立 D 估计是否已经超过
 `tpot_slo_ms`，不包含 P 片段成本。若单独 D 已超过目标，改变 P 层配额不能
 使该目标自动可达。应保留固定配额对照并验证真实 TTFT、TPOT 和 goodput。
 
 scheduler 要求回执的总层数与模型一致、累计提交层数与本轮配额一致，且完成 P
-必须到达最终层。这个计数用于检测错序和执行进度；缓存释放仍只能依据完成或
+必须到达最终层。`full_forward_return` 还要求本轮新 P、完整配额、编译选项
+开启以及整个 cohort 完成；悬挂 P 不能中途改用这个来源。这个计数用于检测
+错序和执行进度；缓存释放仍只能依据完成或
 取消 ACK，不能因看见最后一个层 hook 就提前复用设备内存。
 
 ## 取消、暂停与缓存生命周期
@@ -159,30 +199,88 @@ routed experts 和有状态输入续写不在 decoupled 支持范围内。
 存在 P/D 执行重叠。Cube 与 Vector 核数要分别记录；不能将 CUDA SM 数字
 直接转换成同名配置。普通流优先级也不能替代资源限制。
 
-事件用于确定已发射层和最终 prefill 的完成状态，避免全设备同步。
-重分区需保证旧流上的相关任务完成及新流正确等待依赖。若启用 ACL graph，
-必须验证 capture 时的资源约束、graph 复用和静态缓冲区生命周期。
-初期 eager 验证通过前不应假设 graph 路径可用。
-
 TP/EP 的不同阶段可能同时发起集合通信。独立计算流不足以保证 collective
 顺序正确；需要验证 HCCL communicator、通信流与各 rank 的完成一致性。
 参考 artifact 为 P/D 复制 TP communicator。实验实现的 TP/EP 支持范围
 必须由实际多卡验证确定。
 
-`stream_mode=overlap` 的实验路径见
-[`overlap.py`](../src/vllm_muxpd/overlap.py)。它为 P/D 分别维护 stream、forward
-context 和 workspace，以事件发布共享初始化工作；同一 device process group
-上的 `all_reduce`、`all_gather` 和 `reduce_scatter` 按主机发射顺序门控。
-它依赖原生同步 collective API 已将内部 HCCL 工作连接回调用 stream，且要求
-各 rank 发射顺序一致。普通模型层计算可摆脱整个上一层的跨流等待，但这不等于
-已经验证计算重叠，更不等于 CUDA GreenContext 式硬件资源隔离。
-
-当前 worker 的实验白名单为 Ascend A2、Qwen3.5 BF16、eager、text-only，
+双 runner worker 的白名单为 Ascend A2、Qwen3.5 BF16、V1 同步 runner、text-only，
 禁用 MC2、FlashComm、动态 EPLB、shared-expert 多流、原生 DBO/ubatching；
-overlap 还要求关闭 fine-grained TP。这些限制用于界定需要验证的算子和通信路径。
-当前没有调用 `set_stream_limit()`，也没有接入论文的在线争用修正与资源预测器。
+overlap 还要求关闭 fine-grained TP。未启用 `decode_graph` 时要求 eager；
+图模式使用下面的独立校验。PP、DP、CP、speculative decoding、prefix caching、
+LoRA 和量化等不在当前支持范围内。这些限制界定已经审计的算子与通信路径。
+当前没有调用 `set_stream_limit()`，也没有接入论文的在线争用修正与硬件资源预测器。
 
-当前设备证据见 [2026-10-10 回执](../evidence/2026-10-10/README.md#device-profile-independent-pd-compute-intervals)。
+### 独立 decode ACL graph
+
+[`decode_graph.py`](../src/vllm_muxpd/decode_graph.py) 复用原生
+`ACLGraphWrapper`、capture 和 attention metadata 更新路径。`decode_graph=true`
+只允许 decoupled fenced，要求 `enforce_eager=false`、`VLLM_COMPILE` 和
+`FULL_DECODE_ONLY`；capture sizes 必须为有序、不重复的正整数，且不超过
+`max_num_seqs`，最大 capture size 必须与列表一致。ENPU、xlite、模型 offload、
+动态权重传输及 graph + overlap 组合均拒绝。
+
+P/D 共享原始权重和 KV 所有者，D 则有自己的 graph wrapper、输入静态缓冲区、
+metadata builder、workspace 和更新 stream。启动时把 owner 的 capture 临时
+重定向到 D，同时绑定原生 capture context 和 `torch.npu.graph` 的 capture
+stream；capture 和 replay 使用同一个 D stream 与 workspace。原生 metadata
+更新及 graph replay 同步保留。capture 一旦开始后失败，worker 必须重启，
+不能回退使用部分捕获的图。
+
+P 的 dispatcher 始终强制 eager，forward context 强制 graph mode `NONE`、
+`capturing=false`，默认还设置 `skip_compiled=true`。这覆盖 profile、dummy run
+和真实请求；新请求即使只有一个输入 token，也不会被当作 D graph 重放。
+不能简单移除 eager 校验并让两个 runner 共用原有 graph wrapper。
+
+`compile_full_prefill=true` 是独立 opt-in，要求上述图模式。它在启动的原生
+`profile_run()` 内、D capture 之前允许 P 的 FX 编译和预热，P 的 graph mode
+仍为 `NONE`。运行时只允许本轮新建、无已知取消或暂停、配额覆盖整个模型的
+P 进入编译上下文；已悬挂的 P 始终继续逐层 raw 执行。编译完整 P 成功返回、
+原生 `execute_model_state` 就绪后才能记录 `full_forward_return`；若原生回退
+到带 hook 的执行，hook 数必须精确等于总层数。失败不补记层数，完成 ACK 仍
+等待最终采样同步。该路径允许 FX 执行，并未捕获或重放 P 的 ACL graph。
+
+controller 的 `snapshot()` 按实际 descriptor 对应的已捕获 graph entry 区分
+D capture、replay 与 eager fallback，仅看到 `FULL` 不计作 replay。
+`prefill_compiled_calls` 表示允许编译执行的调用数，不能单独证明实际 FX 命中；
+本轮另外保存了 [四 rank 的编译执行 profile 证据](../evidence/2026-10-10-tp4-optimization/graph-compiled-profile-proof.md)。
+
+纯 D 步骤直接复用原生 runner/sampler，省去逐层 greenlet 编排。仅在 graph
+fenced、连续两轮纯 D、前轮已成功采样且未配置 profiler 时，省去本轮冗余的
+caller fence；仍保留最新 backend tail 依赖、D forward/sample 末尾 fence
+和 caller 恢复。P/D 转换、首次 D、异常或配置 profiler 时走完整依赖路径。
+自定义 collective RPC 若在 caller stream 发射设备工作，必须遵守 backend
+事件发布协议；绕过该协议的任意外部设备调用不在支持范围内。
+
+关闭时先同步 P/D 和 metadata 更新 stream，再释放独立 D graph、恢复 instance
+包装，最后由原生 owner 清理共享缓存；不对 D runner 再调用原生 shutdown。
+流同步失败时保留资源供 shutdown 重试。原生模块的全局 `GraphParams` 不会由
+本插件清空，新 controller 发现已有 owner 会拒绝初始化，因此同一进程内
+close 后重建 graph worker 不受支持，必须重启进程。
+
+### Shared 与 isolated overlap 通信
+
+[`overlap.py`](../src/vllm_muxpd/overlap.py) 为 P/D 分别维护 stream、forward
+context 和 workspace，以事件发布共享初始化工作。默认
+`overlap_communication=shared` 对同一 device process group 的 `all_reduce`、
+`all_gather` 和 `reduce_scatter` 按主机发射顺序门控。它依赖原生同步 collective
+API 将内部 HCCL 工作连接回调用 stream，且要求所有 rank 发射顺序一致。
+
+`overlap_communication=isolated` 只允许 decoupled overlap eager。
+worker 为 P 建立 rank membership 相同的 TP/EP sibling groups，D 和 caller
+继续使用原生组；[`LaneCollectiveRouter`](../src/vllm_muxpd/communicators.py)
+按 active lane 路由上述三个 device collective，不替换全局 TP/EP coordinator。
+所有 rank 必须按相同顺序建组，并在内存 profile 前预热。关闭时先同步 lane，
+再恢复路由并销毁本 worker 自建的组，不销毁原生组。该路由支持当前白名单的
+通信调用，不能推广成任意 MoE backend 或 collective 的隔离保证。
+
+isolated8 已完成 Qwen3.5-35B-A3B BF16、TP4+EP、eager 的自然语言对照、
+长 P 进度、取消和四 rank profile；事件数下降，但该 capture 的计算交叠没有
+增加，实测性能也未超过原生。shared 的 TP4 结果和 graph fenced 的后续优化
+同见 [TP4 性能报告](performance-tp4.md)。这些是不同执行组合，不应把
+isolated 通信组与 decode graph 的验证结果合并成未测试的 graph overlap 配置。
+
+shared overlap 的早期设备证据见 [2026-10-10 回执](../evidence/2026-10-10/README.md#device-profile-independent-pd-compute-intervals)。
 在指定 Qwen3.5-35B-A3B BF16 / Ascend 910B2 / TP2+EP / 固定 8 层配额的
 capture 中，两 rank 的 P/D compute 区间交集分别约占活跃并集的 10.78% 和
 9.16%。计算使用已映射到 P/D 的 CANN physical stream，排除 CPU、拷贝、
@@ -217,6 +315,7 @@ SSE、usage、功能 oracle、重复稳定性及文本哈希；`--require-exact`
 两个服务逐文本一致。客户端请求重叠仍需 scheduler trace 确认 P 实际跨迭代。
 `--baseline-report` 可复用已完成回执中的 baseline 端点，只请求新 candidate；
 复用前验证模型、重复次数、case 内容及功能结果、覆盖范围和文本哈希。
+`--baseline-only` 可先采集这份完整 baseline，供停服换配置后的对照复用。
 该脚本用于正确性比较，复用历史 baseline 的时间数据不构成同条件性能比较。
 
 同一 prompt 的单请求结果在相同配置下应先具有可重复性，再比较两个模式的
@@ -224,6 +323,12 @@ SSE、usage、功能 oracle、重复稳定性及文本哈希；`--require-exact`
 不能证明状态损坏，也不能证明只是正常数值误差。需要定位首个分歧，必要时在
 相同 batch 形状和强制相同历史 token 的条件下比较 logits。少量契约全部通过
 只说明这些用例通过，不能替代长期随机、取消与内存压力测试。
+
+图模式还使用 token-ID 状态复用探针，覆盖单 token P、双 token 对照和长 P
+前后历史。当前 [三路调查](../evidence/2026-10-10-tp4-optimization/one-token-prefill-investigation.md)
+记录了原生 graph 的单 token P 首输出不稳定，而原生 eager 与插件 graph 在
+同一探针中稳定；双 token P 的后续差异在三路均存在。证据支持继续检查原生
+GDN graph 路由与状态更新，尚未证明缓存泄漏，也不能据此归因所有生成差异。
 
 性能测试应固定相同模型、并行方式、缓存预算、请求到达序列和输出长度，
 分别报告 TTFT、逐 token TBT、请求级 TPOT、吞吐量及给定 SLO 下的 goodput。
@@ -237,4 +342,6 @@ KV 抢占、部分/全部取消、晚到取消、首 token 即结束、错序回
 提前拒绝以及原生 `EngineCore.step()` 的零 token continuation/ACK 路径。
 这些主机侧回归不能替代真实 worker 的模型输出、设备访存和多卡通信验证。
 trace 的 `decoupled_schedule` / `decoupled_complete` 记录 cohort、pending P、
-本轮 D 和 ACK；后续 P 层执行不会再次记入 prompt token admission。
+本轮 D、配额来源、prefill-first 债务、层进度来源和 ACK；后续 P 层执行不会
+再次记入 prompt token admission。trace 可关闭以测量常规执行性能；关闭 trace
+的运行不能作为逐轮层进度证据，需保留独立协议验证回执。
