@@ -1,0 +1,98 @@
+{
+  "schema_version": 2,
+  "passed": true,
+  "recorded_at": "2026-10-10T06:00:36.360091+00:00",
+  "scope": "Offline replay from a clean copy of Git index blob contents, not working-tree fallback. No server calls, torch import or device use. Original benchmark/correctness/lifecycle reports were preserved in original-reports and remain unchanged in the archive and source directory.",
+  "replay_directory": "local-results/tp8-replay-final",
+  "index_snapshot": {
+    "source": "git ls-files --stage -z -- evidence/2026-10-10-tp8/; git cat-file blob <indexed-object-id>",
+    "listing_sha256": "af61cab91fade341eea225a73d5887ff2cca0d8df1cf58b3e4163231468ac013",
+    "archive_index_blob_sha1": "df08298fa26b9efc209515bd5c59a2dd330d4157",
+    "archive_index_sha256": "f2db4d44ccb4b7c52603b80d0a9ef00799195a5cf077d4626423efc0c4a9571c",
+    "copied_files": 79,
+    "indexed_source_artifacts": 77,
+    "included_log_files": 26,
+    "all_indexed_artifact_sizes_and_sha256_verified": true,
+    "gh_release_tools_excluded": true,
+    "index_unchanged_during_replay": true,
+    "note": "Snapshot precedes this receipt update. The archived index entry for this new receipt is updated afterwards, avoiding a self-referential hash claim."
+  },
+  "commands": [
+    [
+      "/root/workspace/.venv/bin/python",
+      "local-results/tp8-replay-final/summarize_tp8.py"
+    ],
+    [
+      "/root/workspace/.venv/bin/python",
+      "local-results/tp8-replay-final/audit_lifecycle.py"
+    ],
+    [
+      "/root/workspace/.venv/bin/python",
+      "local-results/tp8-replay-final/correctness-summary-audit.py"
+    ]
+  ],
+  "exit_codes": [
+    0,
+    0,
+    0
+  ],
+  "command_outcomes": [
+    {
+      "command": [
+        "/root/workspace/.venv/bin/python",
+        "local-results/tp8-replay-final/summarize_tp8.py"
+      ],
+      "exit_code": 0,
+      "log": "local-results/tp8-replay-final/replay-logs/summarize_tp8.py.log",
+      "log_sha256": "421b82c05a159a4c059de2e8c50c2c003c121ee8793936cea3aa9d7e50ff39b4"
+    },
+    {
+      "command": [
+        "/root/workspace/.venv/bin/python",
+        "local-results/tp8-replay-final/audit_lifecycle.py"
+      ],
+      "exit_code": 0,
+      "log": "local-results/tp8-replay-final/replay-logs/audit_lifecycle.py.log",
+      "log_sha256": "7d1b7b5653fbce30a73ab8fafcf236028add43e6c90a1e16e073015e780092ff"
+    },
+    {
+      "command": [
+        "/root/workspace/.venv/bin/python",
+        "local-results/tp8-replay-final/correctness-summary-audit.py"
+      ],
+      "exit_code": 0,
+      "log": "local-results/tp8-replay-final/replay-logs/correctness-summary-audit.py.log",
+      "log_sha256": "2814f5e695618484331d9db4561060dcbd0c14fcb91f039aed422fbf02a02217"
+    }
+  ],
+  "comparisons": [
+    {
+      "output": "benchmark-summary.json",
+      "semantic_equal": true,
+      "normalization": [
+        "created_at (generation timestamp only)"
+      ],
+      "archive_sha256": "8dca8708e11ef33e42cbc31d5068f248017935660465735dca7bcff8aa1101a9",
+      "replay_sha256": "6d284009c34422b2e1862962acfca85938877c9dd5eaae709f62e2c4a07c7ff9"
+    },
+    {
+      "output": "lifecycle-proof.json",
+      "semantic_equal": true,
+      "normalization": [],
+      "archive_sha256": "7247c8a03da004dca9d4fe790520f352b718ffd516ab7f0276857919eee0a1ff",
+      "replay_sha256": "7247c8a03da004dca9d4fe790520f352b718ffd516ab7f0276857919eee0a1ff"
+    },
+    {
+      "output": "correctness-summary.json",
+      "semantic_equal": true,
+      "normalization": [
+        "relocated input/script path prefix only: local-results/tp8-replay-final/ -> local-results/tp8/"
+      ],
+      "archive_sha256": "db381a5018b44ae7403c297daca6574ae75267fe040fd9397f4cd6235f383129",
+      "replay_sha256": "a12cd4947e8da52bf3b96cf7dc9d268767758ed4a8e0eb1f67b324fd9af94adf"
+    }
+  ],
+  "correctness_markdown_byte_identical": true,
+  "original_reports_preserved_and_unchanged": true,
+  "original_source_artifacts_copied_before_replay": 77
+}

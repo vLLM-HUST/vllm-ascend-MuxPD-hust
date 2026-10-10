@@ -1,0 +1,764 @@
+{
+  "recorded_at_utc": "2026-10-10T05:31:00.866883+00:00",
+  "recorded_date": "2026-10-10",
+  "timezone": "UTC",
+  "scope": "TP=8 environment snapshot and planned common configuration after container rebuild; no readiness, correctness or performance result is certified by this file.",
+  "collection": {
+    "method": "Read-only npu-smi, git, Python distribution metadata, /proc allowlisted native API arguments/environment, cgroup/system metadata and model metadata file reads. No torch/torch_npu import, device context creation, NPU workload, API request, or full weight-file scan.",
+    "native_log": "local-results/tp8/native-initial-server.log",
+    "native_api_process_id_at_capture": 15848,
+    "environment_is_allowlist_only": true,
+    "native_log_prefix_size_bytes": 33609,
+    "native_log_prefix_sha256": "6e61f727e47e5dba14f4d4729d7a2101283af1d85c8b110b2fc9f20abe8952ce",
+    "note": "Log is growing; the prefix length/hash and selected lines describe only this snapshot.",
+    "followup_note": "Only startup log observations were extended at observed_native_startup.log_followup_at_utc; other dynamic fields retain recorded_at_utc snapshot timing."
+  },
+  "sources": {
+    "vllm-hust": {
+      "path": "/root/workspace/vllm-hust",
+      "commit": "d0f22d2bda562156e4dbf433ce645e1769b4f804",
+      "dirty_tracked_files": {},
+      "branch": "local/qwen35-baseline",
+      "remote": "https://github.com/vLLM-HUST/vllm-hust.git"
+    },
+    "vllm-ascend-hust": {
+      "path": "/root/workspace/vllm-ascend-hust",
+      "commit": "03766ac696fde5ab1980d80ca0b8543d3580c989",
+      "dirty_tracked_files": {
+        "csrc/build_aclnn.sh": {
+          "sha256": "b089d52475c6cb36fffd733bb5be3fbe4158b6845074751268938e98a1d0042c"
+        }
+      },
+      "branch": "local/qwen35-baseline",
+      "remote": "https://github.com/vLLM-HUST/vllm-ascend-hust.git"
+    },
+    "vllm-ascend-MuxPD-hust": {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust",
+      "commit": "3eb6f2ea0dea5b95109435182d106ff1ce15e8cd",
+      "dirty_tracked_files": {},
+      "branch": "bench/tp8-evaluation",
+      "remote": "https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust.git",
+      "main_merge_sha": "3eb6f2ea0dea5b95109435182d106ff1ce15e8cd",
+      "main_merge_parents": [
+        "c9969f8ea6483b839a17765a8b841512be90a7b9",
+        "38970b1f049f23ec1cb2eb061c311d673974c6be"
+      ],
+      "main_merge_subject": "Merge pull request #5 from vLLM-HUST/perf/tp4-execution-overhead",
+      "main_merge_time": "2026-10-10T13:20:29+08:00",
+      "main_reference_source": "Local origin/main ref; no network fetch in collection.",
+      "module_origin": "/root/workspace/vllm-ascend-MuxPD-hust/src/vllm_muxpd/__init__.py"
+    }
+  },
+  "source_notes": [
+    "Ascend tracked local csrc/build_aclnn.sh modification is recorded by current SHA; no source edits were made by this collector.",
+    "The plugin branch and all dynamic dirty-file hashes were read at collection time; earlier TP4 observations were not reused as current state."
+  ],
+  "host": {
+    "python_executable": "/root/workspace/.venv/bin/python",
+    "python_version": "3.12.13 (main, Aug  3 2026, 03:58:42) [GCC 12.3.1 (openEuler 12.3.1-105.oe2403sp3)]",
+    "platform": "Linux-5.15.0-25-generic-aarch64-with-glibc2.38",
+    "machine": "aarch64",
+    "kernel": "5.15.0-25-generic",
+    "hostname": "coder-user-irisuko-7fb9bc6cc7-mjfsk",
+    "cpu_model": "Kunpeng-920",
+    "host_logical_cpu_count": 192,
+    "process_cpu_affinity_count": 192,
+    "lscpu": "Architecture:                    aarch64\nCPU op-mode(s):                  64-bit\nByte Order:                      Little Endian\nCPU(s):                          192\nOn-line CPU(s) list:             0-191\nVendor ID:                       HiSilicon\nModel name:                      Kunpeng-920\nModel:                           0\nThread(s) per core:              1\nCore(s) per cluster:             48\nSocket(s):                       -\nCluster(s):                      4\nStepping:                        0x1\nBogoMIPS:                        200.00\nFlags:                           fp asimd evtstrm aes pmull sha1 sha2 crc32 atomics fphp asimdhp cpuid asimdrdm jscvt fcma dcpop asimddp asimdfhm ssbs\nL1d cache:                       12 MiB (192 instances)\nL1i cache:                       12 MiB (192 instances)\nL2 cache:                        96 MiB (192 instances)\nL3 cache:                        192 MiB (8 instances)\nNUMA node(s):                    8\nNUMA node0 CPU(s):               0-23\nNUMA node1 CPU(s):               24-47\nNUMA node2 CPU(s):               48-71\nNUMA node3 CPU(s):               72-95\nNUMA node4 CPU(s):               96-119\nNUMA node5 CPU(s):               120-143\nNUMA node6 CPU(s):               144-167\nNUMA node7 CPU(s):               168-191\nVulnerability Itlb multihit:     Not affected\nVulnerability L1tf:              Not affected\nVulnerability Mds:               Not affected\nVulnerability Meltdown:          Not affected\nVulnerability Spec store bypass: Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:        Mitigation; __user pointer sanitization\nVulnerability Spectre v2:        Not affected\nVulnerability Srbds:             Not affected\nVulnerability Tsx async abort:   Not affected",
+    "pid_1_comm": "coder",
+    "pid_1_start_time": "Sat Oct 10 05:24:16 2026"
+  },
+  "container_resources": {
+    "cgroup_version": 2,
+    "cgroup": {
+      "cpu.max": "3200000 100000",
+      "cpu.stat": "usage_usec 540798776\nuser_usec 331078207\nsystem_usec 209720568\nnr_periods 3451\nnr_throttled 1\nthrottled_usec 1352122",
+      "cpuset.cpus.effective": "0-191",
+      "memory.max": "274877906944",
+      "memory.current": "77481693184",
+      "memory.events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0",
+      "pids.max": "629145",
+      "pids.current": "1124"
+    },
+    "cpu_quota_equivalent_cores": 32.0,
+    "memory_limit_bytes": 274877906944,
+    "memory_limit_gib": 256.0,
+    "prior_tp4_cpu_quota": "1600000 100000",
+    "prior_tp4_cpu_quota_equivalent_cores": 16,
+    "prior_cpu_evidence": "evidence/2026-10-10-tp4-optimization/graph-work256-manifest.json",
+    "comparison_note": "Current container CPU quota is 32 equivalent cores versus 16 in TP4. 192 allowed CPUs are scheduling affinity, not CPU quota. TP8 versus prior TP4 throughput is therefore not a controlled scaling-only comparison."
+  },
+  "initial_state": {
+    "source": "environment-initial.json",
+    "sha256": "700de179e369a9e5377df865c7d39d9eea1e8ea33cace05a7c0dd18372c7127e",
+    "recorded_at_utc": "2026-10-10T05:27:38.292174+00:00",
+    "reported_services": "No vLLM API/engine/worker processes; all eight NPUs idle after container/device reconfiguration.",
+    "npu_smi_source": "npu-smi-initial.txt",
+    "npu_smi_sha256": "f5a126ae089710b7297430df01c039846bfd25f4b3da3ca9342d6214ffe355d3",
+    "note": "This is an earlier same-run observation, not a claim that services remain absent at this later collection time."
+  },
+  "installed_distributions": {
+    "torch": {
+      "version": "2.10.0+cpu",
+      "metadata_location": "/usr/local/python3.12.13/lib/python3.12/site-packages/torch-2.10.0+cpu.dist-info"
+    },
+    "torch-npu": {
+      "version": "2.10.0.post4",
+      "metadata_location": "/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu-2.10.0.post4.dist-info"
+    },
+    "triton": {
+      "version": "3.5.0",
+      "metadata_location": "/usr/local/python3.12.13/lib/python3.12/site-packages/triton-3.5.0.dist-info"
+    },
+    "triton-ascend": {
+      "version": "3.2.2",
+      "metadata_location": "/usr/local/python3.12.13/lib/python3.12/site-packages/triton_ascend-3.2.2.dist-info"
+    },
+    "transformers": {
+      "version": "5.14.1",
+      "metadata_location": "/root/workspace/.venv/lib/python3.12/site-packages/transformers-5.14.1.dist-info"
+    },
+    "numpy": {
+      "version": "1.26.4",
+      "metadata_location": "/usr/local/python3.12.13/lib/python3.12/site-packages/numpy-1.26.4.dist-info"
+    },
+    "fastapi": {
+      "version": "0.136.3",
+      "metadata_location": "/root/workspace/.venv/lib/python3.12/site-packages/fastapi-0.136.3.dist-info"
+    },
+    "greenlet": {
+      "version": "3.5.6",
+      "metadata_location": "/root/workspace/.venv/lib/python3.12/site-packages/greenlet-3.5.6.dist-info"
+    },
+    "vllm": {
+      "version": "0.1.dev1+gd0f22d2bd.empty",
+      "metadata_location": "/root/workspace/.venv/lib/python3.12/site-packages/vllm-0.1.dev1+gd0f22d2bd.empty.dist-info"
+    },
+    "vllm-ascend": {
+      "version": "0.1.dev1+g03766ac69.d20261010",
+      "metadata_location": "/root/workspace/.venv/lib/python3.12/site-packages/vllm_ascend-0.1.dev1+g03766ac69.d20261010.dist-info"
+    },
+    "vllm-ascend-muxpd": {
+      "version": "0.1.0",
+      "metadata_location": "/root/workspace/.venv/lib/python3.12/site-packages/vllm_ascend_muxpd-0.1.0.dist-info",
+      "editable_local_checkout": "file:///root/workspace/vllm-ascend-MuxPD-hust",
+      "editable": true
+    },
+    "vllm-ascend-muxpd-hust": {
+      "version": "0.1.0",
+      "metadata_location": "/root/workspace/.venv/lib/python3.12/site-packages/vllm_ascend_muxpd_hust-0.1.0.dist-info",
+      "editable_local_checkout": "file:///root/workspace/vllm-ascend-MuxPD-hust",
+      "editable": true
+    },
+    "safetensors": {
+      "version": "0.8.0",
+      "metadata_location": "/usr/local/python3.12.13/lib/python3.12/site-packages/safetensors-0.8.0.dist-info"
+    },
+    "tokenizers": {
+      "version": "0.22.2",
+      "metadata_location": "/usr/local/python3.12.13/lib/python3.12/site-packages/tokenizers-0.22.2.dist-info"
+    },
+    "uvicorn": {
+      "version": "0.52.3",
+      "metadata_location": "/usr/local/python3.12.13/lib/python3.12/site-packages/uvicorn-0.52.3.dist-info"
+    },
+    "huggingface-hub": {
+      "version": "1.27.0",
+      "metadata_location": "/usr/local/python3.12.13/lib/python3.12/site-packages/huggingface_hub-1.27.0.dist-info"
+    }
+  },
+  "distribution_notes": [
+    "Distribution metadata was read without importing torch or torch_npu; installed versions do not replace source pins.",
+    "VLLM_VERSION=0.25.1 selects Ascend API compatibility and is not the installed core version.",
+    "Both plugin distribution names are checked independently; package resolution is recorded in sources.module_origin."
+  ],
+  "ascend_software": {
+    "npu_smi_version": "26.0.rc1",
+    "driver": {
+      "version": "26.0.rc1",
+      "ascendhal_version": "7.35.23",
+      "source": "/usr/local/Ascend/driver/version.info"
+    },
+    "cann": {
+      "version": "9.1.0",
+      "path": "/usr/local/Ascend/cann-9.1.0",
+      "source": "/usr/local/Ascend/cann-9.1.0/opp/version.info"
+    },
+    "atb": {
+      "version": "9.1.0.B150",
+      "commit": "31084fe8a5761db66b212e995a7dde093ed6394f",
+      "source": "/usr/local/Ascend/nnal/atb/9.1.0/version.info"
+    }
+  },
+  "hardware": {
+    "source": "npu-smi info",
+    "accessible_npu_count": 8,
+    "devices": [
+      {
+        "physical_npu_id": 0,
+        "chip_id": 0,
+        "name": "Ascend 910B2",
+        "bus_id": "0000:C1:00.0",
+        "health_at_capture": "OK",
+        "hbm_capacity_mib": 65536,
+        "hbm_used_mib_at_capture": 12073,
+        "aicore_percent_at_capture": 0,
+        "power_watts_at_capture": 91.8,
+        "temperature_c_at_capture": 40
+      },
+      {
+        "physical_npu_id": 1,
+        "chip_id": 0,
+        "name": "Ascend 910B2",
+        "bus_id": "0000:01:00.0",
+        "health_at_capture": "OK",
+        "hbm_capacity_mib": 65536,
+        "hbm_used_mib_at_capture": 12058,
+        "aicore_percent_at_capture": 0,
+        "power_watts_at_capture": 94.4,
+        "temperature_c_at_capture": 40
+      },
+      {
+        "physical_npu_id": 2,
+        "chip_id": 0,
+        "name": "Ascend 910B2",
+        "bus_id": "0000:C2:00.0",
+        "health_at_capture": "OK",
+        "hbm_capacity_mib": 65536,
+        "hbm_used_mib_at_capture": 12032,
+        "aicore_percent_at_capture": 0,
+        "power_watts_at_capture": 97.8,
+        "temperature_c_at_capture": 38
+      },
+      {
+        "physical_npu_id": 3,
+        "chip_id": 0,
+        "name": "Ascend 910B2",
+        "bus_id": "0000:02:00.0",
+        "health_at_capture": "OK",
+        "hbm_capacity_mib": 65536,
+        "hbm_used_mib_at_capture": 12035,
+        "aicore_percent_at_capture": 0,
+        "power_watts_at_capture": 94.9,
+        "temperature_c_at_capture": 39
+      },
+      {
+        "physical_npu_id": 4,
+        "chip_id": 0,
+        "name": "Ascend 910B2",
+        "bus_id": "0000:81:00.0",
+        "health_at_capture": "OK",
+        "hbm_capacity_mib": 65536,
+        "hbm_used_mib_at_capture": 12039,
+        "aicore_percent_at_capture": 0,
+        "power_watts_at_capture": 98.5,
+        "temperature_c_at_capture": 39
+      },
+      {
+        "physical_npu_id": 5,
+        "chip_id": 0,
+        "name": "Ascend 910B2",
+        "bus_id": "0000:41:00.0",
+        "health_at_capture": "OK",
+        "hbm_capacity_mib": 65536,
+        "hbm_used_mib_at_capture": 12036,
+        "aicore_percent_at_capture": 0,
+        "power_watts_at_capture": 93.3,
+        "temperature_c_at_capture": 38
+      },
+      {
+        "physical_npu_id": 6,
+        "chip_id": 0,
+        "name": "Ascend 910B2",
+        "bus_id": "0000:82:00.0",
+        "health_at_capture": "OK",
+        "hbm_capacity_mib": 65536,
+        "hbm_used_mib_at_capture": 12032,
+        "aicore_percent_at_capture": 0,
+        "power_watts_at_capture": 96.3,
+        "temperature_c_at_capture": 39
+      },
+      {
+        "physical_npu_id": 7,
+        "chip_id": 0,
+        "name": "Ascend 910B2",
+        "bus_id": "0000:42:00.0",
+        "health_at_capture": "OK",
+        "hbm_capacity_mib": 65536,
+        "hbm_used_mib_at_capture": 12039,
+        "aicore_percent_at_capture": 0,
+        "power_watts_at_capture": 96.4,
+        "temperature_c_at_capture": 39
+      }
+    ],
+    "native_process_visible_runtime_ids": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "logical_to_physical_mapping": null,
+    "mapping_note": "Runtime and npu-smi physical IDs are recorded separately; no runtime device probe or explicit per-ID mapping performed.",
+    "npu_smi_snapshot": "+------------------------------------------------------------------------------------------------------------------+\n| npu-smi 26.0.rc1                            Version: 26.0.rc1                                                    |\n+---------------------------+---------------+----------------------------------------------------------------------+\n| NPU   Name                | Health        | Power(W)             Temp(C)                 Hugepages-Usage(page)   |\n| Chip                      | Bus-Id        | AICore(%)            Memory-Usage(MB)        HBM-Usage(MB)           |\n+===========================+===============+======================================================================+\n| 0     910B2               | OK            | 91.8                 40                      0    / 0                |\n| 0                         | 0000:C1:00.0  | 0                    0    / 0                12073/ 65536            |\n+===========================+===============+======================================================================+\n| 1     910B2               | OK            | 94.4                 40                      0    / 0                |\n| 0                         | 0000:01:00.0  | 0                    0    / 0                12058/ 65536            |\n+===========================+===============+======================================================================+\n| 2     910B2               | OK            | 97.8                 38                      0    / 0                |\n| 0                         | 0000:C2:00.0  | 0                    0    / 0                12032/ 65536            |\n+===========================+===============+======================================================================+\n| 3     910B2               | OK            | 94.9                 39                      0    / 0                |\n| 0                         | 0000:02:00.0  | 0                    0    / 0                12035/ 65536            |\n+===========================+===============+======================================================================+\n| 4     910B2               | OK            | 98.5                 39                      0    / 0                |\n| 0                         | 0000:81:00.0  | 0                    0    / 0                12039/ 65536            |\n+===========================+===============+======================================================================+\n| 5     910B2               | OK            | 93.3                 38                      0    / 0                |\n| 0                         | 0000:41:00.0  | 0                    0    / 0                12036/ 65536            |\n+===========================+===============+======================================================================+\n| 6     910B2               | OK            | 96.3                 39                      0    / 0                |\n| 0                         | 0000:82:00.0  | 0                    0    / 0                12032/ 65536            |\n+===========================+===============+======================================================================+\n| 7     910B2               | OK            | 96.4                 39                      0    / 0                |\n| 0                         | 0000:42:00.0  | 0                    0    / 0                12039/ 65536            |\n+===========================+===============+======================================================================+\n+---------------------------+---------------+----------------------------------------------------------------------+\n| NPU     Chip              | Process id    | Process name       | Process memory(MB)    | Process id in container |\n+===========================+===============+======================================================================+\n| 0       0                 | 18628         | VLLMWorker_TP      | 8657                  | 18628                   |\n+===========================+===============+======================================================================+\n| 1       0                 | 18629         | VLLMWorker_TP      | 8657                  | 18629                   |\n+===========================+===============+======================================================================+\n| 2       0                 | 18630         | VLLMWorker_TP      | 8657                  | 18630                   |\n+===========================+===============+======================================================================+\n| 3       0                 | 18631         | VLLMWorker_TP      | 8657                  | 18631                   |\n+===========================+===============+======================================================================+\n| 4       0                 | 18632         | VLLMWorker_TP      | 8657                  | 18632                   |\n+===========================+===============+======================================================================+\n| 5       0                 | 18633         | VLLMWorker_TP      | 8657                  | 18633                   |\n+===========================+===============+======================================================================+\n| 6       0                 | 18634         | VLLMWorker_TP      | 8657                  | 18634                   |\n+===========================+===============+======================================================================+\n| 7       0                 | 18635         | VLLMWorker_TP      | 8657                  | 18635                   |\n+===========================+===============+======================================================================+"
+  },
+  "native_process_environment_allowlist": {
+    "VLLM_VERSION": "0.25.1",
+    "ASCEND_RT_VISIBLE_DEVICES": "0,1,2,3,4,5,6,7",
+    "VLLM_WORKER_MULTIPROC_METHOD": "spawn",
+    "LD_PRELOAD": "/usr/lib64/libjemalloc.so.2:",
+    "VLLM_PLUGINS": "ascend,ascend_kv_connector,ascend_model,ascend_model_loader",
+    "HF_HUB_OFFLINE": "1",
+    "OMP_NUM_THREADS": "8",
+    "VLLM_USE_V2_MODEL_RUNNER": "0"
+  },
+  "runtime_environment_script": {
+    "path": "/root/workspace/runtime/env.sh",
+    "size_bytes": 836,
+    "sha256": "32bb60a0c0c8fd8b90695f20b23baa0cb482e840701bba7b45e28743d70cf72a",
+    "note": "Script defaults to devices 0,1; current native process environment is collected separately and launch explicitly selects all 8 runtime IDs."
+  },
+  "model": {
+    "name": "Qwen3.5-35B-A3B",
+    "path": "/root/workspace/models/Qwen3.5-35B-A3B",
+    "resolved_path": "/data/shared_upload/models/vspec/Qwen3.5-35B-A3B",
+    "upstream_revision": null,
+    "revision_note": "No immutable upstream model revision or full weight-content identity was established.",
+    "resolution_evidence": {
+      "path": "model-resolution.json",
+      "sha256": "f8ee3f2dd36966c2b6fcd999a0e9a5b7944382051ab7b27a249954f9a8ec2200",
+      "recorded_at_utc": "2026-10-10T05:28:34.002883+00:00",
+      "old_dangling_target": "/data/home/vllm-hust-mhy-21rc/workspace/models/Qwen3.5-35B-A3B",
+      "new_target": "/data/shared_upload/models/vspec/Qwen3.5-35B-A3B"
+    },
+    "architectures": [
+      "Qwen3_5MoeForConditionalGeneration"
+    ],
+    "model_type": "qwen3_5_moe",
+    "text_config_summary": {
+      "model_type": "qwen3_5_moe_text",
+      "dtype": "bfloat16",
+      "num_hidden_layers": 40,
+      "hidden_size": 2048,
+      "num_attention_heads": 16,
+      "num_key_value_heads": 2,
+      "head_dim": 256,
+      "num_experts": 256,
+      "num_experts_per_tok": 8,
+      "moe_intermediate_size": 512,
+      "shared_expert_intermediate_size": 512,
+      "max_position_embeddings": 262144,
+      "full_attention_interval": 4,
+      "linear_conv_kernel_dim": 4,
+      "linear_key_head_dim": 128,
+      "linear_num_key_heads": 16,
+      "linear_num_value_heads": 32,
+      "linear_value_head_dim": 128,
+      "mamba_ssm_dtype": "float32",
+      "vocab_size": 248320,
+      "mtp_num_hidden_layers": 1
+    },
+    "layer_type_counts": {
+      "linear_attention": 30,
+      "full_attention": 10
+    },
+    "metadata_file_sha256": {
+      "config.json": {
+        "exists": true,
+        "size_bytes": 3544,
+        "sha256": "5e4d7f74fec2f360eb9cfbfcd6ec0c4c76e684d3a11caaed259d9fd9bfbc7944",
+        "matches_tp4_metadata": true
+      },
+      "configuration.json": {
+        "exists": false
+      },
+      "generation_config.json": {
+        "exists": true,
+        "size_bytes": 244,
+        "sha256": "4f25002776b741773666203dcea8f54619f177ace3ae483d311102092a4658e0",
+        "matches_tp4_metadata": true
+      },
+      "model.safetensors.index.json": {
+        "exists": true,
+        "size_bytes": 187463,
+        "sha256": "d8d0b7ca4e61ae107e3e87a3ff21136b3ac7c789e64bb24267227ca804e04205",
+        "matches_tp4_metadata": true
+      },
+      "tokenizer_config.json": {
+        "exists": true,
+        "size_bytes": 16710,
+        "sha256": "316230d6a809701f4db5ea8f8fc862bc3a6f3229c937c174e674ff3ca0a64ac8",
+        "matches_tp4_metadata": true
+      },
+      "tokenizer.json": {
+        "exists": true,
+        "size_bytes": 12807982,
+        "sha256": "5f9e4d4901a92b997e463c1f46055088b6cca5ca61a6522d1b9f64c4bb81cb42",
+        "matches_tp4_metadata": true
+      },
+      "chat_template.jinja": {
+        "exists": true,
+        "size_bytes": 7756,
+        "sha256": "a4aee8afcf2e0711942cf848899be66016f8d14a889ff9ede07bca099c28f715",
+        "matches_tp4_metadata": true
+      },
+      "merges.txt": {
+        "exists": true,
+        "size_bytes": 3353259,
+        "sha256": "a9d356d7bdf1ef4949e3e748e95b8e10ad9d4e2e838eddc38a0a7b6b94d1db8d",
+        "matches_tp4_metadata": true
+      },
+      "vocab.json": {
+        "exists": true,
+        "size_bytes": 6722759,
+        "sha256": "ce99b4cb2983d118806ce0a8b777a35b093e2000a503ebde25853284c9dfa003",
+        "matches_tp4_metadata": true
+      },
+      "preprocessor_config.json": {
+        "exists": true,
+        "size_bytes": 390,
+        "sha256": "27225450ac9c6529872ee1924fcb0962ff5634834f817040f444118116f4e516",
+        "matches_tp4_metadata": true
+      },
+      "video_preprocessor_config.json": {
+        "exists": true,
+        "size_bytes": 385,
+        "sha256": "7768af27c1fafa9cc9011c1dc20067e03f8915e03b63504550e11d5066986d13",
+        "matches_tp4_metadata": true
+      }
+    },
+    "metadata_comparison_note": "10 present metadata files independently rehashed and compared with the TP4 inventory; ModelScope configuration.json is absent at the new location.",
+    "weight_index_metadata": {
+      "total_size": 71903655008
+    },
+    "weight_shard_count": 14,
+    "weight_shard_total_file_bytes": 71903878016,
+    "weight_shards": [
+      {
+        "name": "model.safetensors-00001-of-00014.safetensors",
+        "size_bytes": 5368709816,
+        "sha256": null
+      },
+      {
+        "name": "model.safetensors-00002-of-00014.safetensors",
+        "size_bytes": 5368709808,
+        "sha256": null
+      },
+      {
+        "name": "model.safetensors-00003-of-00014.safetensors",
+        "size_bytes": 5368709808,
+        "sha256": null
+      },
+      {
+        "name": "model.safetensors-00004-of-00014.safetensors",
+        "size_bytes": 5368709816,
+        "sha256": null
+      },
+      {
+        "name": "model.safetensors-00005-of-00014.safetensors",
+        "size_bytes": 5368709816,
+        "sha256": null
+      },
+      {
+        "name": "model.safetensors-00006-of-00014.safetensors",
+        "size_bytes": 5368709816,
+        "sha256": null
+      },
+      {
+        "name": "model.safetensors-00007-of-00014.safetensors",
+        "size_bytes": 5368709808,
+        "sha256": null
+      },
+      {
+        "name": "model.safetensors-00008-of-00014.safetensors",
+        "size_bytes": 5368709808,
+        "sha256": null
+      },
+      {
+        "name": "model.safetensors-00009-of-00014.safetensors",
+        "size_bytes": 5255463936,
+        "sha256": null
+      },
+      {
+        "name": "model.safetensors-00010-of-00014.safetensors",
+        "size_bytes": 5368710456,
+        "sha256": null
+      },
+      {
+        "name": "model.safetensors-00011-of-00014.safetensors",
+        "size_bytes": 5368710464,
+        "sha256": null
+      },
+      {
+        "name": "model.safetensors-00012-of-00014.safetensors",
+        "size_bytes": 5368710456,
+        "sha256": null
+      },
+      {
+        "name": "model.safetensors-00013-of-00014.safetensors",
+        "size_bytes": 5367839544,
+        "sha256": null
+      },
+      {
+        "name": "model.safetensors-00014-of-00014.safetensors",
+        "size_bytes": 2224764664,
+        "sha256": null
+      }
+    ],
+    "weight_hash_note": "Full weight hashes deliberately not computed. Matching metadata and 14 file sizes are inventory evidence and do not establish weight-content equivalence.",
+    "derived_tp8_sharding": {
+      "status": "Derived from current config.json and pinned source formulas; not an observation of device tensors or successful kernel execution.",
+      "tensor_parallel_size": 8,
+      "expert_parallel_size_if_DP1_TP8_EP_enabled": 8,
+      "full_attention_query_heads_per_rank": 2,
+      "full_attention_kv_heads_per_rank": 1,
+      "full_attention_kv_replication_factor": 4,
+      "full_attention_head_dim": 256,
+      "gdn_key_heads_per_rank": 2,
+      "gdn_value_heads_per_rank": 4,
+      "gdn_key_head_dim": 128,
+      "gdn_value_head_dim": 128,
+      "routed_experts_per_rank_with_no_redundancy": 32,
+      "expert_note": "256 routed experts / EP8 = 32 per rank; shared expert is separate. No redundant experts reported by startup log.",
+      "source_formulas": [
+        "https://github.com/vLLM-HUST/vllm-hust/blob/d0f22d2bda562156e4dbf433ce645e1769b4f804/vllm/model_executor/models/qwen3_next.py#L237",
+        "https://github.com/vLLM-HUST/vllm-hust/blob/d0f22d2bda562156e4dbf433ce645e1769b4f804/vllm/model_executor/models/qwen3_next.py#L109",
+        "https://github.com/vLLM-HUST/vllm-ascend-hust/blob/03766ac696fde5ab1980d80ca0b8543d3580c989/vllm_ascend/ops/gdn.py#L113"
+      ]
+    }
+  },
+  "planned_common_engine_parameters": {
+    "tensor_parallel_size": 8,
+    "enable_expert_parallel": true,
+    "pipeline_parallel_size": 1,
+    "data_parallel_size": 1,
+    "decode_context_parallel_size": 1,
+    "dtype": "bfloat16",
+    "quantization": null,
+    "enforce_eager": false,
+    "async_scheduling": false,
+    "max_model_len": 16384,
+    "max_num_batched_tokens": 16384,
+    "max_num_seqs": 8,
+    "gpu_memory_utilization": 0.85,
+    "enable_prefix_caching": false,
+    "mamba_cache_mode": "none",
+    "language_model_only": true,
+    "speculative_config": null,
+    "seed": 0,
+    "compilation_config": {
+      "mode": 3,
+      "cudagraph_mode": "FULL_DECODE_ONLY",
+      "cudagraph_capture_sizes": [
+        1,
+        2,
+        4,
+        8
+      ],
+      "max_cudagraph_capture_size": 8
+    }
+  },
+  "observed_native_startup": {
+    "status": "Startup configuration captured; readiness and successful TP8/EP8 execution are not certified.",
+    "api_process_running_at_capture": true,
+    "native_argv": [
+      "/root/workspace/.venv/bin/python",
+      "-m",
+      "vllm.entrypoints.openai.api_server",
+      "--model",
+      "/root/workspace/models/Qwen3.5-35B-A3B",
+      "--served-model-name",
+      "Qwen3.5-35B-A3B",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      "8000",
+      "--tensor-parallel-size",
+      "8",
+      "--enable-expert-parallel",
+      "--dtype",
+      "bfloat16",
+      "--max-model-len",
+      "16384",
+      "--max-num-seqs",
+      "8",
+      "--max-num-batched-tokens",
+      "16384",
+      "--gpu-memory-utilization",
+      "0.85",
+      "--language-model-only",
+      "--no-enable-prefix-caching",
+      "--mamba-cache-mode",
+      "none",
+      "--no-async-scheduling",
+      "--no-enforce-eager",
+      "--compilation-config",
+      "{\"mode\":3,\"cudagraph_mode\":\"FULL_DECODE_ONLY\",\"cudagraph_capture_sizes\":[1,2,4,8],\"max_cudagraph_capture_size\":8}",
+      "--enable-chunked-prefill"
+    ],
+    "effective_selected_cli_values": {
+      "tensor_parallel_size": "8",
+      "dtype": "bfloat16",
+      "max_model_len": "16384",
+      "max_num_seqs": "8",
+      "max_num_batched_tokens": "16384",
+      "gpu_memory_utilization": "0.85",
+      "mamba_cache_mode": "none",
+      "compilation_config": "{\"mode\":3,\"cudagraph_mode\":\"FULL_DECODE_ONLY\",\"cudagraph_capture_sizes\":[1,2,4,8],\"max_cudagraph_capture_size\":8}",
+      "host": "127.0.0.1",
+      "port": "8000",
+      "enable_expert_parallel": true,
+      "enable_chunked_prefill": true,
+      "no_enable_prefix_caching": true,
+      "no_async_scheduling": true,
+      "no_enforce_eager": true,
+      "language_model_only": true
+    },
+    "effective_cli_note": "Read from the current API process argv, not copied from old TP4 launcher.",
+    "engine_log_confirmed": {
+      "tensor_parallel_size": 8,
+      "pipeline_parallel_size": 1,
+      "data_parallel_size": 1,
+      "decode_context_parallel_size": 1,
+      "max_seq_len": 16384,
+      "enforce_eager": false,
+      "enable_prefix_caching": false,
+      "enable_chunked_prefill": true,
+      "dtype": "bfloat16",
+      "world_size": 8,
+      "enable_expert_parallel": true,
+      "ep_rank_count_seen": 8
+    },
+    "engine_config_log_lines": [
+      "(EngineCore pid=16954) INFO 10-10 05:29:24 [core.py:114] Initializing a V1 LLM engine (v0.1.dev1+gd0f22d2bd) with config: model='/root/workspace/models/Qwen3.5-35B-A3B', speculative_config=None, tokenizer='/root/workspace/models/Qwen3.5-35B-A3B', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=16384, download_dir=None, load_format=auto, tensor_parallel_size=8, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=True, quantization=None, quantization_config=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=npu, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False, jit_monitor_mode='warn', jit_monitor_verbose=False), seed=0, served_model_name=Qwen3.5-35B-A3B, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'vllm_ascend.compilation.compiler_interface.AscendCompiler', 'custom_ops': ['all'], 'ir_enable_torch_wrap': False, 'splitting_ops': [], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': [], 'compile_ranges_endpoints': [16384], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'size_asserts': False, 'alignment_asserts': False, 'scalar_asserts': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_DECODE_ONLY: (2, 0)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': True, 'fuse_act_quant': True, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False, 'fuse_rope_kvcache_cat_mla': False, 'fuse_act_padding': False}, 'max_cudagraph_capture_size': 8, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}, kernel_config=KernelConfig(ir_op_priority=IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native']), enable_flashinfer_autotune=True, enable_cutedsl_warmup=True, moe_backend='auto', linear_backend='auto')"
+    ],
+    "parallel_assignment_log_lines": [
+      "(EngineCore pid=16954) INFO 10-10 05:29:24 [multiproc_executor.py:140] DP group leader: node_rank=0, node_rank_within_dp=0, master_addr=127.0.0.1, mq_connect_ip=10.244.1.53 (local), world_size=8, local_world_size=8",
+      "(Worker pid=18629) INFO 10-10 05:29:51 [parallel_state.py:1607] world_size=8 rank=1 local_rank=1 distributed_init_method=tcp://127.0.0.1:56365 backend=hccl",
+      "(Worker pid=18630) INFO 10-10 05:29:51 [parallel_state.py:1607] world_size=8 rank=2 local_rank=2 distributed_init_method=tcp://127.0.0.1:56365 backend=hccl",
+      "(Worker pid=18634) INFO 10-10 05:29:51 [parallel_state.py:1607] world_size=8 rank=6 local_rank=6 distributed_init_method=tcp://127.0.0.1:56365 backend=hccl",
+      "(Worker pid=18633) INFO 10-10 05:29:53 [parallel_state.py:1607] world_size=8 rank=5 local_rank=5 distributed_init_method=tcp://127.0.0.1:56365 backend=hccl",
+      "(Worker pid=18631) INFO 10-10 05:29:58 [parallel_state.py:1607] world_size=8 rank=3 local_rank=3 distributed_init_method=tcp://127.0.0.1:56365 backend=hccl",
+      "(Worker pid=18635) INFO 10-10 05:29:59 [parallel_state.py:1607] world_size=8 rank=7 local_rank=7 distributed_init_method=tcp://127.0.0.1:56365 backend=hccl",
+      "(Worker pid=18632) INFO 10-10 05:29:59 [parallel_state.py:1607] world_size=8 rank=4 local_rank=4 distributed_init_method=tcp://127.0.0.1:56365 backend=hccl",
+      "(Worker pid=18628) INFO 10-10 05:30:03 [parallel_state.py:1607] world_size=8 rank=0 local_rank=0 distributed_init_method=tcp://127.0.0.1:56365 backend=hccl",
+      "(Worker pid=18628) INFO 10-10 05:30:11 [parallel_state.py:1942] rank 0 in world size 8 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank 0, EPLB rank N/A"
+    ],
+    "assigned_rank_ids_seen": [
+      0
+    ],
+    "startup_log_lines": [
+      "(APIServer pid=15848) INFO 10-10 05:28:54 [api_utils.py:273] non-default args: {'host': '127.0.0.1', 'model': '/root/workspace/models/Qwen3.5-35B-A3B', 'dtype': 'bfloat16', 'max_model_len': 16384, 'served_model_name': ['Qwen3.5-35B-A3B'], 'tensor_parallel_size': 8, 'enable_expert_parallel': True, 'gpu_memory_utilization': 0.85, 'enable_prefix_caching': False, 'language_model_only': True, 'max_num_batched_tokens': 16384, 'max_num_seqs': 8, 'enable_chunked_prefill': True, 'async_scheduling': False, 'compilation_config': {'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'vllm_ascend.compilation.compiler_interface.AscendCompiler', 'custom_ops': [], 'ir_enable_torch_wrap': None, 'splitting_ops': None, 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': None, 'compile_ranges_endpoints': None, 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'size_asserts': False, 'alignment_asserts': False, 'scalar_asserts': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_DECODE_ONLY: (2, 0)>, 'cudagraph_num_of_warmups': 0, 'cudagraph_capture_sizes': [1, 2, 4, 8], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': None, 'pass_config': {}, 'max_cudagraph_capture_size': 8, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': None, 'static_all_moe_layers': []}}",
+      "(APIServer pid=15848) INFO 10-10 05:28:54 [scheduler.py:292] Chunked prefill is enabled with max_num_batched_tokens=16384.",
+      "(APIServer pid=15848) INFO 10-10 05:28:55 [vllm.py:1042] Asynchronous scheduling is disabled.",
+      "(APIServer pid=15848) INFO 10-10 05:28:55 [ascend_config.py:825] The number of redundant experts is 0",
+      "INFO 10-10 05:29:49 [ascend_config.py:825] The number of redundant experts is 0",
+      "INFO 10-10 05:29:49 [ascend_config.py:825] The number of redundant experts is 0",
+      "INFO 10-10 05:29:49 [ascend_config.py:825] The number of redundant experts is 0",
+      "INFO 10-10 05:29:49 [ascend_config.py:825] The number of redundant experts is 0",
+      "INFO 10-10 05:29:49 [ascend_config.py:825] The number of redundant experts is 0",
+      "INFO 10-10 05:29:49 [ascend_config.py:825] The number of redundant experts is 0",
+      "INFO 10-10 05:29:50 [ascend_config.py:825] The number of redundant experts is 0",
+      "INFO 10-10 05:29:53 [ascend_config.py:825] The number of redundant experts is 0"
+    ],
+    "readiness_certified": false,
+    "health_api_requested": false,
+    "application_startup_complete_log_seen": false,
+    "log_followup_at_utc": "2026-10-10T05:31:47.760577+00:00",
+    "log_followup_prefix_size_bytes": 41294,
+    "log_followup_prefix_sha256": "2559f7e302320daf5052238de88549efc8760c8d340dac0150fa4b2ed07384bd",
+    "worker_tp_ep_rank_pairs_seen": [
+      {
+        "tp_rank": 0,
+        "ep_rank": 0
+      },
+      {
+        "tp_rank": 1,
+        "ep_rank": 1
+      },
+      {
+        "tp_rank": 2,
+        "ep_rank": 2
+      },
+      {
+        "tp_rank": 3,
+        "ep_rank": 3
+      },
+      {
+        "tp_rank": 4,
+        "ep_rank": 4
+      },
+      {
+        "tp_rank": 5,
+        "ep_rank": 5
+      },
+      {
+        "tp_rank": 6,
+        "ep_rank": 6
+      },
+      {
+        "tp_rank": 7,
+        "ep_rank": 7
+      }
+    ],
+    "worker_tp_ep_log_examples": [
+      "(Worker_TP0_EP0 pid=18628) INFO 10-10 05:30:11 [model_runner_v1.py:3531] Starting to load model /root/workspace/models/Qwen3.5-35B-A3B...",
+      "(Worker_TP1_EP1 pid=18629) INFO 10-10 05:30:11 [model_runner_v1.py:3531] Starting to load model /root/workspace/models/Qwen3.5-35B-A3B...",
+      "(Worker_TP2_EP2 pid=18630) INFO 10-10 05:30:11 [model_runner_v1.py:3531] Starting to load model /root/workspace/models/Qwen3.5-35B-A3B...",
+      "(Worker_TP3_EP3 pid=18631) INFO 10-10 05:30:11 [model_runner_v1.py:3531] Starting to load model /root/workspace/models/Qwen3.5-35B-A3B...",
+      "(Worker_TP4_EP4 pid=18632) INFO 10-10 05:30:11 [model_runner_v1.py:3531] Starting to load model /root/workspace/models/Qwen3.5-35B-A3B...",
+      "(Worker_TP5_EP5 pid=18633) INFO 10-10 05:30:11 [model_runner_v1.py:3531] Starting to load model /root/workspace/models/Qwen3.5-35B-A3B...",
+      "(Worker_TP6_EP6 pid=18634) INFO 10-10 05:30:11 [model_runner_v1.py:3531] Starting to load model /root/workspace/models/Qwen3.5-35B-A3B...",
+      "(Worker_TP7_EP7 pid=18635) INFO 10-10 05:30:11 [model_runner_v1.py:3531] Starting to load model /root/workspace/models/Qwen3.5-35B-A3B..."
+    ],
+    "distributed_init_rank_ids_seen": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "ep_size_evidence_note": "The API configuration enables EP, engine configuration sets TP8/DP1, distributed world size is 8, and worker labels cover TP0/EP0 through TP7/EP7. This confirms rank layout at startup; graph capture completion, serving readiness and correctness are separate checks."
+  },
+  "planned_test_modes": [
+    {
+      "name": "native-graph-tp8",
+      "scheduler": "vllm native",
+      "enable_chunked_prefill": true,
+      "muxpd_policy": null,
+      "correctness_result": null,
+      "benchmark_result": null
+    },
+    {
+      "name": "muxpd-work256-graph-tp8",
+      "status": "Planned candidate; not launched or validated by this snapshot.",
+      "scheduler": "vllm_muxpd.decoupled_scheduler.DecoupledMuxPDScheduler",
+      "worker": "vllm_muxpd.decoupled_worker.DecoupledMuxPDNPUWorker",
+      "enable_chunked_prefill": false,
+      "muxpd_policy": {
+        "execution": "decoupled",
+        "stream_mode": "fenced",
+        "layers_per_slice": 8,
+        "adaptive_layers": true,
+        "prefill_first": true,
+        "decode_graph": true,
+        "compile_full_prefill": true,
+        "prefill_layer_token_budget": 262144
+      },
+      "configuration_source": "scripts/serve-qwen35-decode-graph.sh with TP8 override; actual later launch must have its own manifest.",
+      "correctness_result": null,
+      "benchmark_result": null
+    }
+  ],
+  "unmeasured_at_collection": [
+    "Successful graph capture, full TP8/EP8 startup completion and API readiness; TP8/EP rank layout itself has been observed in the log followup.",
+    "TP8 correctness, output equivalence, cancellation, strict layer receipts and repeated token-ID stability.",
+    "TP8 throughput, TTFT, TPOT, SLO attainment and controlled scaling relative to TP4.",
+    "TP8 device-kernel overlap, physical lane-stream mapping and actual runtime per-rank tensors."
+  ]
+}
