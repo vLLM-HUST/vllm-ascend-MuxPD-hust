@@ -4,7 +4,7 @@
 取消、采样与 OpenAI API。安装包本身不修改 vLLM；通过显式 scheduler/worker
 类启用，无需改动基线源码。
 
-**开发状态：集成与实机验证中。** 当前实现包含完整 prefill、独立 P/D 模型
+**状态：固定环境集成验证通过，性能调优版本。** 当前实现包含完整 prefill、独立 P/D 模型
 batch；串行策略具有在线延迟估计和等待阈值。实验 worker 使用独立输入/metadata 与共享
 权重/KV，通过 transformer 层边界切换。完整层 event fence 是正确性起点，
 不代表设备 kernel 重叠或论文中的空间资源分区。`decoupled` 模式将完整 prefill
@@ -21,6 +21,12 @@ batch；串行策略具有在线延迟估计和等待阈值。实验 worker 使�
 同组 collective 和采样完成所需依赖，取消普通层边界的跨流等待，并隔离两条
 lane 的临时 workspace。设备并行程度必须由
 NPU profiler 验证，不能由 Python 协程或调度 trace 推断。
+
+本机已验证 12K-token 完整 P 期间连续 4 轮 D，以及两个 rank 上约 9%–11%
+计算活跃区间的 P/D 交叠。158 项本地测试通过；四种 decoupled 配置各 16 项
+自然语言对照与原生输出一致。自适应 fenced 在合成负载下约 31.38 tokens/s，
+匹配原生配置约 34.16 tokens/s；尚未取得原生吞吐收益。完整回执、输出差异和
+测量边界见 [验证记录](evidence/2026-10-10/README.md)。
 
 ## 固定运行基线
 

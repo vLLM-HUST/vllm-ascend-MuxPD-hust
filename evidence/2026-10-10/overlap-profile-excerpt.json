@@ -1,0 +1,680 @@
+{
+  "sources": [
+    {
+      "source_sha256": "94beafac6c9b46153be6e64c3f192144595f560c4f98ca1079619b8e98d81a6a",
+      "device_label": "NPU 0",
+      "source": "local-results/overlap-profile/dp0_pp0_tp0_dcp0_ep0_rank0_300210_20261010022707188_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+      "meaning": "Selected complete raw device task intervals, not a representative utilization sample. Each selected pair overlaps across physical streams 44 and 45.",
+      "traceEvents": [
+        {
+          "name": "process_name",
+          "pid": 307415488,
+          "tid": 0,
+          "ph": "M",
+          "args": {
+            "name": "Ascend Hardware"
+          }
+        },
+        {
+          "name": "process_labels",
+          "pid": 307415488,
+          "tid": 0,
+          "ph": "M",
+          "args": {
+            "labels": "NPU 0"
+          }
+        },
+        {
+          "name": "process_sort_index",
+          "pid": 307415488,
+          "tid": 0,
+          "ph": "M",
+          "args": {
+            "sort_index": 14
+          }
+        },
+        {
+          "name": "thread_name",
+          "pid": 307415488,
+          "tid": 41,
+          "ph": "M",
+          "args": {
+            "name": "Stream 41"
+          }
+        },
+        {
+          "name": "thread_sort_index",
+          "pid": 307415488,
+          "tid": 41,
+          "ph": "M",
+          "args": {
+            "sort_index": 41
+          }
+        },
+        {
+          "name": "thread_name",
+          "pid": 307415488,
+          "tid": 44,
+          "ph": "M",
+          "args": {
+            "name": "Stream 44"
+          }
+        },
+        {
+          "name": "thread_sort_index",
+          "pid": 307415488,
+          "tid": 44,
+          "ph": "M",
+          "args": {
+            "sort_index": 44
+          }
+        },
+        {
+          "name": "thread_name",
+          "pid": 307415488,
+          "tid": 45,
+          "ph": "M",
+          "args": {
+            "name": "Stream 45"
+          }
+        },
+        {
+          "name": "thread_sort_index",
+          "pid": 307415488,
+          "tid": 45,
+          "ph": "M",
+          "args": {
+            "sort_index": 45
+          }
+        },
+        {
+          "name": "thread_name",
+          "pid": 307415488,
+          "tid": 47,
+          "ph": "M",
+          "args": {
+            "name": "Stream 47"
+          }
+        },
+        {
+          "name": "thread_sort_index",
+          "pid": 307415488,
+          "tid": 47,
+          "ph": "M",
+          "args": {
+            "sort_index": 47
+          }
+        },
+        {
+          "name": "thread_name",
+          "pid": 307415488,
+          "tid": 48,
+          "ph": "M",
+          "args": {
+            "name": "Stream 48"
+          }
+        },
+        {
+          "name": "thread_sort_index",
+          "pid": 307415488,
+          "tid": 48,
+          "ph": "M",
+          "args": {
+            "sort_index": 48
+          }
+        },
+        {
+          "name": "aclnnAdds_AddAiCore_Add",
+          "pid": 307415488,
+          "tid": 44,
+          "ts": "1791599229033096.765",
+          "dur": 1623.38,
+          "ph": "X",
+          "args": {
+            "Model Id": 4294967295,
+            "Task Type": "AI_VECTOR_CORE",
+            "Physic Stream Id": 44,
+            "Task Id": 32940,
+            "Batch Id": 0,
+            "Subtask Id": 4294967295,
+            "connection_id": 118738
+          }
+        },
+        {
+          "name": "FusedInferAttentionScore",
+          "pid": 307415488,
+          "tid": 45,
+          "ts": "1791599229032010.125",
+          "dur": 2996.18,
+          "ph": "X",
+          "args": {
+            "Model Id": 4294967295,
+            "Task Type": "MIX_AIC",
+            "Physic Stream Id": 45,
+            "Task Id": 64473,
+            "Batch Id": 0,
+            "Subtask Id": 0,
+            "connection_id": 118476
+          }
+        },
+        {
+          "name": "aclnnAdds_AddAiCore_Add",
+          "pid": 307415488,
+          "tid": 44,
+          "ts": "1791599229762142.125",
+          "dur": 1228.56,
+          "ph": "X",
+          "args": {
+            "Model Id": 4294967295,
+            "Task Type": "AI_VECTOR_CORE",
+            "Physic Stream Id": 44,
+            "Task Id": 36824,
+            "Batch Id": 0,
+            "Subtask Id": 4294967295,
+            "connection_id": 149971
+          }
+        },
+        {
+          "name": "FusedInferAttentionScore",
+          "pid": 307415488,
+          "tid": 45,
+          "ts": "1791599229760633.165",
+          "dur": 2991.48,
+          "ph": "X",
+          "args": {
+            "Model Id": 4294967295,
+            "Task Type": "MIX_AIC",
+            "Physic Stream Id": 45,
+            "Task Id": 176,
+            "Batch Id": 1,
+            "Subtask Id": 0,
+            "connection_id": 149709
+          }
+        },
+        {
+          "name": "aclnnGroupedMatmulV5_GroupedMatmul_GroupedMatmul",
+          "pid": 307415488,
+          "tid": 44,
+          "ts": "1791599229672304.445",
+          "dur": 990.32,
+          "ph": "X",
+          "args": {
+            "Model Id": 4294967295,
+            "Task Type": "MIX_AIC",
+            "Physic Stream Id": 44,
+            "Task Id": 36565,
+            "Batch Id": 0,
+            "Subtask Id": 0,
+            "connection_id": 145800
+          }
+        },
+        {
+          "name": "aclnnMatmul_MatMulV3Common_MatMulV3",
+          "pid": 307415488,
+          "tid": 45,
+          "ts": "1791599229672280.385",
+          "dur": 1013.8,
+          "ph": "X",
+          "args": {
+            "Model Id": 4294967295,
+            "Task Type": "AI_CORE",
+            "Physic Stream Id": 45,
+            "Task Id": 65305,
+            "Batch Id": 0,
+            "Subtask Id": 4294967295,
+            "connection_id": 145928
+          }
+        },
+        {
+          "name": "aclnnGroupedMatmulV5_GroupedMatmul_GroupedMatmul",
+          "pid": 307415488,
+          "tid": 44,
+          "ts": "1791599229307959.325",
+          "dur": 984.92,
+          "ph": "X",
+          "args": {
+            "Model Id": 4294967295,
+            "Task Type": "MIX_AIC",
+            "Physic Stream Id": 44,
+            "Task Id": 34623,
+            "Batch Id": 0,
+            "Subtask Id": 0,
+            "connection_id": 129929
+          }
+        },
+        {
+          "name": "aclnnMatmul_MatMulV3Common_MatMulV3",
+          "pid": 307415488,
+          "tid": 45,
+          "ts": "1791599229307909.145",
+          "dur": 1040.54,
+          "ph": "X",
+          "args": {
+            "Model Id": 4294967295,
+            "Task Type": "AI_CORE",
+            "Physic Stream Id": 45,
+            "Task Id": 64687,
+            "Batch Id": 0,
+            "Subtask Id": 4294967295,
+            "connection_id": 130057
+          }
+        },
+        {
+          "name": "aclnnGroupedMatmulV5_GroupedMatmul_GroupedMatmul",
+          "pid": 307415488,
+          "tid": 44,
+          "ts": "1791599228558348.705",
+          "dur": 987.46,
+          "ph": "X",
+          "args": {
+            "Model Id": 4294967295,
+            "Task Type": "MIX_AIC",
+            "Physic Stream Id": 44,
+            "Task Id": 30691,
+            "Batch Id": 0,
+            "Subtask Id": 0,
+            "connection_id": 98423
+          }
+        },
+        {
+          "name": "aclnnMatmul_MatMulV3Common_MatMulV3",
+          "pid": 307415488,
+          "tid": 45,
+          "ts": "1791599228558295.905",
+          "dur": 1036.62,
+          "ph": "X",
+          "args": {
+            "Model Id": 4294967295,
+            "Task Type": "AI_CORE",
+            "Physic Stream Id": 45,
+            "Task Id": 63360,
+            "Batch Id": 0,
+            "Subtask Id": 4294967295,
+            "connection_id": 98551
+          }
+        },
+        {
+          "name": "aclnnGroupedMatmulV5_GroupedMatmul_GroupedMatmul",
+          "pid": 307415488,
+          "tid": 44,
+          "ts": "1791599228994886.965",
+          "dur": 983.12,
+          "ph": "X",
+          "args": {
+            "Model Id": 4294967295,
+            "Task Type": "MIX_AIC",
+            "Physic Stream Id": 44,
+            "Task Id": 32826,
+            "Batch Id": 0,
+            "Subtask Id": 0,
+            "connection_id": 116738
+          }
+        },
+        {
+          "name": "aclnnMatmul_MatMulV3Common_MatMulV3",
+          "pid": 307415488,
+          "tid": 45,
+          "ts": "1791599228994834.805",
+          "dur": 1035.26,
+          "ph": "X",
+          "args": {
+            "Model Id": 4294967295,
+            "Task Type": "AI_CORE",
+            "Physic Stream Id": 45,
+            "Task Id": 64291,
+            "Batch Id": 0,
+            "Subtask Id": 4294967295,
+            "connection_id": 116866
+          }
+        }
+      ]
+    },
+    {
+      "source_sha256": "b3249af57502f134716c861638348716604e261a623ab62328c09b19d8bb9f84",
+      "device_label": "NPU 1",
+      "source": "local-results/overlap-profile/dp0_pp0_tp1_dcp0_ep1_rank1_300211_20261010022707187_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+      "meaning": "Selected complete raw device task intervals, not a representative utilization sample. Each selected pair overlaps across physical streams 44 and 45.",
+      "traceEvents": [
+        {
+          "name": "process_name",
+          "pid": 307416513,
+          "tid": 0,
+          "ph": "M",
+          "args": {
+            "name": "Ascend Hardware"
+          }
+        },
+        {
+          "name": "process_labels",
+          "pid": 307416513,
+          "tid": 0,
+          "ph": "M",
+          "args": {
+            "labels": "NPU 1"
+          }
+        },
+        {
+          "name": "process_sort_index",
+          "pid": 307416513,
+          "tid": 0,
+          "ph": "M",
+          "args": {
+            "sort_index": 14
+          }
+        },
+        {
+          "name": "thread_name",
+          "pid": 307416513,
+          "tid": 39,
+          "ph": "M",
+          "args": {
+            "name": "Stream 39"
+          }
+        },
+        {
+          "name": "thread_sort_index",
+          "pid": 307416513,
+          "tid": 39,
+          "ph": "M",
+          "args": {
+            "sort_index": 39
+          }
+        },
+        {
+          "name": "thread_name",
+          "pid": 307416513,
+          "tid": 41,
+          "ph": "M",
+          "args": {
+            "name": "Stream 41"
+          }
+        },
+        {
+          "name": "thread_sort_index",
+          "pid": 307416513,
+          "tid": 41,
+          "ph": "M",
+          "args": {
+            "sort_index": 41
+          }
+        },
+        {
+          "name": "thread_name",
+          "pid": 307416513,
+          "tid": 44,
+          "ph": "M",
+          "args": {
+            "name": "Stream 44"
+          }
+        },
+        {
+          "name": "thread_sort_index",
+          "pid": 307416513,
+          "tid": 44,
+          "ph": "M",
+          "args": {
+            "sort_index": 44
+          }
+        },
+        {
+          "name": "thread_name",
+          "pid": 307416513,
+          "tid": 45,
+          "ph": "M",
+          "args": {
+            "name": "Stream 45"
+          }
+        },
+        {
+          "name": "thread_sort_index",
+          "pid": 307416513,
+          "tid": 45,
+          "ph": "M",
+          "args": {
+            "sort_index": 45
+          }
+        },
+        {
+          "name": "thread_name",
+          "pid": 307416513,
+          "tid": 47,
+          "ph": "M",
+          "args": {
+            "name": "Stream 47"
+          }
+        },
+        {
+          "name": "thread_sort_index",
+          "pid": 307416513,
+          "tid": 47,
+          "ph": "M",
+          "args": {
+            "sort_index": 47
+          }
+        },
+        {
+          "name": "thread_name",
+          "pid": 307416513,
+          "tid": 48,
+          "ph": "M",
+          "args": {
+            "name": "Stream 48"
+          }
+        },
+        {
+          "name": "thread_sort_index",
+          "pid": 307416513,
+          "tid": 48,
+          "ph": "M",
+          "args": {
+            "sort_index": 48
+          }
+        },
+        {
+          "name": "aclnnAdds_AddAiCore_Add",
+          "pid": 307416513,
+          "tid": 44,
+          "ts": "1791599230129779.950",
+          "dur": 1119.98,
+          "ph": "X",
+          "args": {
+            "Model Id": 4294967295,
+            "Task Type": "AI_VECTOR_CORE",
+            "Physic Stream Id": 44,
+            "Task Id": 38763,
+            "Batch Id": 0,
+            "Subtask Id": 4294967295,
+            "connection_id": 165381
+          }
+        },
+        {
+          "name": "FusedInferAttentionScore",
+          "pid": 307416513,
+          "tid": 45,
+          "ts": "1791599230128184.690",
+          "dur": 2961.36,
+          "ph": "X",
+          "args": {
+            "Model Id": 4294967295,
+            "Task Type": "MIX_AIC",
+            "Physic Stream Id": 45,
+            "Task Id": 782,
+            "Batch Id": 1,
+            "Subtask Id": 0,
+            "connection_id": 165051
+          }
+        },
+        {
+          "name": "aclnnMatmul_MatMulCommon_MatMulV2",
+          "pid": 307416513,
+          "tid": 44,
+          "ts": "1791599229320385.430",
+          "dur": 1041.04,
+          "ph": "X",
+          "args": {
+            "Model Id": 4294967295,
+            "Task Type": "AI_CORE",
+            "Physic Stream Id": 44,
+            "Task Id": 34652,
+            "Batch Id": 0,
+            "Subtask Id": 4294967295,
+            "connection_id": 130599
+          }
+        },
+        {
+          "name": "aclnnGroupedMatmulV5_GroupedMatmul_GroupedMatmul",
+          "pid": 307416513,
+          "tid": 45,
+          "ts": "1791599229320276.930",
+          "dur": 1101.4,
+          "ph": "X",
+          "args": {
+            "Model Id": 4294967295,
+            "Task Type": "MIX_AIC",
+            "Physic Stream Id": 45,
+            "Task Id": 64742,
+            "Batch Id": 0,
+            "Subtask Id": 0,
+            "connection_id": 130387
+          }
+        },
+        {
+          "name": "aclnnGroupedMatmulV5_GroupedMatmul_GroupedMatmul",
+          "pid": 307416513,
+          "tid": 44,
+          "ts": "1791599228978271.810",
+          "dur": 983.82,
+          "ph": "X",
+          "args": {
+            "Model Id": 4294967295,
+            "Task Type": "MIX_AIC",
+            "Physic Stream Id": 44,
+            "Task Id": 32775,
+            "Batch Id": 0,
+            "Subtask Id": 0,
+            "connection_id": 115935
+          }
+        },
+        {
+          "name": "aclnnMatmul_MatMulV3Common_MatMulV3",
+          "pid": 307416513,
+          "tid": 45,
+          "ts": "1791599228978215.770",
+          "dur": 1037.14,
+          "ph": "X",
+          "args": {
+            "Model Id": 4294967295,
+            "Task Type": "AI_CORE",
+            "Physic Stream Id": 45,
+            "Task Id": 64193,
+            "Batch Id": 0,
+            "Subtask Id": 4294967295,
+            "connection_id": 116063
+          }
+        },
+        {
+          "name": "aclnnGroupedMatmulV5_GroupedMatmul_GroupedMatmul",
+          "pid": 307416513,
+          "tid": 44,
+          "ts": "1791599229340989.770",
+          "dur": 980.98,
+          "ph": "X",
+          "args": {
+            "Model Id": 4294967295,
+            "Task Type": "MIX_AIC",
+            "Physic Stream Id": 44,
+            "Task Id": 34717,
+            "Batch Id": 0,
+            "Subtask Id": 0,
+            "connection_id": 131297
+          }
+        },
+        {
+          "name": "aclnnMatmul_MatMulV3Common_MatMulV3",
+          "pid": 307416513,
+          "tid": 45,
+          "ts": "1791599229340931.110",
+          "dur": 1042.32,
+          "ph": "X",
+          "args": {
+            "Model Id": 4294967295,
+            "Task Type": "AI_CORE",
+            "Physic Stream Id": 45,
+            "Task Id": 64811,
+            "Batch Id": 0,
+            "Subtask Id": 4294967295,
+            "connection_id": 131425
+          }
+        },
+        {
+          "name": "aclnnGroupedMatmulV5_GroupedMatmul_GroupedMatmul",
+          "pid": 307416513,
+          "tid": 44,
+          "ts": "1791599230108370.490",
+          "dur": 976.94,
+          "ph": "X",
+          "args": {
+            "Model Id": 4294967295,
+            "Task Type": "MIX_AIC",
+            "Physic Stream Id": 44,
+            "Task Id": 38697,
+            "Batch Id": 0,
+            "Subtask Id": 0,
+            "connection_id": 164095
+          }
+        },
+        {
+          "name": "aclnnMatmul_MatMulV3Common_MatMulV3",
+          "pid": 307416513,
+          "tid": 45,
+          "ts": "1791599230108312.830",
+          "dur": 1043.22,
+          "ph": "X",
+          "args": {
+            "Model Id": 4294967295,
+            "Task Type": "AI_CORE",
+            "Physic Stream Id": 45,
+            "Task Id": 686,
+            "Batch Id": 1,
+            "Subtask Id": 4294967295,
+            "connection_id": 164223
+          }
+        },
+        {
+          "name": "aclnnGroupedMatmulV5_GroupedMatmul_GroupedMatmul",
+          "pid": 307416513,
+          "tid": 44,
+          "ts": "1791599229705907.670",
+          "dur": 976.66,
+          "ph": "X",
+          "args": {
+            "Model Id": 4294967295,
+            "Task Type": "MIX_AIC",
+            "Physic Stream Id": 44,
+            "Task Id": 36659,
+            "Batch Id": 0,
+            "Subtask Id": 0,
+            "connection_id": 147169
+          }
+        },
+        {
+          "name": "aclnnMatmul_MatMulV3Common_MatMulV3",
+          "pid": 307416513,
+          "tid": 45,
+          "ts": "1791599229705851.450",
+          "dur": 1032.16,
+          "ph": "X",
+          "args": {
+            "Model Id": 4294967295,
+            "Task Type": "AI_CORE",
+            "Physic Stream Id": 45,
+            "Task Id": 65429,
+            "Batch Id": 0,
+            "Subtask Id": 4294967295,
+            "connection_id": 147297
+          }
+        }
+      ]
+    }
+  ]
+}

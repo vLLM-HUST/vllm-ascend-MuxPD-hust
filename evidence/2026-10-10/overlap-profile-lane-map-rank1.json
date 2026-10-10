@@ -1,0 +1,10 @@
+{
+  "device:1": {
+    "prefill": [
+      "physical:45"
+    ],
+    "decode": [
+      "physical:44"
+    ]
+  }
+}

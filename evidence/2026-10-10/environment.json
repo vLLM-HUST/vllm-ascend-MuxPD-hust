@@ -1,6 +1,6 @@
 {
   "recorded_date": "2026-10-10",
-  "timezone": "Asia/Shanghai",
+  "timezone": "UTC",
   "host_commits": {
     "vllm-hust": "d0f22d2bda562156e4dbf433ce645e1769b4f804",
     "vllm-ascend-hust": "03766ac696fde5ab1980d80ca0b8543d3580c989"
