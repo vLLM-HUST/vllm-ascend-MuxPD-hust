@@ -53,6 +53,7 @@ class MuxPDScheduler(Scheduler):
                 "the matching MuxPD scheduler and worker"
             )
         self.muxpd_stats: Counter[str] = Counter()
+        # Detailed diagnostic records exist only when tracing is enabled.
         self.last_muxpd_step: dict[str, Any] | None = None
         self._muxpd_pending: tuple[SchedulerOutput, float, Decision, int] | None = None
         self._muxpd_trace = None
@@ -266,6 +267,8 @@ class MuxPDScheduler(Scheduler):
         snapshots: tuple[BatchRequest, ...],
         now: float,
     ) -> None:
+        if self._muxpd_trace is None:
+            return
         by_id = {r.request_id: r for r in snapshots}
         scheduled = output.num_scheduled_tokens
         record = {
@@ -286,8 +289,7 @@ class MuxPDScheduler(Scheduler):
             "policy": asdict(decision),
         }
         self.last_muxpd_step = record
-        if self._muxpd_trace is not None:
-            self._muxpd_trace.write(json.dumps(record, sort_keys=True) + "\n")
+        self._muxpd_trace.write(json.dumps(record, sort_keys=True) + "\n")
 
     def export_muxpd_stats(self) -> dict[str, int]:
         return dict(self.muxpd_stats)

@@ -156,3 +156,188 @@ def test_deadline_quota_and_model_count_are_checked(tmp_path):
     rows[1]["layers_per_slice"] = 2
     with pytest.raises(AssertionError, match="allowed decode rounds"):
         check(tmp_path, rows, min_decode_steps=0)
+
+
+def source_trace(*, full=False, cancel=False):
+    rows = trace(full=full, cancel=cancel)
+    for row in rows:
+        if row["event"] == "decoupled_schedule":
+            row["compile_full_prefill"] = full
+        elif row["event"] == "decoupled_complete":
+            row["progress_source"] = "full_forward_return" if full else "layer_hooks"
+    return rows
+
+
+def test_full_forward_source_and_layer_hooks_are_distinct_evidence(tmp_path):
+    full = check(tmp_path, source_trace(full=True), min_decode_steps=0)
+    assert full["progress_sources"] == {"full_forward_return": 1}
+    hooks = check(tmp_path, source_trace())
+    assert hooks["progress_sources"] == {"layer_hooks": 3}
+    cancelled = check(tmp_path, source_trace(cancel=True), require_cancellation=True)
+    assert cancelled["progress_sources"] == {"layer_hooks": 3}
+
+
+@pytest.mark.parametrize("fault", ["unknown", "none", "disabled", "missing_config"])
+def test_invalid_full_forward_source_fails_closed(tmp_path, fault):
+    rows = source_trace(full=True)
+    if fault in ("unknown", "none"):
+        rows[-1]["progress_source"] = fault
+    elif fault == "disabled":
+        rows[1]["compile_full_prefill"] = False
+    else:
+        del rows[1]["compile_full_prefill"]
+    with pytest.raises(AssertionError):
+        check(tmp_path, rows, min_decode_steps=0)
+
+
+@pytest.mark.parametrize("step", [0, 1, 2])
+def test_partial_or_old_prefill_cannot_claim_full_forward(tmp_path, step):
+    rows = source_trace()
+    for row in rows:
+        if row["event"] == "decoupled_schedule":
+            row["compile_full_prefill"] = True
+    # The last receipt is a valid complete forward, but it belongs to an old
+    # cohort. The first two are valid quota receipts, but incomplete forwards.
+    rows[2 + step * 2]["progress_source"] = "full_forward_return"
+    with pytest.raises(AssertionError, match="fresh complete"):
+        check(tmp_path, rows)
+
+
+def test_resuming_zero_progress_cohort_cannot_claim_full_forward(tmp_path):
+    rows = source_trace()
+    rows[1]["pause_prefill"] = True
+    rows[2]["layers_completed"] = 0
+    rows[3]["layers_completed_before"] = 0
+    rows[3]["finish_prefill"] = True
+    rows[3]["compile_full_prefill"] = True
+    rows[4]["layers_completed"] = 4
+    rows[4]["completed_prefill_ids"] = ["p"]
+    rows[4]["progress_source"] = "full_forward_return"
+    with pytest.raises(AssertionError, match="fresh complete"):
+        check(tmp_path, rows[:5], min_decode_steps=0)
+
+
+@pytest.mark.parametrize("step", [0, 1, 2])
+def test_progress_source_cannot_be_missing_or_downgraded(tmp_path, step):
+    rows = source_trace()
+    del rows[2 + step * 2]["progress_source"]
+    with pytest.raises(AssertionError, match="source"):
+        check(tmp_path, rows)
+
+
+@pytest.mark.parametrize("source", ["none", "layer_hooks", "full_forward_return"])
+def test_no_cohort_source_requires_none(tmp_path, source):
+    rows = source_trace(full=True)
+    schedule = rows[1].copy()
+    schedule.update(
+        step=2,
+        cohort_id=None,
+        pending_prefill_ids=[],
+        new_prefill_ids=[],
+        layers_completed_before=0,
+        layers_total=0,
+    )
+    complete = rows[2].copy()
+    complete.update(
+        step=2,
+        cohort_id=None,
+        completed_prefill_ids=[],
+        layers_completed=0,
+        layers_total=0,
+        progress_source=source,
+    )
+    rows += [schedule, complete]
+    if source == "none":
+        report = check(tmp_path, rows, min_decode_steps=0)
+        assert report["progress_sources"] == {"full_forward_return": 1, "none": 1}
+    else:
+        with pytest.raises(AssertionError, match="cohort ownership"):
+            check(tmp_path, rows, min_decode_steps=0)
+
+
+def work_trace():
+    template = source_trace()
+    rows = template[:1]
+    for step in range(1, 5):
+        schedule = json.loads(json.dumps(template[1]))
+        complete = json.loads(json.dumps(template[2]))
+        schedule.update(
+            step=step,
+            new_prefill_ids=["p"] if step == 1 else [],
+            layers_per_slice=1,
+            layers_completed_before=step - 1,
+            finish_prefill=step == 4,
+        )
+        schedule["quota"]["reason"] = "token_budget_quota"
+        schedule["quota"]["work_quota"] = {
+            "source": "prefill_layer_token_budget",
+            "prefill_layer_token_budget": 64,
+            "cohort_full_prefill_tokens": 64,
+            "configured_layers_per_slice": 1,
+            "base_layers_per_slice": 1,
+        }
+        complete.update(
+            step=step,
+            layers_completed=step,
+            completed_prefill_ids=["p"] if step == 4 else [],
+        )
+        rows += [schedule, complete]
+    return rows
+
+
+def test_work_quota_verifies_original_cohort_work_and_keeps_legacy_separate(tmp_path):
+    result = check(tmp_path, work_trace(), expected_layers=4)
+    assert result["work_quota_sources"] == {"prefill_layer_token_budget": 4}
+    legacy = check(tmp_path, trace())
+    assert legacy["work_quota_sources"] == {}
+
+
+@pytest.mark.parametrize(
+    "fault",
+    [
+        "ceil",
+        "token_count",
+        "shrink",
+        "quota",
+        "source",
+        "config_change",
+        "protocol_downgrade",
+        "missing_original_tokens",
+    ],
+)
+def test_corrupted_work_quota_proof_is_rejected(tmp_path, fault):
+    rows = work_trace()
+    work = rows[1]["quota"]["work_quota"]
+    if fault == "ceil":
+        work["prefill_layer_token_budget"] = 127
+        work["base_layers_per_slice"] = 2
+    elif fault == "token_count":
+        work["cohort_full_prefill_tokens"] = 32
+    elif fault == "shrink":
+        rows[3]["quota"]["work_quota"]["cohort_full_prefill_tokens"] = 32
+    elif fault == "quota":
+        rows[1]["layers_per_slice"] = 2
+    elif fault == "source":
+        work["source"] = "configured_layers_per_slice"
+    elif fault == "config_change":
+        rows[3]["quota"]["work_quota"]["prefill_layer_token_budget"] = 128
+    elif fault == "protocol_downgrade":
+        del rows[3]["quota"]["work_quota"]
+    else:
+        rows = rows[1:]
+    with pytest.raises(AssertionError):
+        check(tmp_path, rows)
+
+
+def test_deadline_can_raise_work_quota_and_current_receipt_stays_exact(tmp_path):
+    rows = source_trace(full=True)
+    rows[1]["quota"]["work_quota"] = {
+        "source": "prefill_layer_token_budget",
+        "prefill_layer_token_budget": 128,
+        "cohort_full_prefill_tokens": 64,
+        "configured_layers_per_slice": 1,
+        "base_layers_per_slice": 2,
+    }
+    report = check(tmp_path, rows, min_decode_steps=0)
+    assert report["work_quota_sources"] == {"prefill_layer_token_budget": 1}
+    assert report["progress_sources"] == {"full_forward_return": 1}

@@ -2,12 +2,13 @@
 
 import importlib
 import os
+from contextlib import contextmanager
 from types import SimpleNamespace
 
 import pytest
 
 
-@pytest.fixture(params=["fenced", "overlap"])
+@pytest.fixture(params=["fenced", "graph", "overlap", "isolated"])
 def simulation(request):
     if os.environ.get("VLLM_VERSION") != "0.25.1":
         pytest.skip("source runtime/env.sh for pinned HUST worker contracts")
@@ -23,6 +24,8 @@ def simulation(request):
     worker._prefill_order = []
     worker._prefill_cancelled = set()
     worker._awaiting_sample = False
+    worker._decode_only_fast_path = False
+    worker._decode_graph_enabled = request.param == "graph"
     worker._iteration_cohort_id = None
     worker._iteration_prefill_layers_completed = 0
     worker._iteration_prefill_layers_total = 0
@@ -32,7 +35,16 @@ def simulation(request):
     worker._pending_order = []
     worker._layers_per_slice = 1
     worker._decoder_layer_count = 3
-    worker._stream_mode = request.param
+    worker._stream_mode = (
+        "fenced" if request.param in ("fenced", "graph") else "overlap"
+    )
+    worker._overlap_communication = (
+        "isolated" if request.param == "isolated" else "shared"
+    )
+    worker._collective_gates = None
+    worker._collective_router = None
+    worker._prefill_groups = []
+    worker._hook_handles = []
     worker.muxpd_stats = {"prefill_batches": 0, "decode_batches": 0, "slices": 0}
     events = []
 
@@ -77,7 +89,22 @@ def simulation(request):
         def wait_event(self, stream, event):
             events.append(("wait", stream.name, event))
 
-    if worker._stream_mode == "overlap":
+    if request.param == "graph":
+        from vllm_muxpd.decode_graph import GraphFencedExecutionBackend, GraphLaneState
+
+        runtime = Runtime()
+        workspace = SimpleNamespace(_manager=object())
+        worker._execution_backend = GraphFencedExecutionBackend(
+            runtime=runtime,
+            forward_context_module=SimpleNamespace(_forward_context=None),
+            workspace_module=workspace,
+            ascend_utils_module=SimpleNamespace(_CURRENT_STREAM=runtime.stream),
+        )
+        worker._lane_states = {
+            phase: GraphLaneState(None, stream, object())
+            for phase, stream in worker._streams.items()
+        }
+    elif worker._stream_mode == "overlap":
         runtime = Runtime()
         backend = NPUOverlapBackend(
             runtime=runtime,
@@ -121,7 +148,8 @@ def simulation(request):
             try:
                 for layer in range(self.layers):
                     events.append((self.phase, ids, layer))
-                    worker._interleaver.checkpoint(final=layer == self.layers - 1)
+                    if worker._interleaver is not None:
+                        worker._interleaver.checkpoint(final=layer == self.layers - 1)
                 self.execute_model_state = output
             finally:
                 self.closed += 1
@@ -169,6 +197,146 @@ def schedule(*, new_p=(), pending=(), decode=(), cancel=(), finish=False, pause=
 
 
 @pytest.mark.integration
+def test_decode_only_reuses_native_rows_without_greenlet_and_preserves_lifecycle(
+    simulation, monkeypatch
+):
+    from vllm.v1.core.sched.output import CachedRequestData
+
+    worker, events = simulation
+    module = importlib.import_module("vllm_muxpd.decoupled_worker")
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("D-only execution must not create a task or slice native rows")
+
+    monkeypatch.setattr(module, "LayerInterleaver", forbidden)
+    monkeypatch.setattr(module, "_select_requests", forbidden)
+    removed = {"prefill": [], "decode": []}
+    for runner in (worker.model_runner, worker.decode_runner):
+        runner.input_batch.remove_request = removed[runner.phase].append
+        runner.requests["finished"] = object()
+        runner._hybrid_accepted_by_req.update(finished=1, preempted=1, d=1)
+    output = schedule(decode=("d",))
+    output.finished_req_ids = {"finished"}
+    output.preempted_req_ids = {"preempted"}
+    output.new_block_ids_to_zero = [42]
+    output.scheduled_cached_reqs = CachedRequestData(
+        req_ids=["d"], resumed_req_ids={"d"}, new_token_ids=[],
+        all_token_ids={"d": [3, 4]}, new_block_ids=[([42],)],
+        num_computed_tokens=[9], num_output_tokens=[2],
+    )
+    caller = worker._execution_backend.capture()
+    worker.execute_model(output)
+    native_output = worker.decode_runner.execute_model_state
+    assert native_output.scheduled_cached_reqs is output.scheduled_cached_reqs
+    assert native_output.num_scheduled_tokens is output.num_scheduled_tokens
+    assert not native_output.finished_req_ids and not native_output.preempted_req_ids
+    assert output.finished_req_ids == {"finished"}
+    assert output.preempted_req_ids == {"preempted"}
+    assert all(set(ids) == {"finished", "preempted", "d"} for ids in removed.values())
+    assert "finished" not in worker.model_runner.requests
+    assert not worker.decode_runner._hybrid_accepted_by_req
+    assert worker._execution_backend.capture() == caller
+    assert worker._interleaver is None and worker.model_runner.closed == 0
+    native_samples = []
+    sample = worker.decode_runner.sample_tokens
+
+    def capture_sample(grammar):
+        result = sample(grammar)
+        native_samples.append(result)
+        return result
+
+    monkeypatch.setattr(worker.decode_runner, "sample_tokens", capture_sample)
+    result = worker.sample_tokens(None)
+    assert result is native_samples[0]
+    assert result.req_ids == ["d"] and result.sampled_token_ids == [[7]]
+    assert result.muxpd_prefill_layers_completed == 0
+    assert result.muxpd_prefill_layers_total == 0
+    assert result.muxpd_prefill_cohort_id is None
+    assert not result.muxpd_completed_prefill_ids
+    assert not result.muxpd_cancelled_prefill_ids
+    assert worker._execution_backend.capture() == caller
+    assert worker.decode_runner.sample_count == 1
+    if worker._stream_mode == "overlap":
+        assert events.count(("zero", (42,))) == 1
+        assert events[-1][0] == "wait" and events[-1][-1][0] == "decode"
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("cancel", [False, True])
+def test_decode_only_path_yields_to_persistent_prefill_then_returns(simulation, cancel):
+    worker, _ = simulation
+    worker.execute_model(schedule(decode=("d",)))
+    assert worker._decode_only_fast_path
+    worker.sample_tokens(None)
+    worker.execute_model(schedule(new_p=("p",), pending=("p",), decode=("d",)))
+    assert not worker._decode_only_fast_path
+    first = worker.sample_tokens(None)
+    assert first.req_ids == ["d"] and first.muxpd_prefill_layers_completed == 1
+    task = worker._prefill_task
+    worker.execute_model(
+        schedule(pending=("p",), decode=("d",), cancel=("p",) if cancel else (),
+                 finish=not cancel)
+    )
+    assert not worker._decode_only_fast_path
+    result = worker.sample_tokens(None)
+    assert result.muxpd_cancelled_prefill_ids == ({"p"} if cancel else set())
+    assert result.muxpd_completed_prefill_ids == (set() if cancel else {"p"})
+    assert task.tasks["prefill"].done and worker._prefill_task is None
+    worker.execute_model(schedule(decode=("d",)))
+    assert worker._decode_only_fast_path
+    assert worker.sample_tokens(None).req_ids == ["d"]
+    assert worker.decode_runner.sample_count == 4
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("failure", ["execute", "sample"])
+def test_decode_only_failures_restore_caller_state(simulation, monkeypatch, failure):
+    worker, _ = simulation
+    caller = worker._execution_backend.capture()
+
+    def fail(*args):
+        assert worker._interleaver is None
+        assert worker._execution_backend.capture().stream is worker._streams["decode"]
+        raise ValueError("native failure")
+
+    if failure == "execute":
+        monkeypatch.setattr(worker.decode_runner, "execute_model", fail)
+        with pytest.raises(ValueError, match="native failure"):
+            worker.execute_model(schedule(decode=("d",)))
+        assert not worker._awaiting_sample and not worker._pending_lanes
+    else:
+        worker.execute_model(schedule(decode=("d",)))
+        monkeypatch.setattr(worker.decode_runner, "sample_tokens", fail)
+        with pytest.raises(ValueError, match="native failure"):
+            worker.sample_tokens(None)
+        assert worker._awaiting_sample and worker._pending_lanes == ["decode"]
+        with pytest.raises(RuntimeError, match="sampler ACK"):
+            worker.execute_model(schedule(decode=("d",)))
+    assert worker._interleaver is None
+    assert worker._execution_backend.capture() == caller
+
+
+@pytest.mark.integration
+def test_decode_only_native_compaction_order_falls_back_to_merge(
+    simulation, monkeypatch
+):
+    from vllm.v1.outputs import ModelRunnerOutput
+
+    worker, _ = simulation
+    worker.execute_model(schedule(decode=("d1", "d2")))
+    native = ModelRunnerOutput(
+        req_ids=["d2", "d1"], req_id_to_index={"d2": 0, "d1": 1},
+        sampled_token_ids=[[22], [11]],
+    )
+    monkeypatch.setattr(worker.decode_runner, "sample_tokens", lambda grammar: native)
+    result = worker.sample_tokens(None)
+    assert result is not native
+    assert result.req_ids == ["d1", "d2"]
+    assert result.req_id_to_index == {"d1": 0, "d2": 1}
+    assert result.sampled_token_ids == [[11], [22]]
+
+
+@pytest.mark.integration
 def test_decode_samples_each_iteration_while_prefill_is_suspended(simulation):
     worker, events = simulation
     for index in range(3):
@@ -187,16 +355,15 @@ def test_decode_samples_each_iteration_while_prefill_is_suspended(simulation):
     assert worker.decode_runner.sample_count == 3
     assert events.count(("profiler",)) == 3
     assert worker._prefill_task is None
+    expected = []
+    for layer in range(3):
+        pair = [("decode", 0), ("prefill", layer)]
+        expected.extend(
+            reversed(pair) if worker._overlap_communication == "isolated" else pair
+        )
     assert [
         (event[0], event[-1]) for event in events if event[0] in ("decode", "prefill")
-    ] == [
-        ("decode", 0),
-        ("prefill", 0),
-        ("decode", 0),
-        ("prefill", 1),
-        ("decode", 0),
-        ("prefill", 2),
-    ]
+    ] == expected
 
 
 @pytest.mark.integration
@@ -315,7 +482,11 @@ def test_prefill_layer_quota_and_final_layer_retirement_with_complete_decode(
         p_layers = list(range(p_start, min(p_start + 2, 5)))
         assert [layer for lane, layer in observed if lane == "decode"] == list(range(4))
         assert [layer for lane, layer in observed if lane == "prefill"] == p_layers
-        if worker._stream_mode == "overlap":
+        if worker._overlap_communication == "isolated":
+            assert observed == [("prefill", i) for i in p_layers] + [
+                ("decode", i) for i in range(4)
+            ]
+        elif worker._stream_mode == "overlap":
             prefix = [
                 pair
                 for i, p_layer in enumerate(p_layers)
@@ -395,3 +566,361 @@ def test_unstarted_cohort_cancellation_retains_zero_progress_and_total(simulatio
     result = worker.sample_tokens(None)
     assert result.muxpd_prefill_layers_completed == 0
     assert result.muxpd_prefill_layers_total == 0
+
+
+@pytest.mark.integration
+def test_shutdown_unwinds_prefill_before_releasing_communication(
+    simulation, monkeypatch
+):
+    from vllm_muxpd.worker import NPUWorker
+
+    worker, events = simulation
+    worker.execute_model(schedule(new_p=("p",), pending=("p",), decode=("d",)))
+    worker.sample_tokens(None)
+    runner = worker.model_runner
+
+    def restore():
+        assert runner.closed == 1
+        assert runner.sample_count == 0
+        assert ("sync",) in events
+        events.append(("restore",))
+
+    worker._collective_router = SimpleNamespace(restore=restore)
+    worker._prefill_groups = [
+        SimpleNamespace(destroy=lambda: events.append(("destroy",)))
+    ]
+    monkeypatch.setattr(
+        NPUWorker, "shutdown", lambda self: events.append(("native_shutdown",))
+    )
+    worker.shutdown()
+    assert worker._prefill_task is None
+    assert worker.decode_runner is None
+    assert events.index(("restore",)) < events.index(("destroy",))
+    assert events.index(("destroy",)) < events.index(("native_shutdown",))
+    assert worker._prefill_groups == []
+    assert worker._collective_router is None
+
+
+@pytest.mark.integration
+def test_shutdown_abort_join_failure_retains_task_and_resources_for_retry(
+    simulation, monkeypatch
+):
+    from vllm_muxpd.worker import NPUWorker
+
+    worker, events = simulation
+    worker.execute_model(schedule(new_p=("p",), pending=("p",), decode=("d",)))
+    worker.sample_tokens(None)
+    task = worker._prefill_task
+    streams = worker._streams.copy()
+    decode = worker.decode_runner
+    joins = []
+
+    def prefill_join():
+        joins.append("prefill")
+        if len(joins) == 1:
+            raise RuntimeError("abort P join failed")
+
+    streams["prefill"].synchronize = prefill_join
+    router = SimpleNamespace(restore=lambda: events.append(("restore",)))
+    group = SimpleNamespace(destroy=lambda: events.append(("destroy",)))
+    worker._collective_router = router
+    worker._prefill_groups = [group]
+    monkeypatch.setattr(
+        NPUWorker, "shutdown", lambda self: events.append(("native_shutdown",))
+    )
+    with pytest.raises(RuntimeError, match="abort P join failed"):
+        worker.shutdown()
+    assert worker._prefill_task is task and task.tasks["prefill"].done
+    assert worker._streams == streams and worker.decode_runner is decode
+    assert worker._collective_router is router and worker._prefill_groups == [group]
+    assert not worker._cancelled_ack
+    assert not getattr(worker, "_muxpd_shutdown_complete", False)
+    assert ("restore",) not in events and ("native_shutdown",) not in events
+    # A transient join failure must not turn retry into KeyError('prefill') or
+    # silently skip native cleanup via a prematurely set complete flag.
+    worker.shutdown()
+    worker.shutdown()
+    assert len(joins) == 3  # failed abort, successful abort, parent group teardown
+    assert worker._prefill_task is None and worker._cancelled_ack == {"p"}
+    assert not worker._prefill_groups and worker._collective_router is None
+    assert not worker._streams and worker.decode_runner is None
+    assert events.count(("native_shutdown",)) == 1
+    assert events.index(("restore",)) < events.index(("destroy",))
+    assert events.index(("destroy",)) < events.index(("native_shutdown",))
+
+
+def enable_fake_prefill_compile(worker, events):
+    controller = SimpleNamespace(compile_full_prefill=True, active=False)
+
+    @contextmanager
+    def context():
+        assert not controller.active
+        controller.active = True
+        events.append(("compile_enter",))
+        try:
+            yield
+        finally:
+            controller.active = False
+            events.append(("compile_exit",))
+
+    controller.full_prefill_compile_context = context
+    worker._decode_graph_controller = controller
+    return controller
+
+
+def caller_records(events):
+    return [
+        event for event in events if event[0] == "event" and event[1][0] == "caller"
+    ]
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("simulation", ["graph"], indirect=True)
+def test_consecutive_graph_decode_skips_only_redundant_preparation_fence(simulation):
+    worker, events = simulation
+    worker.profiler = None
+    caller = worker._execution_backend.capture()
+    for iteration in range(3):
+        start = len(events)
+        worker.execute_model(schedule(decode=("d",)))
+        receipt = worker.sample_tokens(None)
+        step_events = events[start:]
+        assert len(caller_records(step_events)) == (1 if iteration == 0 else 0)
+        assert len([e for e in step_events if e[0] == "event"]) == (
+            3 if iteration == 0 else 2
+        )
+        assert receipt.req_ids == ["d"]
+        assert receipt.muxpd_prefill_progress_source == "none"
+        assert worker._execution_backend.capture() == caller
+        if iteration:
+            assert not any(e[0] == "wait" and e[1] == "decode" for e in step_events)
+    assert worker.muxpd_stats["decode_preparation_fences_skipped"] == 2
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("simulation", ["graph"], indirect=True)
+def test_decode_prefill_decode_transitions_keep_preparation_fence(simulation):
+    worker, events = simulation
+    worker.profiler = None
+    outputs = [
+        schedule(decode=("d",)),
+        schedule(new_p=("p",), pending=("p",), finish=True),
+        schedule(decode=("d",)),
+        schedule(decode=("d",)),
+    ]
+    for index, output in enumerate(outputs):
+        start = len(events)
+        worker.execute_model(output)
+        worker.sample_tokens(None)
+        assert len(caller_records(events[start:])) == (0 if index == 3 else 1)
+    assert worker.muxpd_stats["decode_preparation_fences_skipped"] == 1
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("simulation", ["graph"], indirect=True)
+def test_decode_reuses_latest_published_caller_tail_and_native_block_zero(
+    simulation, monkeypatch
+):
+    worker, events = simulation
+    worker.profiler = None
+    worker.execute_model(schedule(decode=("d",)))
+    worker.sample_tokens(None)
+    # A supported external operation publishes its dependency through the
+    # backend. The optimization must retain this tail, not assume it is D.
+    worker._execution_backend.fence()
+    caller_tail = worker._execution_backend._tail
+    native = worker.decode_runner.execute_model
+
+    def execute(output):
+        assert worker._execution_backend.capture().stream is worker._streams["decode"]
+        assert output.new_block_ids_to_zero == [42]
+        events.append(("native_zero_on_decode",))
+        return native(output)
+
+    monkeypatch.setattr(worker.decode_runner, "execute_model", execute)
+    start = len(events)
+    output = schedule(decode=("d",))
+    output.new_block_ids_to_zero = [42]
+    worker.execute_model(output)
+    worker.sample_tokens(None)
+    step_events = events[start:]
+    assert not caller_records(step_events)
+    assert ("wait", "decode", caller_tail) in step_events
+    assert step_events.index(("wait", "decode", caller_tail)) < step_events.index(
+        ("native_zero_on_decode",)
+    )
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("simulation", ["graph"], indirect=True)
+def test_even_inactive_profiler_keeps_decode_preparation_fence(simulation):
+    worker, events = simulation
+    worker.profiler = None
+    worker.execute_model(schedule(decode=("d",)))
+    worker.sample_tokens(None)
+    worker.profiler = SimpleNamespace(_active=False, step=lambda: None)
+    start = len(events)
+    worker.execute_model(schedule(decode=("d",)))
+    worker.sample_tokens(None)
+    assert len(caller_records(events[start:])) == 1
+    assert not worker.muxpd_stats.get("decode_preparation_fences_skipped", 0)
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("simulation", ["graph"], indirect=True)
+@pytest.mark.parametrize("failure", ["execute", "sample"])
+def test_decode_preparation_skip_preserves_failure_and_retry_protocol(
+    simulation, monkeypatch, failure
+):
+    worker, events = simulation
+    worker.profiler = None
+    worker.execute_model(schedule(decode=("d",)))
+    worker.sample_tokens(None)
+    caller = worker._execution_backend.capture()
+
+    def fail(*args):
+        raise ValueError("native failure")
+
+    start = len(events)
+    if failure == "execute":
+        native = worker.decode_runner.execute_model
+        monkeypatch.setattr(worker.decode_runner, "execute_model", fail)
+        with pytest.raises(ValueError, match="native failure"):
+            worker.execute_model(schedule(decode=("d",)))
+        assert not worker._awaiting_sample and not worker._decode_only_fast_path
+        assert worker._execution_backend.capture() == caller
+        assert not caller_records(events[start:])
+        monkeypatch.setattr(worker.decode_runner, "execute_model", native)
+        start = len(events)
+        worker.execute_model(schedule(decode=("d",)))
+        worker.sample_tokens(None)
+        assert len(caller_records(events[start:])) == 1
+    else:
+        worker.execute_model(schedule(decode=("d",)))
+        monkeypatch.setattr(worker.decode_runner, "sample_tokens", fail)
+        with pytest.raises(ValueError, match="native failure"):
+            worker.sample_tokens(None)
+        assert worker._awaiting_sample
+        assert worker._execution_backend.capture() == caller
+        assert not caller_records(events[start:])
+        with pytest.raises(RuntimeError, match="sampler ACK"):
+            worker.execute_model(schedule(decode=("d",)))
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("simulation", ["graph"], indirect=True)
+@pytest.mark.parametrize("raw_hooks", [False, True])
+@pytest.mark.parametrize("quota", [None, 3, 4])
+def test_compiled_fresh_full_prefill_records_return_and_preserves_sampler_lane(
+    simulation, monkeypatch, raw_hooks, quota
+):
+    worker, events = simulation
+    controller = enable_fake_prefill_compile(worker, events)
+    native = worker.model_runner.execute_model
+
+    def execute(output):
+        assert controller.active
+        assert list(output.num_scheduled_tokens) == ["p"]
+        if raw_hooks:
+            return native(output)
+        worker.model_runner.execute_model_state = output
+        events.append(("compiled_return",))
+        return None
+
+    monkeypatch.setattr(worker.model_runner, "execute_model", execute)
+    sample = worker.model_runner.sample_tokens
+
+    def sample_prefill(grammar):
+        assert not controller.active
+        assert worker._execution_backend.capture().stream is worker._streams["prefill"]
+        assert worker._prefill_task.tasks["prefill"].done
+        events.append(("prefill_sample",))
+        return sample(grammar)
+
+    monkeypatch.setattr(worker.model_runner, "sample_tokens", sample_prefill)
+    output = schedule(new_p=("p",), pending=("p",), decode=("d",), finish=quota is None)
+    output.muxpd_layers_per_slice = quota or 1
+    worker.execute_model(output)
+    assert not controller.active and worker._prefill_full_forward_return
+    assert worker._prefill_task.tasks["prefill"].done
+    assert worker._prefill_task.tasks["prefill"].completed_layers == (
+        3 if raw_hooks else 0
+    )
+    assert worker.model_runner.sample_count == 0
+    receipt = worker.sample_tokens(None)
+    assert receipt.req_ids == ["d", "p"]
+    assert receipt.muxpd_prefill_layers_completed == 3
+    assert receipt.muxpd_prefill_progress_source == "full_forward_return"
+    assert receipt.muxpd_completed_prefill_ids == {"p"}
+    assert worker.model_runner.sample_count == 1
+    assert events.index(("compile_exit",)) < events.index(("prefill_sample",))
+    assert worker._prefill_task is None
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("simulation", ["graph"], indirect=True)
+@pytest.mark.parametrize("initial_pause", [False, True])
+def test_existing_prefill_never_switches_to_compiled_fx(simulation, initial_pause):
+    worker, events = simulation
+    enable_fake_prefill_compile(worker, events)
+    worker.execute_model(schedule(new_p=("p",), pending=("p",), pause=initial_pause))
+    first = worker.sample_tokens(None)
+    assert first.muxpd_prefill_layers_completed == (0 if initial_pause else 1)
+    worker.execute_model(schedule(pending=("p",), finish=True))
+    receipt = worker.sample_tokens(None)
+    assert receipt.muxpd_prefill_progress_source == "layer_hooks"
+    assert receipt.muxpd_prefill_layers_completed == 3
+    assert ("compile_enter",) not in events
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("simulation", ["graph"], indirect=True)
+@pytest.mark.parametrize("all_cancelled", [False, True])
+def test_cancelled_new_prefill_uses_existing_hook_and_ack_protocol(
+    simulation, all_cancelled
+):
+    worker, events = simulation
+    enable_fake_prefill_compile(worker, events)
+    pending = ("p",) if all_cancelled else ("p", "other")
+    worker.execute_model(
+        schedule(new_p=pending, pending=pending, cancel=("p",), finish=True)
+    )
+    receipt = worker.sample_tokens(None)
+    assert ("compile_enter",) not in events
+    assert receipt.muxpd_prefill_progress_source == "layer_hooks"
+    assert receipt.muxpd_prefill_layers_completed == (0 if all_cancelled else 3)
+    assert receipt.muxpd_cancelled_prefill_ids == {"p"}
+    assert receipt.muxpd_completed_prefill_ids == (
+        set() if all_cancelled else {"other"}
+    )
+    assert worker.model_runner.sample_count == (0 if all_cancelled else 1)
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("simulation", ["graph"], indirect=True)
+@pytest.mark.parametrize(
+    "failure", ["raises", "partial_hooks", "no_state", "immediate_output"]
+)
+def test_compiled_prefill_failure_never_fabricates_progress_receipt(
+    simulation, monkeypatch, failure
+):
+    worker, events = simulation
+    controller = enable_fake_prefill_compile(worker, events)
+
+    def execute(output):
+        if failure == "raises":
+            raise ValueError("compiled forward failed")
+        if failure == "partial_hooks":
+            worker._interleaver.checkpoint(final=True)
+        if failure != "no_state":
+            worker.model_runner.execute_model_state = output
+        return object() if failure == "immediate_output" else None
+
+    monkeypatch.setattr(worker.model_runner, "execute_model", execute)
+    with pytest.raises((ValueError, RuntimeError)):
+        worker.execute_model(schedule(new_p=("p",), pending=("p",), finish=True))
+    assert not controller.active and not worker._prefill_full_forward_return
+    assert not worker._awaiting_sample
+    assert worker._iteration_prefill_layers_completed == 0
+    with pytest.raises(RuntimeError, match="executed iteration"):
+        worker.sample_tokens(None)

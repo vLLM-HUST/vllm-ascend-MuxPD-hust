@@ -67,6 +67,7 @@ class _Step:
     started_at: float
     expected_layers: int
     calibration_phase: str | None
+    deferred_decode_ids: frozenset[str]
 
 
 class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
@@ -86,6 +87,8 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         self._prefill_latency: dict[int, tuple[float, int]] = {}
         self._decode_latency_ms: float | None = None
         self._latency_samples = {"prefill": 0, "decode": 0}
+        self._prefill_first_decode_debt: set[str] = set()
+        self._prefill_first_admission: dict[str, Any] = {}
         # Reuse the common validated allocator setup, without the layered-only
         # execution/worker checks in LayeredMuxPDScheduler.__init__.
         MuxPDScheduler.__init__(self, vllm_config, *args, **kwargs)
@@ -134,6 +137,7 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
     def _free_request_blocks(self, request: Request) -> None:
         if request.is_finished():
             self._arrival_monotonic.pop(request.request_id, None)
+            self._prefill_first_decode_debt.discard(request.request_id)
         cohort = self._prefill_cohort
         if cohort is not None and request.request_id in cohort.pending_ids:
             # Remove native ownership immediately, but retain the block refcounts
@@ -153,6 +157,7 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         ):
             raise RuntimeError("Cannot preempt a pending decoupled prefill")
         super()._preempt_request(request, timestamp)
+        self._prefill_first_decode_debt.discard(request.request_id)
 
     def reset_prefix_cache(self, reset_running_requests=False, reset_connector=False):
         if self._prefill_cohort is not None and reset_running_requests:
@@ -249,6 +254,12 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         if throttle_prefills or self._decoupled_step is not None:
             raise RuntimeError("Decoupled MuxPD requires one synchronous worker step")
         started = time.monotonic()
+        self._prefill_first_admission = {
+            "enabled": self.muxpd_policy.config.prefill_first,
+            "reason": "pending_cohort" if self._prefill_cohort else "unchanged",
+            "decode_debt_ids": sorted(self._prefill_first_decode_debt),
+            "deferred_decode_ids": [],
+        }
         if self._prefill_cohort is None:
             output = LayeredMuxPDScheduler.schedule(self, throttle_prefills=False)
             self._layered_pending = None
@@ -265,6 +276,21 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
             output = self._schedule_while_prefilling(started)
             new_prefill_ids = set()
         decode_ids = set(output.num_scheduled_tokens) - new_prefill_ids
+        deferred_decode_ids = frozenset()
+        if self._prefill_first_admission["reason"] in (
+            "deadline_prefill_first",
+            "full_budget_prefill_first",
+            "token_budget_prefill_first",
+        ):
+            if new_prefill_ids and not decode_ids:
+                deferred_decode_ids = frozenset(
+                    self._prefill_first_admission["deferred_decode_ids"]
+                )
+            else:
+                # The complete prompt could not acquire KV. The shared native
+                # fallback has already progressed decode without advancing P.
+                self._prefill_first_admission["reason"] = "prefill_kv_fallback"
+                self._prefill_first_admission["deferred_decode_ids"] = []
         cohort = self._prefill_cohort
         paused = self._pause_state == PauseState.PAUSED_ALL
         # Native finish_requests removes host state immediately. Its worker-side
@@ -321,22 +347,89 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
             started,
             expected_layers,
             calibration_phase,
+            deferred_decode_ids,
         )
-        self._trace_decoupled(
-            "decoupled_schedule",
-            cohort_id=output.muxpd_prefill_cohort_id,
-            new_prefill_ids=sorted(new_prefill_ids),
-            pending_prefill_ids=sorted(output.muxpd_pending_prefill_ids),
-            cancelled_prefill_ids=sorted(output.muxpd_cancel_prefill_request_ids),
-            decode_ids=sorted(decode_ids),
-            finish_prefill=output.muxpd_finish_prefill,
-            pause_prefill=paused,
-            layers_per_slice=output.muxpd_layers_per_slice,
-            layers_completed_before=output.muxpd_prefill_layers_completed_before,
-            layers_total=output.muxpd_prefill_layers_total,
-            quota=quota_info,
-        )
+        if self._muxpd_trace is not None:
+            self._trace_decoupled(
+                "decoupled_schedule",
+                cohort_id=output.muxpd_prefill_cohort_id,
+                new_prefill_ids=sorted(new_prefill_ids),
+                pending_prefill_ids=sorted(output.muxpd_pending_prefill_ids),
+                cancelled_prefill_ids=sorted(output.muxpd_cancel_prefill_request_ids),
+                decode_ids=sorted(decode_ids),
+                finish_prefill=output.muxpd_finish_prefill,
+                pause_prefill=paused,
+                layers_per_slice=output.muxpd_layers_per_slice,
+                layers_completed_before=output.muxpd_prefill_layers_completed_before,
+                layers_total=output.muxpd_prefill_layers_total,
+                compile_full_prefill=self.muxpd_policy.config.compile_full_prefill,
+                quota=quota_info,
+                admission=self._prefill_first_admission,
+            )
         return output
+
+    def _adjust_phase_selection(self, prefills, decodes, snapshots, now):
+        """Return an urgent full P before a separate, guaranteed decode turn.
+
+        Excluding D here is essential: Scheduler.schedule has not yet advanced
+        any native token counters or allocated this iteration's KV blocks.
+        """
+        if not self.muxpd_policy.config.prefill_first:
+            return prefills, decodes
+        all_decodes = [r for r in snapshots if request_phase(r) == "decode"][
+            : min(self.max_num_running_reqs, self.max_num_scheduled_tokens)
+        ]
+        if self._prefill_first_decode_debt:
+            # The base selector may have chosen P-only for a prompt that fills
+            # the token budget. Debt still takes precedence over that fallback.
+            if all_decodes:
+                self._prefill_first_admission["reason"] = "repay_decode"
+                return [], all_decodes
+            return prefills, decodes
+        if not prefills:
+            return prefills, decodes
+        if not decodes:
+            # The base selector already chose P-only because a complete prompt
+            # cannot coexist with D within the token budget. Such a turn must
+            # incur the same debt, even if P's first token finishes the request
+            # and immediately frees a slot for the next queued long prompt.
+            if all_decodes:
+                self._prefill_first_admission.update(
+                    reason="full_budget_prefill_first",
+                    deferred_decode_ids=[request.request_id for request in all_decodes],
+                )
+            return prefills, decodes
+        tokens = sum(remaining_tokens(request) for request in prefills)
+        base_quota, work_quota = self._base_layer_quota(tokens)
+        self._prefill_first_admission["preview"] = {"work_quota": work_quota}
+        if (
+            self.muxpd_policy.config.prefill_layer_token_budget
+            and base_quota >= self._decoder_layer_count
+        ):
+            self._prefill_first_admission.update(
+                reason="token_budget_prefill_first",
+                deferred_decode_ids=[request.request_id for request in decodes],
+                preview={"work_quota": work_quota},
+            )
+            return prefills, []
+        if not self._prefill_latency or self._decode_latency_ms is None:
+            self._prefill_first_admission["reason"] = "uncalibrated"
+            return prefills, decodes
+        quota, estimate = self._deadline_layer_quota(
+            tokens,
+            0,
+            min(self._arrival_monotonic[request.request_id] for request in prefills),
+            now,
+        )
+        if quota != self._decoder_layer_count:
+            self._prefill_first_admission["reason"] = "retain_layer_slicing"
+            return prefills, decodes
+        self._prefill_first_admission.update(
+            reason="deadline_prefill_first",
+            deferred_decode_ids=[request.request_id for request in decodes],
+            preview=estimate,
+        )
+        return prefills, []
 
     def _estimated_prefill_ms(self, tokens: int) -> float | None:
         if not self._prefill_latency:
@@ -361,13 +454,74 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
             "reason": "fixed_quota" if not config.adaptive_layers else "uncalibrated",
             "estimate_source": "completed_pure_phase_host_round_trip_ewma",
             "estimate_scope": "deadline heuristic; not device overlap or SLO guarantee",
+            "work_quota": None,
         }
-        if not cohort or not config.adaptive_layers or not calibrated:
+        if not cohort:
             return info
-        remaining = self._decoder_layer_count - cohort.completed_layers
-        full_ms = self._estimated_prefill_ms(
+        base_quota, work_quota = self._base_layer_quota(
             cohort.original_output.total_num_scheduled_tokens
         )
+        info["work_quota"] = work_quota
+        remaining = self._decoder_layer_count - cohort.completed_layers
+        cancelled = set(output.muxpd_cancel_prefill_request_ids)
+        control_step = output.muxpd_pause_prefill or cancelled == cohort.pending_ids
+        if config.prefill_layer_token_budget:
+            output.muxpd_layers_per_slice = min(remaining, base_quota)
+            if not control_step and output.muxpd_layers_per_slice == remaining:
+                output.muxpd_finish_prefill = True
+            info["reason"] = "control_step" if control_step else "token_budget_quota"
+        if not config.adaptive_layers or not calibrated:
+            return info
+        quota, estimate = self._deadline_layer_quota(
+            cohort.original_output.total_num_scheduled_tokens,
+            cohort.completed_layers,
+            cohort.arrival_monotonic,
+            now,
+        )
+        if control_step:
+            info["reason"] = "control_step"
+        else:
+            output.muxpd_layers_per_slice = quota
+            if quota == remaining:
+                output.muxpd_finish_prefill = True
+            info["reason"] = (
+                "deadline_finish"
+                if estimate["allowed_decode_rounds"] == 1
+                else "deadline_quota"
+            )
+        info.update(estimate)
+        return info
+
+    def _base_layer_quota(self, tokens: int) -> tuple[int, dict]:
+        """Use the original cohort's complete P work, never its remaining layers.
+
+        The budget measures layer-token work, not KV/token admission capacity.
+        Integer division rounds down. The configured layer floor may exceed the
+        budget, so this heuristic is neither a hard work cap nor a timing bound.
+        Recomputed P includes already-generated tokens that must be replayed.
+        """
+        config = self.muxpd_policy.config
+        budget = config.prefill_layer_token_budget
+        quota = config.layers_per_slice
+        if budget:
+            quota = max(quota, min(self._decoder_layer_count, budget // tokens))
+        return quota, {
+            "source": (
+                "prefill_layer_token_budget"
+                if budget
+                else "configured_layers_per_slice"
+            ),
+            "prefill_layer_token_budget": budget,
+            "cohort_full_prefill_tokens": tokens,
+            "configured_layers_per_slice": config.layers_per_slice,
+            "base_layers_per_slice": quota,
+        }
+
+    def _deadline_layer_quota(self, tokens, completed_layers, arrival_monotonic, now):
+        """Pure deadline calculation shared by preview and allocated cohorts."""
+        config = self.muxpd_policy.config
+        remaining = self._decoder_layer_count - completed_layers
+        full_ms = self._estimated_prefill_ms(tokens)
         assert full_ms is not None and self._decode_latency_ms is not None
         p_ms = (
             config.estimate_safety_factor
@@ -375,32 +529,21 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
             * (remaining / self._decoder_layer_count)
         )
         d_ms = config.estimate_safety_factor * self._decode_latency_ms
-        age_ms = max(0.0, (now - cohort.arrival_monotonic) * 1000)
+        age_ms = max(0.0, (now - arrival_monotonic) * 1000)
         slack = config.ttft_slo_ms - age_ms - p_ms
         rounds = max(1, math.floor(slack / d_ms))
-        quota = min(
-            remaining, max(config.layers_per_slice, math.ceil(remaining / rounds))
-        )
-        cancelled = set(output.muxpd_cancel_prefill_request_ids)
-        if output.muxpd_pause_prefill or cancelled == cohort.pending_ids:
-            info["reason"] = "control_step"
-        else:
-            output.muxpd_layers_per_slice = quota
-            if quota == remaining:
-                output.muxpd_finish_prefill = True
-            info["reason"] = "deadline_finish" if rounds == 1 else "deadline_quota"
-        info.update(
-            {
-                "cohort_age_ms": age_ms,
-                "estimated_remaining_prefill_ms": p_ms,
-                "estimated_decode_ms": d_ms,
-                "allowed_decode_rounds": rounds,
-                "decode_slo_feasible_without_prefill": (
-                    self._decode_latency_ms <= config.tpot_slo_ms
-                ),
-            }
-        )
-        return info
+        base_quota, work_quota = self._base_layer_quota(tokens)
+        quota = min(remaining, max(base_quota, math.ceil(remaining / rounds)))
+        return quota, {
+            "cohort_age_ms": age_ms,
+            "estimated_remaining_prefill_ms": p_ms,
+            "estimated_decode_ms": d_ms,
+            "allowed_decode_rounds": rounds,
+            "work_quota": work_quota,
+            "decode_slo_feasible_without_prefill": (
+                self._decode_latency_ms <= config.tpot_slo_ms
+            ),
+        }
 
     def _observe_latency(self, phase: str, duration_ms: float, tokens: int) -> None:
         if not math.isfinite(duration_ms) or duration_ms <= 0:
@@ -497,7 +640,31 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
             raise RuntimeError("Prefill completed before all decoder layers")
         if cohort and progress == total and completed | cancelled != pending:
             raise RuntimeError("Final prefill layer requires whole cohort retirement")
-        return completed, cancelled, progress
+        source = getattr(model_output, "muxpd_prefill_progress_source", None)
+        if type(source) is not str or source not in (
+            "none",
+            "layer_hooks",
+            "full_forward_return",
+        ):
+            raise RuntimeError("Missing or invalid prefill progress source")
+        if (source == "none") != (cohort is None):
+            raise RuntimeError(
+                "Prefill progress source does not match cohort ownership"
+            )
+        if source == "full_forward_return" and not (
+            self.muxpd_policy.config.compile_full_prefill
+            and set(step.output.muxpd_prefill_request_ids) == pending
+            and step.output.muxpd_prefill_layers_completed_before == 0
+            and not step.output.muxpd_pause_prefill
+            and not step.output.muxpd_cancel_prefill_request_ids
+            and step.expected_layers == total == progress
+            and completed == pending
+            and not cancelled
+        ):
+            raise RuntimeError(
+                "Full-forward progress requires a fresh, complete prefill transaction"
+            )
+        return completed, cancelled, progress, source
 
     @staticmethod
     def _merge_outputs(first, second):
@@ -531,7 +698,7 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         step = self._decoupled_step
         if step is None or step.output is not scheduler_output:
             raise RuntimeError("Unknown/reordered decoupled worker transaction")
-        completed, cancelled, progress = self._validate_receipt(
+        completed, cancelled, progress, source = self._validate_receipt(
             step, model_runner_output
         )
         completed_at = time.monotonic()
@@ -579,6 +746,14 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         if cohort is not None and not cohort.pending_ids:
             self._prefill_cohort = None
             self.muxpd_stats["retired_prefill_cohorts"] += 1
+        self._prefill_first_decode_debt.difference_update(
+            step.decode_output.num_scheduled_tokens
+        )
+        self._prefill_first_decode_debt.update(
+            # Allocation may have preempted a decode, or its ID may have been
+            # cancelled and reused while P ran. Only still-running D owes a turn.
+            step.deferred_decode_ids & {request.request_id for request in self.running}
+        )
         self._decoupled_step = None
         self.muxpd_stats["completed_worker_steps"] += 1
         self.muxpd_stats["completed_prefill_requests"] += len(completed)
@@ -593,19 +768,22 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
                 if step.calibration_phase == "prefill"
                 else step.decode_output.total_num_scheduled_tokens,
             )
-        self._trace_decoupled(
-            "decoupled_complete",
-            cohort_id=step.cohort_id,
-            completed_prefill_ids=sorted(completed),
-            cancelled_prefill_ids=sorted(cancelled),
-            decode_ids=list(step.decode_output.num_scheduled_tokens),
-            duration_ms=duration_ms,
-            layers_completed=progress,
-            layers_total=model_runner_output.muxpd_prefill_layers_total,
-            latency_sample_phase=step.calibration_phase
-            if valid_latency_sample
-            else None,
-        )
+        if self._muxpd_trace is not None:
+            self._trace_decoupled(
+                "decoupled_complete",
+                cohort_id=step.cohort_id,
+                completed_prefill_ids=sorted(completed),
+                cancelled_prefill_ids=sorted(cancelled),
+                decode_ids=list(step.decode_output.num_scheduled_tokens),
+                duration_ms=duration_ms,
+                layers_completed=progress,
+                layers_total=model_runner_output.muxpd_prefill_layers_total,
+                progress_source=source,
+                latency_sample_phase=step.calibration_phase
+                if valid_latency_sample
+                else None,
+                decode_debt_ids=sorted(self._prefill_first_decode_debt),
+            )
         return result
 
     def _trace_decoupled(self, event: str, **fields) -> None:

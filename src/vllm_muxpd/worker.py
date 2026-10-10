@@ -11,13 +11,21 @@ import torch
 import vllm.forward_context as forward_context
 import vllm_ascend.utils as ascend_utils
 from vllm.distributed import get_ep_group, get_tp_group
+from vllm.distributed.parallel_state import init_model_parallel_group
 from vllm.logger import init_logger
 from vllm.v1.core.sched.output import SchedulerOutput
 from vllm.v1.outputs import ModelRunnerOutput
 from vllm_ascend.ascend_config import get_ascend_config
 from vllm_ascend.worker.worker import NPUModelRunner, NPUWorker
 
+from vllm_muxpd.communicators import LaneCollectiveRouter
 from vllm_muxpd.config import validate_engine_config
+from vllm_muxpd.decode_graph import (
+    DecodeGraphController,
+    GraphFencedExecutionBackend,
+    GraphLaneState,
+    validate_decode_graph_config,
+)
 from vllm_muxpd.lanes import LayerInterleaver
 from vllm_muxpd.overlap import CollectiveGates, NPUOverlapBackend
 
@@ -147,8 +155,28 @@ def _select_requests(
 
 
 def _merge_outputs(
-    outputs: list[ModelRunnerOutput], order: list[str]
+    outputs: list[ModelRunnerOutput], order: list[str], *, passthrough: bool = False
 ) -> ModelRunnerOutput:
+    if passthrough and len(outputs) == 1:
+        output = outputs[0]
+        # Native input-batch row order can differ after request removal or
+        # compaction. Reuse the result only when every row already matches the
+        # scheduler order; otherwise the regular merge rebuilds the mapping.
+        if (
+            output.req_ids == order
+            and len(output.req_id_to_index) == len(order)
+            and all(output.req_id_to_index.get(rid) == i for i, rid in enumerate(order))
+            and len(output.sampled_token_ids) == len(order)
+            and all(len(tokens) == 1 for tokens in output.sampled_token_ids)
+            and output.logprobs is None
+            and not output.pooler_output
+            and not output.prompt_logprobs_dict
+            and output.kv_connector_output is None
+            and output.ec_connector_output is None
+            and output.routed_experts is None
+            and output.cudagraph_stats is None
+        ):
+            return output
     sampled = {}
     prompt_logprobs = {}
     num_nans = {}
@@ -174,8 +202,14 @@ def _merge_outputs(
 
 def _validate_worker_config(config: Any) -> None:
     validate_engine_config(config)
+    policy = config.scheduler_config.batch_admission_policy_config or {}
+    decode_graph = policy.get("decode_graph", False)
     errors = []
-    if not config.model_config.enforce_eager:
+    if type(decode_graph) is not bool:
+        errors.append("decode_graph must be a boolean")
+    elif decode_graph:
+        validate_decode_graph_config(config, policy)
+    elif not config.model_config.enforce_eager:
         errors.append("enforce_eager must be true")
     if config.use_v2_model_runner:
         errors.append("only the V1 NPU runner is supported")
@@ -212,11 +246,22 @@ class MuxPDNPUWorker(NPUWorker):
     def __init__(self, vllm_config: Any, *args: Any, **kwargs: Any) -> None:
         _validate_worker_config(vllm_config)
         raw = vllm_config.scheduler_config.batch_admission_policy_config or {}
+        self._decode_graph_enabled = raw.get("decode_graph", False)
+        self._decode_graph_controller: DecodeGraphController | None = None
         self._layers_per_slice = raw.get("layers_per_slice", 1)
         self._stream_mode = raw.get("stream_mode", "fenced")
         if self._stream_mode not in ("fenced", "overlap"):
             raise ValueError("MuxPD stream_mode must be fenced or overlap")
+        self._overlap_communication = raw.get("overlap_communication", "shared")
+        if self._overlap_communication not in ("shared", "isolated"):
+            raise ValueError("MuxPD overlap_communication must be shared or isolated")
+        if self._overlap_communication == "isolated" and not (
+            self.execution_mode == "decoupled" and self._stream_mode == "overlap"
+        ):
+            raise ValueError("MuxPD isolated communication requires decoupled overlap")
         self._collective_gates: CollectiveGates | None = None
+        self._collective_router: LaneCollectiveRouter | None = None
+        self._prefill_groups: list[Any] = []
         if type(self._layers_per_slice) is not int or self._layers_per_slice < 1:
             raise ValueError("MuxPD layers_per_slice must be a positive integer")
         execution = raw.get("execution", self.execution_mode)
@@ -276,17 +321,35 @@ class MuxPDNPUWorker(NPUWorker):
             )
         if self._stream_mode == "overlap":
             backend = NPUOverlapBackend()
-            groups = [get_tp_group()]
-            if self.vllm_config.parallel_config.enable_expert_parallel:
-                groups.append(get_ep_group())
-            self._collective_gates = CollectiveGates(backend.runtime).install(
-                group.device_communicator for group in groups if group.world_size > 1
-            )
             self._execution_backend = backend
             self._lane_states = {
                 phase: backend.lane_state(phase, stream)
                 for phase, stream in self._streams.items()
             }
+            self._configure_overlap_communication(backend)
+        elif self._decode_graph_enabled:
+            import vllm.v1.worker.workspace as workspace
+
+            if workspace._manager is None:
+                raise RuntimeError("MuxPD requires the native prefill workspace")
+            prefill_workspace = workspace._manager
+            decode_workspace = workspace.WorkspaceManager(self.device, num_ubatches=1)
+            self._execution_backend = GraphFencedExecutionBackend()
+            self._lane_states = {
+                "prefill": GraphLaneState(
+                    None, self._streams["prefill"], prefill_workspace
+                ),
+                "decode": GraphLaneState(
+                    None, self._streams["decode"], decode_workspace
+                ),
+            }
+            self._decode_graph_controller = DecodeGraphController(
+                self.model_runner,
+                self.decode_runner,
+                self._streams["decode"],
+                decode_workspace,
+            )
+            self._decode_graph_controller.install_prefill_guards()
         else:
             self._execution_backend = _NPUExecutionBackend()
             self._lane_states = {
@@ -294,9 +357,119 @@ class MuxPDNPUWorker(NPUWorker):
                 for phase, stream in self._streams.items()
             }
 
+    def _configure_overlap_communication(self, backend: NPUOverlapBackend) -> None:
+        groups = [("tp", get_tp_group())]
+        if self.vllm_config.parallel_config.enable_expert_parallel:
+            groups.append(("ep", get_ep_group()))
+        groups = [(name, group) for name, group in groups if group.world_size > 1]
+        if not groups:
+            return
+        if self._overlap_communication == "shared":
+            self._collective_gates = CollectiveGates(backend.runtime).install(
+                group.device_communicator for _, group in groups
+            )
+            return
+
+        # This returns new coordinators without replacing global _TP/_EP. Every
+        # rank creates the same groups in TP, EP order before any forward starts.
+        siblings: dict[int, Any] = {}
+        pairs = []
+        try:
+            for name, native in groups:
+                sibling = siblings.get(id(native.device_group))
+                if sibling is None:
+                    sibling = init_model_parallel_group(
+                        group_ranks=[list(ranks) for ranks in native.group_ranks],
+                        local_rank=native.local_rank,
+                        # Ascend's GroupCoordinatorPatch stores this as
+                        # `backend`, unlike upstream's coordinator. Query the
+                        # actual process group instead of either class layout.
+                        backend=torch.distributed.get_backend(native.device_group),
+                        use_message_queue_broadcaster=False,
+                        group_name=f"{name}:muxpd_prefill",
+                    )
+                    self._prefill_groups.append(sibling)
+                    # The Ascend registry keys HCCL options including our unique
+                    # group_name. Fail before warmup if a future registry change
+                    # aliases a native PG despite the independent coordinator.
+                    if any(
+                        sibling.device_group is group.device_group
+                        for _, group in groups
+                    ):
+                        raise RuntimeError(
+                            "MuxPD prefill process group aliases a native group"
+                        )
+                    siblings[id(native.device_group)] = sibling
+                pairs.append((native.device_communicator, sibling.device_communicator))
+                logger.info(
+                    "MuxPD isolated group rank=%d kind=%s native=%s prefill=%s "
+                    "ranks=%s",
+                    self.rank,
+                    name,
+                    native.unique_name,
+                    sibling.unique_name,
+                    native.ranks,
+                )
+            self._warmup_prefill_groups()
+            self._collective_router = LaneCollectiveRouter(backend)
+            self._collective_router.install(pairs)
+        except BaseException:
+            try:
+                self._release_overlap_communication()
+            except BaseException:
+                logger.exception(
+                    "MuxPD failed to clean up communication initialization"
+                )
+            raise
+
+    @torch.inference_mode()
+    def _warmup_prefill_groups(self) -> None:
+        # Native init_snapshot is captured before init_device returns. Materialize
+        # sibling HCCL allocations now so determine_available_memory accounts for
+        # them; do not pay lazy communicator initialization on the first request.
+        with torch.npu.stream(self._streams["prefill"]):
+            probe = torch.ones(1, device=self.device, dtype=torch.float32)
+            for group in self._prefill_groups:
+                group.device_communicator.all_reduce(probe)
+            self._streams["prefill"].synchronize()
+
+    def _release_overlap_communication(self) -> None:
+        router = getattr(self, "_collective_router", None)
+        gates = getattr(self, "_collective_gates", None)
+        groups = getattr(self, "_prefill_groups", [])
+        if router is None and gates is None and not groups:
+            return
+        # If synchronization fails, keep ownership: destroying a group with
+        # pending device work is unsafe. A later shutdown may retry cleanup.
+        for stream in self._streams.values():
+            stream.synchronize()
+        errors = []
+        for attribute, installed in (
+            ("_collective_router", router),
+            ("_collective_gates", gates),
+        ):
+            if installed is not None:
+                try:
+                    installed.restore()
+                except BaseException as error:
+                    errors.append(error)
+                setattr(self, attribute, None)
+        for group in list(reversed(groups)):
+            try:
+                group.destroy()
+            except BaseException as error:
+                errors.append(error)
+            else:
+                groups.remove(group)
+        if errors:
+            raise RuntimeError("MuxPD communication cleanup failed") from errors[0]
+
     def load_model(self) -> None:
         super().load_model()
-        self.decode_runner.attach_model()
+        if self._decode_graph_controller is not None:
+            self._decode_graph_controller.attach_shared_model()
+        else:
+            self.decode_runner.attach_model()
         model = self.model_runner.get_model()
         if hasattr(model, "language_model"):
             model = model.language_model
@@ -317,14 +490,46 @@ class MuxPDNPUWorker(NPUWorker):
         ]
         logger.info(
             "MuxPD cooperative worker enabled: shared weights/KV, independent P/D "
-            "inputs, %d layers per slice, stream_mode=%s",
+            "inputs, %d layers per slice, stream_mode=%s, overlap_communication=%s",
             self._layers_per_slice,
             self._stream_mode,
+            self._overlap_communication,
         )
 
     def initialize_from_config(self, kv_cache_config: Any) -> None:
         super().initialize_from_config(kv_cache_config)
-        self.decode_runner.initialize_kv_cache(kv_cache_config)
+        if self._decode_graph_controller is None:
+            self.decode_runner.initialize_kv_cache(kv_cache_config)
+            return
+        backend = self._execution_backend
+        caller = backend.capture()
+        # Owner allocations precede D metadata construction. Keep any future
+        # builder workspace allocations with the same manager used by capture.
+        backend.fence()
+        try:
+            backend.restore(self._lane_states["decode"])
+            self.decode_runner.initialize_kv_cache(kv_cache_config)
+        finally:
+            backend.fence()
+            backend.restore(caller)
+
+    def compile_or_warm_up_model(self) -> Any:
+        controller = self._decode_graph_controller
+        if controller is None:
+            return super().compile_or_warm_up_model()
+        if (
+            self._interleaver is not None
+            or self._pending_lanes
+            or getattr(self, "_prefill_task", None) is not None
+            or getattr(self, "_awaiting_sample", False)
+        ):
+            raise RuntimeError("MuxPD graph capture is restricted to worker startup")
+        # Keep the primary runner as the memory owner and preserve all native
+        # ATB warmup, CPU binding, memory accounting and seed-reset behavior.
+        with controller.redirect_owner_capture():
+            result = super().compile_or_warm_up_model()
+        logger.info("MuxPD decode graph rank=%d %s", self.rank, controller.snapshot())
+        return result
 
     def _retire_finished(self, finished: set[str]) -> None:
         for runner in (self.model_runner, self.decode_runner):
@@ -450,7 +655,11 @@ class MuxPDNPUWorker(NPUWorker):
                     )
                 outputs.append(output)
                 backend.fence()
-            merged = _merge_outputs(outputs, self._pending_order)
+            merged = _merge_outputs(
+                outputs,
+                self._pending_order,
+                passthrough=getattr(self, "_decode_only_fast_path", False),
+            )
             self._pending_lanes = []
             self._pending_order = []
             return merged
@@ -462,17 +671,43 @@ class MuxPDNPUWorker(NPUWorker):
                 backend.join(sampled_lanes)
 
     def shutdown(self) -> None:
-        if self._interleaver is not None:
-            self._interleaver.close()
-        for handle in self._hook_handles:
-            handle.remove()
-        self._hook_handles = []
-        if getattr(self, "_collective_gates", None) is not None:
-            for stream in self._streams.values():
-                stream.synchronize()
-            self._collective_gates.restore()
-            self._collective_gates = None
-        # The primary runner owns the shared model/cache; release it only once.
-        super().shutdown()
-        if hasattr(self, "decode_runner"):
-            self.decode_runner = None
+        if getattr(self, "_muxpd_shutdown_complete", False) or getattr(
+            self, "_muxpd_shutdown_in_progress", False
+        ):
+            return
+        self._muxpd_shutdown_in_progress = True
+        try:
+            try:
+                if self._interleaver is not None:
+                    self._interleaver.close()
+                for handle in self._hook_handles:
+                    handle.remove()
+                self._hook_handles = []
+            finally:
+                controller = getattr(self, "_decode_graph_controller", None)
+                if controller is not None:
+                    for stream in self._streams.values():
+                        stream.synchronize()
+                    update_stream = getattr(self.decode_runner, "update_stream", None)
+                    if update_stream is not None:
+                        update_stream.synchronize()
+                    logger.info(
+                        "MuxPD decode graph final rank=%d %s",
+                        self.rank,
+                        controller.snapshot(),
+                    )
+                    controller.close()
+                self._release_overlap_communication()
+                # Failed joins/communication teardown retain their resources
+                # and skip native cleanup, so shutdown can safely be retried.
+                # The primary runner owns the shared model/cache; release once.
+                try:
+                    super().shutdown()
+                finally:
+                    self.decode_runner = None
+                    self._decode_graph_controller = None
+                    self._lane_states = {}
+                    self._streams = {}
+                    self._muxpd_shutdown_complete = True
+        finally:
+            self._muxpd_shutdown_in_progress = False

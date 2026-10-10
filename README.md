@@ -22,15 +22,15 @@ batch；串行策略具有在线延迟估计和等待阈值。实验 worker 使�
 lane 的临时 workspace。设备并行程度必须由
 NPU profiler 验证，不能由 Python 协程或调度 trace 推断。
 
-本机 TP2 已验证 12K-token 完整 P 期间连续 4 轮 D，以及两个 rank 上约 9%–11%
-计算活跃区间的 P/D 交叠。158 项本地测试通过；四种 decoupled 配置各 16 项
-自然语言对照与原生输出一致。自适应 fenced 在合成负载下约 31.38 tokens/s，
-匹配原生配置约 34.16 tokens/s；尚未取得原生吞吐收益。完整回执、输出差异和
-测量边界见 [验证记录](evidence/2026-10-10/README.md)。
+最新 TP4 调优加入独立 decode 图、完整 P 编译、按 cohort token 工作量分配层数，
+并减少连续 D 的 host 调用与事件依赖。两组负载各六轮测量的聚合吞吐高于
+原生 graph 基线；自然语言 16/16 对照一致，但部分合成序列仍有差异，且部分
+延迟指标未改善。完整结果与限制见 [TP4 性能报告](docs/performance-tp4.md)。
+这不是对任意负载或全部指标不退化的保证，也不是论文硬件分区的实现。
 
-四卡 TP4+EP4 的原生对照、输出一致性、跨轮进度与性能测量另见
-[TP4 验证记录](evidence/2026-10-10-tp4/README.md)。不同 TP 的数据分别保留，
-不能根据卡数直接推断吞吐收益。
+早期 [TP2 验证](evidence/2026-10-10/README.md) 和
+[TP4 eager 验证](evidence/2026-10-10-tp4/README.md) 保留原始回执与未取得收益的结果。
+不同 TP、eager/graph、缓存设置的测量不能直接混用。
 
 ## 固定运行基线
 
@@ -39,7 +39,7 @@ NPU profiler 验证，不能由 Python 协程或调度 trace 推断。
 | vllm-hust | `d0f22d2bda562156e4dbf433ce645e1769b4f804` |
 | vllm-ascend-hust | `03766ac696fde5ab1980d80ca0b8543d3580c989` |
 | 模型 / 设备 | Qwen3.5-35B-A3B / Ascend 910B2，BF16，TP2+EP、TP4+EP |
-| 执行 | V1 NPU runner，eager，同步，纯文本 |
+| 执行 | V1 NPU runner，同步，纯文本；eager 或显式 decode graph |
 | 底层依赖 | 复用已运行环境，不重新解析 torch / torch-npu / CANN |
 
 参考正式 [ASPLOS 2026 论文 v3](https://arxiv.org/html/2504.14489v3) 与作者指定
@@ -69,6 +69,17 @@ async scheduling 和 prefix caching，并将 token budget 设置为完整 16K �
 启动脚本默认 TP=2；四卡使用 `ASCEND_RT_VISIBLE_DEVICES=0,1,2,3 MUXPD_TP_SIZE=4`。
 TP4 会占用本机全部四张 NPU，需先停止两个 TP2 服务。完整启动与复测命令见
 [TP4 记录](evidence/2026-10-10-tp4/README.md#reproduction)。
+
+独立 decode 图使用以下入口。P 保持完整 prompt，不进入设备图；D 使用自己
+的静态输入、workspace 和捕获流；两者共享模型权重与 KV。该入口关闭详细 trace，
+启用自适应层配额、prefill-first、完整 P 编译和 262144 layer-tokens 工作量预算。
+该配置在本机 TP4 测量；其他 TP 或模型需重新验证。图的收益应与同样开启 decode 图的原生服务比较，
+调查与逐项证据见 [TP4 性能报告](docs/performance-tp4.md)。
+
+```bash
+ASCEND_RT_VISIBLE_DEVICES=0,1,2,3 MUXPD_TP_SIZE=4 \
+  scripts/serve-qwen35-decode-graph.sh
+```
 
 ```bash
 # 实验分层执行：两套 runner 输入与元数据，模型权重/KV 共用。
@@ -123,23 +134,45 @@ CPU 测试覆盖策略与协程；原生 Scheduler 测试覆盖 KV 容量、抢�
 | `max_prefill_batch_tokens` | 0 | 软 batching 上限；0 使用完整预算 |
 | `ewma_alpha` | 0.2 | 串行模式的调度至完成延迟在线估计权重 |
 | `layers_per_slice` | 1 | 实验 worker 每次提交的完整 transformer 层数 |
+| `prefill_layer_token_budget` | 0 | decoupled 的层工作量预算；非零时按完整 P cohort 的 token 总数计算基础层配额 |
 | `execution` | serial | 必须与 scheduler/worker 类匹配 |
 | `stream_mode` | fenced | `overlap` 是需独立验证的双流执行后端 |
 | `adaptive_layers` | false | decoupled 按本机耗时和 TTFT 预算放大层配额 |
+| `prefill_first` | false | adaptive fenced 判断 P 可在本轮完成时先执行 P，下一轮偿还 D 执行机会 |
+| `decode_graph` | false | decoupled fenced 的独立 FULL_DECODE_ONLY 图，须使用匹配 compilation 配置 |
+| `compile_full_prefill` | false | decode graph 模式中，新 P 可一次完成时复用原生编译路径；需启动预热 |
+| `overlap_communication` | shared | 实验 `isolated` 为 overlap 的 P 创建独立 TP/EP 通信组 |
 | `trace_path` | null | 可选 JSONL 文件；支持 `{pid}`，不记录 prompt 内容 |
 
-`adaptive_layers=true` 只在获得完整 P-only 和 D-only 样本后调整配额；未校准时
-保留固定配额。它优先减少 P 的首 token 等待，可能增加个别 D 的响应间隔，不保证
+`prefill_layer_token_budget` 非零时，基础层配额为
+`max(layers_per_slice, min(模型层数, budget // cohort完整P token数))`，再裁剪到剩余层数。
+分母包括 cohort 全部成员，取消部分成员后也不缩小；它不是 KV 容量或硬时间上限。
+默认 0 保留固定基础配额。`adaptive_layers=true` 在获得完整 P-only 和 D-only 样本后，
+可根据截止时间进一步放大配额。它优先减少 P 的首 token 等待，可能增加个别 D 的响应间隔，不保证
 TPOT 达标，也不进行硬件资源分区。详细算法见 [设计](docs/design.md)。
 
 初始延迟系数是可配置启动值，不能作为 MuxWise 论文 contention predictor 的复现。
 PP/DP/CP、speculative decoding、KV/EC transfer、streaming-input continuation
-不在当前范围。实验 worker 进一步限制 Qwen3.5、A2、eager、BF16、无 LoRA、
+不在当前范围。实验 worker 进一步限制 Qwen3.5、A2、BF16、无 LoRA、
 无结构化输出/logprobs、无 FlashComm/共享专家侧流/EPLB。decoupled 拒绝 MFU
 指标选项，避免拆分结果退休后向原生统计模块传入不完整的 FLOPs 元数据。
 `decoupled` 当前只允许一个未完成的 P cohort，保留其 KV 与请求槽位；不支持
 存在未完成 P 时的 `keep` 暂停，需先 drain 或 abort。完整 prompt 过长或 KV
 不足仍会造成等待，层调度不能消除内存容量限制。
+
+默认 worker 仍要求 eager。`decode_graph=true` 必须配合 `--no-enforce-eager`、
+`FULL_DECODE_ONLY`、编译 mode 3 和明确的捕获大小（当前脚本为 1/2/4/8）；
+不支持 overlap 图、ENPU、offload 或运行中重新捕获。图只覆盖 D，首次单 token
+P 也强制 `NONE`。`trace_path=null` 不构造逐轮诊断记录；需要生命周期证据时
+显式开启 trace，并在计时报告中说明。
+Ascend 原生 GraphParams 包含进程级状态；当前不支持在同一 worker 进程内销毁后
+重新初始化图服务，重启服务需使用新的 worker 进程。
+
+`compile_full_prefill` 保持 P 的图模式为 `NONE`，只开放原生编译函数的调用。
+新 P 的层预算必须覆盖整个模型；已暂停的 P 继续通过 Python 层边界推进。
+整网返回来源记为 `full_forward_return`，与 `layer_hooks` 区分；两者都必须
+经过原生采样同步后才能确认完成和释放 KV。该来源字段本身不证明 FX 命中或
+设备图执行，性能与执行路径需结合启动记录和 profiler 判断。
 
 回滚：停止本插件服务，使用原 `/root/workspace/runtime/serve-qwen35.sh`。
 基线源码与原启动脚本不由安装过程修改。

@@ -4,10 +4,10 @@ import json
 from pathlib import Path
 
 import pytest
-import torch
 
 pytest.importorskip("vllm")
 
+import torch
 from vllm.config import (
     CacheConfig,
     ModelConfig,
