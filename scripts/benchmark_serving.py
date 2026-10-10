@@ -94,8 +94,11 @@ async def main(args):
         health = await client.get(args.base_url + "/health")
         health.raise_for_status()
         # Warm up the same shapes; exclude initialization/JIT from receipts.
+        warmup_args = argparse.Namespace(
+            **(vars(args) | {"output_tokens": args.warmup_output_tokens})
+        )
         for index, length in enumerate(sorted(set(lengths))):
-            await run_request(client, args, index + 1000, length, 0)
+            await run_request(client, warmup_args, index + 1000, length, 0)
         all_results = []
         for repeat in range(args.repeats):
             started = time.perf_counter()
@@ -151,12 +154,15 @@ if __name__ == "__main__":
     parser.add_argument("--repeats", type=int, default=3)
     parser.add_argument("--input-lengths", default="128,2048,512,4096")
     parser.add_argument("--output-tokens", type=int, default=64)
+    parser.add_argument("--warmup-output-tokens", type=int, default=8)
     parser.add_argument("--arrival-interval", type=float, default=0.12)
     parser.add_argument("--ttft-slo", type=float, default=2.0)
     parser.add_argument("--tpot-slo", type=float, default=0.1)
     arguments = parser.parse_args()
     if arguments.requests < 1 or arguments.repeats < 1:
         parser.error("requests and repeats must be positive")
-    if arguments.output_tokens < 2 or arguments.arrival_interval < 0:
-        parser.error("output-tokens must be >=2 and arrival-interval >=0")
+    if min(arguments.output_tokens, arguments.warmup_output_tokens) < 2:
+        parser.error("output-tokens and warmup-output-tokens must be >=2")
+    if arguments.arrival_interval < 0:
+        parser.error("arrival-interval must be >=0")
     asyncio.run(main(arguments))

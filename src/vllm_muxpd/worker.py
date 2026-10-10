@@ -1,17 +1,16 @@
-"""Opt-in Ascend worker with independent, cooperatively scheduled P/D forwards.
-
-The first execution mode fences complete decoder slices. It validates separate
-batches and shared weights/cache without claiming simultaneous NPU kernels.
-"""
+"""Opt-in Ascend worker with independent, cooperatively scheduled P/D forwards."""
 
 from __future__ import annotations
 
+import ctypes
+import sys
 from dataclasses import dataclass, replace
 from typing import Any
 
 import torch
 import vllm.forward_context as forward_context
 import vllm_ascend.utils as ascend_utils
+from vllm.distributed import get_ep_group, get_tp_group
 from vllm.logger import init_logger
 from vllm.v1.core.sched.output import SchedulerOutput
 from vllm.v1.outputs import ModelRunnerOutput
@@ -20,8 +19,25 @@ from vllm_ascend.worker.worker import NPUModelRunner, NPUWorker
 
 from vllm_muxpd.config import validate_engine_config
 from vllm_muxpd.lanes import LayerInterleaver
+from vllm_muxpd.overlap import CollectiveGates, NPUOverlapBackend
 
-logger = init_logger(__name__)
+# The pinned vLLM logging configuration installs its INFO handler only on the
+# `vllm` namespace; an external plugin module name would silently lose INFO.
+logger = init_logger("vllm.muxpd.worker")
+
+
+def _physical_stream_id(stream: Any) -> int | None:
+    """Query CANN's physical ID; Python stream IDs/handles are different IDs."""
+    try:
+        runtime = ctypes.CDLL("libacl_rt.so")
+        get_id = runtime.aclrtStreamGetId
+        get_id.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_int32)]
+        get_id.restype = ctypes.c_int
+        result = ctypes.c_int32()
+        status = get_id(ctypes.c_void_p(stream.npu_stream), ctypes.byref(result))
+        return result.value if status == 0 else None
+    except (AttributeError, OSError):
+        return None
 
 
 @dataclass(frozen=True)
@@ -197,6 +213,10 @@ class MuxPDNPUWorker(NPUWorker):
         _validate_worker_config(vllm_config)
         raw = vllm_config.scheduler_config.batch_admission_policy_config or {}
         self._layers_per_slice = raw.get("layers_per_slice", 1)
+        self._stream_mode = raw.get("stream_mode", "fenced")
+        if self._stream_mode not in ("fenced", "overlap"):
+            raise ValueError("MuxPD stream_mode must be fenced or overlap")
+        self._collective_gates: CollectiveGates | None = None
         if type(self._layers_per_slice) is not int or self._layers_per_slice < 1:
             raise ValueError("MuxPD layers_per_slice must be a positive integer")
         execution = raw.get("execution", self.execution_mode)
@@ -208,6 +228,7 @@ class MuxPDNPUWorker(NPUWorker):
         self._pending_lanes: list[str] = []
         self._pending_order: list[str] = []
         self._hook_handles: list[Any] = []
+        self._decoder_layer_count = 0
         self.muxpd_stats = {"prefill_batches": 0, "decode_batches": 0, "slices": 0}
         super().__init__(vllm_config, *args, **kwargs)
 
@@ -216,6 +237,8 @@ class MuxPDNPUWorker(NPUWorker):
         if ascend_utils.get_ascend_device_type() != ascend_utils.AscendDeviceType.A2:
             raise ValueError("MuxPD cooperative runner currently supports Ascend A2")
         ascend = get_ascend_config()
+        if ascend.msmonitor_use_daemon:
+            raise ValueError("MuxPD cooperative execution requires msmonitor disabled")
         if ascend.eplb_config.dynamic_eplb or ascend.eplb_config.expert_map_path:
             raise ValueError("MuxPD cooperative execution requires EPLB disabled")
         if ascend.multistream_overlap_shared_expert:
@@ -226,6 +249,10 @@ class MuxPDNPUWorker(NPUWorker):
             raise ValueError("MuxPD cooperative execution requires FlashComm disabled")
         if self.vllm_config.parallel_config.tensor_parallel_size >= 16:
             raise ValueError("MuxPD A2 adapter does not support MC2 communication")
+        if self._stream_mode == "overlap" and (
+            ascend_utils.mlp_tp_enable() or ascend_utils.oproj_tp_enable()
+        ):
+            raise ValueError("MuxPD overlap requires fine-grained TP disabled")
         self.decode_runner = _SharedCacheRunner(
             self.vllm_config, self.device, self.model_runner
         )
@@ -233,7 +260,39 @@ class MuxPDNPUWorker(NPUWorker):
             "prefill": torch.npu.Stream(device=self.device),
             "decode": torch.npu.Stream(device=self.device),
         }
-        self._execution_backend = _NPUExecutionBackend()
+        for lane, stream in {
+            "caller": torch.npu.current_stream(),
+            **self._streams,
+        }.items():
+            logger.info(
+                "MuxPD stream rank=%d device=%s lane=%s "
+                "physical_stream_id=%s torch_stream_id=%s npu_stream_handle=%s",
+                self.rank,
+                self.device,
+                lane,
+                _physical_stream_id(stream),
+                getattr(stream, "stream_id", None),
+                getattr(stream, "npu_stream", None),
+            )
+        if self._stream_mode == "overlap":
+            backend = NPUOverlapBackend()
+            groups = [get_tp_group()]
+            if self.vllm_config.parallel_config.enable_expert_parallel:
+                groups.append(get_ep_group())
+            self._collective_gates = CollectiveGates(backend.runtime).install(
+                group.device_communicator for group in groups if group.world_size > 1
+            )
+            self._execution_backend = backend
+            self._lane_states = {
+                phase: backend.lane_state(phase, stream)
+                for phase, stream in self._streams.items()
+            }
+        else:
+            self._execution_backend = _NPUExecutionBackend()
+            self._lane_states = {
+                phase: _NPUState(None, stream)
+                for phase, stream in self._streams.items()
+            }
 
     def load_model(self) -> None:
         super().load_model()
@@ -244,20 +303,23 @@ class MuxPDNPUWorker(NPUWorker):
         layers = model.model.layers
         if not layers:
             raise ValueError("MuxPD could not find the Qwen3.5 decoder layers")
+        self._decoder_layer_count = len(layers)
+        final_layer = layers[-1]
 
         def after_layer(module: Any, args: Any, output: Any) -> None:
-            del module, args, output
+            del args, output
             if self._interleaver is not None:
                 self.muxpd_stats["slices"] += 1
-                self._interleaver.checkpoint()
+                self._interleaver.checkpoint(final=module is final_layer)
 
         self._hook_handles = [
             layer.register_forward_hook(after_layer) for layer in layers
         ]
         logger.info(
             "MuxPD cooperative worker enabled: shared weights/KV, independent P/D "
-            "inputs, %d layers per slice, full layer event fences (no kernel overlap)",
+            "inputs, %d layers per slice, stream_mode=%s",
             self._layers_per_slice,
+            self._stream_mode,
         )
 
     def initialize_from_config(self, kv_cache_config: Any) -> None:
@@ -298,12 +360,29 @@ class MuxPDNPUWorker(NPUWorker):
                     "pooling or structured outputs"
                 )
 
+    def _step_profiler(self) -> None:
+        if getattr(self, "profiler", None) is not None:
+            self.profiler.step()
+
+    def _begin_execution(self, output: SchedulerOutput) -> SchedulerOutput:
+        if self._stream_mode == "overlap":
+            # Publish shared initialization from the caller before either lane
+            # starts. Repeating all-block zeroing in a shard would race the
+            # other lane's writes. Pending cohorts retain pinned disjoint KV.
+            if output.new_block_ids_to_zero:
+                self.model_runner._zero_block_ids(output.new_block_ids_to_zero)
+            self._execution_backend.begin_batch(preparation_lane=None)
+            return replace(output, new_block_ids_to_zero=None)
+        self._execution_backend.fence()
+        return output
+
     @torch.inference_mode()
     def execute_model(
         self, scheduler_output: SchedulerOutput
     ) -> ModelRunnerOutput | None:
         if self._pending_lanes:
             raise RuntimeError("MuxPD requires sample_tokens before the next execute")
+        self._step_profiler()
         self._validate_requests(scheduler_output)
         self._retire_finished(scheduler_output.finished_req_ids)
         self._invalidate_batch_rows(
@@ -327,19 +406,21 @@ class MuxPDNPUWorker(NPUWorker):
         order = [phase for phase, ids in phases.items() if ids]
         interleaver = LayerInterleaver(self._execution_backend)
         self._interleaver = interleaver
-        self._execution_backend.fence()
+        execution_output = self._begin_execution(scheduler_output)
         for index, phase in enumerate(order):
             lane_output = _select_requests(
-                scheduler_output, phases[phase], carry_side_effects=index == 0
+                execution_output, phases[phase], carry_side_effects=index == 0
             )
             runner = runners[phase]
             interleaver.add(
                 phase,
                 lambda runner=runner, output=lane_output: runner.execute_model(output),
-                _NPUState(None, self._streams[phase]),
+                self._lane_states[phase],
             )
         try:
-            results = interleaver.run(order, self._layers_per_slice)
+            # One active phase needs no intermediate layer fences or host yields.
+            budget = self._layers_per_slice if len(order) > 1 else sys.maxsize
+            results = interleaver.run(order, budget)
             if any(value is not None for value in results.values()):
                 raise RuntimeError("MuxPD expected deferred native sampler outputs")
             for phase in order:
@@ -358,9 +439,10 @@ class MuxPDNPUWorker(NPUWorker):
         runners = {"prefill": self.model_runner, "decode": self.decode_runner}
         backend = self._execution_backend
         caller_state = backend.capture()
+        sampled_lanes = self._pending_lanes.copy()
         try:
             for phase in self._pending_lanes:
-                backend.restore(_NPUState(None, self._streams[phase]))
+                backend.restore(self._lane_states[phase])
                 output = runners[phase].sample_tokens(None)
                 if not isinstance(output, ModelRunnerOutput):
                     raise RuntimeError(
@@ -374,6 +456,10 @@ class MuxPDNPUWorker(NPUWorker):
             return merged
         finally:
             backend.restore(caller_state)
+            if self._stream_mode == "overlap":
+                # Decode ACK must not wait for a still-suspended prefill. A
+                # completed prefill is joined only when it was sampled here.
+                backend.join(sampled_lanes)
 
     def shutdown(self) -> None:
         if self._interleaver is not None:
@@ -381,6 +467,11 @@ class MuxPDNPUWorker(NPUWorker):
         for handle in self._hook_handles:
             handle.remove()
         self._hook_handles = []
+        if getattr(self, "_collective_gates", None) is not None:
+            for stream in self._streams.values():
+                stream.synchronize()
+            self._collective_gates.restore()
+            self._collective_gates = None
         # The primary runner owns the shared model/cache; release it only once.
         super().shutdown()
         if hasattr(self, "decode_runner"):

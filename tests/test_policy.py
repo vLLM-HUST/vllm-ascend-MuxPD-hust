@@ -138,6 +138,10 @@ def test_supported_execution_modes_and_scheduler_pairing(mode, scheduler):
         {"unknown_knob": 1},
         {"trace_path": "{unknown}"},
         {"execution": "other"},
+        {"stream_mode": "other"},
+        {"execution": "serial", "stream_mode": "overlap"},
+        {"adaptive_layers": 1},
+        {"adaptive_layers": True},
         {"layers_per_slice": 0},
         [],
         False,
@@ -147,6 +151,13 @@ def test_supported_execution_modes_and_scheduler_pairing(mode, scheduler):
 def test_invalid_config_fails_closed(raw):
     with pytest.raises(ValueError):
         MuxPDConfig.from_mapping(raw)
+
+
+@pytest.mark.parametrize("execution", ["layered", "decoupled"])
+def test_overlap_is_explicit_for_cooperative_execution(execution):
+    assert MuxPDConfig(execution=execution).stream_mode == "fenced"
+    config = MuxPDConfig(execution=execution, stream_mode="overlap")
+    assert config.stream_mode == "overlap"
 
 
 def engine_config():

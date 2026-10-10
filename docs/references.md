@@ -64,3 +64,29 @@ Ascend 性能或 SLO 保证。[论文 §3](https://arxiv.org/html/2504.14489v3#S
 
 这些 API 为迁移提供候选机制，是否满足本机算子集合的空间并发需求必须实测。
 当前设计的完成情况与边界见 [design.md](design.md)。
+
+## 本项目的对应实现与差异
+
+| Artifact 机制 | 本项目入口与适配 |
+| --- | --- |
+| 独立 P/D batch 与 split-prefill 状态 | [`worker.py`](../src/vllm_muxpd/worker.py) 使用共享权重和缓存的两个 runner；[`lanes.py`](../src/vllm_muxpd/lanes.py) 保留按层恢复的调用栈 |
+| P 跨轮保留，D 每轮独立输出 | [`decoupled_scheduler.py`](../src/vllm_muxpd/decoupled_scheduler.py) 保存原始 P 成本与 cohort；[`decoupled_worker.py`](../src/vllm_muxpd/decoupled_worker.py) 分别采样 D 和当轮已完成 P |
+| split-prefill 完成与合并 | 本项目使用显式 cohort 完成/取消 ACK，再调用原生 vLLM retirement；未照搬 SGLang 的 batch merge 状态结构 |
+| GreenContext 与 SM 分区 | 尚未移植；`stream_mode=overlap` 仅为独立 NPU 流实验，不提供核数分区 |
+| 独立 TP communicator | [`overlap.py`](../src/vllm_muxpd/overlap.py) 实验性保留现有 communicator，按 device process group 对 collective 加事件依赖；是否足够隔离本机 TP/EP 路径需验证 |
+| 独立 workspace / graph | overlap 为各 lane 切换 workspace 与 forward context；当前要求 eager，不支持 graph capture |
+| 资源预测与争用修正 | 论文机制未接入；本地 serial EWMA 与可选 `adaptive_layers` TTFT 配额只使用本机独立步骤耗时，不是空间分区预测器或 contention guard |
+
+vLLM 的调度发射即递增 computed token 数，与分层执行完成不是同一时刻。
+因此 decoupled scheduler 显式保护 pending P，不以 computed token 数推断其
+已经能够 decode。取消路径沿用原生 KV manager 的 `pop_blocks_for_free()`
+引用保留语义，ACK 后才 `free_blocks()`；原生 host 请求可先删除，设备侧
+仍持有的行和缓存必须晚于 ACK 回收。
+
+这是对 HUST vLLM 生命周期的额外适配，不是 paper artifact 中已有的 vLLM
+实现。部分取消需等整个 P forward 结束；整组取消同步 P stream 后 ACK；
+pending P 时拒绝 keep / `PAUSED_ALL`，禁止原生暂停或 cache reset 提前回收
+悬挂状态。具体协议及测试边界见 [design.md](design.md#跨迭代-prefill-协议)。
+本节的实现映射本身不证明设备并发、性能优于 baseline 或达到 SLO。
+设备 compute 区间重叠另有 [指定 capture 的独立证据](../evidence/2026-10-10/README.md#device-profile-independent-pd-compute-intervals)；
+其范围不扩展到每核资源隔离、完整负载利用率或论文性能结果。

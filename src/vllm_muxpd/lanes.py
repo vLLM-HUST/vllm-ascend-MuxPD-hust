@@ -67,7 +67,7 @@ class LayerInterleaver:
             raise ValueError(f"Duplicate MuxPD lane: {name}")
         self.tasks[name] = CooperativeTask(name, function, state)
 
-    def checkpoint(self) -> None:
+    def checkpoint(self, *, final: bool = False) -> None:
         task = self.active
         if task is None:
             return
@@ -75,7 +75,7 @@ class LayerInterleaver:
         if getcurrent() is not task.coroutine:
             raise RuntimeError("Decoder hook called outside its cooperative task")
         task.completed_layers += 1
-        if task.completed_layers >= self._target_layer:
+        if not final and task.completed_layers >= self._target_layer:
             self.backend.fence()
             task.state = self.backend.capture()
             task.coroutine.parent.switch(
@@ -129,6 +129,11 @@ class LayerInterleaver:
         try:
             for task in self.tasks.values():
                 if not task.done:
+                    if not task.coroutine:
+                        # A never-started stack owns no device state. Restoring
+                        # it could violate a backend's initial-preparation fence.
+                        task.coroutine.throw(GreenletExit)
+                        continue
                     self.backend.restore(task.state)
                     task.coroutine.throw(GreenletExit)
                     self.backend.fence()

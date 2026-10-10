@@ -118,6 +118,27 @@ def test_no_active_task_leaves_normal_model_hooks_inert():
     assert not backend.fences
 
 
+def test_failure_before_initial_barrier_does_not_restore_unstarted_lane():
+    class InitialBarrierBackend(FakeBackend):
+        def restore(self, state):
+            if state == "prefill":
+                raise RuntimeError("Prefill cannot start before the initial barrier")
+            super().restore(state)
+
+    backend = InitialBarrierBackend()
+    interleaver = LayerInterleaver(backend)
+
+    def decode():
+        raise RuntimeError("initial preparation failed")
+
+    interleaver.add("p", lambda: None, "prefill")
+    interleaver.add("d", decode, "decode")
+    with pytest.raises(RuntimeError, match="initial preparation failed"):
+        interleaver.run(("d", "p"))
+    assert all(task.done for task in interleaver.tasks.values())
+    assert backend.state == "caller"
+
+
 @pytest.fixture
 def native_worker():
     import importlib

@@ -26,6 +26,8 @@ class MuxPDConfig:
     trace_path: str | None = None
     execution: str = "serial"
     layers_per_slice: int = 1
+    stream_mode: str = "fenced"
+    adaptive_layers: bool = False
 
     def __post_init__(self) -> None:
         for name in (
@@ -62,6 +64,14 @@ class MuxPDConfig:
             raise ValueError(
                 "MuxPD execution must be 'serial', 'layered', or 'decoupled'"
             )
+        if self.stream_mode not in ("fenced", "overlap"):
+            raise ValueError("MuxPD stream_mode must be 'fenced' or 'overlap'")
+        if self.execution == "serial" and self.stream_mode != "fenced":
+            raise ValueError("MuxPD serial execution requires stream_mode='fenced'")
+        if type(self.adaptive_layers) is not bool:
+            raise ValueError("MuxPD adaptive_layers must be a boolean")
+        if self.adaptive_layers and self.execution != "decoupled":
+            raise ValueError("MuxPD adaptive_layers requires execution='decoupled'")
         if self.trace_path is not None:
             if not isinstance(self.trace_path, str) or not self.trace_path.strip():
                 raise ValueError("MuxPD trace_path must be a nonempty string or null")
