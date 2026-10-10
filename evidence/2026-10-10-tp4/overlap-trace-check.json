@@ -1,0 +1,20 @@
+{
+  "passed": true,
+  "cohorts": 38,
+  "max_complete_prompt_tokens": 12000,
+  "max_decode_steps_before_prefill_completion": 4,
+  "prefill_retirements": {
+    "completed": 48,
+    "cancelled": 1
+  },
+  "receipt_checks": {
+    "layer_progress_steps": 780
+  },
+  "model_layers_by_pid": {
+    "403973": 40
+  },
+  "quota_reasons": {
+    "fixed_quota": 780
+  },
+  "scope": "host lifecycle/progress receipts; kernel overlap needs profiling"
+}

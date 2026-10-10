@@ -1,0 +1,244 @@
+{
+  "schema_version": 1,
+  "scope": "Qwen3.5-35B-A3B BF16, Ascend 910B2/A2, TP4+EP4, eager V1, decoupled overlap, layers_per_slice=8",
+  "workload": "128-token prompt + 64-token decode, then 12000-token prefill + 8 tokens after decode first content event",
+  "method": "Independent CSV Decimal-to-integer-nanosecond per-lane interval union and two-pointer intersection. Every classified CSV row must match a hardware trace row by name/type/start/end/physical stream, with multiplicity. Results must equal the separate analyzer CLI. Only AI_CORE/AI_VECTOR_CORE/AI_VECTOR/MIX_AIC/MIX_AIV; Communication and recognizable HCCL names excluded.",
+  "claim": "Observed cross-lane device compute interval overlap. Not simultaneous per-core occupancy proof, hardware resource partitioning, or a speedup claim.",
+  "capture_limit": "max_iterations=8 auto-stop during RECORD emitted a possible-incomplete-data warning. Complete exported intervals are inside enable/disable markers, but this cannot establish capture completeness. Bounded sample, not the entire 64-token workload. Active/span is only profile-window activity with profiler overhead, not production utilization. Subtype overlaps are separate measurements and are not additive.",
+  "sources": [
+    {
+      "rank": 0,
+      "trace": "local-results/tp4/overlap-profile/dp0_pp0_tp0_dcp0_ep0_rank0_405579_20261010030542751_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+      "trace_bytes": 113951009,
+      "trace_sha256": "4a2192c4a4107279ff5d479eda8a29560472a79ad042c83c5fb6503846f853e6",
+      "kernel_csv": "local-results/tp4/overlap-profile/dp0_pp0_tp0_dcp0_ep0_rank0_405579_20261010030542751_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
+      "kernel_csv_sha256": "be04168b01640c4481db820f40c3d00cb747e9571fb8713eba596cd7f806b313",
+      "device_label": "NPU 0",
+      "hardware_trace_pid": 415313344,
+      "lane_mapping": {
+        "prefill": [
+          "physical:45"
+        ],
+        "decode": [
+          "physical:44"
+        ]
+      },
+      "kernel_count": 16086,
+      "task_types": {
+        "AI_VECTOR_CORE": 11907,
+        "AI_CORE": 2439,
+        "MIX_AIC": 1380,
+        "MIX_AIV": 360
+      },
+      "prefill_kernel_count": 5400,
+      "decode_kernel_count": 10686,
+      "excluded_communication_track_ranges": 15489,
+      "prefill_active_union_us": 307207.08,
+      "decode_active_union_us": 77051.8,
+      "compute_union_us": 369224.18,
+      "prefill_decode_overlap_us": 15034.7,
+      "overlap_fraction_of_compute_union": 0.04071970584375054,
+      "first_kernel_start_ns": 1791601543339622910,
+      "last_kernel_end_ns": 1791601546255322170,
+      "kernel_window_span_us": 2915699.26,
+      "compute_active_fraction_of_kernel_window": 0.12663314940101195,
+      "profiling_enable_ns": 1791601542871171510,
+      "profiling_disable_ns": 1791601546268356650,
+      "compute_intervals_outside_profiling_markers": 0,
+      "csv_crosscheck": {
+        "kernel_count": 16086,
+        "trace_only_rows": 0,
+        "csv_only_rows": 0,
+        "independent_interval_metrics_match_trace_and_analyzer": true
+      },
+      "compute_subtype_overlap_us": {
+        "cube_or_mixed_aic": 4214.64,
+        "vector_or_mixed_aiv": 8085.32
+      }
+    },
+    {
+      "rank": 1,
+      "trace": "local-results/tp4/overlap-profile/dp0_pp0_tp1_dcp0_ep1_rank1_405582_20261010030542750_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+      "trace_bytes": 108322901,
+      "trace_sha256": "e3fea7f8b69687a969c6e4ed6e2e10fecc57ab6e6ab812746617eaad7d845994",
+      "kernel_csv": "local-results/tp4/overlap-profile/dp0_pp0_tp1_dcp0_ep1_rank1_405582_20261010030542750_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
+      "kernel_csv_sha256": "f1b3f7afd2dae73fadc874e1b7c3698a012747dc36e4882791561be9af5a1eec",
+      "device_label": "NPU 1",
+      "hardware_trace_pid": 415316417,
+      "lane_mapping": {
+        "prefill": [
+          "physical:45"
+        ],
+        "decode": [
+          "physical:44"
+        ]
+      },
+      "kernel_count": 16086,
+      "task_types": {
+        "AI_VECTOR_CORE": 11907,
+        "AI_CORE": 2439,
+        "MIX_AIC": 1380,
+        "MIX_AIV": 360
+      },
+      "prefill_kernel_count": 5400,
+      "decode_kernel_count": 10686,
+      "excluded_communication_track_ranges": 10953,
+      "prefill_active_union_us": 310097.38,
+      "decode_active_union_us": 77467.46,
+      "compute_union_us": 370905.22,
+      "prefill_decode_overlap_us": 16659.62,
+      "overlap_fraction_of_compute_union": 0.04491611091372615,
+      "first_kernel_start_ns": 1791601543338731380,
+      "last_kernel_end_ns": 1791601546256109460,
+      "kernel_window_span_us": 2917378.08,
+      "compute_active_fraction_of_kernel_window": 0.12713649373824046,
+      "profiling_enable_ns": 1791601542885593760,
+      "profiling_disable_ns": 1791601546267564820,
+      "compute_intervals_outside_profiling_markers": 0,
+      "csv_crosscheck": {
+        "kernel_count": 16086,
+        "trace_only_rows": 0,
+        "csv_only_rows": 0,
+        "independent_interval_metrics_match_trace_and_analyzer": true
+      },
+      "compute_subtype_overlap_us": {
+        "cube_or_mixed_aic": 4988.44,
+        "vector_or_mixed_aiv": 8238.66
+      }
+    },
+    {
+      "rank": 2,
+      "trace": "local-results/tp4/overlap-profile/dp0_pp0_tp2_dcp0_ep2_rank2_405584_20261010030542750_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+      "trace_bytes": 108351391,
+      "trace_sha256": "669e8794352bf6ee1aa796048be5814efa404e59da14f2239fcf1f4f5a0cc57c",
+      "kernel_csv": "local-results/tp4/overlap-profile/dp0_pp0_tp2_dcp0_ep2_rank2_405584_20261010030542750_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
+      "kernel_csv_sha256": "540ee10f763511bdfab05ffdd72e82068c16c67c4bcc042460f4b8b026cb2cb6",
+      "device_label": "NPU 2",
+      "hardware_trace_pid": 415318466,
+      "lane_mapping": {
+        "prefill": [
+          "physical:45"
+        ],
+        "decode": [
+          "physical:44"
+        ]
+      },
+      "kernel_count": 16086,
+      "task_types": {
+        "AI_VECTOR_CORE": 11907,
+        "AI_CORE": 2439,
+        "MIX_AIC": 1380,
+        "MIX_AIV": 360
+      },
+      "prefill_kernel_count": 5400,
+      "decode_kernel_count": 10686,
+      "excluded_communication_track_ranges": 10953,
+      "prefill_active_union_us": 310965.0,
+      "decode_active_union_us": 72318.08,
+      "compute_union_us": 372634.34,
+      "prefill_decode_overlap_us": 10648.74,
+      "overlap_fraction_of_compute_union": 0.028576915375002745,
+      "first_kernel_start_ns": 1791601543338734525,
+      "last_kernel_end_ns": 1791601546255319365,
+      "kernel_window_span_us": 2916584.84,
+      "compute_active_fraction_of_kernel_window": 0.12776392954164845,
+      "profiling_enable_ns": 1791601542873375705,
+      "profiling_disable_ns": 1791601546266393185,
+      "compute_intervals_outside_profiling_markers": 0,
+      "csv_crosscheck": {
+        "kernel_count": 16086,
+        "trace_only_rows": 0,
+        "csv_only_rows": 0,
+        "independent_interval_metrics_match_trace_and_analyzer": true
+      },
+      "compute_subtype_overlap_us": {
+        "cube_or_mixed_aic": 1537.86,
+        "vector_or_mixed_aiv": 5901.62
+      }
+    },
+    {
+      "rank": 3,
+      "trace": "local-results/tp4/overlap-profile/dp0_pp0_tp3_dcp0_ep3_rank3_405588_20261010030542751_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+      "trace_bytes": 108324944,
+      "trace_sha256": "cd4fdde4ac3b694bce3b3e86fea86ba4bf4d8731bf245a4c10842d754d228403",
+      "kernel_csv": "local-results/tp4/overlap-profile/dp0_pp0_tp3_dcp0_ep3_rank3_405588_20261010030542751_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
+      "kernel_csv_sha256": "6bcf75bf0a9bfae00873cc316dfd63bad7d53c5599a3b30ed994d61d833671ce",
+      "device_label": "NPU 3",
+      "hardware_trace_pid": 415322563,
+      "lane_mapping": {
+        "prefill": [
+          "physical:45"
+        ],
+        "decode": [
+          "physical:44"
+        ]
+      },
+      "kernel_count": 16086,
+      "task_types": {
+        "AI_VECTOR_CORE": 11907,
+        "AI_CORE": 2439,
+        "MIX_AIC": 1380,
+        "MIX_AIV": 360
+      },
+      "prefill_kernel_count": 5400,
+      "decode_kernel_count": 10686,
+      "excluded_communication_track_ranges": 10953,
+      "prefill_active_union_us": 309717.72,
+      "decode_active_union_us": 76633.32,
+      "compute_union_us": 370572.12,
+      "prefill_decode_overlap_us": 15778.92,
+      "overlap_fraction_of_compute_union": 0.042579889712156434,
+      "first_kernel_start_ns": 1791601543339082805,
+      "last_kernel_end_ns": 1791601546255317845,
+      "kernel_window_span_us": 2916235.04,
+      "compute_active_fraction_of_kernel_window": 0.12707210321428686,
+      "profiling_enable_ns": 1791601542868596465,
+      "profiling_disable_ns": 1791601546265152905,
+      "compute_intervals_outside_profiling_markers": 0,
+      "csv_crosscheck": {
+        "kernel_count": 16086,
+        "trace_only_rows": 0,
+        "csv_only_rows": 0,
+        "independent_interval_metrics_match_trace_and_analyzer": true
+      },
+      "compute_subtype_overlap_us": {
+        "cube_or_mixed_aic": 5766.36,
+        "vector_or_mixed_aiv": 6381.22
+      }
+    }
+  ],
+  "worker_stream_log": [
+    "(Worker pid=405588) INFO 10-10 03:01:40 [worker.py:267] MuxPD stream rank=3 device=npu:3 lane=caller physical_stream_id=47 torch_stream_id=0 npu_stream_handle=281468476562440",
+    "(Worker pid=405588) INFO 10-10 03:01:40 [worker.py:267] MuxPD stream rank=3 device=npu:3 lane=prefill physical_stream_id=45 torch_stream_id=96 npu_stream_handle=281467432014856",
+    "(Worker pid=405588) INFO 10-10 03:01:40 [worker.py:267] MuxPD stream rank=3 device=npu:3 lane=decode physical_stream_id=44 torch_stream_id=97 npu_stream_handle=281467432019976",
+    "(Worker pid=405579) INFO 10-10 03:01:40 [worker.py:267] MuxPD stream rank=0 device=npu:0 lane=caller physical_stream_id=47 torch_stream_id=0 npu_stream_handle=281468241222664",
+    "(Worker pid=405579) INFO 10-10 03:01:40 [worker.py:267] MuxPD stream rank=0 device=npu:0 lane=prefill physical_stream_id=45 torch_stream_id=96 npu_stream_handle=281467165873160",
+    "(Worker pid=405579) INFO 10-10 03:01:40 [worker.py:267] MuxPD stream rank=0 device=npu:0 lane=decode physical_stream_id=44 torch_stream_id=97 npu_stream_handle=281467165878280",
+    "(Worker pid=405582) INFO 10-10 03:01:40 [worker.py:267] MuxPD stream rank=1 device=npu:1 lane=caller physical_stream_id=47 torch_stream_id=0 npu_stream_handle=281468610124808",
+    "(Worker pid=405582) INFO 10-10 03:01:40 [worker.py:267] MuxPD stream rank=1 device=npu:1 lane=prefill physical_stream_id=45 torch_stream_id=96 npu_stream_handle=281467553584136",
+    "(Worker pid=405582) INFO 10-10 03:01:40 [worker.py:267] MuxPD stream rank=1 device=npu:1 lane=decode physical_stream_id=44 torch_stream_id=97 npu_stream_handle=281467553589256",
+    "(Worker pid=405584) INFO 10-10 03:01:40 [worker.py:267] MuxPD stream rank=2 device=npu:2 lane=caller physical_stream_id=47 torch_stream_id=0 npu_stream_handle=281468236307464",
+    "(Worker pid=405584) INFO 10-10 03:01:40 [worker.py:267] MuxPD stream rank=2 device=npu:2 lane=prefill physical_stream_id=45 torch_stream_id=96 npu_stream_handle=281467178259464",
+    "(Worker pid=405584) INFO 10-10 03:01:40 [worker.py:267] MuxPD stream rank=2 device=npu:2 lane=decode physical_stream_id=44 torch_stream_id=97 npu_stream_handle=281467178264584"
+  ],
+  "profiler_stop_log": [
+    "(Worker_TP0_EP0 pid=405579) INFO 10-10 03:05:42 [wrapper.py:30] GPU profiling will stop after 8 worker steps, or when stop_profile is received.",
+    "(Worker_TP1_EP1 pid=405582) [2026-10-10 03:05:46] [WARNING] [405582] profiler.py: Incorrect schedule: Stop profiler while current state is RECORD which may result in incomplete parsed data.",
+    "(Worker_TP3_EP3 pid=405588) [2026-10-10 03:05:46] [WARNING] [405588] profiler.py: Incorrect schedule: Stop profiler while current state is RECORD which may result in incomplete parsed data.",
+    "(Worker_TP2_EP2 pid=405584) [2026-10-10 03:05:46] [WARNING] [405584] profiler.py: Incorrect schedule: Stop profiler while current state is RECORD which may result in incomplete parsed data.",
+    "(Worker_TP0_EP0 pid=405579) INFO 10-10 03:05:46 [wrapper.py:112] Max profiling iterations reached. Stopping profiler...",
+    "(Worker_TP0_EP0 pid=405579) [2026-10-10 03:05:46] [WARNING] [405579] profiler.py: Incorrect schedule: Stop profiler while current state is RECORD which may result in incomplete parsed data.",
+    "(Worker_TP0_EP0 pid=405579) INFO 10-10 03:05:47 [wrapper.py:66] Profiler stopped successfully."
+  ],
+  "server_log": "local-results/tp4/overlap-server.log",
+  "server_log_sha256": "efaaac54ca788f93578b1adc8f365a159e772537adeec1730b159695225cffb1",
+  "offline_parse_log": "local-results/tp4/overlap-profile-analysis.log",
+  "commands": [
+    "source /root/workspace/runtime/env.sh && /root/workspace/.venv/bin/python -c \"from torch_npu.profiler.profiler import analyse; analyse('local-results/tp4/overlap-profile')\"",
+    "/root/workspace/.venv/bin/python scripts/analyze_npu_trace.py local-results/tp4/overlap-profile/dp0_pp0_tp0_dcp0_ep0_rank0_405579_20261010030542751_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json --lane-map evidence/2026-10-10-tp4/overlap-profile-lane-map-rank0.json --output evidence/2026-10-10-tp4/overlap-profile-analyzer-rank0.json",
+    "/root/workspace/.venv/bin/python scripts/analyze_npu_trace.py local-results/tp4/overlap-profile/dp0_pp0_tp1_dcp0_ep1_rank1_405582_20261010030542750_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json --lane-map evidence/2026-10-10-tp4/overlap-profile-lane-map-rank1.json --output evidence/2026-10-10-tp4/overlap-profile-analyzer-rank1.json",
+    "/root/workspace/.venv/bin/python scripts/analyze_npu_trace.py local-results/tp4/overlap-profile/dp0_pp0_tp2_dcp0_ep2_rank2_405584_20261010030542750_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json --lane-map evidence/2026-10-10-tp4/overlap-profile-lane-map-rank2.json --output evidence/2026-10-10-tp4/overlap-profile-analyzer-rank2.json",
+    "/root/workspace/.venv/bin/python scripts/analyze_npu_trace.py local-results/tp4/overlap-profile/dp0_pp0_tp3_dcp0_ep3_rank3_405588_20261010030542751_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json --lane-map evidence/2026-10-10-tp4/overlap-profile-lane-map-rank3.json --output evidence/2026-10-10-tp4/overlap-profile-analyzer-rank3.json",
+    "/root/workspace/.venv/bin/python evidence/2026-10-10-tp4/overlap-profile-audit.py"
+  ]
+}

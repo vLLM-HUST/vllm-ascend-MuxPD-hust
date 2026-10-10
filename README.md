@@ -22,11 +22,15 @@ batch；串行策略具有在线延迟估计和等待阈值。实验 worker 使�
 lane 的临时 workspace。设备并行程度必须由
 NPU profiler 验证，不能由 Python 协程或调度 trace 推断。
 
-本机已验证 12K-token 完整 P 期间连续 4 轮 D，以及两个 rank 上约 9%–11%
+本机 TP2 已验证 12K-token 完整 P 期间连续 4 轮 D，以及两个 rank 上约 9%–11%
 计算活跃区间的 P/D 交叠。158 项本地测试通过；四种 decoupled 配置各 16 项
 自然语言对照与原生输出一致。自适应 fenced 在合成负载下约 31.38 tokens/s，
 匹配原生配置约 34.16 tokens/s；尚未取得原生吞吐收益。完整回执、输出差异和
 测量边界见 [验证记录](evidence/2026-10-10/README.md)。
+
+四卡 TP4+EP4 的原生对照、输出一致性、跨轮进度与性能测量另见
+[TP4 验证记录](evidence/2026-10-10-tp4/README.md)。不同 TP 的数据分别保留，
+不能根据卡数直接推断吞吐收益。
 
 ## 固定运行基线
 
@@ -34,7 +38,7 @@ NPU profiler 验证，不能由 Python 协程或调度 trace 推断。
 |---|---|
 | vllm-hust | `d0f22d2bda562156e4dbf433ce645e1769b4f804` |
 | vllm-ascend-hust | `03766ac696fde5ab1980d80ca0b8543d3580c989` |
-| 模型 / 设备 | Qwen3.5-35B-A3B / Ascend 910B2，BF16，TP2+EP |
+| 模型 / 设备 | Qwen3.5-35B-A3B / Ascend 910B2，BF16，TP2+EP、TP4+EP |
 | 执行 | V1 NPU runner，eager，同步，纯文本 |
 | 底层依赖 | 复用已运行环境，不重新解析 torch / torch-npu / CANN |
 
@@ -61,6 +65,10 @@ ASCEND_RT_VISIBLE_DEVICES=2,3 scripts/serve-qwen35.sh \
 async scheduling 和 prefix caching，并将 token budget 设置为完整 16K 上下文。
 **Qwen3.5 的 Mamba `align` 模式本身会拆 prefill**，因此使用 `none`。
 这会改变缓存条件，性能比较必须保留相同缓存设置的对照组。
+
+启动脚本默认 TP=2；四卡使用 `ASCEND_RT_VISIBLE_DEVICES=0,1,2,3 MUXPD_TP_SIZE=4`。
+TP4 会占用本机全部四张 NPU，需先停止两个 TP2 服务。完整启动与复测命令见
+[TP4 记录](evidence/2026-10-10-tp4/README.md#reproduction)。
 
 ```bash
 # 实验分层执行：两套 runner 输入与元数据，模型权重/KV 共用。
