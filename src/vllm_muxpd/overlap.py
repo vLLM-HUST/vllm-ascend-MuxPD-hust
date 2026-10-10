@@ -52,10 +52,12 @@ _MISSING = object()
 class CollectiveGates:
     """Serialize only collectives sharing a device process group.
 
-    The wrapper waits before the collective and records its completion on the
-    invoking compute stream after the native synchronous collective API has
-    joined its internal HCCL work to that stream. Compute after the collective
-    is outside this fence. This is deliberately instance-local and reversible.
+    When the invoking stream changes, the wrapper waits before the collective.
+    Same-stream calls are ordered by stream FIFO. Every call still records its
+    completion after the native synchronous collective API has joined internal
+    HCCL work to that stream, so a later stream switch sees the latest tail.
+    Compute after the collective is outside this fence. This is deliberately
+    instance-local and reversible.
     """
 
     METHODS = ("all_reduce", "all_gather", "reduce_scatter")
@@ -64,7 +66,7 @@ class CollectiveGates:
         self.runtime = runtime
         self._thread = get_ident()
         self._installed: list[tuple[Any, str, Any, Any]] = []
-        self._tails: dict[int, Any] = {}
+        self._tails: dict[int, tuple[Any, Any]] = {}
         self._failed = False
         self.calls = 0
 
@@ -82,9 +84,11 @@ class CollectiveGates:
             previous = self._tails.get(group_key)
             try:
                 if previous is not None:
-                    self.runtime.wait_event(stream, previous)
+                    previous_stream, previous_event = previous
+                    if stream != previous_stream:
+                        self.runtime.wait_event(stream, previous_event)
                 result = function(*args, **kwargs)
-                self._tails[group_key] = self.runtime.record_event(stream)
+                self._tails[group_key] = (stream, self.runtime.record_event(stream))
             except BaseException:
                 self._failed = True
                 raise
@@ -193,6 +197,12 @@ class NPUOverlapBackend:
     def _check_thread(self) -> None:
         if get_ident() != self._thread:
             raise RuntimeError("MuxPD stream overlap requires one host thread")
+
+    @property
+    def active_lane(self) -> str | None:
+        """Current lane for communicator routing; ``None`` is caller work."""
+        self._check_thread()
+        return self._active_lane
 
     def lane_state(self, name: str, stream: Any) -> LaneState:
         """Register an existing stream, allocating no device workspace yet."""

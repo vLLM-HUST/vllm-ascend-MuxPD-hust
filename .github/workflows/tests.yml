@@ -1,4 +1,4 @@
-name: CPU policy and lane tests
+name: CPU policy, lane and graph contracts
 on: [push, pull_request]
 jobs:
   cpu:
@@ -9,5 +9,6 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install -e '.[test]' greenlet
-      - run: python -m pytest tests/test_policy.py tests/test_lanes.py tests/test_overlap.py tests/test_npu_trace.py tests/test_decoupled_trace.py -q
+      # Native scheduler/worker tests skip without the pinned Ascend runtime.
+      - run: python -m pytest tests -q
       - run: python -m ruff check .

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import sys
+from dataclasses import replace
+from functools import partial
 from typing import Any
 
 import torch
@@ -32,11 +34,15 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
         self._prefill_cohort_id: int | None = None
         self._prefill_order: list[str] = []
         self._prefill_cancelled: set[str] = set()
+        self._prefill_compiled = False
+        self._prefill_full_forward_return = False
         self._awaiting_sample = False
         self._iteration_cohort_id: int | None = None
         self._iteration_prefill_layers_completed = 0
         self._iteration_prefill_layers_total = 0
+        self._iteration_prefill_progress_source = "none"
         self._cancelled_ack: set[str] = set()
+        self._decode_only_fast_path = False
         super().__init__(*args, **kwargs)
 
     def _clear_prefill(self) -> None:
@@ -44,25 +50,92 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
         self._prefill_cohort_id = None
         self._prefill_order = []
         self._prefill_cancelled = set()
+        self._prefill_compiled = False
+        self._prefill_full_forward_return = False
 
     def _snapshot_prefill_progress(self) -> None:
         if self._prefill_task is not None:
-            self._iteration_prefill_layers_completed = self._prefill_task.tasks[
-                "prefill"
-            ].completed_layers
+            task = self._prefill_task.tasks["prefill"]
+            complete_return = (
+                task.done and getattr(self, "_prefill_full_forward_return", False)
+            )
+            self._iteration_prefill_layers_completed = (
+                self._decoder_layer_count if complete_return else task.completed_layers
+            )
             self._iteration_prefill_layers_total = self._decoder_layer_count
+            self._iteration_prefill_progress_source = (
+                "full_forward_return" if complete_return else "layer_hooks"
+            )
+
+    def _execute_compiled_prefill(self, output: SchedulerOutput, controller: Any):
+        """A fresh full forward may use FX, but never D's ACL graph."""
+        task = self._prefill_task.tasks["prefill"]
+        if task.completed_layers != 0 or self._stream_mode != "fenced":
+            raise RuntimeError("Compiled prefill requires a fresh fenced forward")
+        with controller.full_prefill_compile_context():
+            result = self.model_runner.execute_model(output)
+        # A compiled FX call normally elides Python post-hooks. If native falls
+        # back to raw Python, require every layer hook rather than masking a
+        # partial forward with a fabricated full layer count.
+        if task.completed_layers not in (0, self._decoder_layer_count):
+            raise RuntimeError("Compiled prefill returned with incomplete layer hooks")
+        if result is not None or self.model_runner.execute_model_state is None:
+            raise RuntimeError(
+                "Compiled prefill requires a complete deferred native sampler"
+            )
+        self._prefill_full_forward_return = True
+        return result
 
     def _run_lane(
         self, interleaver: LayerInterleaver, lane: str, layer_budget: int | None
     ) -> None:
         self._interleaver = interleaver
         try:
+            if lane == "prefill" and getattr(self, "_prefill_compiled", False):
+                # This path was admitted with a full quota. Even a raw Python
+                # fallback must not suspend inside the compilation context.
+                layer_budget = None
             if layer_budget is None:
                 interleaver.run((lane,), sys.maxsize)
             else:
                 interleaver.step(lane, layer_budget)
         finally:
             self._interleaver = None
+
+    def _execute_decode_only(self, output: SchedulerOutput, decodes: set[str]) -> None:
+        """Run a complete D forward in its own lane without a resumable stack."""
+        cached = output.scheduled_cached_reqs
+        if (
+            all(req.req_id in decodes for req in output.scheduled_new_reqs)
+            and all(rid in decodes for rid in cached.req_ids)
+            and cached.resumed_req_ids <= decodes
+            and cached.all_token_ids.keys() <= decodes
+        ):
+            # Lifecycle work was applied to both runners above. Every request
+            # belongs to D, so retain the native per-request arrays instead of
+            # allocating sliced copies of all of them.
+            lane_output = replace(
+                output,
+                finished_req_ids=set(),
+                preempted_req_ids=(output.preempted_req_ids or set()) & decodes,
+            )
+        else:
+            lane_output = _select_requests(output, decodes, carry_side_effects=True)
+        backend = self._execution_backend
+        caller_state = backend.capture()
+        try:
+            backend.restore(self._lane_states["decode"])
+            result = self.decode_runner.execute_model(lane_output)
+            backend.fence()
+        finally:
+            backend.restore(caller_state)
+        if result is not None:
+            raise RuntimeError("MuxPD requires a deferred native decode sampler")
+        self._pending_lanes = ["decode"]
+        self._pending_order = list(lane_output.num_scheduled_tokens)
+        self.muxpd_stats["decode_batches"] += 1
+        self._decode_only_fast_path = True
+        self._awaiting_sample = True
 
     def _advance_lanes(
         self,
@@ -79,6 +152,14 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
             self._run_lane(decode, "decode", None)
             if prefill is not None:
                 self._run_lane(prefill, "prefill", prefill_budget)
+            return
+
+        if self._overlap_communication == "isolated":
+            # Independent HCCL groups remove the cross-lane collective chain.
+            # Submit the complete P quota once, then D; device work can overlap
+            # without a host greenlet round trip at every decoder layer.
+            self._run_lane(prefill, "prefill", prefill_budget)
+            self._run_lane(decode, "decode", None)
             return
 
         # Putting an entire decode network ahead of P would make P's first
@@ -115,6 +196,7 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
     def execute_model(self, scheduler_output: SchedulerOutput) -> None:
         if self._awaiting_sample:
             raise RuntimeError("MuxPD requires sampler ACK before another iteration")
+        previous_completed_decode_only = self._decode_only_fast_path
         self._step_profiler()
         if getattr(scheduler_output, "muxpd_execution", None) != "decoupled":
             raise ValueError("Persistent MuxPD worker requires the decoupled scheduler")
@@ -152,22 +234,81 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
         self._iteration_cohort_id = cohort_id
         self._iteration_prefill_layers_completed = 0
         self._iteration_prefill_layers_total = 0
+        self._iteration_prefill_progress_source = "none"
         self._cancelled_ack = set()
+        self._decode_only_fast_path = False
         self._pending_lanes = []
         self._pending_order = []
-        execution_output = self._begin_execution(scheduler_output)
         decodes = scheduled - new_prefills
         if decodes & pending:
             raise RuntimeError("A pinned prefill cannot simultaneously enter decode")
+
+        decode_only = bool(
+            decodes
+            and not new_prefills
+            and self._prefill_task is None
+            and not pending
+            and not cancelled
+            and cohort_id is None
+        )
+        reuse_decode_dependency = (
+            decode_only
+            and previous_completed_decode_only
+            and getattr(self, "_decode_graph_enabled", False)
+            and self._stream_mode == "fenced"
+            and getattr(self, "profiler", None) is None
+        )
+        if reuse_decode_dependency:
+            # The preceding D-only sampler completed successfully. Lifecycle
+            # edits above touch only host rows; native block zeroing happens
+            # inside execute_model on D. Preserve the latest backend tail: D
+            # FIFO suffices when it belongs to D, otherwise restore(D) still
+            # waits for its actual producer. Do not publish an empty caller
+            # event that creates a redundant caller -> D dependency.
+            # Custom collective RPCs that submit caller-stream device work
+            # must publish it through backend.fence(); bypassing that stream
+            # protocol is unsupported. Profiling always uses the full path.
+            execution_output = scheduler_output
+            key = "decode_preparation_fences_skipped"
+            self.muxpd_stats[key] = self.muxpd_stats.get(key, 0) + 1
+        else:
+            execution_output = self._begin_execution(scheduler_output)
+
+        if decode_only:
+            self._execute_decode_only(execution_output, decodes)
+            return None
+
+        budget = None
+        if pending and not scheduler_output.muxpd_pause_prefill and not (
+            pending <= (cancelled | self._prefill_cancelled)
+        ):
+            budget = scheduler_output.muxpd_layers_per_slice
+            if type(budget) is not int or budget < 1:
+                raise ValueError("MuxPD layer budget must be a positive integer")
+            if scheduler_output.muxpd_finish_prefill:
+                budget = None
 
         if new_prefills:
             output = _select_requests(
                 execution_output, new_prefills, carry_side_effects=not decodes
             )
             task = LayerInterleaver(self._execution_backend)
+            controller = getattr(self, "_decode_graph_controller", None)
+            self._prefill_compiled = bool(
+                controller is not None
+                and controller.compile_full_prefill
+                and not scheduler_output.muxpd_pause_prefill
+                and not cancelled
+                and (budget is None or budget >= self._decoder_layer_count)
+            )
+            self._prefill_full_forward_return = False
+            if self._prefill_compiled:
+                forward = partial(self._execute_compiled_prefill, output, controller)
+            else:
+                forward = partial(self.model_runner.execute_model, output)
             task.add(
                 "prefill",
-                lambda output=output: self.model_runner.execute_model(output),
+                forward,
                 self._lane_states["prefill"],
             )
             self._prefill_task = task
@@ -192,13 +333,6 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
             decode_task = task
             decode_order = list(output.num_scheduled_tokens)
 
-        budget = None
-        if self._prefill_task is not None and not scheduler_output.muxpd_pause_prefill:
-            budget = scheduler_output.muxpd_layers_per_slice
-            if type(budget) is not int or budget < 1:
-                raise ValueError("MuxPD layer budget must be a positive integer")
-            if scheduler_output.muxpd_finish_prefill:
-                budget = None
         self._advance_lanes(decode_task, budget, scheduler_output.muxpd_pause_prefill)
         self._snapshot_prefill_progress()
 
@@ -256,6 +390,7 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
         # or permission to free KV. Only the completion/cancellation ACK is that.
         output.muxpd_prefill_layers_completed = self._iteration_prefill_layers_completed
         output.muxpd_prefill_layers_total = self._iteration_prefill_layers_total
+        output.muxpd_prefill_progress_source = self._iteration_prefill_progress_source
         if prefill_completed:
             self._clear_prefill()
         self._awaiting_sample = False
@@ -263,5 +398,8 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
 
     def shutdown(self) -> None:
         if self._prefill_task is not None:
+            # Failed teardown or synchronization leaves the cohort owned here.
+            # Parent cleanup must not clear its streams/model before a retry can
+            # safely finish the abort and release the suspended task's state.
             self._abort_prefill()
         super().shutdown()

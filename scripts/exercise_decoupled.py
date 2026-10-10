@@ -7,10 +7,21 @@ deferred cancellation. HTTP timings alone cannot prove internal KV ownership.
 import argparse
 import asyncio
 import json
+import math
 import time
 from pathlib import Path
 
 import httpx
+
+
+def positive_finite_float(value):
+    try:
+        number = float(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("must be a positive finite number") from exc
+    if not math.isfinite(number) or number <= 0:
+        raise argparse.ArgumentTypeError("must be a positive finite number")
+    return number
 
 
 async def generate(client, base, model, rid, tokens, output_tokens, first_token):
@@ -86,7 +97,7 @@ async def main(args):
         )
         cancelled_at = None
         if args.cancel_prefill:
-            await asyncio.sleep(0.4)
+            await asyncio.sleep(args.cancel_after)
             cancelled_at = time.monotonic()
             prefill_task.cancel()
             try:
@@ -101,6 +112,7 @@ async def main(args):
         health.raise_for_status()
     report = {
         "passed": True,
+        "cancel_delay_s": args.cancel_after if args.cancel_prefill else None,
         "cancelled_at_monotonic": cancelled_at,
         "prefill_started_monotonic": prefill_started,
         "decode": decode,
@@ -131,4 +143,13 @@ if __name__ == "__main__":
     parser.add_argument("--model", default="Qwen3.5-35B-A3B")
     parser.add_argument("--output", required=True)
     parser.add_argument("--cancel-prefill", action="store_true")
+    parser.add_argument(
+        "--cancel-after",
+        type=positive_finite_float,
+        default=0.4,
+        help=(
+            "seconds after starting prefill to cancel with --cancel-prefill "
+            "(default: 0.4)"
+        ),
+    )
     asyncio.run(main(parser.parse_args()))

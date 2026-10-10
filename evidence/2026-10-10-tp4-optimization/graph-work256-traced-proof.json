@@ -1,0 +1,467 @@
+{
+  "schema_version": 1,
+  "passed": true,
+  "scope": "Host scheduler/worker progress and lifecycle protocol; not kernel overlap, KV contents, or performance evidence.",
+  "runtime_commit": "4caeeba",
+  "trace": {
+    "path": "local-results/perf-tp4/graph-work256-traced-817463.jsonl",
+    "bytes": 877659,
+    "sha256": "a268832d0c8dbaf81ec40511a3f6ef80c63c8b801fbeec1bdcc749b1368aff15"
+  },
+  "trace_lines": 1398,
+  "inputs": [
+    {
+      "path": "local-results/perf-tp4/graph-work256-traced-manifest.json",
+      "bytes": 3781,
+      "sha256": "3f8c51e927caae1d971f21162cfd761bfdea25f2dc03f4ea35b1af109212c58a"
+    },
+    {
+      "path": "local-results/perf-tp4/graph-work256-traced-calibration.json",
+      "bytes": 1761,
+      "sha256": "47e5bd13176e56b87b1c1e228f93a20453f00c038e7a71d7e6a94b0fa3bca478"
+    },
+    {
+      "path": "local-results/perf-tp4/graph-work256-traced-progress.json",
+      "bytes": 2059,
+      "sha256": "fc1bdf91f4dd98d66163fb360e8c87b50d638fe4f53f5c802d655bed46827ea7"
+    },
+    {
+      "path": "local-results/perf-tp4/graph-work256-traced-cancel.json",
+      "bytes": 1600,
+      "sha256": "1a25b64c1f943508a346510da58cb398362429c285c2ce3aa175647e43f5bcc8"
+    },
+    {
+      "path": "local-results/perf-tp4/graph-work256-traced-check.json",
+      "bytes": 681,
+      "sha256": "aa88e4421e022761e52ac2a8ff1bd961f308be2bf09431488be7984c5b85822c"
+    },
+    {
+      "path": "local-results/perf-tp4/native-graph-vs-graph-work256-traced.json",
+      "bytes": 490194,
+      "sha256": "3af61caaf0d174679b05910b6327df9f8bf2ade363c3834fe37d5dcd7ed8bbf9"
+    },
+    {
+      "path": "local-results/perf-tp4/validation-final.json",
+      "bytes": 2395,
+      "sha256": "55c558789829a432fae2d18fda1b099391f79da0b963a49df606b444fcd18522"
+    }
+  ],
+  "audit_script": {
+    "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/perf-tp4/graph-work256-traced-proof-audit.py",
+    "bytes": 8651,
+    "sha256": "529a1c5b7116430179a3d55497456a4a59d362762278146c05bde86c0c0362e1"
+  },
+  "reproduce": "python local-results/perf-tp4/graph-work256-traced-proof-audit.py",
+  "diagnostic_preparation": "Separate trace-on process, same frozen runtime source as timed work256. One 12000-token P request plus an 8-token-output warmup calibrated pure-P latency before these probes. Calibration and all diagnostics are excluded from performance aggregates.",
+  "selection": "All fresh 12000-token cohorts admitted alongside decode, and every token_budget_prefill_first/next-step repay_decode pair. Original lines are UTF-8 text without the terminal newline; numbers are 1-based.",
+  "completed_long_prefill": [
+    {
+      "cohort_id": 4,
+      "request_id": "cmpl-muxpd-prefill-probe-0-bbbbb678",
+      "steps": [
+        21,
+        22
+      ],
+      "full_prompt_tokens": 12000,
+      "scheduled_layer_quotas": [
+        21,
+        19
+      ],
+      "source_lines": [
+        61,
+        62,
+        63,
+        64,
+        65,
+        66
+      ],
+      "completed_layers": [
+        21,
+        40
+      ],
+      "actual_layer_deltas": [
+        21,
+        19
+      ]
+    }
+  ],
+  "cancelled_long_prefill": [
+    {
+      "cohort_id": 6,
+      "request_id": "cmpl-muxpd-prefill-probe-0-bdec98f1",
+      "steps": [
+        86,
+        87
+      ],
+      "full_prompt_tokens": 12000,
+      "scheduled_layer_quotas": [
+        21,
+        19
+      ],
+      "source_lines": [
+        256,
+        257,
+        258,
+        259,
+        260,
+        261,
+        262,
+        263,
+        264
+      ],
+      "completed_layers": [
+        21,
+        21
+      ],
+      "actual_layer_deltas": [
+        21,
+        0
+      ],
+      "cancel_ack": true,
+      "next_step_cohort_cleared": true
+    }
+  ],
+  "prefill_first_decode_debt_pairs": [
+    {
+      "prefill_first_step": 236,
+      "repay_decode_step": 237,
+      "deferred_ids": [
+        "chatcmpl-ba3ea6ce37d4e30d-963656c5"
+      ],
+      "computed_token_check": {
+        "chatcmpl-ba3ea6ce37d4e30d-963656c5": {
+          "previous_computed_before": 35,
+          "previous_scheduled_tokens": 1,
+          "computed_before_repayment": 36,
+          "extra_advance_during_prefill_only_step": 0
+        }
+      },
+      "source_lines": [
+        703,
+        704,
+        705,
+        706,
+        707,
+        708,
+        709,
+        710,
+        711
+      ]
+    },
+    {
+      "prefill_first_step": 301,
+      "repay_decode_step": 302,
+      "deferred_ids": [
+        "chatcmpl-919dbe75087117fb-a0db14fc"
+      ],
+      "computed_token_check": {
+        "chatcmpl-919dbe75087117fb-a0db14fc": {
+          "previous_computed_before": 0,
+          "previous_scheduled_tokens": 26,
+          "computed_before_repayment": 26,
+          "extra_advance_during_prefill_only_step": 0
+        }
+      },
+      "source_lines": [
+        898,
+        899,
+        900,
+        901,
+        902,
+        903,
+        904,
+        905,
+        906
+      ]
+    },
+    {
+      "prefill_first_step": 395,
+      "repay_decode_step": 396,
+      "deferred_ids": [
+        "chatcmpl-88af85c03c967b00-93c11e7c"
+      ],
+      "computed_token_check": {
+        "chatcmpl-88af85c03c967b00-93c11e7c": {
+          "previous_computed_before": 35,
+          "previous_scheduled_tokens": 1,
+          "computed_before_repayment": 36,
+          "extra_advance_during_prefill_only_step": 0
+        }
+      },
+      "source_lines": [
+        1180,
+        1181,
+        1182,
+        1183,
+        1184,
+        1185,
+        1186,
+        1187,
+        1188
+      ]
+    },
+    {
+      "prefill_first_step": 460,
+      "repay_decode_step": 461,
+      "deferred_ids": [
+        "chatcmpl-964c46e16b98ad6a-9672ed05"
+      ],
+      "computed_token_check": {
+        "chatcmpl-964c46e16b98ad6a-9672ed05": {
+          "previous_computed_before": 0,
+          "previous_scheduled_tokens": 26,
+          "computed_before_repayment": 26,
+          "extra_advance_during_prefill_only_step": 0
+        }
+      },
+      "source_lines": [
+        1375,
+        1376,
+        1377,
+        1378,
+        1379,
+        1380,
+        1381,
+        1382,
+        1383
+      ]
+    }
+  ],
+  "checker_summary": {
+    "passed": true,
+    "cohorts": 22,
+    "max_complete_prompt_tokens": 12000,
+    "max_decode_steps_before_prefill_completion": 1,
+    "prefill_retirements": {
+      "completed": 21,
+      "cancelled": 1
+    },
+    "receipt_checks": {
+      "layer_progress_steps": 466
+    },
+    "model_layers_by_pid": {
+      "817463": 40
+    },
+    "quota_reasons": {
+      "token_budget_quota": 1,
+      "uncalibrated": 442,
+      "deadline_quota": 22,
+      "control_step": 1
+    },
+    "progress_sources": {
+      "full_forward_return": 20,
+      "none": 442,
+      "layer_hooks": 4
+    },
+    "work_quota_sources": {
+      "prefill_layer_token_budget": 24
+    },
+    "scope": "host lifecycle/progress receipts; kernel overlap needs profiling"
+  },
+  "original_trace_lines": [
+    {
+      "line_number": 61,
+      "raw_line": "{\"computed_before\": {\"cmpl-muxpd-decode-probe-0-a2c8b2c2\": 129, \"cmpl-muxpd-prefill-probe-0-bbbbb678\": 0}, \"event\": \"schedule\", \"expected_tokens\": {\"cmpl-muxpd-decode-probe-0-a2c8b2c2\": 1, \"cmpl-muxpd-prefill-probe-0-bbbbb678\": 12000}, \"finished_req_ids\": [], \"phase\": \"multiplex\", \"pid\": 817463, \"policy\": {\"decode_slack_ms\": 0.0, \"estimated_decode_ms\": 0.0, \"estimated_prefill_ms\": 0.0, \"oldest_prefill_wait_ms\": 0.0, \"phase\": \"multiplex\", \"reason\": \"separate_model_batches\", \"request_ids\": [\"cmpl-muxpd-decode-probe-0-a2c8b2c2\", \"cmpl-muxpd-prefill-probe-0-bbbbb678\"]}, \"preempted_req_ids\": [], \"request_ids\": [\"cmpl-muxpd-decode-probe-0-a2c8b2c2\", \"cmpl-muxpd-prefill-probe-0-bbbbb678\"], \"request_phases\": {\"cmpl-muxpd-decode-probe-0-a2c8b2c2\": \"decode\", \"cmpl-muxpd-prefill-probe-0-bbbbb678\": \"prefill\"}, \"scheduled_tokens\": {\"cmpl-muxpd-decode-probe-0-a2c8b2c2\": 1, \"cmpl-muxpd-prefill-probe-0-bbbbb678\": 12000}, \"step\": 21, \"time\": 1565547.152843899}"
+    },
+    {
+      "line_number": 62,
+      "raw_line": "{\"admission\": {\"decode_debt_ids\": [], \"deferred_decode_ids\": [], \"enabled\": true, \"preview\": {\"work_quota\": {\"base_layers_per_slice\": 21, \"cohort_full_prefill_tokens\": 12000, \"configured_layers_per_slice\": 8, \"prefill_layer_token_budget\": 262144, \"source\": \"prefill_layer_token_budget\"}}, \"reason\": \"retain_layer_slicing\"}, \"cancelled_prefill_ids\": [], \"cohort_id\": 4, \"compile_full_prefill\": true, \"decode_ids\": [\"cmpl-muxpd-decode-probe-0-a2c8b2c2\"], \"event\": \"decoupled_schedule\", \"finish_prefill\": false, \"layers_completed_before\": 0, \"layers_per_slice\": 21, \"layers_total\": 40, \"new_prefill_ids\": [\"cmpl-muxpd-prefill-probe-0-bbbbb678\"], \"pause_prefill\": false, \"pending_prefill_ids\": [\"cmpl-muxpd-prefill-probe-0-bbbbb678\"], \"pid\": 817463, \"quota\": {\"allowed_decode_rounds\": 11, \"calibrated\": true, \"cohort_age_ms\": 6.01272308267653, \"decode_slo_feasible_without_prefill\": true, \"enabled\": true, \"estimate_scope\": \"deadline heuristic; not device overlap or SLO guarantee\", \"estimate_source\": \"completed_pure_phase_host_round_trip_ewma\", \"estimated_decode_ms\": 23.23897436023304, \"estimated_remaining_prefill_ms\": 724.0717656165361, \"latency_samples\": {\"decode\": 15, \"prefill\": 3}, \"reason\": \"deadline_quota\", \"work_quota\": {\"base_layers_per_slice\": 21, \"cohort_full_prefill_tokens\": 12000, \"configured_layers_per_slice\": 8, \"prefill_layer_token_budget\": 262144, \"source\": \"prefill_layer_token_budget\"}}, \"step\": 21, \"time\": 1565547.153529693}"
+    },
+    {
+      "line_number": 63,
+      "raw_line": "{\"cancelled_prefill_ids\": [], \"cohort_id\": 4, \"completed_prefill_ids\": [], \"decode_debt_ids\": [], \"decode_ids\": [\"cmpl-muxpd-decode-probe-0-a2c8b2c2\"], \"duration_ms\": 256.2079499475658, \"event\": \"decoupled_complete\", \"latency_sample_phase\": null, \"layers_completed\": 21, \"layers_total\": 40, \"pid\": 817463, \"progress_source\": \"layer_hooks\", \"step\": 21, \"time\": 1565547.409176712}"
+    },
+    {
+      "line_number": 64,
+      "raw_line": "{\"computed_before\": {\"cmpl-muxpd-decode-probe-0-a2c8b2c2\": 130}, \"event\": \"schedule\", \"expected_tokens\": {\"cmpl-muxpd-decode-probe-0-a2c8b2c2\": 1}, \"finished_req_ids\": [], \"phase\": \"decode\", \"pid\": 817463, \"policy\": {\"decode_slack_ms\": 0.0, \"estimated_decode_ms\": 0.0, \"estimated_prefill_ms\": 0.0, \"oldest_prefill_wait_ms\": 0.0, \"phase\": \"decode\", \"reason\": \"pending_prefill_decode_progress\", \"request_ids\": [\"cmpl-muxpd-decode-probe-0-a2c8b2c2\"]}, \"preempted_req_ids\": [], \"request_ids\": [\"cmpl-muxpd-decode-probe-0-a2c8b2c2\"], \"request_phases\": {\"cmpl-muxpd-decode-probe-0-a2c8b2c2\": \"decode\"}, \"scheduled_tokens\": {\"cmpl-muxpd-decode-probe-0-a2c8b2c2\": 1}, \"step\": 22, \"time\": 1565547.409357876}"
+    },
+    {
+      "line_number": 65,
+      "raw_line": "{\"admission\": {\"decode_debt_ids\": [], \"deferred_decode_ids\": [], \"enabled\": true, \"reason\": \"pending_cohort\"}, \"cancelled_prefill_ids\": [], \"cohort_id\": 4, \"compile_full_prefill\": true, \"decode_ids\": [\"cmpl-muxpd-decode-probe-0-a2c8b2c2\"], \"event\": \"decoupled_schedule\", \"finish_prefill\": true, \"layers_completed_before\": 21, \"layers_per_slice\": 19, \"layers_total\": 40, \"new_prefill_ids\": [], \"pause_prefill\": false, \"pending_prefill_ids\": [\"cmpl-muxpd-prefill-probe-0-bbbbb678\"], \"pid\": 817463, \"quota\": {\"allowed_decode_rounds\": 16, \"calibrated\": true, \"cohort_age_ms\": 262.5327301211655, \"decode_slo_feasible_without_prefill\": true, \"enabled\": true, \"estimate_scope\": \"deadline heuristic; not device overlap or SLO guarantee\", \"estimate_source\": \"completed_pure_phase_host_round_trip_ewma\", \"estimated_decode_ms\": 23.23897436023304, \"estimated_remaining_prefill_ms\": 343.93408866785467, \"latency_samples\": {\"decode\": 15, \"prefill\": 3}, \"reason\": \"deadline_quota\", \"work_quota\": {\"base_layers_per_slice\": 21, \"cohort_full_prefill_tokens\": 12000, \"configured_layers_per_slice\": 8, \"prefill_layer_token_budget\": 262144, \"source\": \"prefill_layer_token_budget\"}}, \"step\": 22, \"time\": 1565547.409869356}"
+    },
+    {
+      "line_number": 66,
+      "raw_line": "{\"cancelled_prefill_ids\": [], \"cohort_id\": 4, \"completed_prefill_ids\": [\"cmpl-muxpd-prefill-probe-0-bbbbb678\"], \"decode_debt_ids\": [], \"decode_ids\": [\"cmpl-muxpd-decode-probe-0-a2c8b2c2\"], \"duration_ms\": 215.33719799481332, \"event\": \"decoupled_complete\", \"latency_sample_phase\": null, \"layers_completed\": 40, \"layers_total\": 40, \"pid\": 817463, \"progress_source\": \"layer_hooks\", \"step\": 22, \"time\": 1565547.62495986}"
+    },
+    {
+      "line_number": 256,
+      "raw_line": "{\"computed_before\": {\"cmpl-muxpd-decode-probe-0-8c6c12e0\": 129, \"cmpl-muxpd-prefill-probe-0-bdec98f1\": 0}, \"event\": \"schedule\", \"expected_tokens\": {\"cmpl-muxpd-decode-probe-0-8c6c12e0\": 1, \"cmpl-muxpd-prefill-probe-0-bdec98f1\": 12000}, \"finished_req_ids\": [], \"phase\": \"multiplex\", \"pid\": 817463, \"policy\": {\"decode_slack_ms\": 0.0, \"estimated_decode_ms\": 0.0, \"estimated_prefill_ms\": 0.0, \"oldest_prefill_wait_ms\": 0.0, \"phase\": \"multiplex\", \"reason\": \"separate_model_batches\", \"request_ids\": [\"cmpl-muxpd-decode-probe-0-8c6c12e0\", \"cmpl-muxpd-prefill-probe-0-bdec98f1\"]}, \"preempted_req_ids\": [], \"request_ids\": [\"cmpl-muxpd-decode-probe-0-8c6c12e0\", \"cmpl-muxpd-prefill-probe-0-bdec98f1\"], \"request_phases\": {\"cmpl-muxpd-decode-probe-0-8c6c12e0\": \"decode\", \"cmpl-muxpd-prefill-probe-0-bdec98f1\": \"prefill\"}, \"scheduled_tokens\": {\"cmpl-muxpd-decode-probe-0-8c6c12e0\": 1, \"cmpl-muxpd-prefill-probe-0-bdec98f1\": 12000}, \"step\": 86, \"time\": 1565549.638305213}"
+    },
+    {
+      "line_number": 257,
+      "raw_line": "{\"admission\": {\"decode_debt_ids\": [], \"deferred_decode_ids\": [], \"enabled\": true, \"preview\": {\"work_quota\": {\"base_layers_per_slice\": 21, \"cohort_full_prefill_tokens\": 12000, \"configured_layers_per_slice\": 8, \"prefill_layer_token_budget\": 262144, \"source\": \"prefill_layer_token_budget\"}}, \"reason\": \"retain_layer_slicing\"}, \"cancelled_prefill_ids\": [], \"cohort_id\": 6, \"compile_full_prefill\": true, \"decode_ids\": [\"cmpl-muxpd-decode-probe-0-8c6c12e0\"], \"event\": \"decoupled_schedule\", \"finish_prefill\": false, \"layers_completed_before\": 0, \"layers_per_slice\": 21, \"layers_total\": 40, \"new_prefill_ids\": [\"cmpl-muxpd-prefill-probe-0-bdec98f1\"], \"pause_prefill\": false, \"pending_prefill_ids\": [\"cmpl-muxpd-prefill-probe-0-bdec98f1\"], \"pid\": 817463, \"quota\": {\"allowed_decode_rounds\": 12, \"calibrated\": true, \"cohort_age_ms\": 6.076435558497906, \"decode_slo_feasible_without_prefill\": true, \"enabled\": true, \"estimate_scope\": \"deadline heuristic; not device overlap or SLO guarantee\", \"estimate_source\": \"completed_pure_phase_host_round_trip_ewma\", \"estimated_decode_ms\": 21.474146585539312, \"estimated_remaining_prefill_ms\": 724.0717656165361, \"latency_samples\": {\"decode\": 76, \"prefill\": 4}, \"reason\": \"deadline_quota\", \"work_quota\": {\"base_layers_per_slice\": 21, \"cohort_full_prefill_tokens\": 12000, \"configured_layers_per_slice\": 8, \"prefill_layer_token_budget\": 262144, \"source\": \"prefill_layer_token_budget\"}}, \"step\": 86, \"time\": 1565549.638980767}"
+    },
+    {
+      "line_number": 258,
+      "raw_line": "{\"cancelled_prefill_ids\": [], \"cohort_id\": 6, \"completed_prefill_ids\": [], \"decode_debt_ids\": [], \"decode_ids\": [\"cmpl-muxpd-decode-probe-0-8c6c12e0\"], \"duration_ms\": 247.32645181939006, \"event\": \"decoupled_complete\", \"latency_sample_phase\": null, \"layers_completed\": 21, \"layers_total\": 40, \"pid\": 817463, \"progress_source\": \"layer_hooks\", \"step\": 86, \"time\": 1565549.885754918}"
+    },
+    {
+      "line_number": 259,
+      "raw_line": "{\"computed_before\": {\"cmpl-muxpd-decode-probe-0-8c6c12e0\": 130}, \"event\": \"schedule\", \"expected_tokens\": {\"cmpl-muxpd-decode-probe-0-8c6c12e0\": 1}, \"finished_req_ids\": [\"cmpl-muxpd-prefill-probe-0-bdec98f1\"], \"phase\": \"decode\", \"pid\": 817463, \"policy\": {\"decode_slack_ms\": 0.0, \"estimated_decode_ms\": 0.0, \"estimated_prefill_ms\": 0.0, \"oldest_prefill_wait_ms\": 0.0, \"phase\": \"decode\", \"reason\": \"pending_prefill_decode_progress\", \"request_ids\": [\"cmpl-muxpd-decode-probe-0-8c6c12e0\"]}, \"preempted_req_ids\": [], \"request_ids\": [\"cmpl-muxpd-decode-probe-0-8c6c12e0\"], \"request_phases\": {\"cmpl-muxpd-decode-probe-0-8c6c12e0\": \"decode\"}, \"scheduled_tokens\": {\"cmpl-muxpd-decode-probe-0-8c6c12e0\": 1}, \"step\": 87, \"time\": 1565549.885992842}"
+    },
+    {
+      "line_number": 260,
+      "raw_line": "{\"admission\": {\"decode_debt_ids\": [], \"deferred_decode_ids\": [], \"enabled\": true, \"reason\": \"pending_cohort\"}, \"cancelled_prefill_ids\": [\"cmpl-muxpd-prefill-probe-0-bdec98f1\"], \"cohort_id\": 6, \"compile_full_prefill\": true, \"decode_ids\": [\"cmpl-muxpd-decode-probe-0-8c6c12e0\"], \"event\": \"decoupled_schedule\", \"finish_prefill\": false, \"layers_completed_before\": 21, \"layers_per_slice\": 19, \"layers_total\": 40, \"new_prefill_ids\": [], \"pause_prefill\": false, \"pending_prefill_ids\": [\"cmpl-muxpd-prefill-probe-0-bdec98f1\"], \"pid\": 817463, \"quota\": {\"allowed_decode_rounds\": 18, \"calibrated\": true, \"cohort_age_ms\": 253.7693944759667, \"decode_slo_feasible_without_prefill\": true, \"enabled\": true, \"estimate_scope\": \"deadline heuristic; not device overlap or SLO guarantee\", \"estimate_source\": \"completed_pure_phase_host_round_trip_ewma\", \"estimated_decode_ms\": 21.474146585539312, \"estimated_remaining_prefill_ms\": 343.93408866785467, \"latency_samples\": {\"decode\": 76, \"prefill\": 4}, \"reason\": \"control_step\", \"work_quota\": {\"base_layers_per_slice\": 21, \"cohort_full_prefill_tokens\": 12000, \"configured_layers_per_slice\": 8, \"prefill_layer_token_budget\": 262144, \"source\": \"prefill_layer_token_budget\"}}, \"step\": 87, \"time\": 1565549.886490502}"
+    },
+    {
+      "line_number": 261,
+      "raw_line": "{\"cancelled_prefill_ids\": [\"cmpl-muxpd-prefill-probe-0-bdec98f1\"], \"cohort_id\": 6, \"completed_prefill_ids\": [], \"decode_debt_ids\": [], \"decode_ids\": [\"cmpl-muxpd-decode-probe-0-8c6c12e0\"], \"duration_ms\": 21.33334893733263, \"event\": \"decoupled_complete\", \"latency_sample_phase\": null, \"layers_completed\": 21, \"layers_total\": 40, \"pid\": 817463, \"progress_source\": \"layer_hooks\", \"step\": 87, \"time\": 1565549.907590397}"
+    },
+    {
+      "line_number": 262,
+      "raw_line": "{\"computed_before\": {\"cmpl-muxpd-decode-probe-0-8c6c12e0\": 131}, \"event\": \"schedule\", \"expected_tokens\": {\"cmpl-muxpd-decode-probe-0-8c6c12e0\": 1}, \"finished_req_ids\": [\"cmpl-muxpd-prefill-probe-0-bdec98f1\"], \"phase\": \"decode\", \"pid\": 817463, \"policy\": {\"decode_slack_ms\": 0.0, \"estimated_decode_ms\": 0.0, \"estimated_prefill_ms\": 0.0, \"oldest_prefill_wait_ms\": 0.0, \"phase\": \"decode\", \"reason\": \"separate_model_batches\", \"request_ids\": [\"cmpl-muxpd-decode-probe-0-8c6c12e0\"]}, \"preempted_req_ids\": [], \"request_ids\": [\"cmpl-muxpd-decode-probe-0-8c6c12e0\"], \"request_phases\": {\"cmpl-muxpd-decode-probe-0-8c6c12e0\": \"decode\"}, \"scheduled_tokens\": {\"cmpl-muxpd-decode-probe-0-8c6c12e0\": 1}, \"step\": 88, \"time\": 1565549.907815301}"
+    },
+    {
+      "line_number": 263,
+      "raw_line": "{\"admission\": {\"decode_debt_ids\": [], \"deferred_decode_ids\": [], \"enabled\": true, \"reason\": \"unchanged\"}, \"cancelled_prefill_ids\": [], \"cohort_id\": null, \"compile_full_prefill\": true, \"decode_ids\": [\"cmpl-muxpd-decode-probe-0-8c6c12e0\"], \"event\": \"decoupled_schedule\", \"finish_prefill\": false, \"layers_completed_before\": 0, \"layers_per_slice\": 8, \"layers_total\": 0, \"new_prefill_ids\": [], \"pause_prefill\": false, \"pending_prefill_ids\": [], \"pid\": 817463, \"quota\": {\"calibrated\": true, \"enabled\": true, \"estimate_scope\": \"deadline heuristic; not device overlap or SLO guarantee\", \"estimate_source\": \"completed_pure_phase_host_round_trip_ewma\", \"latency_samples\": {\"decode\": 76, \"prefill\": 4}, \"reason\": \"uncalibrated\", \"work_quota\": null}, \"step\": 88, \"time\": 1565549.908485895}"
+    },
+    {
+      "line_number": 264,
+      "raw_line": "{\"cancelled_prefill_ids\": [], \"cohort_id\": null, \"completed_prefill_ids\": [], \"decode_debt_ids\": [], \"decode_ids\": [\"cmpl-muxpd-decode-probe-0-8c6c12e0\"], \"duration_ms\": 18.37364910170436, \"event\": \"decoupled_complete\", \"latency_sample_phase\": \"decode\", \"layers_completed\": 0, \"layers_total\": 0, \"pid\": 817463, \"progress_source\": \"none\", \"step\": 88, \"time\": 1565549.926286262}"
+    },
+    {
+      "line_number": 703,
+      "raw_line": "{\"computed_before\": {\"chatcmpl-ba3ea6ce37d4e30d-963656c5\": 35}, \"event\": \"schedule\", \"expected_tokens\": {\"chatcmpl-ba3ea6ce37d4e30d-963656c5\": 1}, \"finished_req_ids\": [], \"phase\": \"decode\", \"pid\": 817463, \"policy\": {\"decode_slack_ms\": 0.0, \"estimated_decode_ms\": 0.0, \"estimated_prefill_ms\": 0.0, \"oldest_prefill_wait_ms\": 0.0, \"phase\": \"decode\", \"reason\": \"separate_model_batches\", \"request_ids\": [\"chatcmpl-ba3ea6ce37d4e30d-963656c5\"]}, \"preempted_req_ids\": [], \"request_ids\": [\"chatcmpl-ba3ea6ce37d4e30d-963656c5\"], \"request_phases\": {\"chatcmpl-ba3ea6ce37d4e30d-963656c5\": \"decode\"}, \"scheduled_tokens\": {\"chatcmpl-ba3ea6ce37d4e30d-963656c5\": 1}, \"step\": 235, \"time\": 1565554.62390468}"
+    },
+    {
+      "line_number": 704,
+      "raw_line": "{\"admission\": {\"decode_debt_ids\": [], \"deferred_decode_ids\": [], \"enabled\": true, \"reason\": \"unchanged\"}, \"cancelled_prefill_ids\": [], \"cohort_id\": null, \"compile_full_prefill\": true, \"decode_ids\": [\"chatcmpl-ba3ea6ce37d4e30d-963656c5\"], \"event\": \"decoupled_schedule\", \"finish_prefill\": false, \"layers_completed_before\": 0, \"layers_per_slice\": 8, \"layers_total\": 0, \"new_prefill_ids\": [], \"pause_prefill\": false, \"pending_prefill_ids\": [], \"pid\": 817463, \"quota\": {\"calibrated\": true, \"enabled\": true, \"estimate_scope\": \"deadline heuristic; not device overlap or SLO guarantee\", \"estimate_source\": \"completed_pure_phase_host_round_trip_ewma\", \"latency_samples\": {\"decode\": 213, \"prefill\": 9}, \"reason\": \"uncalibrated\", \"work_quota\": null}, \"step\": 235, \"time\": 1565554.6244069}"
+    },
+    {
+      "line_number": 705,
+      "raw_line": "{\"cancelled_prefill_ids\": [], \"cohort_id\": null, \"completed_prefill_ids\": [], \"decode_debt_ids\": [], \"decode_ids\": [\"chatcmpl-ba3ea6ce37d4e30d-963656c5\"], \"duration_ms\": 18.029862083494663, \"event\": \"decoupled_complete\", \"latency_sample_phase\": \"decode\", \"layers_completed\": 0, \"layers_total\": 0, \"pid\": 817463, \"progress_source\": \"none\", \"step\": 235, \"time\": 1565554.642042695}"
+    },
+    {
+      "line_number": 706,
+      "raw_line": "{\"computed_before\": {\"chatcmpl-a146866ab0d834ce-a46f3112\": 0}, \"event\": \"schedule\", \"expected_tokens\": {\"chatcmpl-a146866ab0d834ce-a46f3112\": 2735}, \"finished_req_ids\": [], \"phase\": \"prefill\", \"pid\": 817463, \"policy\": {\"decode_slack_ms\": 0.0, \"estimated_decode_ms\": 0.0, \"estimated_prefill_ms\": 0.0, \"oldest_prefill_wait_ms\": 0.0, \"phase\": \"prefill\", \"reason\": \"separate_model_batches\", \"request_ids\": [\"chatcmpl-a146866ab0d834ce-a46f3112\"]}, \"preempted_req_ids\": [], \"request_ids\": [\"chatcmpl-a146866ab0d834ce-a46f3112\"], \"request_phases\": {\"chatcmpl-a146866ab0d834ce-a46f3112\": \"prefill\"}, \"scheduled_tokens\": {\"chatcmpl-a146866ab0d834ce-a46f3112\": 2735}, \"step\": 236, \"time\": 1565554.642203298}"
+    },
+    {
+      "line_number": 707,
+      "raw_line": "{\"admission\": {\"decode_debt_ids\": [], \"deferred_decode_ids\": [\"chatcmpl-ba3ea6ce37d4e30d-963656c5\"], \"enabled\": true, \"preview\": {\"work_quota\": {\"base_layers_per_slice\": 40, \"cohort_full_prefill_tokens\": 2735, \"configured_layers_per_slice\": 8, \"prefill_layer_token_budget\": 262144, \"source\": \"prefill_layer_token_budget\"}}, \"reason\": \"token_budget_prefill_first\"}, \"cancelled_prefill_ids\": [], \"cohort_id\": 12, \"compile_full_prefill\": true, \"decode_ids\": [], \"event\": \"decoupled_schedule\", \"finish_prefill\": true, \"layers_completed_before\": 0, \"layers_per_slice\": 40, \"layers_total\": 40, \"new_prefill_ids\": [\"chatcmpl-a146866ab0d834ce-a46f3112\"], \"pause_prefill\": false, \"pending_prefill_ids\": [\"chatcmpl-a146866ab0d834ce-a46f3112\"], \"pid\": 817463, \"quota\": {\"allowed_decode_rounds\": 25, \"calibrated\": true, \"cohort_age_ms\": 12.480040779337287, \"decode_slo_feasible_without_prefill\": true, \"enabled\": true, \"estimate_scope\": \"deadline heuristic; not device overlap or SLO guarantee\", \"estimate_source\": \"completed_pure_phase_host_round_trip_ewma\", \"estimated_decode_ms\": 21.28456286445456, \"estimated_remaining_prefill_ms\": 452.0997648127377, \"latency_samples\": {\"decode\": 214, \"prefill\": 9}, \"reason\": \"deadline_quota\", \"work_quota\": {\"base_layers_per_slice\": 40, \"cohort_full_prefill_tokens\": 2735, \"configured_layers_per_slice\": 8, \"prefill_layer_token_budget\": 262144, \"source\": \"prefill_layer_token_budget\"}}, \"step\": 236, \"time\": 1565554.64278502}"
+    },
+    {
+      "line_number": 708,
+      "raw_line": "{\"cancelled_prefill_ids\": [], \"cohort_id\": 12, \"completed_prefill_ids\": [\"chatcmpl-a146866ab0d834ce-a46f3112\"], \"decode_debt_ids\": [\"chatcmpl-ba3ea6ce37d4e30d-963656c5\"], \"decode_ids\": [], \"duration_ms\": 324.04741598293185, \"event\": \"decoupled_complete\", \"latency_sample_phase\": \"prefill\", \"layers_completed\": 40, \"layers_total\": 40, \"pid\": 817463, \"progress_source\": \"full_forward_return\", \"step\": 236, \"time\": 1565554.966649282}"
+    },
+    {
+      "line_number": 709,
+      "raw_line": "{\"computed_before\": {\"chatcmpl-a146866ab0d834ce-a46f3112\": 2735, \"chatcmpl-ba3ea6ce37d4e30d-963656c5\": 36}, \"event\": \"schedule\", \"expected_tokens\": {\"chatcmpl-a146866ab0d834ce-a46f3112\": 1, \"chatcmpl-ba3ea6ce37d4e30d-963656c5\": 1}, \"finished_req_ids\": [], \"phase\": \"decode\", \"pid\": 817463, \"policy\": {\"decode_slack_ms\": 0.0, \"estimated_decode_ms\": 0.0, \"estimated_prefill_ms\": 0.0, \"oldest_prefill_wait_ms\": 0.0, \"phase\": \"decode\", \"reason\": \"separate_model_batches\", \"request_ids\": [\"chatcmpl-ba3ea6ce37d4e30d-963656c5\", \"chatcmpl-a146866ab0d834ce-a46f3112\"]}, \"preempted_req_ids\": [], \"request_ids\": [\"chatcmpl-ba3ea6ce37d4e30d-963656c5\", \"chatcmpl-a146866ab0d834ce-a46f3112\"], \"request_phases\": {\"chatcmpl-a146866ab0d834ce-a46f3112\": \"decode\", \"chatcmpl-ba3ea6ce37d4e30d-963656c5\": \"decode\"}, \"scheduled_tokens\": {\"chatcmpl-a146866ab0d834ce-a46f3112\": 1, \"chatcmpl-ba3ea6ce37d4e30d-963656c5\": 1}, \"step\": 237, \"time\": 1565554.966909347}"
+    },
+    {
+      "line_number": 710,
+      "raw_line": "{\"admission\": {\"decode_debt_ids\": [\"chatcmpl-ba3ea6ce37d4e30d-963656c5\"], \"deferred_decode_ids\": [], \"enabled\": true, \"reason\": \"repay_decode\"}, \"cancelled_prefill_ids\": [], \"cohort_id\": null, \"compile_full_prefill\": true, \"decode_ids\": [\"chatcmpl-a146866ab0d834ce-a46f3112\", \"chatcmpl-ba3ea6ce37d4e30d-963656c5\"], \"event\": \"decoupled_schedule\", \"finish_prefill\": false, \"layers_completed_before\": 0, \"layers_per_slice\": 8, \"layers_total\": 0, \"new_prefill_ids\": [], \"pause_prefill\": false, \"pending_prefill_ids\": [], \"pid\": 817463, \"quota\": {\"calibrated\": true, \"enabled\": true, \"estimate_scope\": \"deadline heuristic; not device overlap or SLO guarantee\", \"estimate_source\": \"completed_pure_phase_host_round_trip_ewma\", \"latency_samples\": {\"decode\": 214, \"prefill\": 10}, \"reason\": \"uncalibrated\", \"work_quota\": null}, \"step\": 237, \"time\": 1565554.967613521}"
+    },
+    {
+      "line_number": 711,
+      "raw_line": "{\"cancelled_prefill_ids\": [], \"cohort_id\": null, \"completed_prefill_ids\": [], \"decode_debt_ids\": [], \"decode_ids\": [\"chatcmpl-ba3ea6ce37d4e30d-963656c5\", \"chatcmpl-a146866ab0d834ce-a46f3112\"], \"duration_ms\": 20.54843306541443, \"event\": \"decoupled_complete\", \"latency_sample_phase\": \"decode\", \"layers_completed\": 0, \"layers_total\": 0, \"pid\": 817463, \"progress_source\": \"none\", \"step\": 237, \"time\": 1565554.987555972}"
+    },
+    {
+      "line_number": 898,
+      "raw_line": "{\"computed_before\": {\"chatcmpl-919dbe75087117fb-a0db14fc\": 0}, \"event\": \"schedule\", \"expected_tokens\": {\"chatcmpl-919dbe75087117fb-a0db14fc\": 26}, \"finished_req_ids\": [], \"phase\": \"prefill\", \"pid\": 817463, \"policy\": {\"decode_slack_ms\": 0.0, \"estimated_decode_ms\": 0.0, \"estimated_prefill_ms\": 0.0, \"oldest_prefill_wait_ms\": 0.0, \"phase\": \"prefill\", \"reason\": \"separate_model_batches\", \"request_ids\": [\"chatcmpl-919dbe75087117fb-a0db14fc\"]}, \"preempted_req_ids\": [], \"request_ids\": [\"chatcmpl-919dbe75087117fb-a0db14fc\"], \"request_phases\": {\"chatcmpl-919dbe75087117fb-a0db14fc\": \"prefill\"}, \"scheduled_tokens\": {\"chatcmpl-919dbe75087117fb-a0db14fc\": 26}, \"step\": 300, \"time\": 1565556.082822616}"
+    },
+    {
+      "line_number": 899,
+      "raw_line": "{\"admission\": {\"decode_debt_ids\": [], \"deferred_decode_ids\": [], \"enabled\": true, \"reason\": \"unchanged\"}, \"cancelled_prefill_ids\": [], \"cohort_id\": 13, \"compile_full_prefill\": true, \"decode_ids\": [], \"event\": \"decoupled_schedule\", \"finish_prefill\": true, \"layers_completed_before\": 0, \"layers_per_slice\": 40, \"layers_total\": 40, \"new_prefill_ids\": [\"chatcmpl-919dbe75087117fb-a0db14fc\"], \"pause_prefill\": false, \"pending_prefill_ids\": [\"chatcmpl-919dbe75087117fb-a0db14fc\"], \"pid\": 817463, \"quota\": {\"allowed_decode_rounds\": 27, \"calibrated\": true, \"cohort_age_ms\": 4.714006325230002, \"decode_slo_feasible_without_prefill\": true, \"enabled\": true, \"estimate_scope\": \"deadline heuristic; not device overlap or SLO guarantee\", \"estimate_source\": \"completed_pure_phase_host_round_trip_ewma\", \"estimated_decode_ms\": 21.93132127975431, \"estimated_remaining_prefill_ms\": 384.32127591222525, \"latency_samples\": {\"decode\": 276, \"prefill\": 10}, \"reason\": \"deadline_quota\", \"work_quota\": {\"base_layers_per_slice\": 40, \"cohort_full_prefill_tokens\": 26, \"configured_layers_per_slice\": 8, \"prefill_layer_token_budget\": 262144, \"source\": \"prefill_layer_token_budget\"}}, \"step\": 300, \"time\": 1565556.083350396}"
+    },
+    {
+      "line_number": 900,
+      "raw_line": "{\"cancelled_prefill_ids\": [], \"cohort_id\": 13, \"completed_prefill_ids\": [\"chatcmpl-919dbe75087117fb-a0db14fc\"], \"decode_debt_ids\": [], \"decode_ids\": [], \"duration_ms\": 318.66381713189185, \"event\": \"decoupled_complete\", \"latency_sample_phase\": \"prefill\", \"layers_completed\": 40, \"layers_total\": 40, \"pid\": 817463, \"progress_source\": \"full_forward_return\", \"step\": 300, \"time\": 1565556.401740159}"
+    },
+    {
+      "line_number": 901,
+      "raw_line": "{\"computed_before\": {\"chatcmpl-b20f8a844b15c89b-ae5d1802\": 0}, \"event\": \"schedule\", \"expected_tokens\": {\"chatcmpl-b20f8a844b15c89b-ae5d1802\": 39}, \"finished_req_ids\": [], \"phase\": \"prefill\", \"pid\": 817463, \"policy\": {\"decode_slack_ms\": 0.0, \"estimated_decode_ms\": 0.0, \"estimated_prefill_ms\": 0.0, \"oldest_prefill_wait_ms\": 0.0, \"phase\": \"prefill\", \"reason\": \"separate_model_batches\", \"request_ids\": [\"chatcmpl-b20f8a844b15c89b-ae5d1802\"]}, \"preempted_req_ids\": [], \"request_ids\": [\"chatcmpl-b20f8a844b15c89b-ae5d1802\"], \"request_phases\": {\"chatcmpl-b20f8a844b15c89b-ae5d1802\": \"prefill\"}, \"scheduled_tokens\": {\"chatcmpl-b20f8a844b15c89b-ae5d1802\": 39}, \"step\": 301, \"time\": 1565556.402026354}"
+    },
+    {
+      "line_number": 902,
+      "raw_line": "{\"admission\": {\"decode_debt_ids\": [], \"deferred_decode_ids\": [\"chatcmpl-919dbe75087117fb-a0db14fc\"], \"enabled\": true, \"preview\": {\"work_quota\": {\"base_layers_per_slice\": 40, \"cohort_full_prefill_tokens\": 39, \"configured_layers_per_slice\": 8, \"prefill_layer_token_budget\": 262144, \"source\": \"prefill_layer_token_budget\"}}, \"reason\": \"token_budget_prefill_first\"}, \"cancelled_prefill_ids\": [], \"cohort_id\": 14, \"compile_full_prefill\": true, \"decode_ids\": [], \"event\": \"decoupled_schedule\", \"finish_prefill\": true, \"layers_completed_before\": 0, \"layers_per_slice\": 40, \"layers_total\": 40, \"new_prefill_ids\": [\"chatcmpl-b20f8a844b15c89b-ae5d1802\"], \"pause_prefill\": false, \"pending_prefill_ids\": [\"chatcmpl-b20f8a844b15c89b-ae5d1802\"], \"pid\": 817463, \"quota\": {\"allowed_decode_rounds\": 11, \"calibrated\": true, \"cohort_age_ms\": 323.0881297495216, \"decode_slo_feasible_without_prefill\": true, \"enabled\": true, \"estimate_scope\": \"deadline heuristic; not device overlap or SLO guarantee\", \"estimate_source\": \"completed_pure_phase_host_round_trip_ewma\", \"estimated_decode_ms\": 21.93132127975431, \"estimated_remaining_prefill_ms\": 432.2836777986161, \"latency_samples\": {\"decode\": 276, \"prefill\": 11}, \"reason\": \"deadline_quota\", \"work_quota\": {\"base_layers_per_slice\": 40, \"cohort_full_prefill_tokens\": 39, \"configured_layers_per_slice\": 8, \"prefill_layer_token_budget\": 262144, \"source\": \"prefill_layer_token_budget\"}}, \"step\": 301, \"time\": 1565556.402715828}"
+    },
+    {
+      "line_number": 903,
+      "raw_line": "{\"cancelled_prefill_ids\": [], \"cohort_id\": 14, \"completed_prefill_ids\": [\"chatcmpl-b20f8a844b15c89b-ae5d1802\"], \"decode_debt_ids\": [\"chatcmpl-919dbe75087117fb-a0db14fc\"], \"decode_ids\": [], \"duration_ms\": 326.8239221069962, \"event\": \"decoupled_complete\", \"latency_sample_phase\": \"prefill\", \"layers_completed\": 40, \"layers_total\": 40, \"pid\": 817463, \"progress_source\": \"full_forward_return\", \"step\": 301, \"time\": 1565556.729058031}"
+    },
+    {
+      "line_number": 904,
+      "raw_line": "{\"computed_before\": {\"chatcmpl-919dbe75087117fb-a0db14fc\": 26, \"chatcmpl-b20f8a844b15c89b-ae5d1802\": 39}, \"event\": \"schedule\", \"expected_tokens\": {\"chatcmpl-919dbe75087117fb-a0db14fc\": 1, \"chatcmpl-b20f8a844b15c89b-ae5d1802\": 1}, \"finished_req_ids\": [], \"phase\": \"decode\", \"pid\": 817463, \"policy\": {\"decode_slack_ms\": 0.0, \"estimated_decode_ms\": 0.0, \"estimated_prefill_ms\": 0.0, \"oldest_prefill_wait_ms\": 0.0, \"phase\": \"decode\", \"reason\": \"separate_model_batches\", \"request_ids\": [\"chatcmpl-919dbe75087117fb-a0db14fc\", \"chatcmpl-b20f8a844b15c89b-ae5d1802\"]}, \"preempted_req_ids\": [], \"request_ids\": [\"chatcmpl-919dbe75087117fb-a0db14fc\", \"chatcmpl-b20f8a844b15c89b-ae5d1802\"], \"request_phases\": {\"chatcmpl-919dbe75087117fb-a0db14fc\": \"decode\", \"chatcmpl-b20f8a844b15c89b-ae5d1802\": \"decode\"}, \"scheduled_tokens\": {\"chatcmpl-919dbe75087117fb-a0db14fc\": 1, \"chatcmpl-b20f8a844b15c89b-ae5d1802\": 1}, \"step\": 302, \"time\": 1565556.729253974}"
+    },
+    {
+      "line_number": 905,
+      "raw_line": "{\"admission\": {\"decode_debt_ids\": [\"chatcmpl-919dbe75087117fb-a0db14fc\"], \"deferred_decode_ids\": [], \"enabled\": true, \"reason\": \"repay_decode\"}, \"cancelled_prefill_ids\": [], \"cohort_id\": null, \"compile_full_prefill\": true, \"decode_ids\": [\"chatcmpl-919dbe75087117fb-a0db14fc\", \"chatcmpl-b20f8a844b15c89b-ae5d1802\"], \"event\": \"decoupled_schedule\", \"finish_prefill\": false, \"layers_completed_before\": 0, \"layers_per_slice\": 8, \"layers_total\": 0, \"new_prefill_ids\": [], \"pause_prefill\": false, \"pending_prefill_ids\": [], \"pid\": 817463, \"quota\": {\"calibrated\": true, \"enabled\": true, \"estimate_scope\": \"deadline heuristic; not device overlap or SLO guarantee\", \"estimate_source\": \"completed_pure_phase_host_round_trip_ewma\", \"latency_samples\": {\"decode\": 276, \"prefill\": 12}, \"reason\": \"uncalibrated\", \"work_quota\": null}, \"step\": 302, \"time\": 1565556.729828286}"
+    },
+    {
+      "line_number": 906,
+      "raw_line": "{\"cancelled_prefill_ids\": [], \"cohort_id\": null, \"completed_prefill_ids\": [], \"decode_debt_ids\": [], \"decode_ids\": [\"chatcmpl-919dbe75087117fb-a0db14fc\", \"chatcmpl-b20f8a844b15c89b-ae5d1802\"], \"duration_ms\": 25.59046493843198, \"event\": \"decoupled_complete\", \"latency_sample_phase\": \"decode\", \"layers_completed\": 0, \"layers_total\": 0, \"pid\": 817463, \"progress_source\": \"none\", \"step\": 302, \"time\": 1565556.754946671}"
+    },
+    {
+      "line_number": 1180,
+      "raw_line": "{\"computed_before\": {\"chatcmpl-88af85c03c967b00-93c11e7c\": 35}, \"event\": \"schedule\", \"expected_tokens\": {\"chatcmpl-88af85c03c967b00-93c11e7c\": 1}, \"finished_req_ids\": [], \"phase\": \"decode\", \"pid\": 817463, \"policy\": {\"decode_slack_ms\": 0.0, \"estimated_decode_ms\": 0.0, \"estimated_prefill_ms\": 0.0, \"oldest_prefill_wait_ms\": 0.0, \"phase\": \"decode\", \"reason\": \"separate_model_batches\", \"request_ids\": [\"chatcmpl-88af85c03c967b00-93c11e7c\"]}, \"preempted_req_ids\": [], \"request_ids\": [\"chatcmpl-88af85c03c967b00-93c11e7c\"], \"request_phases\": {\"chatcmpl-88af85c03c967b00-93c11e7c\": \"decode\"}, \"scheduled_tokens\": {\"chatcmpl-88af85c03c967b00-93c11e7c\": 1}, \"step\": 394, \"time\": 1565560.013727836}"
+    },
+    {
+      "line_number": 1181,
+      "raw_line": "{\"admission\": {\"decode_debt_ids\": [], \"deferred_decode_ids\": [], \"enabled\": true, \"reason\": \"unchanged\"}, \"cancelled_prefill_ids\": [], \"cohort_id\": null, \"compile_full_prefill\": true, \"decode_ids\": [\"chatcmpl-88af85c03c967b00-93c11e7c\"], \"event\": \"decoupled_schedule\", \"finish_prefill\": false, \"layers_completed_before\": 0, \"layers_per_slice\": 8, \"layers_total\": 0, \"new_prefill_ids\": [], \"pause_prefill\": false, \"pending_prefill_ids\": [], \"pid\": 817463, \"quota\": {\"calibrated\": true, \"enabled\": true, \"estimate_scope\": \"deadline heuristic; not device overlap or SLO guarantee\", \"estimate_source\": \"completed_pure_phase_host_round_trip_ewma\", \"latency_samples\": {\"decode\": 358, \"prefill\": 17}, \"reason\": \"uncalibrated\", \"work_quota\": null}, \"step\": 394, \"time\": 1565560.014278087}"
+    },
+    {
+      "line_number": 1182,
+      "raw_line": "{\"cancelled_prefill_ids\": [], \"cohort_id\": null, \"completed_prefill_ids\": [], \"decode_debt_ids\": [], \"decode_ids\": [\"chatcmpl-88af85c03c967b00-93c11e7c\"], \"duration_ms\": 18.616334069520235, \"event\": \"decoupled_complete\", \"latency_sample_phase\": \"decode\", \"layers_completed\": 0, \"layers_total\": 0, \"pid\": 817463, \"progress_source\": \"none\", \"step\": 394, \"time\": 1565560.032454463}"
+    },
+    {
+      "line_number": 1183,
+      "raw_line": "{\"computed_before\": {\"chatcmpl-8f43c9f06667bf37-bcddcda6\": 0}, \"event\": \"schedule\", \"expected_tokens\": {\"chatcmpl-8f43c9f06667bf37-bcddcda6\": 2735}, \"finished_req_ids\": [], \"phase\": \"prefill\", \"pid\": 817463, \"policy\": {\"decode_slack_ms\": 0.0, \"estimated_decode_ms\": 0.0, \"estimated_prefill_ms\": 0.0, \"oldest_prefill_wait_ms\": 0.0, \"phase\": \"prefill\", \"reason\": \"separate_model_batches\", \"request_ids\": [\"chatcmpl-8f43c9f06667bf37-bcddcda6\"]}, \"preempted_req_ids\": [], \"request_ids\": [\"chatcmpl-8f43c9f06667bf37-bcddcda6\"], \"request_phases\": {\"chatcmpl-8f43c9f06667bf37-bcddcda6\": \"prefill\"}, \"scheduled_tokens\": {\"chatcmpl-8f43c9f06667bf37-bcddcda6\": 2735}, \"step\": 395, \"time\": 1565560.032622006}"
+    },
+    {
+      "line_number": 1184,
+      "raw_line": "{\"admission\": {\"decode_debt_ids\": [], \"deferred_decode_ids\": [\"chatcmpl-88af85c03c967b00-93c11e7c\"], \"enabled\": true, \"preview\": {\"work_quota\": {\"base_layers_per_slice\": 40, \"cohort_full_prefill_tokens\": 2735, \"configured_layers_per_slice\": 8, \"prefill_layer_token_budget\": 262144, \"source\": \"prefill_layer_token_budget\"}}, \"reason\": \"token_budget_prefill_first\"}, \"cancelled_prefill_ids\": [], \"cohort_id\": 20, \"compile_full_prefill\": true, \"decode_ids\": [], \"event\": \"decoupled_schedule\", \"finish_prefill\": true, \"layers_completed_before\": 0, \"layers_per_slice\": 40, \"layers_total\": 40, \"new_prefill_ids\": [\"chatcmpl-8f43c9f06667bf37-bcddcda6\"], \"pause_prefill\": false, \"pending_prefill_ids\": [\"chatcmpl-8f43c9f06667bf37-bcddcda6\"], \"pid\": 817463, \"quota\": {\"allowed_decode_rounds\": 25, \"calibrated\": true, \"cohort_age_ms\": 11.773094302043319, \"decode_slo_feasible_without_prefill\": true, \"enabled\": true, \"estimate_scope\": \"deadline heuristic; not device overlap or SLO guarantee\", \"estimate_source\": \"completed_pure_phase_host_round_trip_ewma\", \"estimated_decode_ms\": 21.26298257526639, \"estimated_remaining_prefill_ms\": 435.93692050874233, \"latency_samples\": {\"decode\": 359, \"prefill\": 17}, \"reason\": \"deadline_quota\", \"work_quota\": {\"base_layers_per_slice\": 40, \"cohort_full_prefill_tokens\": 2735, \"configured_layers_per_slice\": 8, \"prefill_layer_token_budget\": 262144, \"source\": \"prefill_layer_token_budget\"}}, \"step\": 395, \"time\": 1565560.033210238}"
+    },
+    {
+      "line_number": 1185,
+      "raw_line": "{\"cancelled_prefill_ids\": [], \"cohort_id\": 20, \"completed_prefill_ids\": [\"chatcmpl-8f43c9f06667bf37-bcddcda6\"], \"decode_debt_ids\": [\"chatcmpl-88af85c03c967b00-93c11e7c\"], \"decode_ids\": [], \"duration_ms\": 350.64788185991347, \"event\": \"decoupled_complete\", \"latency_sample_phase\": \"prefill\", \"layers_completed\": 40, \"layers_total\": 40, \"pid\": 817463, \"progress_source\": \"full_forward_return\", \"step\": 395, \"time\": 1565560.383567044}"
+    },
+    {
+      "line_number": 1186,
+      "raw_line": "{\"computed_before\": {\"chatcmpl-88af85c03c967b00-93c11e7c\": 36, \"chatcmpl-8f43c9f06667bf37-bcddcda6\": 2735}, \"event\": \"schedule\", \"expected_tokens\": {\"chatcmpl-88af85c03c967b00-93c11e7c\": 1, \"chatcmpl-8f43c9f06667bf37-bcddcda6\": 1}, \"finished_req_ids\": [], \"phase\": \"decode\", \"pid\": 817463, \"policy\": {\"decode_slack_ms\": 0.0, \"estimated_decode_ms\": 0.0, \"estimated_prefill_ms\": 0.0, \"oldest_prefill_wait_ms\": 0.0, \"phase\": \"decode\", \"reason\": \"separate_model_batches\", \"request_ids\": [\"chatcmpl-88af85c03c967b00-93c11e7c\", \"chatcmpl-8f43c9f06667bf37-bcddcda6\"]}, \"preempted_req_ids\": [], \"request_ids\": [\"chatcmpl-88af85c03c967b00-93c11e7c\", \"chatcmpl-8f43c9f06667bf37-bcddcda6\"], \"request_phases\": {\"chatcmpl-88af85c03c967b00-93c11e7c\": \"decode\", \"chatcmpl-8f43c9f06667bf37-bcddcda6\": \"decode\"}, \"scheduled_tokens\": {\"chatcmpl-88af85c03c967b00-93c11e7c\": 1, \"chatcmpl-8f43c9f06667bf37-bcddcda6\": 1}, \"step\": 396, \"time\": 1565560.383802379}"
+    },
+    {
+      "line_number": 1187,
+      "raw_line": "{\"admission\": {\"decode_debt_ids\": [\"chatcmpl-88af85c03c967b00-93c11e7c\"], \"deferred_decode_ids\": [], \"enabled\": true, \"reason\": \"repay_decode\"}, \"cancelled_prefill_ids\": [], \"cohort_id\": null, \"compile_full_prefill\": true, \"decode_ids\": [\"chatcmpl-88af85c03c967b00-93c11e7c\", \"chatcmpl-8f43c9f06667bf37-bcddcda6\"], \"event\": \"decoupled_schedule\", \"finish_prefill\": false, \"layers_completed_before\": 0, \"layers_per_slice\": 8, \"layers_total\": 0, \"new_prefill_ids\": [], \"pause_prefill\": false, \"pending_prefill_ids\": [], \"pid\": 817463, \"quota\": {\"calibrated\": true, \"enabled\": true, \"estimate_scope\": \"deadline heuristic; not device overlap or SLO guarantee\", \"estimate_source\": \"completed_pure_phase_host_round_trip_ewma\", \"latency_samples\": {\"decode\": 359, \"prefill\": 18}, \"reason\": \"uncalibrated\", \"work_quota\": null}, \"step\": 396, \"time\": 1565560.384520313}"
+    },
+    {
+      "line_number": 1188,
+      "raw_line": "{\"cancelled_prefill_ids\": [], \"cohort_id\": null, \"completed_prefill_ids\": [], \"decode_debt_ids\": [], \"decode_ids\": [\"chatcmpl-88af85c03c967b00-93c11e7c\", \"chatcmpl-8f43c9f06667bf37-bcddcda6\"], \"duration_ms\": 44.990504859015346, \"event\": \"decoupled_complete\", \"latency_sample_phase\": \"decode\", \"layers_completed\": 0, \"layers_total\": 0, \"pid\": 817463, \"progress_source\": \"none\", \"step\": 396, \"time\": 1565560.428894146}"
+    },
+    {
+      "line_number": 1375,
+      "raw_line": "{\"computed_before\": {\"chatcmpl-964c46e16b98ad6a-9672ed05\": 0}, \"event\": \"schedule\", \"expected_tokens\": {\"chatcmpl-964c46e16b98ad6a-9672ed05\": 26}, \"finished_req_ids\": [], \"phase\": \"prefill\", \"pid\": 817463, \"policy\": {\"decode_slack_ms\": 0.0, \"estimated_decode_ms\": 0.0, \"estimated_prefill_ms\": 0.0, \"oldest_prefill_wait_ms\": 0.0, \"phase\": \"prefill\", \"reason\": \"separate_model_batches\", \"request_ids\": [\"chatcmpl-964c46e16b98ad6a-9672ed05\"]}, \"preempted_req_ids\": [], \"request_ids\": [\"chatcmpl-964c46e16b98ad6a-9672ed05\"], \"request_phases\": {\"chatcmpl-964c46e16b98ad6a-9672ed05\": \"prefill\"}, \"scheduled_tokens\": {\"chatcmpl-964c46e16b98ad6a-9672ed05\": 26}, \"step\": 459, \"time\": 1565561.616066432}"
+    },
+    {
+      "line_number": 1376,
+      "raw_line": "{\"admission\": {\"decode_debt_ids\": [], \"deferred_decode_ids\": [], \"enabled\": true, \"reason\": \"unchanged\"}, \"cancelled_prefill_ids\": [], \"cohort_id\": 21, \"compile_full_prefill\": true, \"decode_ids\": [], \"event\": \"decoupled_schedule\", \"finish_prefill\": true, \"layers_completed_before\": 0, \"layers_per_slice\": 40, \"layers_total\": 40, \"new_prefill_ids\": [\"chatcmpl-964c46e16b98ad6a-9672ed05\"], \"pause_prefill\": false, \"pending_prefill_ids\": [\"chatcmpl-964c46e16b98ad6a-9672ed05\"], \"pid\": 817463, \"quota\": {\"allowed_decode_rounds\": 27, \"calibrated\": true, \"cohort_age_ms\": 4.57644066773355, \"decode_slo_feasible_without_prefill\": true, \"enabled\": true, \"estimate_scope\": \"deadline heuristic; not device overlap or SLO guarantee\", \"estimate_source\": \"completed_pure_phase_host_round_trip_ewma\", \"estimated_decode_ms\": 21.970489244883645, \"estimated_remaining_prefill_ms\": 389.98523531109095, \"latency_samples\": {\"decode\": 421, \"prefill\": 18}, \"reason\": \"deadline_quota\", \"work_quota\": {\"base_layers_per_slice\": 40, \"cohort_full_prefill_tokens\": 26, \"configured_layers_per_slice\": 8, \"prefill_layer_token_budget\": 262144, \"source\": \"prefill_layer_token_budget\"}}, \"step\": 459, \"time\": 1565561.616669164}"
+    },
+    {
+      "line_number": 1377,
+      "raw_line": "{\"cancelled_prefill_ids\": [], \"cohort_id\": 21, \"completed_prefill_ids\": [\"chatcmpl-964c46e16b98ad6a-9672ed05\"], \"decode_debt_ids\": [], \"decode_ids\": [], \"duration_ms\": 344.88209686242044, \"event\": \"decoupled_complete\", \"latency_sample_phase\": \"prefill\", \"layers_completed\": 40, \"layers_total\": 40, \"pid\": 817463, \"progress_source\": \"full_forward_return\", \"step\": 459, \"time\": 1565561.961203014}"
+    },
+    {
+      "line_number": 1378,
+      "raw_line": "{\"computed_before\": {\"chatcmpl-82591ff498430d4f-a0ffe025\": 0}, \"event\": \"schedule\", \"expected_tokens\": {\"chatcmpl-82591ff498430d4f-a0ffe025\": 39}, \"finished_req_ids\": [], \"phase\": \"prefill\", \"pid\": 817463, \"policy\": {\"decode_slack_ms\": 0.0, \"estimated_decode_ms\": 0.0, \"estimated_prefill_ms\": 0.0, \"oldest_prefill_wait_ms\": 0.0, \"phase\": \"prefill\", \"reason\": \"separate_model_batches\", \"request_ids\": [\"chatcmpl-82591ff498430d4f-a0ffe025\"]}, \"preempted_req_ids\": [], \"request_ids\": [\"chatcmpl-82591ff498430d4f-a0ffe025\"], \"request_phases\": {\"chatcmpl-82591ff498430d4f-a0ffe025\": \"prefill\"}, \"scheduled_tokens\": {\"chatcmpl-82591ff498430d4f-a0ffe025\": 39}, \"step\": 460, \"time\": 1565561.96148028}"
+    },
+    {
+      "line_number": 1379,
+      "raw_line": "{\"admission\": {\"decode_debt_ids\": [], \"deferred_decode_ids\": [\"chatcmpl-964c46e16b98ad6a-9672ed05\"], \"enabled\": true, \"preview\": {\"work_quota\": {\"base_layers_per_slice\": 40, \"cohort_full_prefill_tokens\": 39, \"configured_layers_per_slice\": 8, \"prefill_layer_token_budget\": 262144, \"source\": \"prefill_layer_token_budget\"}}, \"reason\": \"token_budget_prefill_first\"}, \"cancelled_prefill_ids\": [], \"cohort_id\": 22, \"compile_full_prefill\": true, \"decode_ids\": [], \"event\": \"decoupled_schedule\", \"finish_prefill\": true, \"layers_completed_before\": 0, \"layers_per_slice\": 40, \"layers_total\": 40, \"new_prefill_ids\": [\"chatcmpl-82591ff498430d4f-a0ffe025\"], \"pause_prefill\": false, \"pending_prefill_ids\": [\"chatcmpl-82591ff498430d4f-a0ffe025\"], \"pid\": 817463, \"quota\": {\"allowed_decode_rounds\": 9, \"calibrated\": true, \"cohort_age_ms\": 349.15164252743125, \"decode_slo_feasible_without_prefill\": true, \"enabled\": true, \"estimate_scope\": \"deadline heuristic; not device overlap or SLO guarantee\", \"estimate_source\": \"completed_pure_phase_host_round_trip_ewma\", \"estimated_decode_ms\": 21.970489244883645, \"estimated_remaining_prefill_ms\": 432.1550571511189, \"latency_samples\": {\"decode\": 421, \"prefill\": 19}, \"reason\": \"deadline_quota\", \"work_quota\": {\"base_layers_per_slice\": 40, \"cohort_full_prefill_tokens\": 39, \"configured_layers_per_slice\": 8, \"prefill_layer_token_budget\": 262144, \"source\": \"prefill_layer_token_budget\"}}, \"step\": 460, \"time\": 1565561.962186864}"
+    },
+    {
+      "line_number": 1380,
+      "raw_line": "{\"cancelled_prefill_ids\": [], \"cohort_id\": 22, \"completed_prefill_ids\": [\"chatcmpl-82591ff498430d4f-a0ffe025\"], \"decode_debt_ids\": [\"chatcmpl-964c46e16b98ad6a-9672ed05\"], \"decode_ids\": [], \"duration_ms\": 352.9144390486181, \"event\": \"decoupled_complete\", \"latency_sample_phase\": \"prefill\", \"layers_completed\": 40, \"layers_total\": 40, \"pid\": 817463, \"progress_source\": \"full_forward_return\", \"step\": 460, \"time\": 1565562.314777756}"
+    },
+    {
+      "line_number": 1381,
+      "raw_line": "{\"computed_before\": {\"chatcmpl-82591ff498430d4f-a0ffe025\": 39, \"chatcmpl-964c46e16b98ad6a-9672ed05\": 26}, \"event\": \"schedule\", \"expected_tokens\": {\"chatcmpl-82591ff498430d4f-a0ffe025\": 1, \"chatcmpl-964c46e16b98ad6a-9672ed05\": 1}, \"finished_req_ids\": [], \"phase\": \"decode\", \"pid\": 817463, \"policy\": {\"decode_slack_ms\": 0.0, \"estimated_decode_ms\": 0.0, \"estimated_prefill_ms\": 0.0, \"oldest_prefill_wait_ms\": 0.0, \"phase\": \"decode\", \"reason\": \"separate_model_batches\", \"request_ids\": [\"chatcmpl-964c46e16b98ad6a-9672ed05\", \"chatcmpl-82591ff498430d4f-a0ffe025\"]}, \"preempted_req_ids\": [], \"request_ids\": [\"chatcmpl-964c46e16b98ad6a-9672ed05\", \"chatcmpl-82591ff498430d4f-a0ffe025\"], \"request_phases\": {\"chatcmpl-82591ff498430d4f-a0ffe025\": \"decode\", \"chatcmpl-964c46e16b98ad6a-9672ed05\": \"decode\"}, \"scheduled_tokens\": {\"chatcmpl-82591ff498430d4f-a0ffe025\": 1, \"chatcmpl-964c46e16b98ad6a-9672ed05\": 1}, \"step\": 461, \"time\": 1565562.31502053}"
+    },
+    {
+      "line_number": 1382,
+      "raw_line": "{\"admission\": {\"decode_debt_ids\": [\"chatcmpl-964c46e16b98ad6a-9672ed05\"], \"deferred_decode_ids\": [], \"enabled\": true, \"reason\": \"repay_decode\"}, \"cancelled_prefill_ids\": [], \"cohort_id\": null, \"compile_full_prefill\": true, \"decode_ids\": [\"chatcmpl-82591ff498430d4f-a0ffe025\", \"chatcmpl-964c46e16b98ad6a-9672ed05\"], \"event\": \"decoupled_schedule\", \"finish_prefill\": false, \"layers_completed_before\": 0, \"layers_per_slice\": 8, \"layers_total\": 0, \"new_prefill_ids\": [], \"pause_prefill\": false, \"pending_prefill_ids\": [], \"pid\": 817463, \"quota\": {\"calibrated\": true, \"enabled\": true, \"estimate_scope\": \"deadline heuristic; not device overlap or SLO guarantee\", \"estimate_source\": \"completed_pure_phase_host_round_trip_ewma\", \"latency_samples\": {\"decode\": 421, \"prefill\": 20}, \"reason\": \"uncalibrated\", \"work_quota\": null}, \"step\": 461, \"time\": 1565562.315739635}"
+    },
+    {
+      "line_number": 1383,
+      "raw_line": "{\"cancelled_prefill_ids\": [], \"cohort_id\": null, \"completed_prefill_ids\": [], \"decode_debt_ids\": [], \"decode_ids\": [\"chatcmpl-964c46e16b98ad6a-9672ed05\", \"chatcmpl-82591ff498430d4f-a0ffe025\"], \"duration_ms\": 20.516433054581285, \"event\": \"decoupled_complete\", \"latency_sample_phase\": \"decode\", \"layers_completed\": 0, \"layers_total\": 0, \"pid\": 817463, \"progress_source\": \"none\", \"step\": 461, \"time\": 1565562.335635845}"
+    }
+  ]
+}

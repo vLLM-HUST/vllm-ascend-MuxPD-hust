@@ -142,7 +142,44 @@ def test_supported_execution_modes_and_scheduler_pairing(mode, scheduler):
         {"execution": "serial", "stream_mode": "overlap"},
         {"adaptive_layers": 1},
         {"adaptive_layers": True},
+        {"prefill_first": 1},
+        {"prefill_first": True},
+        {"execution": "decoupled", "prefill_first": True},
+        {
+            "execution": "decoupled",
+            "adaptive_layers": True,
+            "stream_mode": "overlap",
+            "prefill_first": True,
+        },
+        {"overlap_communication": "other"},
+        {"overlap_communication": "isolated"},
+        {"execution": "decoupled", "overlap_communication": "isolated"},
+        {
+            "execution": "layered",
+            "stream_mode": "overlap",
+            "overlap_communication": "isolated",
+        },
         {"layers_per_slice": 0},
+        {"prefill_layer_token_budget": -1},
+        {"prefill_layer_token_budget": True},
+        {"prefill_layer_token_budget": 1.5},
+        {"prefill_layer_token_budget": "65536"},
+        {"prefill_layer_token_budget": 65536},
+        {"execution": "layered", "prefill_layer_token_budget": 65536},
+        {"decode_graph": 1},
+        {"decode_graph": True},
+        {"execution": "layered", "decode_graph": True},
+        {"execution": "decoupled", "stream_mode": "overlap", "decode_graph": True},
+        {"compile_full_prefill": 1},
+        {"compile_full_prefill": True},
+        {"execution": "decoupled", "compile_full_prefill": True},
+        {"execution": "layered", "decode_graph": True, "compile_full_prefill": True},
+        {
+            "execution": "decoupled",
+            "stream_mode": "overlap",
+            "decode_graph": True,
+            "compile_full_prefill": True,
+        },
         [],
         False,
         "",
@@ -158,6 +195,52 @@ def test_overlap_is_explicit_for_cooperative_execution(execution):
     assert MuxPDConfig(execution=execution).stream_mode == "fenced"
     config = MuxPDConfig(execution=execution, stream_mode="overlap")
     assert config.stream_mode == "overlap"
+
+
+def test_prefill_first_is_explicit_and_requires_adaptive_fenced():
+    assert not MuxPDConfig().prefill_first
+    config = MuxPDConfig(
+        execution="decoupled", adaptive_layers=True, prefill_first=True
+    )
+    assert config.prefill_first and config.stream_mode == "fenced"
+
+
+def test_isolated_communication_is_explicit_for_decoupled_overlap():
+    assert MuxPDConfig().overlap_communication == "shared"
+    config = MuxPDConfig(
+        execution="decoupled", stream_mode="overlap", overlap_communication="isolated"
+    )
+    assert config.overlap_communication == "isolated"
+
+
+def test_decode_graph_is_explicit_and_requires_decoupled_fenced():
+    assert not MuxPDConfig().decode_graph
+    config = MuxPDConfig(execution="decoupled", decode_graph=True)
+    assert config.decode_graph and config.stream_mode == "fenced"
+
+
+def test_full_prefill_compile_requires_explicit_decode_graph_fenced():
+    assert not MuxPDConfig().compile_full_prefill
+    config = MuxPDConfig.from_mapping(
+        {
+            "execution": "decoupled",
+            "decode_graph": True,
+            "compile_full_prefill": True,
+        }
+    )
+    assert config.compile_full_prefill and config.stream_mode == "fenced"
+
+
+@pytest.mark.parametrize("budget", [0, 65536, 131072, 262144])
+@pytest.mark.parametrize("stream_mode", ["fenced", "overlap"])
+def test_layer_token_budget_is_optional_for_decoupled(budget, stream_mode):
+    assert MuxPDConfig().prefill_layer_token_budget == 0
+    config = MuxPDConfig(
+        execution="decoupled",
+        stream_mode=stream_mode,
+        prefill_layer_token_budget=budget,
+    )
+    assert config.prefill_layer_token_budget == budget
 
 
 def engine_config():

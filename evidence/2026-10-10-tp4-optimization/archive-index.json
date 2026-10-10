@@ -1,0 +1,618 @@
+{
+  "schema_version": 1,
+  "scope": "Completed TP4 evidence through all six work256 benchmark runs, both native graph baseline stages, corrected FX proof, three-way state-reuse diagnosis, same-source trace-on 21+19 layer progress/cancellation ACK/decode-debt proof, final test validation and restored TP2 service smoke checks. Diagnostic calibration and restored TP2 smoke are not performance samples.",
+  "copy_policy": "Byte-identical copies of completed JSON, manifests and compact audit reports/scripts. No full profiler, scheduler JSONL, server log, frozen source tree or incomplete receipt is copied.",
+  "files": [
+    {
+      "file": "original-comparison.md",
+      "source": "local-results/perf-tp4/original-comparison.md",
+      "bytes": 10721,
+      "sha256": "bb724fbebd172ee2c4cc8ec13276dc287d0dab14d5d5b50039bb9db917f6290a"
+    },
+    {
+      "file": "scheduler-findings.md",
+      "source": "local-results/perf-tp4/scheduler-findings.md",
+      "bytes": 7581,
+      "sha256": "a2d86140e14d6836efc97388a1f6146eced5d1a6de60271a1bf047c10e3315a9"
+    },
+    {
+      "file": "native-vs-shared-profile.md",
+      "source": "local-results/perf-tp4/native-vs-shared-profile.md",
+      "bytes": 6151,
+      "sha256": "681cb1e970bdc571edc34a6c7eeda96033464ae0d26ea295a9c3351713dde044"
+    },
+    {
+      "file": "decode-graph-design.md",
+      "source": "local-results/perf-tp4/decode-graph-design.md",
+      "bytes": 8139,
+      "sha256": "49da555e2c3ba6e35c3c343a57ed787c7a096295154343f49afec8ef6024b422"
+    },
+    {
+      "file": "isolated-communication-audit.md",
+      "source": "local-results/perf-tp4/isolated-communication-audit.md",
+      "bytes": 12498,
+      "sha256": "5002f6a4205366449b64b7f52ac84eacae4f02a76b987ee0d7c8a929c6cead43"
+    },
+    {
+      "file": "native-vs-shared-profile-audit.py",
+      "source": "local-results/perf-tp4/native-vs-shared-profile-audit.py",
+      "bytes": 19657,
+      "sha256": "2636e8e17d34cb6ab5dcc6b9c3d71115954572693d8482fabeed1edb19ba00b9"
+    },
+    {
+      "file": "graph8-profile-proof-audit.py",
+      "source": "local-results/perf-tp4/graph8-profile-proof-audit.py",
+      "bytes": 6130,
+      "sha256": "d9f52dde009e102a0af506adc9b59f091e2de0fb909d372130fab4af3f6ef70c"
+    },
+    {
+      "file": "eager-summary.json",
+      "source": "local-results/perf-tp4/eager-summary.json",
+      "bytes": 1376,
+      "sha256": "eebcf27a5a0d85b66add9a7585e5e95b600b7ff63de1dafcb2a792edd5707dd8"
+    },
+    {
+      "file": "native-manifest.json",
+      "source": "local-results/perf-tp4/native-manifest.json",
+      "bytes": 3508,
+      "sha256": "c5874b01ca5037779e7a52dffab316fa295c713aef6ec3b9ebb5cdab53781981"
+    },
+    {
+      "file": "pfirst-manifest.json",
+      "source": "local-results/perf-tp4/pfirst-manifest.json",
+      "bytes": 2854,
+      "sha256": "f125701856792abf771ff0d0c06656f51dbfbeaec6d37fde6a7a815253ce3b7f"
+    },
+    {
+      "file": "native-graph-manifest.json",
+      "source": "local-results/perf-tp4/native-graph-manifest.json",
+      "bytes": 2628,
+      "sha256": "91016ec3dadedee56962c9d3090f23ac7bf29620f35c68a28d5518a21222ecfd"
+    },
+    {
+      "file": "graph8-manifest.json",
+      "source": "local-results/perf-tp4/graph8-manifest.json",
+      "bytes": 3289,
+      "sha256": "d3ceac186286abc56b033f24bc87023624293d0384202b6361fe532dcec8a499"
+    },
+    {
+      "file": "graph-adaptive-manifest.json",
+      "source": "local-results/perf-tp4/graph-adaptive-manifest.json",
+      "bytes": 3026,
+      "sha256": "e30205e231eeb7578dfdc3d7c6dabc169041f75b13553f73cb8cc026eef1e085"
+    },
+    {
+      "file": "native-mixed.json",
+      "source": "local-results/perf-tp4/native-mixed.json",
+      "bytes": 64157,
+      "sha256": "3b361649815a35f42534c1996eb923562f9e2ebaf10f28e048d87f63a017a9d5"
+    },
+    {
+      "file": "native-decode-heavy.json",
+      "source": "local-results/perf-tp4/native-decode-heavy.json",
+      "bytes": 64284,
+      "sha256": "d3721df7c077c466a1c1be2f4a84d3a20819fe6bb428e49d9ddd9b297dc573c4"
+    },
+    {
+      "file": "pfirst-mixed.json",
+      "source": "local-results/perf-tp4/pfirst-mixed.json",
+      "bytes": 64097,
+      "sha256": "f1a9b02cffd9fccff3053424efe86f58b042e4cbd779eee0722a62da11d7c15b"
+    },
+    {
+      "file": "pfirst-decode-heavy.json",
+      "source": "local-results/perf-tp4/pfirst-decode-heavy.json",
+      "bytes": 64198,
+      "sha256": "b16b08af68cbf076532750a7fb6ec872e29a74e835e4ce881bf1e8ea2a3c5d1a"
+    },
+    {
+      "file": "native-graph-mixed.json",
+      "source": "local-results/perf-tp4/native-graph-mixed.json",
+      "bytes": 64589,
+      "sha256": "1fb2c066347a4f19b2d44677e743ef755017f53aa6abc22fa4f3771b164254d9"
+    },
+    {
+      "file": "native-graph-decode-heavy.json",
+      "source": "local-results/perf-tp4/native-graph-decode-heavy.json",
+      "bytes": 64830,
+      "sha256": "9f6cc8d5d3f6c5928bfedf1fa42c7bcd25e8c773987fd8d06e0ee8e33fb1da5e"
+    },
+    {
+      "file": "graph8-mixed.json",
+      "source": "local-results/perf-tp4/graph8-mixed.json",
+      "bytes": 64537,
+      "sha256": "036a51cf28136a51ae61c75484828675deb179828e81f2fa1e7197e8d74fbba4"
+    },
+    {
+      "file": "graph8-decode-heavy.json",
+      "source": "local-results/perf-tp4/graph8-decode-heavy.json",
+      "bytes": 64733,
+      "sha256": "e9cb85bc59ec1430dead24a45e5fadfe6b3fc4fe2f6127ad5eecf401d6aa8854"
+    },
+    {
+      "file": "graph-adaptive-mixed.json",
+      "source": "local-results/perf-tp4/graph-adaptive-mixed.json",
+      "bytes": 64689,
+      "sha256": "29f7d2ac10160605b42d3cb94c8aab5fde8a4aae9a7d9ea8a37638217865c971"
+    },
+    {
+      "file": "graph-adaptive-decode-heavy.json",
+      "source": "local-results/perf-tp4/graph-adaptive-decode-heavy.json",
+      "bytes": 64817,
+      "sha256": "190e0f66b6234d3011aeca01a608ac469ba93287952b01366dc23c33bf15ffcf"
+    },
+    {
+      "file": "native-correctness.json",
+      "source": "local-results/perf-tp4/native-correctness.json",
+      "bytes": 249266,
+      "sha256": "3a54c8e832726a6bcf1bef00577436d41220a36f6daab1acb1c5480947982b83"
+    },
+    {
+      "file": "native-vs-pfirst.json",
+      "source": "local-results/perf-tp4/native-vs-pfirst.json",
+      "bytes": 489859,
+      "sha256": "68d25201731e9cc984baabc04fba48b1138346c28e1b891dfc0ec3ee3236341a"
+    },
+    {
+      "file": "native-graph-correctness.json",
+      "source": "local-results/perf-tp4/native-graph-correctness.json",
+      "bytes": 249421,
+      "sha256": "8337a6b3cf64957a59bfc645050f8bbcc9f5326812d372d67d227197b8263a29"
+    },
+    {
+      "file": "native-graph-serving.json",
+      "source": "local-results/perf-tp4/native-graph-serving.json",
+      "bytes": 605272,
+      "sha256": "bfd628bb8b8171b91193f9c69c4fb8977563c4c9ff63f4f7c9f493bc327c3851"
+    },
+    {
+      "file": "native-graph-vs-graph8.json",
+      "source": "local-results/perf-tp4/native-graph-vs-graph8.json",
+      "bytes": 490183,
+      "sha256": "1a0b170ce64756540576d3ce68f320a00222e7233cc84bc532075bb9f474cc66"
+    },
+    {
+      "file": "native-graph-vs-graph8-serving.json",
+      "source": "local-results/perf-tp4/native-graph-vs-graph8-serving.json",
+      "bytes": 1205841,
+      "sha256": "7249bb5b3ee775fe51ed17249a9f1e78ae5347bfb41e5b322517c2cd875eba7e"
+    },
+    {
+      "file": "native-graph-vs-graph-adaptive.json",
+      "source": "local-results/perf-tp4/native-graph-vs-graph-adaptive.json",
+      "bytes": 490208,
+      "sha256": "d9ffd69d5abcdd94bb196f8326d9fcca5fab019cd4436fdb4ff6477ea1ee1674"
+    },
+    {
+      "file": "graph-adaptive-state-reuse.json",
+      "source": "local-results/perf-tp4/graph-adaptive-state-reuse.json",
+      "bytes": 981080,
+      "sha256": "b22e9436c58cfcb03afa254c24536d3c60c356330e6231c3e58e0a93fcac598e"
+    },
+    {
+      "file": "pfirst-progress.json",
+      "source": "local-results/perf-tp4/pfirst-progress.json",
+      "bytes": 2030,
+      "sha256": "4cd1ebd61caf0823e26d7af56abd652be1bc0d38ef9d450a9c92d43d17ad22b2"
+    },
+    {
+      "file": "pfirst-cancel.json",
+      "source": "local-results/perf-tp4/pfirst-cancel.json",
+      "bytes": 1579,
+      "sha256": "80d202564246c33c6c447276d7e688105479fc3d556c35ad1f3e9f816f79af0f"
+    },
+    {
+      "file": "pfirst-trace-check.json",
+      "source": "local-results/perf-tp4/pfirst-trace-check.json",
+      "bytes": 489,
+      "sha256": "7f27266b54df5a4e1dbe6874c3baa39b2e094949eb6b54ca5e14fd2b5144841f"
+    },
+    {
+      "file": "graph8-progress.json",
+      "source": "local-results/perf-tp4/graph8-progress.json",
+      "bytes": 2030,
+      "sha256": "da5eb657c722816f8577a2ad7d47a29de97f5d05aeaadf778c67805b7bb6c36f"
+    },
+    {
+      "file": "graph8-cancel.json",
+      "source": "local-results/perf-tp4/graph8-cancel.json",
+      "bytes": 1553,
+      "sha256": "79ed7f2dfec5a50a81cb4f6a7df8ebab87431b0576b400ad5bf99183ec0f7647"
+    },
+    {
+      "file": "graph8-trace-check.json",
+      "source": "local-results/perf-tp4/graph8-trace-check.json",
+      "bytes": 439,
+      "sha256": "099b6026017c436e9e708c67afdebc377ece04496d0f5a782d7b894724741f5f"
+    },
+    {
+      "file": "native-profile-client.json",
+      "source": "local-results/perf-tp4/native-profile-client.json",
+      "bytes": 2002,
+      "sha256": "5b8ca4006f90a1d7ff7bb3fd552943d56b249c3dbf3017db1fe9a7d0477d6e7c"
+    },
+    {
+      "file": "native-vs-shared-profile.json",
+      "source": "local-results/perf-tp4/native-vs-shared-profile.json",
+      "bytes": 192824,
+      "sha256": "e4e499fea32d0da83fbac5b7877eb8f59bfaf40ecae6620aad8204c362b85167"
+    },
+    {
+      "file": "graph8-profile-client.json",
+      "source": "local-results/perf-tp4/graph8-profile-client.json",
+      "bytes": 1975,
+      "sha256": "d158fb50b28482c471a9dec53a001ca755f7a3d6ea654b41f14f72a021ddcb46"
+    },
+    {
+      "file": "graph8-profile-proof.json",
+      "source": "local-results/perf-tp4/graph8-profile-proof.json",
+      "bytes": 21163,
+      "sha256": "c8b027396467c71f5220d5ad97a435cebc46c82d023746312eb9b32884514a69"
+    },
+    {
+      "file": "isolated8-manifest.json",
+      "source": "local-results/perf-tp4/isolated8-manifest.json",
+      "bytes": 3257,
+      "sha256": "18b8ea153c3e5c8af5ded9135ba9617a9d196142e017ca8946c6ea039c809b0c"
+    },
+    {
+      "file": "isolated8-mixed.json",
+      "source": "local-results/perf-tp4/isolated8-mixed.json",
+      "bytes": 64105,
+      "sha256": "3b057f12cfd0eb7d3814bced71898083ba8a73a8c0378bf2af2b4dea0aa791e8"
+    },
+    {
+      "file": "isolated8-decode-heavy.json",
+      "source": "local-results/perf-tp4/isolated8-decode-heavy.json",
+      "bytes": 64158,
+      "sha256": "c7b7379b59f75c093ae51b83e701772ff2116e33c9ab51b1debe6e2234324534"
+    },
+    {
+      "file": "native-vs-isolated8.json",
+      "source": "local-results/perf-tp4/native-vs-isolated8.json",
+      "bytes": 489874,
+      "sha256": "bad84f436125aaf25f21ba80c08e59f913790d15680de5f31d565191cc24cd59"
+    },
+    {
+      "file": "isolated8-progress.json",
+      "source": "local-results/perf-tp4/isolated8-progress.json",
+      "bytes": 2029,
+      "sha256": "9623b8c3ae36662994f9d8fe233c37421703107ae2886760d8aaa091efe346ed"
+    },
+    {
+      "file": "isolated8-cancel.json",
+      "source": "local-results/perf-tp4/isolated8-cancel.json",
+      "bytes": 1576,
+      "sha256": "2af809a5af60aa97f5b082f12c9d39e2559ab403877e0e4f03bbcb119b4f7bad"
+    },
+    {
+      "file": "isolated8-trace-check.json",
+      "source": "local-results/perf-tp4/isolated8-trace-check.json",
+      "bytes": 462,
+      "sha256": "ce91961d78bdfd58e1d03959c975bfd287190b74499b9526c810d88236c77210"
+    },
+    {
+      "file": "isolated8-profile-client.json",
+      "source": "local-results/perf-tp4/isolated8-profile-client.json",
+      "bytes": 2031,
+      "sha256": "71cd75ba50f80a3d8e806fa6d62f53353916379fc5d45fcc7377a33681ace466"
+    },
+    {
+      "file": "isolated-vs-shared-profile.json",
+      "source": "local-results/perf-tp4/isolated-vs-shared-profile.json",
+      "bytes": 179788,
+      "sha256": "cea59426c91bb3a6d01f3d5637198b746e56f23a26d2c4e54f96377faec6b4b9"
+    },
+    {
+      "file": "isolated-vs-shared-profile.md",
+      "source": "local-results/perf-tp4/isolated-vs-shared-profile.md",
+      "bytes": 6474,
+      "sha256": "d96c40aa8ee2d5cc3cf62491bf2175c33b6b94180891346d8b0b3908b000841f"
+    },
+    {
+      "file": "isolated-vs-shared-profile-audit.py",
+      "source": "local-results/perf-tp4/isolated-vs-shared-profile-audit.py",
+      "bytes": 11990,
+      "sha256": "ef57f654bb881ff534d89e537d1c853726a4a697135a967497aab95fee842be0"
+    },
+    {
+      "file": "native-graph-bracket-manifest.json",
+      "source": "local-results/perf-tp4/native-graph-bracket-manifest.json",
+      "bytes": 1393,
+      "sha256": "4200b7ec30c1e3d2fe5d0b8e8ba9fd56aa4c30f2f6c3a6a1b492e40bfe90eaf6"
+    },
+    {
+      "file": "native-graph-bracket-mixed.json",
+      "source": "local-results/perf-tp4/native-graph-bracket-mixed.json",
+      "bytes": 64683,
+      "sha256": "1be9428c43db5555e45a33c73855fc79d9ab9b024b5d4fb053bd60bc5895dab8"
+    },
+    {
+      "file": "native-graph-bracket-decode-heavy.json",
+      "source": "local-results/perf-tp4/native-graph-bracket-decode-heavy.json",
+      "bytes": 64835,
+      "sha256": "f8c5e3560573ef39010e88d4266dc3bc3893729e508218fc5b90827e5ca048cb"
+    },
+    {
+      "file": "native-graph-progress.json",
+      "source": "local-results/perf-tp4/native-graph-progress.json",
+      "bytes": 2028,
+      "sha256": "25ab3b151713def6e7285bb61048ed0b2119ed6a36e44a6d0c6db19576fd0a5e"
+    },
+    {
+      "file": "native-graph-baseline-summary.json",
+      "source": "local-results/perf-tp4/native-graph-baseline-summary.json",
+      "bytes": 10738,
+      "sha256": "402feae4c27666c256b2f92ab2b656f05e037e7a1211c697939e48146b1fa683"
+    },
+    {
+      "file": "graph-compiled-manifest.json",
+      "source": "local-results/perf-tp4/graph-compiled-manifest.json",
+      "bytes": 3523,
+      "sha256": "dd2543515393ec0321f6fee090616ae25430a5f4fe6d2b6b247216087225109f"
+    },
+    {
+      "file": "graph-compiled-mixed.json",
+      "source": "local-results/perf-tp4/graph-compiled-mixed.json",
+      "bytes": 64680,
+      "sha256": "972d9c9e6886b921169fadb551e5de1ecbf8bc5b1d844c53f7a463632f62f720"
+    },
+    {
+      "file": "graph-compiled-decode-heavy.json",
+      "source": "local-results/perf-tp4/graph-compiled-decode-heavy.json",
+      "bytes": 64802,
+      "sha256": "8fa574f2f814e1edaa39e71d2d4b08889f5b9fc53aad2afd0a13cd0baa1475c2"
+    },
+    {
+      "file": "native-graph-vs-graph-compiled.json",
+      "source": "local-results/perf-tp4/native-graph-vs-graph-compiled.json",
+      "bytes": 490195,
+      "sha256": "2e9bfb74d7bca1050f1984c6db714bc9802b7fcb702effea62b7fe0e75916552"
+    },
+    {
+      "file": "native-graph-vs-graph-compiled-serving.json",
+      "source": "local-results/perf-tp4/native-graph-vs-graph-compiled-serving.json",
+      "bytes": 1205885,
+      "sha256": "05e00374f5f6ab68171da73487f821455a47172e78f175665d30a7b969926f9d"
+    },
+    {
+      "file": "graph-compiled-state-reuse.json",
+      "source": "local-results/perf-tp4/graph-compiled-state-reuse.json",
+      "bytes": 981215,
+      "sha256": "7dd31a21ca74485279938b2aef72f59554223a5414274135beaad9816cfc9222"
+    },
+    {
+      "file": "graph-compiled-progress.json",
+      "source": "local-results/perf-tp4/graph-compiled-progress.json",
+      "bytes": 2029,
+      "sha256": "478bada9bc831f7a58cabe1224c04ce20412c1332932468626ac21ec34df4474"
+    },
+    {
+      "file": "graph-compiled-cancel.json",
+      "source": "local-results/perf-tp4/graph-compiled-cancel.json",
+      "bytes": 1577,
+      "sha256": "34430071e763660a29b93486a6e8209723ddb0fe2913a4a25e49320dba2c76c4"
+    },
+    {
+      "file": "graph-compiled-trace-check.json",
+      "source": "local-results/perf-tp4/graph-compiled-trace-check.json",
+      "bytes": 645,
+      "sha256": "35cf1528a79e078f6762b6ed325bc9f92aa4e97552bfdaf7a15b7ae99567b7a2"
+    },
+    {
+      "file": "graph-compiled-profile-client.json",
+      "source": "local-results/perf-tp4/graph-compiled-profile-client.json",
+      "bytes": 2033,
+      "sha256": "7a94a286e1bebecd10a333a1ef2b6a36facefe1fa06247261288888b937b8c5a"
+    },
+    {
+      "file": "native-eager-state-reuse.json",
+      "source": "local-results/perf-tp4/native-eager-state-reuse.json",
+      "bytes": 981312,
+      "sha256": "69a706bb87043e12804bf13006da02ef5c4030d8ff3a8fab53397f496ced01c7"
+    },
+    {
+      "file": "native-eager-state-manifest.json",
+      "source": "local-results/perf-tp4/native-eager-state-manifest.json",
+      "bytes": 1416,
+      "sha256": "310bf5da2bddeb5cbfed66a38db07e8bade52f0b6062a235a98ff8c64ec5a940"
+    },
+    {
+      "file": "graph-compiled-profile-proof.json",
+      "source": "local-results/perf-tp4/graph-compiled-profile-proof.json",
+      "bytes": 133901,
+      "sha256": "cccc6e6a2c2fb7742eb24cfed01523255d21065d124f8bbc1eb3a50594454b81"
+    },
+    {
+      "file": "graph-compiled-profile-proof.md",
+      "source": "local-results/perf-tp4/graph-compiled-profile-proof.md",
+      "bytes": 3889,
+      "sha256": "9f01fa1c7ce0caa2683834cd734be7b4d05842c9b07e5777d3d3a2d59f3480d5"
+    },
+    {
+      "file": "graph-compiled-profile-proof-audit.py",
+      "source": "local-results/perf-tp4/graph-compiled-profile-proof-audit.py",
+      "bytes": 13999,
+      "sha256": "6c0fb4ae8166d79b0a2fd23389c10c7fb432970a7a689afdbdfb28b9f55b77be"
+    },
+    {
+      "file": "one-token-prefill-investigation.md",
+      "source": "local-results/perf-tp4/one-token-prefill-investigation.md",
+      "bytes": 14347,
+      "sha256": "cf0128cc25f46aef20a41b16a89c27a3995ce9e0865d8a5c9dc930d6b3cda511"
+    },
+    {
+      "file": "one-token-prefill-issue-draft.md",
+      "source": "local-results/perf-tp4/one-token-prefill-issue-draft.md",
+      "bytes": 6122,
+      "sha256": "5a409ba867b7211bc47fdf0dbc4d4ee1643b253780280167756ae3fabc063fdd"
+    },
+    {
+      "file": "native-graph-state-reuse.json",
+      "source": "local-results/perf-tp4/native-graph-state-reuse.json",
+      "bytes": 984812,
+      "sha256": "29650c7a95242f7cd06b7ea712f1faad0b22b5f09f64b84802c233e7e939825a"
+    },
+    {
+      "file": "graph-work256-manifest.json",
+      "source": "local-results/perf-tp4/graph-work256-manifest.json",
+      "bytes": 4568,
+      "sha256": "6d5511e5075287d45179037b4911bf0964ac666bc07022eef716edf29f16f04d"
+    },
+    {
+      "file": "graph-work256-mixed.json",
+      "source": "local-results/perf-tp4/graph-work256-mixed.json",
+      "bytes": 64757,
+      "sha256": "3620aa4e15c06c3cd41c3bddb1b04f4172c01368a75fab3579c24a3283ff961e"
+    },
+    {
+      "file": "graph-work256-decode-heavy.json",
+      "source": "local-results/perf-tp4/graph-work256-decode-heavy.json",
+      "bytes": 64837,
+      "sha256": "29fa467c8a7960988f9b819f6f81b59eb3a6cd672bd12b032786908ea4ea4eb0"
+    },
+    {
+      "file": "graph-work256-stage1-summary.json",
+      "source": "local-results/perf-tp4/graph-work256-stage1-summary.json",
+      "bytes": 13498,
+      "sha256": "ff2844bf59f9ac3c86d86f20f493609bb1ef92a0ff4c49bc05acc42b7221248d"
+    },
+    {
+      "file": "graph-work256-confirm-mixed.json",
+      "source": "local-results/perf-tp4/graph-work256-confirm-mixed.json",
+      "bytes": 64732,
+      "sha256": "e2e013064350358edd2233e9a6b65f21b95d0869ca5ad7d6d9ba21e5d20faf0b"
+    },
+    {
+      "file": "graph-work256-confirm-decode-heavy.json",
+      "source": "local-results/perf-tp4/graph-work256-confirm-decode-heavy.json",
+      "bytes": 64793,
+      "sha256": "4031dea6dc89c76390765662897bb27b14b8024aaea4da00ccbaed5219d089d3"
+    },
+    {
+      "file": "graph-work256-summary.json",
+      "source": "local-results/perf-tp4/graph-work256-summary.json",
+      "bytes": 28100,
+      "sha256": "fe23a6bcf09df82609d4cacbe71fb47ef4665046fb6527380e20a0bfaa75882c"
+    },
+    {
+      "file": "native-graph-vs-graph-work256.json",
+      "source": "local-results/perf-tp4/native-graph-vs-graph-work256.json",
+      "bytes": 490187,
+      "sha256": "50faf752961942c07a6217ff66bc5ad094bada5bc77ac07e2da5130132f0df8d"
+    },
+    {
+      "file": "native-graph-vs-graph-work256-serving.json",
+      "source": "local-results/perf-tp4/native-graph-vs-graph-work256-serving.json",
+      "bytes": 1205676,
+      "sha256": "c73baad9967ab52a836485eff33721bca6b97ebe41f321095e83a153826f051f"
+    },
+    {
+      "file": "graph-work256-state-reuse.json",
+      "source": "local-results/perf-tp4/graph-work256-state-reuse.json",
+      "bytes": 981237,
+      "sha256": "50bc3a95186798d599a719f924893fb407da9c581cf44b02acc657619ab60d42"
+    },
+    {
+      "file": "graph-work256-progress.json",
+      "source": "local-results/perf-tp4/graph-work256-progress.json",
+      "bytes": 2052,
+      "sha256": "291dc5361c268c03e035881dc2365c7471163af770f262a823f884c6ba294d66"
+    },
+    {
+      "file": "graph-work256-cancel.json",
+      "source": "local-results/perf-tp4/graph-work256-cancel.json",
+      "bytes": 1602,
+      "sha256": "e680bc86cbe98f2c195733b94bbb89b8d6782a2fb9a0c24195b62206ea61c954"
+    },
+    {
+      "file": "graph-work256-traced-calibration.json",
+      "source": "local-results/perf-tp4/graph-work256-traced-calibration.json",
+      "bytes": 1761,
+      "sha256": "47e5bd13176e56b87b1c1e228f93a20453f00c038e7a71d7e6a94b0fa3bca478"
+    },
+    {
+      "file": "graph-work256-traced-progress.json",
+      "source": "local-results/perf-tp4/graph-work256-traced-progress.json",
+      "bytes": 2059,
+      "sha256": "fc1bdf91f4dd98d66163fb360e8c87b50d638fe4f53f5c802d655bed46827ea7"
+    },
+    {
+      "file": "graph-work256-traced-cancel.json",
+      "source": "local-results/perf-tp4/graph-work256-traced-cancel.json",
+      "bytes": 1600,
+      "sha256": "1a25b64c1f943508a346510da58cb398362429c285c2ce3aa175647e43f5bcc8"
+    },
+    {
+      "file": "graph-work256-traced-manifest.json",
+      "source": "local-results/perf-tp4/graph-work256-traced-manifest.json",
+      "bytes": 3781,
+      "sha256": "3f8c51e927caae1d971f21162cfd761bfdea25f2dc03f4ea35b1af109212c58a"
+    },
+    {
+      "file": "graph-work256-traced-check.json",
+      "source": "local-results/perf-tp4/graph-work256-traced-check.json",
+      "bytes": 681,
+      "sha256": "aa88e4421e022761e52ac2a8ff1bd961f308be2bf09431488be7984c5b85822c"
+    },
+    {
+      "file": "native-graph-vs-graph-work256-traced.json",
+      "source": "local-results/perf-tp4/native-graph-vs-graph-work256-traced.json",
+      "bytes": 490194,
+      "sha256": "3af61caaf0d174679b05910b6327df9f8bf2ade363c3834fe37d5dcd7ed8bbf9"
+    },
+    {
+      "file": "validation-final.json",
+      "source": "local-results/perf-tp4/validation-final.json",
+      "bytes": 2395,
+      "sha256": "55c558789829a432fae2d18fda1b099391f79da0b963a49df606b444fcd18522"
+    },
+    {
+      "file": "graph-work256-traced-proof.json",
+      "source": "local-results/perf-tp4/graph-work256-traced-proof.json",
+      "bytes": 52882,
+      "sha256": "b5de2f9d415fa585c872f18e0a86692ebd81e9c781621c11795bf5bb13bb4bd4"
+    },
+    {
+      "file": "graph-work256-traced-proof-audit.py",
+      "source": "local-results/perf-tp4/graph-work256-traced-proof-audit.py",
+      "bytes": 8651,
+      "sha256": "529a1c5b7116430179a3d55497456a4a59d362762278146c05bde86c0c0362e1"
+    },
+    {
+      "file": "restored-services.json",
+      "source": "local-results/perf-tp4/restored-services.json",
+      "bytes": 3520,
+      "sha256": "17ad88047d335a9b3bac0d13e8b49b5c8198b81fe404c57a02f11efe0bf3f442"
+    },
+    {
+      "file": "restored-native-smoke.json",
+      "source": "local-results/perf-tp4/restored-native-smoke.json",
+      "bytes": 86321,
+      "sha256": "7a2f93011ba77f0ed277804c7a54ef23aa4ba3638476a12b30a01e7b96d5beb4"
+    },
+    {
+      "file": "restored-muxpd-smoke.json",
+      "source": "local-results/perf-tp4/restored-muxpd-smoke.json",
+      "bytes": 85156,
+      "sha256": "5ee42ea0f90bc6bd52728650c5c0efee8331ba42fa6c9625890488313a8165ff"
+    }
+  ],
+  "excluded_incomplete": [
+    {
+      "source": "local-results/perf-tp4/graph8-state-reuse.json",
+      "complete": false,
+      "observed_receipts": 41,
+      "expected_requests": 54,
+      "interruption_reason": "Operator stopped API before diagnostic completed; incomplete receipt, excluded from conclusions; will rerun full diagnostic on next graph configuration.",
+      "excluded_from_performance_and_correctness_conclusions": true
+    }
+  ],
+  "not_archived": [
+    "Full trace_view.json/kernel_details.csv/profiler directories",
+    "Full scheduler JSONL traces",
+    "Server logs",
+    "Frozen source directories"
+  ],
+  "reproduction_note": "Audit scripts are byte-identical originals. Their recorded reproduction commands use the original local-results/perf-tp4 paths. Restore the original script/input layout to rerun; large input traces are identified by SHA256 in compact reports and are not included in this archive."
+}

@@ -1,0 +1,6129 @@
+{
+  "schema_version": 1,
+  "script": "local-results/perf-tp4/native-vs-shared-profile-audit.py",
+  "script_sha256": "2636e8e17d34cb6ab5dcc6b9c3d71115954572693d8482fabeed1edb19ba00b9",
+  "reproduction": "python local-results/perf-tp4/native-vs-shared-profile-audit.py --ranks 0 1 2 3",
+  "model_config_sha256": "5e4d7f74fec2f360eb9cfbfcd6ec0c4c76e684d3a11caaed259d9fd9bfbc7944",
+  "method": {
+    "timestamps": "Decimal microseconds converted to integer nanoseconds; never merge capture/rank timelines",
+    "cpu_inclusive": "sum of durations for each exact operation name, not additive across nested names",
+    "cpu_exclusive": "range duration minus union of strictly contained cpu_op ranges on same pid/tid; coincident ranges excluded and crossings counted; includes uninstrumented/greenlet suspension time",
+    "device_active": "union of explicit compute task types on Ascend Hardware/Task Scheduler, excluding communication names",
+    "device_window": "first compute kernel start to last compute kernel end; profiling enable/disable window also retained",
+    "forward_count": "inferred from MoE/40, GDN/30, independently matching logits all-gather; no direct forward/layer timing exported",
+    "scope": "diagnostic captures bounded to eight engine iterations; different number of executed model forwards, not a matched throughput benchmark"
+  },
+  "captures": [
+    {
+      "mode": "native",
+      "rank": 0,
+      "source": "local-results/perf-tp4/native-profile/dp0_pp0_tp0_dcp0_ep0_rank0_491925_20261010034443533_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+      "source_sha256": "9ea44c82f25f01d50f59398fb650d432b1151b9ca7eb42cf4797c061e1bd9c73",
+      "source_bytes": 102982893,
+      "profiler_info": "local-results/perf-tp4/native-profile/dp0_pp0_tp0_dcp0_ep0_rank0_491925_20261010034443533_ascend_pt/profiler_info_0.json",
+      "profiler_info_sha256": "9e21e5203c067eb8f4553efdcc77bb2a103ae43dfe0d9470d6ddd905f224199e",
+      "device_label": "NPU 0",
+      "complete_cpu_op_count": 117295,
+      "direct_model_or_decoder_forward_range_candidates": {},
+      "model_forward_equivalents": {
+        "count": 8,
+        "kind": "inferred_from_40_MoE_and_30_GDN_calls_per_model_forward",
+        "independent_logits_all_gather_count": 8,
+        "direct_complete_model_range_observed": false,
+        "direct_complete_model_inclusive_us": null,
+        "moe_layer_calls": 320,
+        "gdn_layer_calls": 240
+      },
+      "cpu_operations": {
+        "Event::record": {
+          "count": 976,
+          "inclusive_sum_us": 86888.11,
+          "exclusive_of_contained_cpu_ops_sum_us": 72440.45,
+          "per_thread_union_sum_us": 86888.11,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "Event::synchronize": {
+          "count": 8,
+          "inclusive_sum_us": 148097.08,
+          "exclusive_of_contained_cpu_ops_sum_us": 148097.08,
+          "per_thread_union_sum_us": 148097.08,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "Event::wait": {
+          "count": 968,
+          "inclusive_sum_us": 63687.17,
+          "exclusive_of_contained_cpu_ops_sum_us": 50015.73,
+          "per_thread_union_sum_us": 63687.17,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::all_gather": {
+          "count": 8,
+          "inclusive_sum_us": 2723.68,
+          "exclusive_of_contained_cpu_ops_sum_us": 1203.34,
+          "per_thread_union_sum_us": 2723.68,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::all_reduce": {
+          "count": 648,
+          "inclusive_sum_us": 108937.49,
+          "exclusive_of_contained_cpu_ops_sum_us": 40486.59,
+          "per_thread_union_sum_us": 108937.49,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::maybe_all_reduce_tensor_model_parallel": {
+          "count": 320,
+          "inclusive_sum_us": 65663.69,
+          "exclusive_of_contained_cpu_ops_sum_us": 12332.96,
+          "per_thread_union_sum_us": 65663.69,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::maybe_chunk_residual": {
+          "count": 640,
+          "inclusive_sum_us": 7960.06,
+          "exclusive_of_contained_cpu_ops_sum_us": 7960.06,
+          "per_thread_union_sum_us": 7960.06,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::maybe_pad_and_reduce": {
+          "count": 8,
+          "inclusive_sum_us": 2143.41,
+          "exclusive_of_contained_cpu_ops_sum_us": 314.79,
+          "per_thread_union_sum_us": 2143.41,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::moe_forward_shared": {
+          "count": 320,
+          "inclusive_sum_us": 944476.21,
+          "exclusive_of_contained_cpu_ops_sum_us": 425696.28,
+          "per_thread_union_sum_us": 944476.21,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::qwen_gdn_attention_core": {
+          "count": 240,
+          "inclusive_sum_us": 653106.14,
+          "exclusive_of_contained_cpu_ops_sum_us": 245678.39,
+          "per_thread_union_sum_us": 653106.14,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::triton_split_qkv_rmsnorm_mrope": {
+          "count": 80,
+          "inclusive_sum_us": 29245.91,
+          "exclusive_of_contained_cpu_ops_sum_us": 25368.45,
+          "per_thread_union_sum_us": 29245.91,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::unified_attention_with_output": {
+          "count": 80,
+          "inclusive_sum_us": 58926.5,
+          "exclusive_of_contained_cpu_ops_sum_us": 19541.45,
+          "per_thread_union_sum_us": 58926.5,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::unquantized_gemm": {
+          "count": 2160,
+          "inclusive_sum_us": 158856.99,
+          "exclusive_of_contained_cpu_ops_sum_us": 35858.14,
+          "per_thread_union_sum_us": 158856.99,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        }
+      },
+      "cann_runtime_apis": {
+        "AscendCL@Abs_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 22.09,
+          "union_us": 22.09
+        },
+        "AscendCL@Add_Tiling": {
+          "count": 2,
+          "inclusive_sum_us": 127.89,
+          "union_us": 127.89
+        },
+        "AscendCL@BroadcastTo_Tiling": {
+          "count": 62,
+          "inclusive_sum_us": 1383.61,
+          "union_us": 1383.61
+        },
+        "AscendCL@Cast_Tiling": {
+          "count": 12,
+          "inclusive_sum_us": 208.06,
+          "union_us": 208.06
+        },
+        "AscendCL@ChunkFwdO_Tiling": {
+          "count": 120,
+          "inclusive_sum_us": 975.92,
+          "union_us": 975.92
+        },
+        "AscendCL@ChunkGatedDeltaRuleFwdH_Tiling": {
+          "count": 120,
+          "inclusive_sum_us": 1280.22,
+          "union_us": 1280.22
+        },
+        "AscendCL@ConcatD_Tiling": {
+          "count": 3,
+          "inclusive_sum_us": 77.48,
+          "union_us": 77.48
+        },
+        "AscendCL@Fill_Tiling": {
+          "count": 2,
+          "inclusive_sum_us": 70.37,
+          "union_us": 70.37
+        },
+        "AscendCL@GatherV2_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 98.96,
+          "union_us": 98.96
+        },
+        "AscendCL@GreaterEqual_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 53.89,
+          "union_us": 53.89
+        },
+        "AscendCL@GroupedMatmul_Tiling": {
+          "count": 4,
+          "inclusive_sum_us": 608.98,
+          "union_us": 608.98
+        },
+        "AscendCL@IndexCheck_Tiling": {
+          "count": 128,
+          "inclusive_sum_us": 1011.48,
+          "union_us": 1011.48
+        },
+        "AscendCL@IndexPutV2_Tiling": {
+          "count": 60,
+          "inclusive_sum_us": 764.54,
+          "union_us": 764.54
+        },
+        "AscendCL@Index_Tiling": {
+          "count": 4,
+          "inclusive_sum_us": 66.15,
+          "union_us": 66.15
+        },
+        "AscendCL@Less_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 26.88,
+          "union_us": 26.88
+        },
+        "AscendCL@LogicalAnd_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 38.02,
+          "union_us": 38.02
+        },
+        "AscendCL@LogicalNot_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 9.75,
+          "union_us": 9.75
+        },
+        "AscendCL@MaskedFill_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 70.82,
+          "union_us": 70.82
+        },
+        "AscendCL@MatMulV2_Tiling": {
+          "count": 14,
+          "inclusive_sum_us": 1403.32,
+          "union_us": 1403.32
+        },
+        "AscendCL@MoeInitRoutingV3_Tiling": {
+          "count": 2,
+          "inclusive_sum_us": 258.25,
+          "union_us": 258.25
+        },
+        "AscendCL@Mul_Tiling": {
+          "count": 5,
+          "inclusive_sum_us": 218.73,
+          "union_us": 218.73
+        },
+        "AscendCL@NotEqual_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 23.79,
+          "union_us": 23.79
+        },
+        "AscendCL@RecurrentGatedDeltaRule_Tiling": {
+          "count": 2,
+          "inclusive_sum_us": 132.28,
+          "union_us": 132.28
+        },
+        "AscendCL@ScatterPaKvCache_Tiling": {
+          "count": 160,
+          "inclusive_sum_us": 3902.37,
+          "union_us": 3902.37
+        },
+        "AscendCL@Sigmoid_Tiling": {
+          "count": 2,
+          "inclusive_sum_us": 35.43,
+          "union_us": 35.43
+        },
+        "AscendCL@Slice_Tiling": {
+          "count": 218,
+          "inclusive_sum_us": 3173.21,
+          "union_us": 3173.21
+        },
+        "AscendCL@Sub_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 48.61,
+          "union_us": 48.61
+        },
+        "AscendCL@TensorMove_Tiling": {
+          "count": 2,
+          "inclusive_sum_us": 13.24,
+          "union_us": 13.24
+        },
+        "AscendCL@Transpose_Tiling": {
+          "count": 500,
+          "inclusive_sum_us": 3053.86,
+          "union_us": 3053.86
+        },
+        "AscendCL@ZerosLike_Tiling": {
+          "count": 3,
+          "inclusive_sum_us": 59.62,
+          "union_us": 59.62
+        },
+        "AscendCL@aclmdlRICaptureGetInfo": {
+          "count": 18368,
+          "inclusive_sum_us": 10938.56,
+          "union_us": 10938.56
+        },
+        "AscendCL@aclnnAbs": {
+          "count": 320,
+          "inclusive_sum_us": 4465.88,
+          "union_us": 4465.88
+        },
+        "AscendCL@aclnnAbsGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 103.64,
+          "union_us": 103.64
+        },
+        "AscendCL@aclnnAdd": {
+          "count": 336,
+          "inclusive_sum_us": 4917.62,
+          "union_us": 4917.62
+        },
+        "AscendCL@aclnnAddGetWorkspaceSize": {
+          "count": 2,
+          "inclusive_sum_us": 256.09,
+          "union_us": 256.09
+        },
+        "AscendCL@aclnnAddRmsNormBias": {
+          "count": 640,
+          "inclusive_sum_us": 17523.87,
+          "union_us": 17523.87
+        },
+        "AscendCL@aclnnAddRmsNormBiasGetWorkspaceSize": {
+          "count": 640,
+          "inclusive_sum_us": 14568.08,
+          "union_us": 14568.08
+        },
+        "AscendCL@aclnnAddRmsNormBiasTiling": {
+          "count": 1,
+          "inclusive_sum_us": 36.03,
+          "union_us": 36.03
+        },
+        "AscendCL@aclnnAdds": {
+          "count": 800,
+          "inclusive_sum_us": 15532.01,
+          "union_us": 15532.01
+        },
+        "AscendCL@aclnnArgMax": {
+          "count": 8,
+          "inclusive_sum_us": 201.56,
+          "union_us": 201.56
+        },
+        "AscendCL@aclnnBitwiseAndTensor": {
+          "count": 8,
+          "inclusive_sum_us": 305.1,
+          "union_us": 305.1
+        },
+        "AscendCL@aclnnBitwiseAndTensorGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 89.46,
+          "union_us": 89.46
+        },
+        "AscendCL@aclnnBitwiseNot": {
+          "count": 8,
+          "inclusive_sum_us": 234.27,
+          "union_us": 234.27
+        },
+        "AscendCL@aclnnBitwiseNotGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 113.71,
+          "union_us": 113.71
+        },
+        "AscendCL@aclnnCat": {
+          "count": 300,
+          "inclusive_sum_us": 4085.02,
+          "union_us": 4085.02
+        },
+        "AscendCL@aclnnCatGetWorkspaceSize": {
+          "count": 3,
+          "inclusive_sum_us": 144.38,
+          "union_us": 144.38
+        },
+        "AscendCL@aclnnCausalConv1d": {
+          "count": 240,
+          "inclusive_sum_us": 29903.07,
+          "union_us": 29903.07
+        },
+        "AscendCL@aclnnCausalConv1dGetWorkspaceSize": {
+          "count": 240,
+          "inclusive_sum_us": 26094.33,
+          "union_us": 26094.33
+        },
+        "AscendCL@aclnnCausalConv1dTiling": {
+          "count": 1,
+          "inclusive_sum_us": 76.1,
+          "union_us": 76.1
+        },
+        "AscendCL@aclnnChunkFwdO": {
+          "count": 60,
+          "inclusive_sum_us": 3516.22,
+          "union_us": 3516.22
+        },
+        "AscendCL@aclnnChunkFwdOGetWorkspaceSize": {
+          "count": 60,
+          "inclusive_sum_us": 3511.87,
+          "union_us": 3511.87
+        },
+        "AscendCL@aclnnChunkGatedDeltaRuleFwdH": {
+          "count": 60,
+          "inclusive_sum_us": 4326.29,
+          "union_us": 4326.29
+        },
+        "AscendCL@aclnnChunkGatedDeltaRuleFwdHGetWorkspaceSize": {
+          "count": 60,
+          "inclusive_sum_us": 4402.92,
+          "union_us": 4402.92
+        },
+        "AscendCL@aclnnContiguous": {
+          "count": 240,
+          "inclusive_sum_us": 21338.29,
+          "union_us": 21338.29
+        },
+        "AscendCL@aclnnContiguousGetWorkspaceSize": {
+          "count": 240,
+          "inclusive_sum_us": 17385.72,
+          "union_us": 17385.72
+        },
+        "AscendCL@aclnnEmbedding": {
+          "count": 8,
+          "inclusive_sum_us": 371.26,
+          "union_us": 371.26
+        },
+        "AscendCL@aclnnEmbeddingGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 257.82,
+          "union_us": 257.82
+        },
+        "AscendCL@aclnnGeScalar": {
+          "count": 8,
+          "inclusive_sum_us": 475.75,
+          "union_us": 475.75
+        },
+        "AscendCL@aclnnGeScalarGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 124.5,
+          "union_us": 124.5
+        },
+        "AscendCL@aclnnGemmaRmsNorm": {
+          "count": 8,
+          "inclusive_sum_us": 431.03,
+          "union_us": 431.03
+        },
+        "AscendCL@aclnnGemmaRmsNormGetWorkspaceSize": {
+          "count": 8,
+          "inclusive_sum_us": 673.38,
+          "union_us": 673.38
+        },
+        "AscendCL@aclnnGemmaRmsNormTiling": {
+          "count": 1,
+          "inclusive_sum_us": 87.29,
+          "union_us": 87.29
+        },
+        "AscendCL@aclnnGroupedMatmulV5": {
+          "count": 640,
+          "inclusive_sum_us": 11968.96,
+          "union_us": 11968.96
+        },
+        "AscendCL@aclnnGroupedMatmulV5GetWorkspaceSize": {
+          "count": 2,
+          "inclusive_sum_us": 1018.67,
+          "union_us": 1018.67
+        },
+        "AscendCL@aclnnGtScalar": {
+          "count": 6,
+          "inclusive_sum_us": 366.69,
+          "union_us": 366.69
+        },
+        "AscendCL@aclnnIndex": {
+          "count": 476,
+          "inclusive_sum_us": 12930.82,
+          "union_us": 12930.82
+        },
+        "AscendCL@aclnnIndexGetWorkspaceSize": {
+          "count": 4,
+          "inclusive_sum_us": 564.75,
+          "union_us": 564.75
+        },
+        "AscendCL@aclnnIndexPutImpl": {
+          "count": 60,
+          "inclusive_sum_us": 8320.35,
+          "union_us": 8320.35
+        },
+        "AscendCL@aclnnIndexPutImplGetWorkspaceSize": {
+          "count": 60,
+          "inclusive_sum_us": 5932.55,
+          "union_us": 5932.55
+        },
+        "AscendCL@aclnnInnerFusedInferAttentionScore": {
+          "count": 80,
+          "inclusive_sum_us": 4043.21,
+          "union_us": 4043.21
+        },
+        "AscendCL@aclnnInnerFusedInferAttentionScoreGetWorkspaceSize": {
+          "count": 80,
+          "inclusive_sum_us": 3927.1,
+          "union_us": 3927.1
+        },
+        "AscendCL@aclnnInnerFusedInferAttentionScoreTiling": {
+          "count": 6,
+          "inclusive_sum_us": 484.51,
+          "union_us": 484.51
+        },
+        "AscendCL@aclnnInnerMoeTokenUnpermute": {
+          "count": 320,
+          "inclusive_sum_us": 7323.06,
+          "union_us": 7323.06
+        },
+        "AscendCL@aclnnInnerMoeTokenUnpermuteGetWorkspaceSize": {
+          "count": 320,
+          "inclusive_sum_us": 4939.43,
+          "union_us": 4939.43
+        },
+        "AscendCL@aclnnInnerMoeTokenUnpermuteTiling": {
+          "count": 1,
+          "inclusive_sum_us": 73.83,
+          "union_us": 73.83
+        },
+        "AscendCL@aclnnInplaceCopy": {
+          "count": 2765,
+          "inclusive_sum_us": 42629.65,
+          "union_us": 42629.65
+        },
+        "AscendCL@aclnnInplaceCopyGetWorkspaceSize": {
+          "count": 414,
+          "inclusive_sum_us": 9345.6,
+          "union_us": 9345.6
+        },
+        "AscendCL@aclnnInplaceFillScalar": {
+          "count": 116,
+          "inclusive_sum_us": 1583.58,
+          "union_us": 1583.58
+        },
+        "AscendCL@aclnnInplaceFillScalarGetWorkspaceSize": {
+          "count": 3,
+          "inclusive_sum_us": 101.62,
+          "union_us": 101.62
+        },
+        "AscendCL@aclnnInplaceMaskedFillScalar": {
+          "count": 8,
+          "inclusive_sum_us": 430.77,
+          "union_us": 430.77
+        },
+        "AscendCL@aclnnInplaceMaskedFillScalarGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 130.97,
+          "union_us": 130.97
+        },
+        "AscendCL@aclnnInplaceZero": {
+          "count": 420,
+          "inclusive_sum_us": 5597.51,
+          "union_us": 5597.51
+        },
+        "AscendCL@aclnnInplaceZeroGetWorkspaceSize": {
+          "count": 3,
+          "inclusive_sum_us": 121.84,
+          "union_us": 121.84
+        },
+        "AscendCL@aclnnLtScalar": {
+          "count": 8,
+          "inclusive_sum_us": 393.43,
+          "union_us": 393.43
+        },
+        "AscendCL@aclnnLtScalarGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 161.34,
+          "union_us": 161.34
+        },
+        "AscendCL@aclnnMatmul": {
+          "count": 2168,
+          "inclusive_sum_us": 31942.57,
+          "union_us": 31942.57
+        },
+        "AscendCL@aclnnMatmulGetWorkspaceSize": {
+          "count": 7,
+          "inclusive_sum_us": 2594.94,
+          "union_us": 2594.94
+        },
+        "AscendCL@aclnnMoeGatingTopK": {
+          "count": 320,
+          "inclusive_sum_us": 7668.29,
+          "union_us": 7668.29
+        },
+        "AscendCL@aclnnMoeGatingTopKGetWorkspaceSize": {
+          "count": 320,
+          "inclusive_sum_us": 7621.35,
+          "union_us": 7621.35
+        },
+        "AscendCL@aclnnMoeGatingTopKTiling": {
+          "count": 1,
+          "inclusive_sum_us": 112.03,
+          "union_us": 112.03
+        },
+        "AscendCL@aclnnMoeInitRoutingV3": {
+          "count": 320,
+          "inclusive_sum_us": 6403.5,
+          "union_us": 6403.5
+        },
+        "AscendCL@aclnnMoeInitRoutingV3GetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 453.16,
+          "union_us": 453.16
+        },
+        "AscendCL@aclnnMoeTokenUnpermuteGetWorkspaceSize": {
+          "count": 320,
+          "inclusive_sum_us": 8733.98,
+          "union_us": 8733.98
+        },
+        "AscendCL@aclnnMul": {
+          "count": 728,
+          "inclusive_sum_us": 12141.74,
+          "union_us": 12141.74
+        },
+        "AscendCL@aclnnMulGetWorkspaceSize": {
+          "count": 4,
+          "inclusive_sum_us": 154.27,
+          "union_us": 154.27
+        },
+        "AscendCL@aclnnMuls": {
+          "count": 8,
+          "inclusive_sum_us": 513.93,
+          "union_us": 513.93
+        },
+        "AscendCL@aclnnMulsGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 55.51,
+          "union_us": 55.51
+        },
+        "AscendCL@aclnnNeScalar": {
+          "count": 320,
+          "inclusive_sum_us": 4370.53,
+          "union_us": 4370.53
+        },
+        "AscendCL@aclnnNeScalarGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 57.33,
+          "union_us": 57.33
+        },
+        "AscendCL@aclnnRecurrentGatedDeltaRule": {
+          "count": 210,
+          "inclusive_sum_us": 3961.08,
+          "union_us": 3961.08
+        },
+        "AscendCL@aclnnRecurrentGatedDeltaRuleGetWorkspaceSize": {
+          "count": 210,
+          "inclusive_sum_us": 2707.34,
+          "union_us": 2707.34
+        },
+        "AscendCL@aclnnScatterPaKvCache": {
+          "count": 80,
+          "inclusive_sum_us": 4633.48,
+          "union_us": 4633.48
+        },
+        "AscendCL@aclnnScatterPaKvCacheGetWorkspaceSize": {
+          "count": 80,
+          "inclusive_sum_us": 8313.84,
+          "union_us": 8313.84
+        },
+        "AscendCL@aclnnSigmoid": {
+          "count": 400,
+          "inclusive_sum_us": 5518.19,
+          "union_us": 5518.19
+        },
+        "AscendCL@aclnnSigmoidGetWorkspaceSize": {
+          "count": 2,
+          "inclusive_sum_us": 126.66,
+          "union_us": 126.66
+        },
+        "AscendCL@aclnnSub": {
+          "count": 80,
+          "inclusive_sum_us": 1460.24,
+          "union_us": 1460.24
+        },
+        "AscendCL@aclnnSubGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 185.39,
+          "union_us": 185.39
+        },
+        "AscendCL@aclnnSubs": {
+          "count": 11,
+          "inclusive_sum_us": 244.1,
+          "union_us": 244.1
+        },
+        "AscendCL@aclnnSwiGlu": {
+          "count": 640,
+          "inclusive_sum_us": 14093.88,
+          "union_us": 14093.88
+        },
+        "AscendCL@aclnnSwiGluGetWorkspaceSize": {
+          "count": 640,
+          "inclusive_sum_us": 13416.44,
+          "union_us": 13416.44
+        },
+        "AscendCL@aclnnSwiGluTiling": {
+          "count": 2,
+          "inclusive_sum_us": 117.73,
+          "union_us": 117.73
+        },
+        "AscendCL@aclrtCreateEventExWithFlag": {
+          "count": 2272,
+          "inclusive_sum_us": 10100.32,
+          "union_us": 10100.32
+        },
+        "AscendCL@aclrtCtxGetSysParamOpt": {
+          "count": 2248,
+          "inclusive_sum_us": 5285.83,
+          "union_us": 5285.83
+        },
+        "AscendCL@aclrtDestroyEvent": {
+          "count": 2026,
+          "inclusive_sum_us": 2412.55,
+          "union_us": 2412.55
+        },
+        "AscendCL@aclrtGetCurrentContext": {
+          "count": 656,
+          "inclusive_sum_us": 553.23,
+          "union_us": 553.23
+        },
+        "AscendCL@aclrtGetDeviceCount": {
+          "count": 2,
+          "inclusive_sum_us": 7.83,
+          "union_us": 7.83
+        },
+        "AscendCL@aclrtGetHardwareSyncAddr": {
+          "count": 1400,
+          "inclusive_sum_us": 1433.29,
+          "union_us": 1433.29
+        },
+        "AscendCL@aclrtGetResInCurrentThread": {
+          "count": 7466,
+          "inclusive_sum_us": 7919.13,
+          "union_us": 7919.13
+        },
+        "AscendCL@aclrtGetStreamAttribute": {
+          "count": 13228,
+          "inclusive_sum_us": 8860.99,
+          "union_us": 8860.99
+        },
+        "AscendCL@aclrtLaunchKernelWithHostArgs": {
+          "count": 14137,
+          "inclusive_sum_us": 93818.81,
+          "union_us": 93818.81
+        },
+        "AscendCL@aclrtMallocHostWithCfg": {
+          "count": 3,
+          "inclusive_sum_us": 474.12,
+          "union_us": 474.12
+        },
+        "AscendCL@aclrtMallocPhysical": {
+          "count": 27,
+          "inclusive_sum_us": 60367.85,
+          "union_us": 60367.85
+        },
+        "AscendCL@aclrtMapMem": {
+          "count": 27,
+          "inclusive_sum_us": 1264.33,
+          "union_us": 1264.33
+        },
+        "AscendCL@aclrtMemcpyAsync": {
+          "count": 481,
+          "inclusive_sum_us": 8159.22,
+          "union_us": 8159.22
+        },
+        "AscendCL@aclrtMemcpyAsyncWithCondition": {
+          "count": 8,
+          "inclusive_sum_us": 132.86,
+          "union_us": 132.86
+        },
+        "AscendCL@aclrtPointerGetAttributes": {
+          "count": 6374,
+          "inclusive_sum_us": 12236.32,
+          "union_us": 12236.32
+        },
+        "AscendCL@aclrtQueryEventStatus": {
+          "count": 416,
+          "inclusive_sum_us": 421.43,
+          "union_us": 421.43
+        },
+        "AscendCL@aclrtRecordEvent": {
+          "count": 2950,
+          "inclusive_sum_us": 35061.52,
+          "union_us": 35061.52
+        },
+        "AscendCL@aclrtStreamGetId": {
+          "count": 14432,
+          "inclusive_sum_us": 7010.02,
+          "union_us": 7010.02
+        },
+        "AscendCL@aclrtStreamWaitEvent": {
+          "count": 2280,
+          "inclusive_sum_us": 12612.66,
+          "union_us": 12612.66
+        },
+        "AscendCL@aclrtSynchronizeDeviceWithTimeout": {
+          "count": 1,
+          "inclusive_sum_us": 33.47,
+          "union_us": 33.47
+        },
+        "AscendCL@aclrtSynchronizeEvent": {
+          "count": 8,
+          "inclusive_sum_us": 147563.86,
+          "union_us": 147563.86
+        },
+        "AscendCL@aclrtSynchronizeStreamWithTimeout": {
+          "count": 42,
+          "inclusive_sum_us": 144.18,
+          "union_us": 144.18
+        },
+        "AscendCL@hcom_allGather_": {
+          "count": 8,
+          "inclusive_sum_us": 2896.38,
+          "union_us": 2896.38
+        },
+        "AscendCL@hcom_allReduce_": {
+          "count": 648,
+          "inclusive_sum_us": 245026.29,
+          "union_us": 245026.29
+        }
+      },
+      "device_compute": {
+        "kernel_count": 15605,
+        "task_types": {
+          "AI_VECTOR_CORE": 11857,
+          "AI_CORE": 2168,
+          "MIX_AIC": 1260,
+          "MIX_AIV": 320
+        },
+        "active_union_us": 371456.42,
+        "first_kernel_start_ns": 1791603888675621860,
+        "last_kernel_end_ns": 1791603891356977900,
+        "kernel_window_us": 2681356.04,
+        "active_fraction_of_kernel_window": 0.13853304613735667,
+        "profiling_enable_ns": 1791603883654703440,
+        "profiling_disable_ns": 1791603891372068520,
+        "profiling_window_us": 7717365.08,
+        "active_fraction_of_profiling_window": 0.048132544741553165,
+        "streams": {
+          "47": {
+            "kernel_count": 15605,
+            "active_union_us": 371456.42
+          }
+        },
+        "mapped_pd_overlap_us": null,
+        "mapped_pd_overlap_fraction_of_compute_union": null
+      },
+      "device_communication_tasks": {
+        "count": 0,
+        "inclusive_sum_us": 0.0,
+        "union_us": 0.0
+      },
+      "excluded_communication_process_spans": {
+        "count": 13754,
+        "inclusive_sum_us": 3900440.56,
+        "union_us": 1781119.52
+      },
+      "other_hardware_tasks": {
+        "EVENT_RECORD:EVENT_RECORD": {
+          "count": 2615,
+          "inclusive_sum_us": 52.3,
+          "union_us": 52.3
+        },
+        "EVENT_WAIT:EVENT_WAIT": {
+          "count": 1269,
+          "inclusive_sum_us": 2023489.52,
+          "union_us": 2023087.0
+        },
+        "Notify Wait:Notify Wait": {
+          "count": 4570,
+          "inclusive_sum_us": 1758196.66,
+          "union_us": 1650894.74
+        },
+        "PCIE_DMA_SQE:MEMCPY_ASYNC": {
+          "count": 126,
+          "inclusive_sum_us": 541.46,
+          "union_us": 541.46
+        },
+        "PLACE_HOLDER_SQE:PLACE_HOLDER_SQE": {
+          "count": 1,
+          "inclusive_sum_us": 0.02,
+          "union_us": 0.02
+        },
+        "PROFILING_DISABLE:PROFILING_DISABLE": {
+          "count": 1,
+          "inclusive_sum_us": 0.02,
+          "union_us": 0.02
+        },
+        "SDMA:SDMA": {
+          "count": 3620,
+          "inclusive_sum_us": 355893.18,
+          "union_us": 122296.64
+        },
+        "SDMA_SQE:MEMCPY_ASYNC": {
+          "count": 321,
+          "inclusive_sum_us": 206.34,
+          "union_us": 206.34
+        },
+        "Write Value:Write Value": {
+          "count": 4908,
+          "inclusive_sum_us": 5231.2,
+          "union_us": 3987.52
+        }
+      },
+      "per_forward_equivalent": {
+        "all_reduce_cpu_calls": 81.0,
+        "python_event_record_calls": 122.0,
+        "python_event_wait_calls": 121.0,
+        "cann_stream_wait_event_calls": 285.0,
+        "cann_record_event_calls": 368.75,
+        "device_compute_active_union_us": 46432.0525
+      }
+    },
+    {
+      "mode": "native",
+      "rank": 1,
+      "source": "local-results/perf-tp4/native-profile/dp0_pp0_tp1_dcp0_ep1_rank1_491926_20261010034443531_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+      "source_sha256": "8159c2a3bba550ffeb66f83cfdbe719984c50e85ce349d60a06ddabee9024f06",
+      "source_bytes": 98186306,
+      "profiler_info": "local-results/perf-tp4/native-profile/dp0_pp0_tp1_dcp0_ep1_rank1_491926_20261010034443531_ascend_pt/profiler_info_1.json",
+      "profiler_info_sha256": "60ab0e67f7e2e0b5f9446abc740f115e008dedd95b15720c420f4aaf4747f4e7",
+      "device_label": "NPU 1",
+      "complete_cpu_op_count": 117295,
+      "direct_model_or_decoder_forward_range_candidates": {},
+      "model_forward_equivalents": {
+        "count": 8,
+        "kind": "inferred_from_40_MoE_and_30_GDN_calls_per_model_forward",
+        "independent_logits_all_gather_count": 8,
+        "direct_complete_model_range_observed": false,
+        "direct_complete_model_inclusive_us": null,
+        "moe_layer_calls": 320,
+        "gdn_layer_calls": 240
+      },
+      "cpu_operations": {
+        "Event::record": {
+          "count": 976,
+          "inclusive_sum_us": 99429.91,
+          "exclusive_of_contained_cpu_ops_sum_us": 84411.29,
+          "per_thread_union_sum_us": 99429.91,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "Event::synchronize": {
+          "count": 8,
+          "inclusive_sum_us": 15145.82,
+          "exclusive_of_contained_cpu_ops_sum_us": 15145.82,
+          "per_thread_union_sum_us": 15145.82,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "Event::wait": {
+          "count": 968,
+          "inclusive_sum_us": 73085.83,
+          "exclusive_of_contained_cpu_ops_sum_us": 58719.53,
+          "per_thread_union_sum_us": 73085.83,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::all_gather": {
+          "count": 8,
+          "inclusive_sum_us": 2712.61,
+          "exclusive_of_contained_cpu_ops_sum_us": 1334.21,
+          "per_thread_union_sum_us": 2712.61,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::all_reduce": {
+          "count": 648,
+          "inclusive_sum_us": 105817.15,
+          "exclusive_of_contained_cpu_ops_sum_us": 44503.07,
+          "per_thread_union_sum_us": 105817.15,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::maybe_all_reduce_tensor_model_parallel": {
+          "count": 320,
+          "inclusive_sum_us": 66073.75,
+          "exclusive_of_contained_cpu_ops_sum_us": 14749.25,
+          "per_thread_union_sum_us": 66073.75,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::maybe_chunk_residual": {
+          "count": 640,
+          "inclusive_sum_us": 9077.71,
+          "exclusive_of_contained_cpu_ops_sum_us": 9077.71,
+          "per_thread_union_sum_us": 9077.71,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::maybe_pad_and_reduce": {
+          "count": 8,
+          "inclusive_sum_us": 2095.79,
+          "exclusive_of_contained_cpu_ops_sum_us": 324.66,
+          "per_thread_union_sum_us": 2095.79,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::moe_forward_shared": {
+          "count": 320,
+          "inclusive_sum_us": 1002885.91,
+          "exclusive_of_contained_cpu_ops_sum_us": 499489.8,
+          "per_thread_union_sum_us": 1002885.91,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::qwen_gdn_attention_core": {
+          "count": 240,
+          "inclusive_sum_us": 675621.37,
+          "exclusive_of_contained_cpu_ops_sum_us": 279019.5,
+          "per_thread_union_sum_us": 675621.37,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::triton_split_qkv_rmsnorm_mrope": {
+          "count": 80,
+          "inclusive_sum_us": 31957.89,
+          "exclusive_of_contained_cpu_ops_sum_us": 28138.63,
+          "per_thread_union_sum_us": 31957.89,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::unified_attention_with_output": {
+          "count": 80,
+          "inclusive_sum_us": 57189.72,
+          "exclusive_of_contained_cpu_ops_sum_us": 21137.25,
+          "per_thread_union_sum_us": 57189.72,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::unquantized_gemm": {
+          "count": 2160,
+          "inclusive_sum_us": 167357.58,
+          "exclusive_of_contained_cpu_ops_sum_us": 40925.34,
+          "per_thread_union_sum_us": 167357.58,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        }
+      },
+      "cann_runtime_apis": {
+        "AscendCL@Abs_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 20.04,
+          "union_us": 20.04
+        },
+        "AscendCL@Add_Tiling": {
+          "count": 2,
+          "inclusive_sum_us": 44.13,
+          "union_us": 44.13
+        },
+        "AscendCL@BroadcastTo_Tiling": {
+          "count": 62,
+          "inclusive_sum_us": 1068.8,
+          "union_us": 1068.8
+        },
+        "AscendCL@Cast_Tiling": {
+          "count": 12,
+          "inclusive_sum_us": 145.36,
+          "union_us": 145.36
+        },
+        "AscendCL@ChunkFwdO_Tiling": {
+          "count": 120,
+          "inclusive_sum_us": 822.8,
+          "union_us": 822.8
+        },
+        "AscendCL@ChunkGatedDeltaRuleFwdH_Tiling": {
+          "count": 120,
+          "inclusive_sum_us": 1008.52,
+          "union_us": 1008.52
+        },
+        "AscendCL@ConcatD_Tiling": {
+          "count": 3,
+          "inclusive_sum_us": 68.59,
+          "union_us": 68.59
+        },
+        "AscendCL@Fill_Tiling": {
+          "count": 2,
+          "inclusive_sum_us": 34.93,
+          "union_us": 34.93
+        },
+        "AscendCL@GatherV2_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 31.68,
+          "union_us": 31.68
+        },
+        "AscendCL@GreaterEqual_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 17.13,
+          "union_us": 17.13
+        },
+        "AscendCL@GroupedMatmul_Tiling": {
+          "count": 4,
+          "inclusive_sum_us": 351.09,
+          "union_us": 351.09
+        },
+        "AscendCL@IndexCheck_Tiling": {
+          "count": 128,
+          "inclusive_sum_us": 771.81,
+          "union_us": 771.81
+        },
+        "AscendCL@IndexPutV2_Tiling": {
+          "count": 60,
+          "inclusive_sum_us": 587.61,
+          "union_us": 587.61
+        },
+        "AscendCL@Index_Tiling": {
+          "count": 4,
+          "inclusive_sum_us": 40.06,
+          "union_us": 40.06
+        },
+        "AscendCL@Less_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 13.97,
+          "union_us": 13.97
+        },
+        "AscendCL@LogicalAnd_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 11.05,
+          "union_us": 11.05
+        },
+        "AscendCL@LogicalNot_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 8.47,
+          "union_us": 8.47
+        },
+        "AscendCL@MaskedFill_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 30.7,
+          "union_us": 30.7
+        },
+        "AscendCL@MatMulV2_Tiling": {
+          "count": 14,
+          "inclusive_sum_us": 844.47,
+          "union_us": 844.47
+        },
+        "AscendCL@MoeInitRoutingV3_Tiling": {
+          "count": 2,
+          "inclusive_sum_us": 88.62,
+          "union_us": 88.62
+        },
+        "AscendCL@Mul_Tiling": {
+          "count": 5,
+          "inclusive_sum_us": 61.52,
+          "union_us": 61.52
+        },
+        "AscendCL@NotEqual_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 22.58,
+          "union_us": 22.58
+        },
+        "AscendCL@RecurrentGatedDeltaRule_Tiling": {
+          "count": 2,
+          "inclusive_sum_us": 44.94,
+          "union_us": 44.94
+        },
+        "AscendCL@ScatterPaKvCache_Tiling": {
+          "count": 160,
+          "inclusive_sum_us": 3655.39,
+          "union_us": 3655.39
+        },
+        "AscendCL@Sigmoid_Tiling": {
+          "count": 2,
+          "inclusive_sum_us": 31.54,
+          "union_us": 31.54
+        },
+        "AscendCL@Slice_Tiling": {
+          "count": 218,
+          "inclusive_sum_us": 3214.06,
+          "union_us": 3214.06
+        },
+        "AscendCL@Sub_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 13.32,
+          "union_us": 13.32
+        },
+        "AscendCL@TensorMove_Tiling": {
+          "count": 2,
+          "inclusive_sum_us": 11.54,
+          "union_us": 11.54
+        },
+        "AscendCL@Transpose_Tiling": {
+          "count": 496,
+          "inclusive_sum_us": 2646.0,
+          "union_us": 2646.0
+        },
+        "AscendCL@ZerosLike_Tiling": {
+          "count": 3,
+          "inclusive_sum_us": 34.98,
+          "union_us": 34.98
+        },
+        "AscendCL@aclmdlRICaptureGetInfo": {
+          "count": 14480,
+          "inclusive_sum_us": 9614.63,
+          "union_us": 9614.63
+        },
+        "AscendCL@aclnnAbs": {
+          "count": 320,
+          "inclusive_sum_us": 3955.93,
+          "union_us": 3955.93
+        },
+        "AscendCL@aclnnAbsGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 33.74,
+          "union_us": 33.74
+        },
+        "AscendCL@aclnnAdd": {
+          "count": 336,
+          "inclusive_sum_us": 4171.43,
+          "union_us": 4171.43
+        },
+        "AscendCL@aclnnAddGetWorkspaceSize": {
+          "count": 2,
+          "inclusive_sum_us": 79.16,
+          "union_us": 79.16
+        },
+        "AscendCL@aclnnAddRmsNormBias": {
+          "count": 640,
+          "inclusive_sum_us": 15208.06,
+          "union_us": 15208.06
+        },
+        "AscendCL@aclnnAddRmsNormBiasGetWorkspaceSize": {
+          "count": 640,
+          "inclusive_sum_us": 12485.08,
+          "union_us": 12485.08
+        },
+        "AscendCL@aclnnAddRmsNormBiasTiling": {
+          "count": 1,
+          "inclusive_sum_us": 26.86,
+          "union_us": 26.86
+        },
+        "AscendCL@aclnnAdds": {
+          "count": 800,
+          "inclusive_sum_us": 13785.02,
+          "union_us": 13785.02
+        },
+        "AscendCL@aclnnArgMax": {
+          "count": 8,
+          "inclusive_sum_us": 172.3,
+          "union_us": 172.3
+        },
+        "AscendCL@aclnnBitwiseAndTensor": {
+          "count": 8,
+          "inclusive_sum_us": 155.47,
+          "union_us": 155.47
+        },
+        "AscendCL@aclnnBitwiseAndTensorGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 24.41,
+          "union_us": 24.41
+        },
+        "AscendCL@aclnnBitwiseNot": {
+          "count": 8,
+          "inclusive_sum_us": 172.2,
+          "union_us": 172.2
+        },
+        "AscendCL@aclnnBitwiseNotGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 19.39,
+          "union_us": 19.39
+        },
+        "AscendCL@aclnnCat": {
+          "count": 300,
+          "inclusive_sum_us": 3606.7,
+          "union_us": 3606.7
+        },
+        "AscendCL@aclnnCatGetWorkspaceSize": {
+          "count": 3,
+          "inclusive_sum_us": 102.74,
+          "union_us": 102.74
+        },
+        "AscendCL@aclnnCausalConv1d": {
+          "count": 240,
+          "inclusive_sum_us": 25887.06,
+          "union_us": 25887.06
+        },
+        "AscendCL@aclnnCausalConv1dGetWorkspaceSize": {
+          "count": 240,
+          "inclusive_sum_us": 21769.99,
+          "union_us": 21769.99
+        },
+        "AscendCL@aclnnCausalConv1dTiling": {
+          "count": 1,
+          "inclusive_sum_us": 28.6,
+          "union_us": 28.6
+        },
+        "AscendCL@aclnnChunkFwdO": {
+          "count": 60,
+          "inclusive_sum_us": 2587.28,
+          "union_us": 2587.28
+        },
+        "AscendCL@aclnnChunkFwdOGetWorkspaceSize": {
+          "count": 60,
+          "inclusive_sum_us": 2629.11,
+          "union_us": 2629.11
+        },
+        "AscendCL@aclnnChunkGatedDeltaRuleFwdH": {
+          "count": 60,
+          "inclusive_sum_us": 3269.18,
+          "union_us": 3269.18
+        },
+        "AscendCL@aclnnChunkGatedDeltaRuleFwdHGetWorkspaceSize": {
+          "count": 60,
+          "inclusive_sum_us": 3249.43,
+          "union_us": 3249.43
+        },
+        "AscendCL@aclnnContiguous": {
+          "count": 240,
+          "inclusive_sum_us": 18542.3,
+          "union_us": 18542.3
+        },
+        "AscendCL@aclnnContiguousGetWorkspaceSize": {
+          "count": 240,
+          "inclusive_sum_us": 14193.11,
+          "union_us": 14193.11
+        },
+        "AscendCL@aclnnEmbedding": {
+          "count": 8,
+          "inclusive_sum_us": 178.98,
+          "union_us": 178.98
+        },
+        "AscendCL@aclnnEmbeddingGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 38.31,
+          "union_us": 38.31
+        },
+        "AscendCL@aclnnGeScalar": {
+          "count": 8,
+          "inclusive_sum_us": 272.96,
+          "union_us": 272.96
+        },
+        "AscendCL@aclnnGeScalarGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 41.43,
+          "union_us": 41.43
+        },
+        "AscendCL@aclnnGemmaRmsNorm": {
+          "count": 8,
+          "inclusive_sum_us": 318.38,
+          "union_us": 318.38
+        },
+        "AscendCL@aclnnGemmaRmsNormGetWorkspaceSize": {
+          "count": 8,
+          "inclusive_sum_us": 400.55,
+          "union_us": 400.55
+        },
+        "AscendCL@aclnnGemmaRmsNormTiling": {
+          "count": 1,
+          "inclusive_sum_us": 44.31,
+          "union_us": 44.31
+        },
+        "AscendCL@aclnnGroupedMatmulV5": {
+          "count": 640,
+          "inclusive_sum_us": 10013.46,
+          "union_us": 10013.46
+        },
+        "AscendCL@aclnnGroupedMatmulV5GetWorkspaceSize": {
+          "count": 2,
+          "inclusive_sum_us": 532.14,
+          "union_us": 532.14
+        },
+        "AscendCL@aclnnGtScalar": {
+          "count": 6,
+          "inclusive_sum_us": 196.47,
+          "union_us": 196.47
+        },
+        "AscendCL@aclnnIndex": {
+          "count": 476,
+          "inclusive_sum_us": 10441.61,
+          "union_us": 10441.61
+        },
+        "AscendCL@aclnnIndexGetWorkspaceSize": {
+          "count": 4,
+          "inclusive_sum_us": 349.92,
+          "union_us": 349.92
+        },
+        "AscendCL@aclnnIndexPutImpl": {
+          "count": 60,
+          "inclusive_sum_us": 6345.66,
+          "union_us": 6345.66
+        },
+        "AscendCL@aclnnIndexPutImplGetWorkspaceSize": {
+          "count": 60,
+          "inclusive_sum_us": 4440.35,
+          "union_us": 4440.35
+        },
+        "AscendCL@aclnnInnerFusedInferAttentionScore": {
+          "count": 80,
+          "inclusive_sum_us": 3067.29,
+          "union_us": 3067.29
+        },
+        "AscendCL@aclnnInnerFusedInferAttentionScoreGetWorkspaceSize": {
+          "count": 80,
+          "inclusive_sum_us": 2916.36,
+          "union_us": 2916.36
+        },
+        "AscendCL@aclnnInnerFusedInferAttentionScoreTiling": {
+          "count": 6,
+          "inclusive_sum_us": 441.41,
+          "union_us": 441.41
+        },
+        "AscendCL@aclnnInnerMoeTokenUnpermute": {
+          "count": 320,
+          "inclusive_sum_us": 5930.5,
+          "union_us": 5930.5
+        },
+        "AscendCL@aclnnInnerMoeTokenUnpermuteGetWorkspaceSize": {
+          "count": 320,
+          "inclusive_sum_us": 4134.29,
+          "union_us": 4134.29
+        },
+        "AscendCL@aclnnInnerMoeTokenUnpermuteTiling": {
+          "count": 1,
+          "inclusive_sum_us": 29.77,
+          "union_us": 29.77
+        },
+        "AscendCL@aclnnInplaceCopy": {
+          "count": 2765,
+          "inclusive_sum_us": 36947.57,
+          "union_us": 36947.57
+        },
+        "AscendCL@aclnnInplaceCopyGetWorkspaceSize": {
+          "count": 412,
+          "inclusive_sum_us": 7221.68,
+          "union_us": 7221.68
+        },
+        "AscendCL@aclnnInplaceFillScalar": {
+          "count": 116,
+          "inclusive_sum_us": 1135.67,
+          "union_us": 1135.67
+        },
+        "AscendCL@aclnnInplaceFillScalarGetWorkspaceSize": {
+          "count": 3,
+          "inclusive_sum_us": 73.64,
+          "union_us": 73.64
+        },
+        "AscendCL@aclnnInplaceMaskedFillScalar": {
+          "count": 8,
+          "inclusive_sum_us": 198.15,
+          "union_us": 198.15
+        },
+        "AscendCL@aclnnInplaceMaskedFillScalarGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 34.22,
+          "union_us": 34.22
+        },
+        "AscendCL@aclnnInplaceZero": {
+          "count": 420,
+          "inclusive_sum_us": 4781.49,
+          "union_us": 4781.49
+        },
+        "AscendCL@aclnnInplaceZeroGetWorkspaceSize": {
+          "count": 3,
+          "inclusive_sum_us": 64.06,
+          "union_us": 64.06
+        },
+        "AscendCL@aclnnLtScalar": {
+          "count": 8,
+          "inclusive_sum_us": 240.29,
+          "union_us": 240.29
+        },
+        "AscendCL@aclnnLtScalarGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 35.54,
+          "union_us": 35.54
+        },
+        "AscendCL@aclnnMatmul": {
+          "count": 2168,
+          "inclusive_sum_us": 27886.6,
+          "union_us": 27886.6
+        },
+        "AscendCL@aclnnMatmulGetWorkspaceSize": {
+          "count": 7,
+          "inclusive_sum_us": 1836.34,
+          "union_us": 1836.34
+        },
+        "AscendCL@aclnnMoeGatingTopK": {
+          "count": 320,
+          "inclusive_sum_us": 6225.25,
+          "union_us": 6225.25
+        },
+        "AscendCL@aclnnMoeGatingTopKGetWorkspaceSize": {
+          "count": 320,
+          "inclusive_sum_us": 6267.81,
+          "union_us": 6267.81
+        },
+        "AscendCL@aclnnMoeGatingTopKTiling": {
+          "count": 1,
+          "inclusive_sum_us": 57.07,
+          "union_us": 57.07
+        },
+        "AscendCL@aclnnMoeInitRoutingV3": {
+          "count": 320,
+          "inclusive_sum_us": 5642.6,
+          "union_us": 5642.6
+        },
+        "AscendCL@aclnnMoeInitRoutingV3GetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 135.09,
+          "union_us": 135.09
+        },
+        "AscendCL@aclnnMoeTokenUnpermuteGetWorkspaceSize": {
+          "count": 320,
+          "inclusive_sum_us": 7361.0,
+          "union_us": 7361.0
+        },
+        "AscendCL@aclnnMul": {
+          "count": 728,
+          "inclusive_sum_us": 9975.49,
+          "union_us": 9975.49
+        },
+        "AscendCL@aclnnMulGetWorkspaceSize": {
+          "count": 4,
+          "inclusive_sum_us": 108.63,
+          "union_us": 108.63
+        },
+        "AscendCL@aclnnMuls": {
+          "count": 8,
+          "inclusive_sum_us": 247.59,
+          "union_us": 247.59
+        },
+        "AscendCL@aclnnMulsGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 39.69,
+          "union_us": 39.69
+        },
+        "AscendCL@aclnnNeScalar": {
+          "count": 320,
+          "inclusive_sum_us": 3821.74,
+          "union_us": 3821.74
+        },
+        "AscendCL@aclnnNeScalarGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 35.51,
+          "union_us": 35.51
+        },
+        "AscendCL@aclnnRecurrentGatedDeltaRule": {
+          "count": 210,
+          "inclusive_sum_us": 3313.41,
+          "union_us": 3313.41
+        },
+        "AscendCL@aclnnRecurrentGatedDeltaRuleGetWorkspaceSize": {
+          "count": 210,
+          "inclusive_sum_us": 2109.4,
+          "union_us": 2109.4
+        },
+        "AscendCL@aclnnScatterPaKvCache": {
+          "count": 80,
+          "inclusive_sum_us": 3802.96,
+          "union_us": 3802.96
+        },
+        "AscendCL@aclnnScatterPaKvCacheGetWorkspaceSize": {
+          "count": 80,
+          "inclusive_sum_us": 7198.52,
+          "union_us": 7198.52
+        },
+        "AscendCL@aclnnSigmoid": {
+          "count": 400,
+          "inclusive_sum_us": 4609.56,
+          "union_us": 4609.56
+        },
+        "AscendCL@aclnnSigmoidGetWorkspaceSize": {
+          "count": 2,
+          "inclusive_sum_us": 51.72,
+          "union_us": 51.72
+        },
+        "AscendCL@aclnnSub": {
+          "count": 80,
+          "inclusive_sum_us": 1095.06,
+          "union_us": 1095.06
+        },
+        "AscendCL@aclnnSubGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 34.95,
+          "union_us": 34.95
+        },
+        "AscendCL@aclnnSubs": {
+          "count": 11,
+          "inclusive_sum_us": 175.64,
+          "union_us": 175.64
+        },
+        "AscendCL@aclnnSwiGlu": {
+          "count": 640,
+          "inclusive_sum_us": 11618.67,
+          "union_us": 11618.67
+        },
+        "AscendCL@aclnnSwiGluGetWorkspaceSize": {
+          "count": 640,
+          "inclusive_sum_us": 11587.67,
+          "union_us": 11587.67
+        },
+        "AscendCL@aclnnSwiGluTiling": {
+          "count": 2,
+          "inclusive_sum_us": 50.79,
+          "union_us": 50.79
+        },
+        "AscendCL@aclrtCreateEventExWithFlag": {
+          "count": 2272,
+          "inclusive_sum_us": 9270.49,
+          "union_us": 9270.49
+        },
+        "AscendCL@aclrtCtxGetSysParamOpt": {
+          "count": 2248,
+          "inclusive_sum_us": 4862.28,
+          "union_us": 4862.28
+        },
+        "AscendCL@aclrtDestroyEvent": {
+          "count": 2031,
+          "inclusive_sum_us": 2361.85,
+          "union_us": 2361.85
+        },
+        "AscendCL@aclrtGetCurrentContext": {
+          "count": 656,
+          "inclusive_sum_us": 594.05,
+          "union_us": 594.05
+        },
+        "AscendCL@aclrtGetDeviceCount": {
+          "count": 2,
+          "inclusive_sum_us": 6.19,
+          "union_us": 6.19
+        },
+        "AscendCL@aclrtGetHardwareSyncAddr": {
+          "count": 1400,
+          "inclusive_sum_us": 1421.83,
+          "union_us": 1421.83
+        },
+        "AscendCL@aclrtGetResInCurrentThread": {
+          "count": 7462,
+          "inclusive_sum_us": 8271.93,
+          "union_us": 8271.93
+        },
+        "AscendCL@aclrtGetStreamAttribute": {
+          "count": 13228,
+          "inclusive_sum_us": 9385.63,
+          "union_us": 9385.63
+        },
+        "AscendCL@aclrtLaunchKernelWithHostArgs": {
+          "count": 14137,
+          "inclusive_sum_us": 88794.6,
+          "union_us": 88794.6
+        },
+        "AscendCL@aclrtMallocHostWithCfg": {
+          "count": 3,
+          "inclusive_sum_us": 404.92,
+          "union_us": 404.92
+        },
+        "AscendCL@aclrtMallocPhysical": {
+          "count": 27,
+          "inclusive_sum_us": 39131.56,
+          "union_us": 39131.56
+        },
+        "AscendCL@aclrtMapMem": {
+          "count": 27,
+          "inclusive_sum_us": 1129.7,
+          "union_us": 1129.7
+        },
+        "AscendCL@aclrtMemcpyAsync": {
+          "count": 481,
+          "inclusive_sum_us": 6796.33,
+          "union_us": 6796.33
+        },
+        "AscendCL@aclrtMemcpyAsyncWithCondition": {
+          "count": 8,
+          "inclusive_sum_us": 121.18,
+          "union_us": 121.18
+        },
+        "AscendCL@aclrtPointerGetAttributes": {
+          "count": 6374,
+          "inclusive_sum_us": 13097.99,
+          "union_us": 13097.99
+        },
+        "AscendCL@aclrtQueryEventStatus": {
+          "count": 429,
+          "inclusive_sum_us": 396.75,
+          "union_us": 396.75
+        },
+        "AscendCL@aclrtRecordEvent": {
+          "count": 2950,
+          "inclusive_sum_us": 32098.51,
+          "union_us": 32098.51
+        },
+        "AscendCL@aclrtStreamGetId": {
+          "count": 10544,
+          "inclusive_sum_us": 5317.19,
+          "union_us": 5317.19
+        },
+        "AscendCL@aclrtStreamWaitEvent": {
+          "count": 2280,
+          "inclusive_sum_us": 11825.75,
+          "union_us": 11825.75
+        },
+        "AscendCL@aclrtSynchronizeDeviceWithTimeout": {
+          "count": 1,
+          "inclusive_sum_us": 29.26,
+          "union_us": 29.26
+        },
+        "AscendCL@aclrtSynchronizeEvent": {
+          "count": 8,
+          "inclusive_sum_us": 14674.4,
+          "union_us": 14674.4
+        },
+        "AscendCL@aclrtSynchronizeStreamWithTimeout": {
+          "count": 42,
+          "inclusive_sum_us": 116.84,
+          "union_us": 116.84
+        },
+        "AscendCL@hcom_allGather_": {
+          "count": 8,
+          "inclusive_sum_us": 3025.3,
+          "union_us": 3025.3
+        },
+        "AscendCL@hcom_allReduce_": {
+          "count": 648,
+          "inclusive_sum_us": 203684.94,
+          "union_us": 203684.94
+        }
+      },
+      "device_compute": {
+        "kernel_count": 15605,
+        "task_types": {
+          "AI_VECTOR_CORE": 11857,
+          "AI_CORE": 2168,
+          "MIX_AIC": 1260,
+          "MIX_AIV": 320
+        },
+        "active_union_us": 372529.6,
+        "first_kernel_start_ns": 1791603888675736600,
+        "last_kernel_end_ns": 1791603891357215360,
+        "kernel_window_us": 2681478.76,
+        "active_fraction_of_kernel_window": 0.13892692552970287,
+        "profiling_enable_ns": 1791603883655247400,
+        "profiling_disable_ns": 1791603891365233040,
+        "profiling_window_us": 7709985.64,
+        "active_fraction_of_profiling_window": 0.048317807243023606,
+        "streams": {
+          "47": {
+            "kernel_count": 15605,
+            "active_union_us": 372529.6
+          }
+        },
+        "mapped_pd_overlap_us": null,
+        "mapped_pd_overlap_fraction_of_compute_union": null
+      },
+      "device_communication_tasks": {
+        "count": 0,
+        "inclusive_sum_us": 0.0,
+        "union_us": 0.0
+      },
+      "excluded_communication_process_spans": {
+        "count": 9469,
+        "inclusive_sum_us": 689720.52,
+        "union_us": 221826.68
+      },
+      "other_hardware_tasks": {
+        "EVENT_RECORD:EVENT_RECORD": {
+          "count": 2648,
+          "inclusive_sum_us": 52.96,
+          "union_us": 52.96
+        },
+        "EVENT_WAIT:EVENT_WAIT": {
+          "count": 1050,
+          "inclusive_sum_us": 480563.14,
+          "union_us": 480493.3
+        },
+        "Notify Wait:Notify Wait": {
+          "count": 2229,
+          "inclusive_sum_us": 98783.74,
+          "union_us": 86789.14
+        },
+        "PCIE_DMA_SQE:MEMCPY_ASYNC": {
+          "count": 126,
+          "inclusive_sum_us": 482.06,
+          "union_us": 482.06
+        },
+        "PLACE_HOLDER_SQE:PLACE_HOLDER_SQE": {
+          "count": 1,
+          "inclusive_sum_us": 0.02,
+          "union_us": 0.02
+        },
+        "PROFILING_DISABLE:PROFILING_DISABLE": {
+          "count": 1,
+          "inclusive_sum_us": 0.02,
+          "union_us": 0.02
+        },
+        "PROFILING_ENABLE:PROFILING_ENABLE": {
+          "count": 1,
+          "inclusive_sum_us": 0.02,
+          "union_us": 0.02
+        },
+        "SDMA:SDMA": {
+          "count": 3620,
+          "inclusive_sum_us": 364582.96,
+          "union_us": 125864.66
+        },
+        "SDMA_SQE:MEMCPY_ASYNC": {
+          "count": 321,
+          "inclusive_sum_us": 207.26,
+          "union_us": 207.26
+        },
+        "Write Value:Write Value": {
+          "count": 2964,
+          "inclusive_sum_us": 4527.14,
+          "union_us": 4125.98
+        }
+      },
+      "per_forward_equivalent": {
+        "all_reduce_cpu_calls": 81.0,
+        "python_event_record_calls": 122.0,
+        "python_event_wait_calls": 121.0,
+        "cann_stream_wait_event_calls": 285.0,
+        "cann_record_event_calls": 368.75,
+        "device_compute_active_union_us": 46566.2
+      }
+    },
+    {
+      "mode": "native",
+      "rank": 2,
+      "source": "local-results/perf-tp4/native-profile/dp0_pp0_tp2_dcp0_ep2_rank2_491927_20261010034443532_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+      "source_sha256": "d60fe4917cc089315ca9278996bc51e69ad6f1b389b88354703e49d9c4f67778",
+      "source_bytes": 98175730,
+      "profiler_info": "local-results/perf-tp4/native-profile/dp0_pp0_tp2_dcp0_ep2_rank2_491927_20261010034443532_ascend_pt/profiler_info_2.json",
+      "profiler_info_sha256": "9d62c24b3b6c3ea6598650ebc3daabd194fcdcedc870d1331d390ad0810ea474",
+      "device_label": "NPU 2",
+      "complete_cpu_op_count": 117295,
+      "direct_model_or_decoder_forward_range_candidates": {},
+      "model_forward_equivalents": {
+        "count": 8,
+        "kind": "inferred_from_40_MoE_and_30_GDN_calls_per_model_forward",
+        "independent_logits_all_gather_count": 8,
+        "direct_complete_model_range_observed": false,
+        "direct_complete_model_inclusive_us": null,
+        "moe_layer_calls": 320,
+        "gdn_layer_calls": 240
+      },
+      "cpu_operations": {
+        "Event::record": {
+          "count": 976,
+          "inclusive_sum_us": 91595.81,
+          "exclusive_of_contained_cpu_ops_sum_us": 76726.19,
+          "per_thread_union_sum_us": 91595.81,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "Event::synchronize": {
+          "count": 8,
+          "inclusive_sum_us": 89168.24,
+          "exclusive_of_contained_cpu_ops_sum_us": 89168.24,
+          "per_thread_union_sum_us": 89168.24,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "Event::wait": {
+          "count": 968,
+          "inclusive_sum_us": 68570.08,
+          "exclusive_of_contained_cpu_ops_sum_us": 54457.51,
+          "per_thread_union_sum_us": 68570.08,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::all_gather": {
+          "count": 8,
+          "inclusive_sum_us": 2631.34,
+          "exclusive_of_contained_cpu_ops_sum_us": 1250.04,
+          "per_thread_union_sum_us": 2631.34,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::all_reduce": {
+          "count": 648,
+          "inclusive_sum_us": 102977.14,
+          "exclusive_of_contained_cpu_ops_sum_us": 43610.76,
+          "per_thread_union_sum_us": 102977.14,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::maybe_all_reduce_tensor_model_parallel": {
+          "count": 320,
+          "inclusive_sum_us": 63820.21,
+          "exclusive_of_contained_cpu_ops_sum_us": 13098.07,
+          "per_thread_union_sum_us": 63820.21,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::maybe_chunk_residual": {
+          "count": 640,
+          "inclusive_sum_us": 8884.35,
+          "exclusive_of_contained_cpu_ops_sum_us": 8884.35,
+          "per_thread_union_sum_us": 8884.35,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::maybe_pad_and_reduce": {
+          "count": 8,
+          "inclusive_sum_us": 1964.09,
+          "exclusive_of_contained_cpu_ops_sum_us": 310.93,
+          "per_thread_union_sum_us": 1964.09,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::moe_forward_shared": {
+          "count": 320,
+          "inclusive_sum_us": 954204.68,
+          "exclusive_of_contained_cpu_ops_sum_us": 457150.07,
+          "per_thread_union_sum_us": 954204.68,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::qwen_gdn_attention_core": {
+          "count": 240,
+          "inclusive_sum_us": 639839.07,
+          "exclusive_of_contained_cpu_ops_sum_us": 255896.07,
+          "per_thread_union_sum_us": 639839.07,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::triton_split_qkv_rmsnorm_mrope": {
+          "count": 80,
+          "inclusive_sum_us": 29946.08,
+          "exclusive_of_contained_cpu_ops_sum_us": 26212.05,
+          "per_thread_union_sum_us": 29946.08,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::unified_attention_with_output": {
+          "count": 80,
+          "inclusive_sum_us": 56813.12,
+          "exclusive_of_contained_cpu_ops_sum_us": 19901.93,
+          "per_thread_union_sum_us": 56813.12,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::unquantized_gemm": {
+          "count": 2160,
+          "inclusive_sum_us": 165758.86,
+          "exclusive_of_contained_cpu_ops_sum_us": 38990.11,
+          "per_thread_union_sum_us": 165758.86,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        }
+      },
+      "cann_runtime_apis": {
+        "AscendCL@Abs_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 32.23,
+          "union_us": 32.23
+        },
+        "AscendCL@Add_Tiling": {
+          "count": 2,
+          "inclusive_sum_us": 55.18,
+          "union_us": 55.18
+        },
+        "AscendCL@BroadcastTo_Tiling": {
+          "count": 62,
+          "inclusive_sum_us": 1135.26,
+          "union_us": 1135.26
+        },
+        "AscendCL@Cast_Tiling": {
+          "count": 12,
+          "inclusive_sum_us": 164.26,
+          "union_us": 164.26
+        },
+        "AscendCL@ChunkFwdO_Tiling": {
+          "count": 120,
+          "inclusive_sum_us": 858.11,
+          "union_us": 858.11
+        },
+        "AscendCL@ChunkGatedDeltaRuleFwdH_Tiling": {
+          "count": 120,
+          "inclusive_sum_us": 1082.09,
+          "union_us": 1082.09
+        },
+        "AscendCL@ConcatD_Tiling": {
+          "count": 3,
+          "inclusive_sum_us": 68.55,
+          "union_us": 68.55
+        },
+        "AscendCL@Fill_Tiling": {
+          "count": 2,
+          "inclusive_sum_us": 39.44,
+          "union_us": 39.44
+        },
+        "AscendCL@GatherV2_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 39.55,
+          "union_us": 39.55
+        },
+        "AscendCL@GreaterEqual_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 16.05,
+          "union_us": 16.05
+        },
+        "AscendCL@GroupedMatmul_Tiling": {
+          "count": 4,
+          "inclusive_sum_us": 431.23,
+          "union_us": 431.23
+        },
+        "AscendCL@IndexCheck_Tiling": {
+          "count": 128,
+          "inclusive_sum_us": 897.87,
+          "union_us": 897.87
+        },
+        "AscendCL@IndexPutV2_Tiling": {
+          "count": 60,
+          "inclusive_sum_us": 614.58,
+          "union_us": 614.58
+        },
+        "AscendCL@Index_Tiling": {
+          "count": 4,
+          "inclusive_sum_us": 43.78,
+          "union_us": 43.78
+        },
+        "AscendCL@Less_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 16.58,
+          "union_us": 16.58
+        },
+        "AscendCL@LogicalAnd_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 11.42,
+          "union_us": 11.42
+        },
+        "AscendCL@LogicalNot_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 9.61,
+          "union_us": 9.61
+        },
+        "AscendCL@MaskedFill_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 37.75,
+          "union_us": 37.75
+        },
+        "AscendCL@MatMulV2_Tiling": {
+          "count": 14,
+          "inclusive_sum_us": 995.25,
+          "union_us": 995.25
+        },
+        "AscendCL@MoeInitRoutingV3_Tiling": {
+          "count": 2,
+          "inclusive_sum_us": 107.06,
+          "union_us": 107.06
+        },
+        "AscendCL@Mul_Tiling": {
+          "count": 5,
+          "inclusive_sum_us": 75.64,
+          "union_us": 75.64
+        },
+        "AscendCL@NotEqual_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 22.96,
+          "union_us": 22.96
+        },
+        "AscendCL@RecurrentGatedDeltaRule_Tiling": {
+          "count": 2,
+          "inclusive_sum_us": 40.69,
+          "union_us": 40.69
+        },
+        "AscendCL@ScatterPaKvCache_Tiling": {
+          "count": 160,
+          "inclusive_sum_us": 3511.39,
+          "union_us": 3511.39
+        },
+        "AscendCL@Sigmoid_Tiling": {
+          "count": 2,
+          "inclusive_sum_us": 33.44,
+          "union_us": 33.44
+        },
+        "AscendCL@Slice_Tiling": {
+          "count": 218,
+          "inclusive_sum_us": 3188.22,
+          "union_us": 3188.22
+        },
+        "AscendCL@Sub_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 13.83,
+          "union_us": 13.83
+        },
+        "AscendCL@TensorMove_Tiling": {
+          "count": 2,
+          "inclusive_sum_us": 14.19,
+          "union_us": 14.19
+        },
+        "AscendCL@Transpose_Tiling": {
+          "count": 500,
+          "inclusive_sum_us": 2720.59,
+          "union_us": 2720.59
+        },
+        "AscendCL@ZerosLike_Tiling": {
+          "count": 3,
+          "inclusive_sum_us": 36.23,
+          "union_us": 36.23
+        },
+        "AscendCL@aclmdlRICaptureGetInfo": {
+          "count": 14480,
+          "inclusive_sum_us": 8980.84,
+          "union_us": 8980.84
+        },
+        "AscendCL@aclnnAbs": {
+          "count": 320,
+          "inclusive_sum_us": 4106.85,
+          "union_us": 4106.85
+        },
+        "AscendCL@aclnnAbsGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 43.22,
+          "union_us": 43.22
+        },
+        "AscendCL@aclnnAdd": {
+          "count": 336,
+          "inclusive_sum_us": 4139.45,
+          "union_us": 4139.45
+        },
+        "AscendCL@aclnnAddGetWorkspaceSize": {
+          "count": 2,
+          "inclusive_sum_us": 90.86,
+          "union_us": 90.86
+        },
+        "AscendCL@aclnnAddRmsNormBias": {
+          "count": 640,
+          "inclusive_sum_us": 16427.24,
+          "union_us": 16427.24
+        },
+        "AscendCL@aclnnAddRmsNormBiasGetWorkspaceSize": {
+          "count": 640,
+          "inclusive_sum_us": 13527.65,
+          "union_us": 13527.65
+        },
+        "AscendCL@aclnnAddRmsNormBiasTiling": {
+          "count": 1,
+          "inclusive_sum_us": 30.54,
+          "union_us": 30.54
+        },
+        "AscendCL@aclnnAdds": {
+          "count": 800,
+          "inclusive_sum_us": 14620.77,
+          "union_us": 14620.77
+        },
+        "AscendCL@aclnnArgMax": {
+          "count": 8,
+          "inclusive_sum_us": 182.5,
+          "union_us": 182.5
+        },
+        "AscendCL@aclnnBitwiseAndTensor": {
+          "count": 8,
+          "inclusive_sum_us": 158.03,
+          "union_us": 158.03
+        },
+        "AscendCL@aclnnBitwiseAndTensorGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 30.02,
+          "union_us": 30.02
+        },
+        "AscendCL@aclnnBitwiseNot": {
+          "count": 8,
+          "inclusive_sum_us": 139.76,
+          "union_us": 139.76
+        },
+        "AscendCL@aclnnBitwiseNotGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 23.57,
+          "union_us": 23.57
+        },
+        "AscendCL@aclnnCat": {
+          "count": 300,
+          "inclusive_sum_us": 3673.03,
+          "union_us": 3673.03
+        },
+        "AscendCL@aclnnCatGetWorkspaceSize": {
+          "count": 3,
+          "inclusive_sum_us": 128.32,
+          "union_us": 128.32
+        },
+        "AscendCL@aclnnCausalConv1d": {
+          "count": 240,
+          "inclusive_sum_us": 27099.45,
+          "union_us": 27099.45
+        },
+        "AscendCL@aclnnCausalConv1dGetWorkspaceSize": {
+          "count": 240,
+          "inclusive_sum_us": 23876.55,
+          "union_us": 23876.55
+        },
+        "AscendCL@aclnnCausalConv1dTiling": {
+          "count": 1,
+          "inclusive_sum_us": 31.51,
+          "union_us": 31.51
+        },
+        "AscendCL@aclnnChunkFwdO": {
+          "count": 60,
+          "inclusive_sum_us": 2686.87,
+          "union_us": 2686.87
+        },
+        "AscendCL@aclnnChunkFwdOGetWorkspaceSize": {
+          "count": 60,
+          "inclusive_sum_us": 2952.2,
+          "union_us": 2952.2
+        },
+        "AscendCL@aclnnChunkGatedDeltaRuleFwdH": {
+          "count": 60,
+          "inclusive_sum_us": 3492.1,
+          "union_us": 3492.1
+        },
+        "AscendCL@aclnnChunkGatedDeltaRuleFwdHGetWorkspaceSize": {
+          "count": 60,
+          "inclusive_sum_us": 3657.76,
+          "union_us": 3657.76
+        },
+        "AscendCL@aclnnContiguous": {
+          "count": 240,
+          "inclusive_sum_us": 19502.83,
+          "union_us": 19502.83
+        },
+        "AscendCL@aclnnContiguousGetWorkspaceSize": {
+          "count": 240,
+          "inclusive_sum_us": 15634.1,
+          "union_us": 15634.1
+        },
+        "AscendCL@aclnnEmbedding": {
+          "count": 8,
+          "inclusive_sum_us": 237.93,
+          "union_us": 237.93
+        },
+        "AscendCL@aclnnEmbeddingGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 49.64,
+          "union_us": 49.64
+        },
+        "AscendCL@aclnnGeScalar": {
+          "count": 8,
+          "inclusive_sum_us": 269.76,
+          "union_us": 269.76
+        },
+        "AscendCL@aclnnGeScalarGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 49.33,
+          "union_us": 49.33
+        },
+        "AscendCL@aclnnGemmaRmsNorm": {
+          "count": 8,
+          "inclusive_sum_us": 329.06,
+          "union_us": 329.06
+        },
+        "AscendCL@aclnnGemmaRmsNormGetWorkspaceSize": {
+          "count": 8,
+          "inclusive_sum_us": 443.18,
+          "union_us": 443.18
+        },
+        "AscendCL@aclnnGemmaRmsNormTiling": {
+          "count": 1,
+          "inclusive_sum_us": 49.55,
+          "union_us": 49.55
+        },
+        "AscendCL@aclnnGroupedMatmulV5": {
+          "count": 640,
+          "inclusive_sum_us": 10347.08,
+          "union_us": 10347.08
+        },
+        "AscendCL@aclnnGroupedMatmulV5GetWorkspaceSize": {
+          "count": 2,
+          "inclusive_sum_us": 655.84,
+          "union_us": 655.84
+        },
+        "AscendCL@aclnnGtScalar": {
+          "count": 6,
+          "inclusive_sum_us": 195.44,
+          "union_us": 195.44
+        },
+        "AscendCL@aclnnIndex": {
+          "count": 476,
+          "inclusive_sum_us": 10955.68,
+          "union_us": 10955.68
+        },
+        "AscendCL@aclnnIndexGetWorkspaceSize": {
+          "count": 4,
+          "inclusive_sum_us": 417.21,
+          "union_us": 417.21
+        },
+        "AscendCL@aclnnIndexPutImpl": {
+          "count": 60,
+          "inclusive_sum_us": 6657.73,
+          "union_us": 6657.73
+        },
+        "AscendCL@aclnnIndexPutImplGetWorkspaceSize": {
+          "count": 60,
+          "inclusive_sum_us": 5153.48,
+          "union_us": 5153.48
+        },
+        "AscendCL@aclnnInnerFusedInferAttentionScore": {
+          "count": 80,
+          "inclusive_sum_us": 3139.0,
+          "union_us": 3139.0
+        },
+        "AscendCL@aclnnInnerFusedInferAttentionScoreGetWorkspaceSize": {
+          "count": 80,
+          "inclusive_sum_us": 3223.13,
+          "union_us": 3223.13
+        },
+        "AscendCL@aclnnInnerFusedInferAttentionScoreTiling": {
+          "count": 6,
+          "inclusive_sum_us": 502.25,
+          "union_us": 502.25
+        },
+        "AscendCL@aclnnInnerMoeTokenUnpermute": {
+          "count": 320,
+          "inclusive_sum_us": 6005.84,
+          "union_us": 6005.84
+        },
+        "AscendCL@aclnnInnerMoeTokenUnpermuteGetWorkspaceSize": {
+          "count": 320,
+          "inclusive_sum_us": 4624.31,
+          "union_us": 4624.31
+        },
+        "AscendCL@aclnnInnerMoeTokenUnpermuteTiling": {
+          "count": 1,
+          "inclusive_sum_us": 34.27,
+          "union_us": 34.27
+        },
+        "AscendCL@aclnnInplaceCopy": {
+          "count": 2765,
+          "inclusive_sum_us": 37358.0,
+          "union_us": 37358.0
+        },
+        "AscendCL@aclnnInplaceCopyGetWorkspaceSize": {
+          "count": 414,
+          "inclusive_sum_us": 8915.98,
+          "union_us": 8915.98
+        },
+        "AscendCL@aclnnInplaceFillScalar": {
+          "count": 116,
+          "inclusive_sum_us": 1239.59,
+          "union_us": 1239.59
+        },
+        "AscendCL@aclnnInplaceFillScalarGetWorkspaceSize": {
+          "count": 3,
+          "inclusive_sum_us": 101.58,
+          "union_us": 101.58
+        },
+        "AscendCL@aclnnInplaceMaskedFillScalar": {
+          "count": 8,
+          "inclusive_sum_us": 202.88,
+          "union_us": 202.88
+        },
+        "AscendCL@aclnnInplaceMaskedFillScalarGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 31.09,
+          "union_us": 31.09
+        },
+        "AscendCL@aclnnInplaceZero": {
+          "count": 420,
+          "inclusive_sum_us": 4816.04,
+          "union_us": 4816.04
+        },
+        "AscendCL@aclnnInplaceZeroGetWorkspaceSize": {
+          "count": 3,
+          "inclusive_sum_us": 79.32,
+          "union_us": 79.32
+        },
+        "AscendCL@aclnnLtScalar": {
+          "count": 8,
+          "inclusive_sum_us": 244.94,
+          "union_us": 244.94
+        },
+        "AscendCL@aclnnLtScalarGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 44.86,
+          "union_us": 44.86
+        },
+        "AscendCL@aclnnMatmul": {
+          "count": 2168,
+          "inclusive_sum_us": 28362.72,
+          "union_us": 28362.72
+        },
+        "AscendCL@aclnnMatmulGetWorkspaceSize": {
+          "count": 7,
+          "inclusive_sum_us": 2030.98,
+          "union_us": 2030.98
+        },
+        "AscendCL@aclnnMoeGatingTopK": {
+          "count": 320,
+          "inclusive_sum_us": 6524.11,
+          "union_us": 6524.11
+        },
+        "AscendCL@aclnnMoeGatingTopKGetWorkspaceSize": {
+          "count": 320,
+          "inclusive_sum_us": 6959.7,
+          "union_us": 6959.7
+        },
+        "AscendCL@aclnnMoeGatingTopKTiling": {
+          "count": 1,
+          "inclusive_sum_us": 52.82,
+          "union_us": 52.82
+        },
+        "AscendCL@aclnnMoeInitRoutingV3": {
+          "count": 320,
+          "inclusive_sum_us": 5686.16,
+          "union_us": 5686.16
+        },
+        "AscendCL@aclnnMoeInitRoutingV3GetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 162.47,
+          "union_us": 162.47
+        },
+        "AscendCL@aclnnMoeTokenUnpermuteGetWorkspaceSize": {
+          "count": 320,
+          "inclusive_sum_us": 8150.29,
+          "union_us": 8150.29
+        },
+        "AscendCL@aclnnMul": {
+          "count": 728,
+          "inclusive_sum_us": 10108.25,
+          "union_us": 10108.25
+        },
+        "AscendCL@aclnnMulGetWorkspaceSize": {
+          "count": 4,
+          "inclusive_sum_us": 122.51,
+          "union_us": 122.51
+        },
+        "AscendCL@aclnnMuls": {
+          "count": 8,
+          "inclusive_sum_us": 271.07,
+          "union_us": 271.07
+        },
+        "AscendCL@aclnnMulsGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 44.06,
+          "union_us": 44.06
+        },
+        "AscendCL@aclnnNeScalar": {
+          "count": 320,
+          "inclusive_sum_us": 3854.87,
+          "union_us": 3854.87
+        },
+        "AscendCL@aclnnNeScalarGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 52.53,
+          "union_us": 52.53
+        },
+        "AscendCL@aclnnRecurrentGatedDeltaRule": {
+          "count": 210,
+          "inclusive_sum_us": 3321.75,
+          "union_us": 3321.75
+        },
+        "AscendCL@aclnnRecurrentGatedDeltaRuleGetWorkspaceSize": {
+          "count": 210,
+          "inclusive_sum_us": 2383.42,
+          "union_us": 2383.42
+        },
+        "AscendCL@aclnnScatterPaKvCache": {
+          "count": 80,
+          "inclusive_sum_us": 4034.13,
+          "union_us": 4034.13
+        },
+        "AscendCL@aclnnScatterPaKvCacheGetWorkspaceSize": {
+          "count": 80,
+          "inclusive_sum_us": 7433.75,
+          "union_us": 7433.75
+        },
+        "AscendCL@aclnnSigmoid": {
+          "count": 400,
+          "inclusive_sum_us": 4844.77,
+          "union_us": 4844.77
+        },
+        "AscendCL@aclnnSigmoidGetWorkspaceSize": {
+          "count": 2,
+          "inclusive_sum_us": 59.15,
+          "union_us": 59.15
+        },
+        "AscendCL@aclnnSub": {
+          "count": 80,
+          "inclusive_sum_us": 1046.85,
+          "union_us": 1046.85
+        },
+        "AscendCL@aclnnSubGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 43.39,
+          "union_us": 43.39
+        },
+        "AscendCL@aclnnSubs": {
+          "count": 11,
+          "inclusive_sum_us": 171.71,
+          "union_us": 171.71
+        },
+        "AscendCL@aclnnSwiGlu": {
+          "count": 640,
+          "inclusive_sum_us": 11684.41,
+          "union_us": 11684.41
+        },
+        "AscendCL@aclnnSwiGluGetWorkspaceSize": {
+          "count": 640,
+          "inclusive_sum_us": 13021.92,
+          "union_us": 13021.92
+        },
+        "AscendCL@aclnnSwiGluTiling": {
+          "count": 2,
+          "inclusive_sum_us": 67.75,
+          "union_us": 67.75
+        },
+        "AscendCL@aclrtCreateEventExWithFlag": {
+          "count": 2272,
+          "inclusive_sum_us": 10180.83,
+          "union_us": 10180.83
+        },
+        "AscendCL@aclrtCtxGetSysParamOpt": {
+          "count": 2248,
+          "inclusive_sum_us": 5016.85,
+          "union_us": 5016.85
+        },
+        "AscendCL@aclrtDestroyEvent": {
+          "count": 2022,
+          "inclusive_sum_us": 2320.65,
+          "union_us": 2320.65
+        },
+        "AscendCL@aclrtGetCurrentContext": {
+          "count": 656,
+          "inclusive_sum_us": 553.21,
+          "union_us": 553.21
+        },
+        "AscendCL@aclrtGetDeviceCount": {
+          "count": 2,
+          "inclusive_sum_us": 9.46,
+          "union_us": 9.46
+        },
+        "AscendCL@aclrtGetHardwareSyncAddr": {
+          "count": 1400,
+          "inclusive_sum_us": 1491.45,
+          "union_us": 1491.45
+        },
+        "AscendCL@aclrtGetResInCurrentThread": {
+          "count": 7466,
+          "inclusive_sum_us": 8733.03,
+          "union_us": 8733.03
+        },
+        "AscendCL@aclrtGetStreamAttribute": {
+          "count": 13228,
+          "inclusive_sum_us": 8747.04,
+          "union_us": 8747.04
+        },
+        "AscendCL@aclrtLaunchKernelWithHostArgs": {
+          "count": 14137,
+          "inclusive_sum_us": 90928.54,
+          "union_us": 90928.54
+        },
+        "AscendCL@aclrtMallocHostWithCfg": {
+          "count": 3,
+          "inclusive_sum_us": 419.07,
+          "union_us": 419.07
+        },
+        "AscendCL@aclrtMallocPhysical": {
+          "count": 27,
+          "inclusive_sum_us": 39627.52,
+          "union_us": 39627.52
+        },
+        "AscendCL@aclrtMapMem": {
+          "count": 27,
+          "inclusive_sum_us": 1088.9,
+          "union_us": 1088.9
+        },
+        "AscendCL@aclrtMemcpyAsync": {
+          "count": 481,
+          "inclusive_sum_us": 6833.66,
+          "union_us": 6833.66
+        },
+        "AscendCL@aclrtMemcpyAsyncWithCondition": {
+          "count": 8,
+          "inclusive_sum_us": 127.27,
+          "union_us": 127.27
+        },
+        "AscendCL@aclrtPointerGetAttributes": {
+          "count": 6374,
+          "inclusive_sum_us": 13419.65,
+          "union_us": 13419.65
+        },
+        "AscendCL@aclrtQueryEventStatus": {
+          "count": 419,
+          "inclusive_sum_us": 433.05,
+          "union_us": 433.05
+        },
+        "AscendCL@aclrtRecordEvent": {
+          "count": 2950,
+          "inclusive_sum_us": 32446.34,
+          "union_us": 32446.34
+        },
+        "AscendCL@aclrtStreamGetId": {
+          "count": 10544,
+          "inclusive_sum_us": 5114.54,
+          "union_us": 5114.54
+        },
+        "AscendCL@aclrtStreamWaitEvent": {
+          "count": 2280,
+          "inclusive_sum_us": 12379.84,
+          "union_us": 12379.84
+        },
+        "AscendCL@aclrtSynchronizeDeviceWithTimeout": {
+          "count": 1,
+          "inclusive_sum_us": 28.55,
+          "union_us": 28.55
+        },
+        "AscendCL@aclrtSynchronizeEvent": {
+          "count": 8,
+          "inclusive_sum_us": 88680.41,
+          "union_us": 88680.41
+        },
+        "AscendCL@aclrtSynchronizeStreamWithTimeout": {
+          "count": 42,
+          "inclusive_sum_us": 126.27,
+          "union_us": 126.27
+        },
+        "AscendCL@hcom_allGather_": {
+          "count": 8,
+          "inclusive_sum_us": 2869.31,
+          "union_us": 2869.31
+        },
+        "AscendCL@hcom_allReduce_": {
+          "count": 648,
+          "inclusive_sum_us": 195380.52,
+          "union_us": 195380.52
+        }
+      },
+      "device_compute": {
+        "kernel_count": 15605,
+        "task_types": {
+          "AI_VECTOR_CORE": 11857,
+          "AI_CORE": 2168,
+          "MIX_AIC": 1260,
+          "MIX_AIV": 320
+        },
+        "active_union_us": 371429.88,
+        "first_kernel_start_ns": 1791603888676351720,
+        "last_kernel_end_ns": 1791603891356978320,
+        "kernel_window_us": 2680626.6,
+        "active_fraction_of_kernel_window": 0.13856084245377553,
+        "profiling_enable_ns": 1791603883665595940,
+        "profiling_disable_ns": 1791603891365164700,
+        "profiling_window_us": 7699568.76,
+        "active_fraction_of_profiling_window": 0.048240348463359915,
+        "streams": {
+          "47": {
+            "kernel_count": 15605,
+            "active_union_us": 371429.88
+          }
+        },
+        "mapped_pd_overlap_us": null,
+        "mapped_pd_overlap_fraction_of_compute_union": null
+      },
+      "device_communication_tasks": {
+        "count": 0,
+        "inclusive_sum_us": 0.0,
+        "union_us": 0.0
+      },
+      "excluded_communication_process_spans": {
+        "count": 9916,
+        "inclusive_sum_us": 4260096.86,
+        "union_us": 1973185.18
+      },
+      "other_hardware_tasks": {
+        "EVENT_RECORD:EVENT_RECORD": {
+          "count": 2637,
+          "inclusive_sum_us": 52.74,
+          "union_us": 52.74
+        },
+        "EVENT_WAIT:EVENT_WAIT": {
+          "count": 1282,
+          "inclusive_sum_us": 2307078.42,
+          "union_us": 2306621.74
+        },
+        "Notify Wait:Notify Wait": {
+          "count": 2676,
+          "inclusive_sum_us": 1918606.06,
+          "union_us": 1840446.52
+        },
+        "PCIE_DMA_SQE:MEMCPY_ASYNC": {
+          "count": 126,
+          "inclusive_sum_us": 566.88,
+          "union_us": 566.88
+        },
+        "PROFILING_DISABLE:PROFILING_DISABLE": {
+          "count": 1,
+          "inclusive_sum_us": 0.02,
+          "union_us": 0.02
+        },
+        "SDMA:SDMA": {
+          "count": 3620,
+          "inclusive_sum_us": 361839.22,
+          "union_us": 124942.32
+        },
+        "SDMA_SQE:MEMCPY_ASYNC": {
+          "count": 321,
+          "inclusive_sum_us": 205.14,
+          "union_us": 205.14
+        },
+        "Write Value:Write Value": {
+          "count": 2964,
+          "inclusive_sum_us": 6466.4,
+          "union_us": 6017.5
+        }
+      },
+      "per_forward_equivalent": {
+        "all_reduce_cpu_calls": 81.0,
+        "python_event_record_calls": 122.0,
+        "python_event_wait_calls": 121.0,
+        "cann_stream_wait_event_calls": 285.0,
+        "cann_record_event_calls": 368.75,
+        "device_compute_active_union_us": 46428.735
+      }
+    },
+    {
+      "mode": "native",
+      "rank": 3,
+      "source": "local-results/perf-tp4/native-profile/dp0_pp0_tp3_dcp0_ep3_rank3_491928_20261010034443531_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+      "source_sha256": "56c1a8bad91301340216ec47d4cc1cd8261e07569ab5e26d48357b69742b538a",
+      "source_bytes": 98164814,
+      "profiler_info": "local-results/perf-tp4/native-profile/dp0_pp0_tp3_dcp0_ep3_rank3_491928_20261010034443531_ascend_pt/profiler_info_3.json",
+      "profiler_info_sha256": "95db9f55107e877eafa0afb8010836f328d18d0351947c24d788b324e28e8762",
+      "device_label": "NPU 3",
+      "complete_cpu_op_count": 117295,
+      "direct_model_or_decoder_forward_range_candidates": {},
+      "model_forward_equivalents": {
+        "count": 8,
+        "kind": "inferred_from_40_MoE_and_30_GDN_calls_per_model_forward",
+        "independent_logits_all_gather_count": 8,
+        "direct_complete_model_range_observed": false,
+        "direct_complete_model_inclusive_us": null,
+        "moe_layer_calls": 320,
+        "gdn_layer_calls": 240
+      },
+      "cpu_operations": {
+        "Event::record": {
+          "count": 976,
+          "inclusive_sum_us": 88971.22,
+          "exclusive_of_contained_cpu_ops_sum_us": 74650.55,
+          "per_thread_union_sum_us": 88971.22,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "Event::synchronize": {
+          "count": 8,
+          "inclusive_sum_us": 99017.66,
+          "exclusive_of_contained_cpu_ops_sum_us": 99017.66,
+          "per_thread_union_sum_us": 99017.66,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "Event::wait": {
+          "count": 968,
+          "inclusive_sum_us": 66724.46,
+          "exclusive_of_contained_cpu_ops_sum_us": 53299.76,
+          "per_thread_union_sum_us": 66724.46,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::all_gather": {
+          "count": 8,
+          "inclusive_sum_us": 2602.16,
+          "exclusive_of_contained_cpu_ops_sum_us": 1246.45,
+          "per_thread_union_sum_us": 2602.16,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::all_reduce": {
+          "count": 648,
+          "inclusive_sum_us": 102479.94,
+          "exclusive_of_contained_cpu_ops_sum_us": 42459.37,
+          "per_thread_union_sum_us": 102479.94,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::maybe_all_reduce_tensor_model_parallel": {
+          "count": 320,
+          "inclusive_sum_us": 63572.49,
+          "exclusive_of_contained_cpu_ops_sum_us": 13317.46,
+          "per_thread_union_sum_us": 63572.49,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::maybe_chunk_residual": {
+          "count": 640,
+          "inclusive_sum_us": 8536.7,
+          "exclusive_of_contained_cpu_ops_sum_us": 8536.7,
+          "per_thread_union_sum_us": 8536.7,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::maybe_pad_and_reduce": {
+          "count": 8,
+          "inclusive_sum_us": 2121.42,
+          "exclusive_of_contained_cpu_ops_sum_us": 324.41,
+          "per_thread_union_sum_us": 2121.42,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::moe_forward_shared": {
+          "count": 320,
+          "inclusive_sum_us": 938895.19,
+          "exclusive_of_contained_cpu_ops_sum_us": 452543.05,
+          "per_thread_union_sum_us": 938895.19,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::qwen_gdn_attention_core": {
+          "count": 240,
+          "inclusive_sum_us": 642255.1,
+          "exclusive_of_contained_cpu_ops_sum_us": 253784.56,
+          "per_thread_union_sum_us": 642255.1,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::triton_split_qkv_rmsnorm_mrope": {
+          "count": 80,
+          "inclusive_sum_us": 29951.46,
+          "exclusive_of_contained_cpu_ops_sum_us": 26168.72,
+          "per_thread_union_sum_us": 29951.46,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::unified_attention_with_output": {
+          "count": 80,
+          "inclusive_sum_us": 57557.39,
+          "exclusive_of_contained_cpu_ops_sum_us": 20131.32,
+          "per_thread_union_sum_us": 57557.39,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::unquantized_gemm": {
+          "count": 2160,
+          "inclusive_sum_us": 162707.26,
+          "exclusive_of_contained_cpu_ops_sum_us": 37882.74,
+          "per_thread_union_sum_us": 162707.26,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        }
+      },
+      "cann_runtime_apis": {
+        "AscendCL@Abs_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 28.29,
+          "union_us": 28.29
+        },
+        "AscendCL@Add_Tiling": {
+          "count": 2,
+          "inclusive_sum_us": 50.37,
+          "union_us": 50.37
+        },
+        "AscendCL@BroadcastTo_Tiling": {
+          "count": 62,
+          "inclusive_sum_us": 1215.95,
+          "union_us": 1215.95
+        },
+        "AscendCL@Cast_Tiling": {
+          "count": 12,
+          "inclusive_sum_us": 148.2,
+          "union_us": 148.2
+        },
+        "AscendCL@ChunkFwdO_Tiling": {
+          "count": 120,
+          "inclusive_sum_us": 877.71,
+          "union_us": 877.71
+        },
+        "AscendCL@ChunkGatedDeltaRuleFwdH_Tiling": {
+          "count": 120,
+          "inclusive_sum_us": 1085.5,
+          "union_us": 1085.5
+        },
+        "AscendCL@ConcatD_Tiling": {
+          "count": 3,
+          "inclusive_sum_us": 64.87,
+          "union_us": 64.87
+        },
+        "AscendCL@Fill_Tiling": {
+          "count": 2,
+          "inclusive_sum_us": 39.61,
+          "union_us": 39.61
+        },
+        "AscendCL@GatherV2_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 33.48,
+          "union_us": 33.48
+        },
+        "AscendCL@GreaterEqual_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 16.45,
+          "union_us": 16.45
+        },
+        "AscendCL@GroupedMatmul_Tiling": {
+          "count": 4,
+          "inclusive_sum_us": 386.85,
+          "union_us": 386.85
+        },
+        "AscendCL@IndexCheck_Tiling": {
+          "count": 128,
+          "inclusive_sum_us": 874.66,
+          "union_us": 874.66
+        },
+        "AscendCL@IndexPutV2_Tiling": {
+          "count": 60,
+          "inclusive_sum_us": 627.83,
+          "union_us": 627.83
+        },
+        "AscendCL@Index_Tiling": {
+          "count": 4,
+          "inclusive_sum_us": 40.65,
+          "union_us": 40.65
+        },
+        "AscendCL@Less_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 13.67,
+          "union_us": 13.67
+        },
+        "AscendCL@LogicalAnd_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 11.01,
+          "union_us": 11.01
+        },
+        "AscendCL@LogicalNot_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 9.58,
+          "union_us": 9.58
+        },
+        "AscendCL@MaskedFill_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 37.7,
+          "union_us": 37.7
+        },
+        "AscendCL@MatMulV2_Tiling": {
+          "count": 14,
+          "inclusive_sum_us": 917.78,
+          "union_us": 917.78
+        },
+        "AscendCL@MoeInitRoutingV3_Tiling": {
+          "count": 2,
+          "inclusive_sum_us": 86.65,
+          "union_us": 86.65
+        },
+        "AscendCL@Mul_Tiling": {
+          "count": 5,
+          "inclusive_sum_us": 74.67,
+          "union_us": 74.67
+        },
+        "AscendCL@NotEqual_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 22.77,
+          "union_us": 22.77
+        },
+        "AscendCL@RecurrentGatedDeltaRule_Tiling": {
+          "count": 2,
+          "inclusive_sum_us": 40.23,
+          "union_us": 40.23
+        },
+        "AscendCL@ScatterPaKvCache_Tiling": {
+          "count": 160,
+          "inclusive_sum_us": 3925.92,
+          "union_us": 3925.92
+        },
+        "AscendCL@Sigmoid_Tiling": {
+          "count": 2,
+          "inclusive_sum_us": 32.28,
+          "union_us": 32.28
+        },
+        "AscendCL@Slice_Tiling": {
+          "count": 218,
+          "inclusive_sum_us": 3225.79,
+          "union_us": 3225.79
+        },
+        "AscendCL@Sub_Tiling": {
+          "count": 1,
+          "inclusive_sum_us": 14.19,
+          "union_us": 14.19
+        },
+        "AscendCL@TensorMove_Tiling": {
+          "count": 2,
+          "inclusive_sum_us": 12.35,
+          "union_us": 12.35
+        },
+        "AscendCL@Transpose_Tiling": {
+          "count": 496,
+          "inclusive_sum_us": 2799.74,
+          "union_us": 2799.74
+        },
+        "AscendCL@ZerosLike_Tiling": {
+          "count": 3,
+          "inclusive_sum_us": 34.88,
+          "union_us": 34.88
+        },
+        "AscendCL@aclmdlRICaptureGetInfo": {
+          "count": 14480,
+          "inclusive_sum_us": 8979.46,
+          "union_us": 8979.46
+        },
+        "AscendCL@aclnnAbs": {
+          "count": 320,
+          "inclusive_sum_us": 3954.89,
+          "union_us": 3954.89
+        },
+        "AscendCL@aclnnAbsGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 38.14,
+          "union_us": 38.14
+        },
+        "AscendCL@aclnnAdd": {
+          "count": 336,
+          "inclusive_sum_us": 3915.7,
+          "union_us": 3915.7
+        },
+        "AscendCL@aclnnAddGetWorkspaceSize": {
+          "count": 2,
+          "inclusive_sum_us": 83.71,
+          "union_us": 83.71
+        },
+        "AscendCL@aclnnAddRmsNormBias": {
+          "count": 640,
+          "inclusive_sum_us": 17137.24,
+          "union_us": 17137.24
+        },
+        "AscendCL@aclnnAddRmsNormBiasGetWorkspaceSize": {
+          "count": 640,
+          "inclusive_sum_us": 13081.57,
+          "union_us": 13081.57
+        },
+        "AscendCL@aclnnAddRmsNormBiasTiling": {
+          "count": 1,
+          "inclusive_sum_us": 24.62,
+          "union_us": 24.62
+        },
+        "AscendCL@aclnnAdds": {
+          "count": 800,
+          "inclusive_sum_us": 14659.91,
+          "union_us": 14659.91
+        },
+        "AscendCL@aclnnArgMax": {
+          "count": 8,
+          "inclusive_sum_us": 203.86,
+          "union_us": 203.86
+        },
+        "AscendCL@aclnnBitwiseAndTensor": {
+          "count": 8,
+          "inclusive_sum_us": 153.07,
+          "union_us": 153.07
+        },
+        "AscendCL@aclnnBitwiseAndTensorGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 26.1,
+          "union_us": 26.1
+        },
+        "AscendCL@aclnnBitwiseNot": {
+          "count": 8,
+          "inclusive_sum_us": 214.99,
+          "union_us": 214.99
+        },
+        "AscendCL@aclnnBitwiseNotGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 23.48,
+          "union_us": 23.48
+        },
+        "AscendCL@aclnnCat": {
+          "count": 300,
+          "inclusive_sum_us": 3628.05,
+          "union_us": 3628.05
+        },
+        "AscendCL@aclnnCatGetWorkspaceSize": {
+          "count": 3,
+          "inclusive_sum_us": 119.12,
+          "union_us": 119.12
+        },
+        "AscendCL@aclnnCausalConv1d": {
+          "count": 240,
+          "inclusive_sum_us": 27789.58,
+          "union_us": 27789.58
+        },
+        "AscendCL@aclnnCausalConv1dGetWorkspaceSize": {
+          "count": 240,
+          "inclusive_sum_us": 27904.12,
+          "union_us": 27904.12
+        },
+        "AscendCL@aclnnCausalConv1dTiling": {
+          "count": 1,
+          "inclusive_sum_us": 22.48,
+          "union_us": 22.48
+        },
+        "AscendCL@aclnnChunkFwdO": {
+          "count": 60,
+          "inclusive_sum_us": 2762.37,
+          "union_us": 2762.37
+        },
+        "AscendCL@aclnnChunkFwdOGetWorkspaceSize": {
+          "count": 60,
+          "inclusive_sum_us": 2893.49,
+          "union_us": 2893.49
+        },
+        "AscendCL@aclnnChunkGatedDeltaRuleFwdH": {
+          "count": 60,
+          "inclusive_sum_us": 3490.56,
+          "union_us": 3490.56
+        },
+        "AscendCL@aclnnChunkGatedDeltaRuleFwdHGetWorkspaceSize": {
+          "count": 60,
+          "inclusive_sum_us": 3570.26,
+          "union_us": 3570.26
+        },
+        "AscendCL@aclnnContiguous": {
+          "count": 240,
+          "inclusive_sum_us": 19947.24,
+          "union_us": 19947.24
+        },
+        "AscendCL@aclnnContiguousGetWorkspaceSize": {
+          "count": 240,
+          "inclusive_sum_us": 19983.12,
+          "union_us": 19983.12
+        },
+        "AscendCL@aclnnEmbedding": {
+          "count": 8,
+          "inclusive_sum_us": 186.57,
+          "union_us": 186.57
+        },
+        "AscendCL@aclnnEmbeddingGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 47.93,
+          "union_us": 47.93
+        },
+        "AscendCL@aclnnGeScalar": {
+          "count": 8,
+          "inclusive_sum_us": 273.5,
+          "union_us": 273.5
+        },
+        "AscendCL@aclnnGeScalarGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 43.81,
+          "union_us": 43.81
+        },
+        "AscendCL@aclnnGemmaRmsNorm": {
+          "count": 8,
+          "inclusive_sum_us": 353.47,
+          "union_us": 353.47
+        },
+        "AscendCL@aclnnGemmaRmsNormGetWorkspaceSize": {
+          "count": 8,
+          "inclusive_sum_us": 435.54,
+          "union_us": 435.54
+        },
+        "AscendCL@aclnnGemmaRmsNormTiling": {
+          "count": 1,
+          "inclusive_sum_us": 39.26,
+          "union_us": 39.26
+        },
+        "AscendCL@aclnnGroupedMatmulV5": {
+          "count": 640,
+          "inclusive_sum_us": 10796.57,
+          "union_us": 10796.57
+        },
+        "AscendCL@aclnnGroupedMatmulV5GetWorkspaceSize": {
+          "count": 2,
+          "inclusive_sum_us": 596.63,
+          "union_us": 596.63
+        },
+        "AscendCL@aclnnGtScalar": {
+          "count": 6,
+          "inclusive_sum_us": 203.22,
+          "union_us": 203.22
+        },
+        "AscendCL@aclnnIndex": {
+          "count": 476,
+          "inclusive_sum_us": 10955.54,
+          "union_us": 10955.54
+        },
+        "AscendCL@aclnnIndexGetWorkspaceSize": {
+          "count": 4,
+          "inclusive_sum_us": 408.74,
+          "union_us": 408.74
+        },
+        "AscendCL@aclnnIndexPutImpl": {
+          "count": 60,
+          "inclusive_sum_us": 6599.13,
+          "union_us": 6599.13
+        },
+        "AscendCL@aclnnIndexPutImplGetWorkspaceSize": {
+          "count": 60,
+          "inclusive_sum_us": 5038.1,
+          "union_us": 5038.1
+        },
+        "AscendCL@aclnnInnerFusedInferAttentionScore": {
+          "count": 80,
+          "inclusive_sum_us": 3337.05,
+          "union_us": 3337.05
+        },
+        "AscendCL@aclnnInnerFusedInferAttentionScoreGetWorkspaceSize": {
+          "count": 80,
+          "inclusive_sum_us": 3184.14,
+          "union_us": 3184.14
+        },
+        "AscendCL@aclnnInnerFusedInferAttentionScoreTiling": {
+          "count": 6,
+          "inclusive_sum_us": 457.67,
+          "union_us": 457.67
+        },
+        "AscendCL@aclnnInnerMoeTokenUnpermute": {
+          "count": 320,
+          "inclusive_sum_us": 6139.89,
+          "union_us": 6139.89
+        },
+        "AscendCL@aclnnInnerMoeTokenUnpermuteGetWorkspaceSize": {
+          "count": 320,
+          "inclusive_sum_us": 4544.36,
+          "union_us": 4544.36
+        },
+        "AscendCL@aclnnInnerMoeTokenUnpermuteTiling": {
+          "count": 1,
+          "inclusive_sum_us": 32.16,
+          "union_us": 32.16
+        },
+        "AscendCL@aclnnInplaceCopy": {
+          "count": 2765,
+          "inclusive_sum_us": 35814.61,
+          "union_us": 35814.61
+        },
+        "AscendCL@aclnnInplaceCopyGetWorkspaceSize": {
+          "count": 412,
+          "inclusive_sum_us": 8621.9,
+          "union_us": 8621.9
+        },
+        "AscendCL@aclnnInplaceFillScalar": {
+          "count": 116,
+          "inclusive_sum_us": 1204.9,
+          "union_us": 1204.9
+        },
+        "AscendCL@aclnnInplaceFillScalarGetWorkspaceSize": {
+          "count": 3,
+          "inclusive_sum_us": 81.07,
+          "union_us": 81.07
+        },
+        "AscendCL@aclnnInplaceMaskedFillScalar": {
+          "count": 8,
+          "inclusive_sum_us": 204.61,
+          "union_us": 204.61
+        },
+        "AscendCL@aclnnInplaceMaskedFillScalarGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 36.02,
+          "union_us": 36.02
+        },
+        "AscendCL@aclnnInplaceZero": {
+          "count": 420,
+          "inclusive_sum_us": 4741.39,
+          "union_us": 4741.39
+        },
+        "AscendCL@aclnnInplaceZeroGetWorkspaceSize": {
+          "count": 3,
+          "inclusive_sum_us": 103.43,
+          "union_us": 103.43
+        },
+        "AscendCL@aclnnLtScalar": {
+          "count": 8,
+          "inclusive_sum_us": 227.08,
+          "union_us": 227.08
+        },
+        "AscendCL@aclnnLtScalarGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 41.19,
+          "union_us": 41.19
+        },
+        "AscendCL@aclnnMatmul": {
+          "count": 2168,
+          "inclusive_sum_us": 28854.37,
+          "union_us": 28854.37
+        },
+        "AscendCL@aclnnMatmulGetWorkspaceSize": {
+          "count": 7,
+          "inclusive_sum_us": 2260.04,
+          "union_us": 2260.04
+        },
+        "AscendCL@aclnnMoeGatingTopK": {
+          "count": 320,
+          "inclusive_sum_us": 6459.2,
+          "union_us": 6459.2
+        },
+        "AscendCL@aclnnMoeGatingTopKGetWorkspaceSize": {
+          "count": 320,
+          "inclusive_sum_us": 6692.25,
+          "union_us": 6692.25
+        },
+        "AscendCL@aclnnMoeGatingTopKTiling": {
+          "count": 1,
+          "inclusive_sum_us": 48.67,
+          "union_us": 48.67
+        },
+        "AscendCL@aclnnMoeInitRoutingV3": {
+          "count": 320,
+          "inclusive_sum_us": 6006.92,
+          "union_us": 6006.92
+        },
+        "AscendCL@aclnnMoeInitRoutingV3GetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 140.69,
+          "union_us": 140.69
+        },
+        "AscendCL@aclnnMoeTokenUnpermuteGetWorkspaceSize": {
+          "count": 320,
+          "inclusive_sum_us": 7962.24,
+          "union_us": 7962.24
+        },
+        "AscendCL@aclnnMul": {
+          "count": 728,
+          "inclusive_sum_us": 10417.24,
+          "union_us": 10417.24
+        },
+        "AscendCL@aclnnMulGetWorkspaceSize": {
+          "count": 4,
+          "inclusive_sum_us": 117.64,
+          "union_us": 117.64
+        },
+        "AscendCL@aclnnMuls": {
+          "count": 8,
+          "inclusive_sum_us": 279.01,
+          "union_us": 279.01
+        },
+        "AscendCL@aclnnMulsGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 40.58,
+          "union_us": 40.58
+        },
+        "AscendCL@aclnnNeScalar": {
+          "count": 320,
+          "inclusive_sum_us": 3883.58,
+          "union_us": 3883.58
+        },
+        "AscendCL@aclnnNeScalarGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 43.45,
+          "union_us": 43.45
+        },
+        "AscendCL@aclnnRecurrentGatedDeltaRule": {
+          "count": 210,
+          "inclusive_sum_us": 3423.65,
+          "union_us": 3423.65
+        },
+        "AscendCL@aclnnRecurrentGatedDeltaRuleGetWorkspaceSize": {
+          "count": 210,
+          "inclusive_sum_us": 2309.57,
+          "union_us": 2309.57
+        },
+        "AscendCL@aclnnScatterPaKvCache": {
+          "count": 80,
+          "inclusive_sum_us": 4164.42,
+          "union_us": 4164.42
+        },
+        "AscendCL@aclnnScatterPaKvCacheGetWorkspaceSize": {
+          "count": 80,
+          "inclusive_sum_us": 7952.13,
+          "union_us": 7952.13
+        },
+        "AscendCL@aclnnSigmoid": {
+          "count": 400,
+          "inclusive_sum_us": 4798.1,
+          "union_us": 4798.1
+        },
+        "AscendCL@aclnnSigmoidGetWorkspaceSize": {
+          "count": 2,
+          "inclusive_sum_us": 56.4,
+          "union_us": 56.4
+        },
+        "AscendCL@aclnnSub": {
+          "count": 80,
+          "inclusive_sum_us": 1053.44,
+          "union_us": 1053.44
+        },
+        "AscendCL@aclnnSubGetWorkspaceSize": {
+          "count": 1,
+          "inclusive_sum_us": 36.98,
+          "union_us": 36.98
+        },
+        "AscendCL@aclnnSubs": {
+          "count": 11,
+          "inclusive_sum_us": 163.83,
+          "union_us": 163.83
+        },
+        "AscendCL@aclnnSwiGlu": {
+          "count": 640,
+          "inclusive_sum_us": 11793.56,
+          "union_us": 11793.56
+        },
+        "AscendCL@aclnnSwiGluGetWorkspaceSize": {
+          "count": 640,
+          "inclusive_sum_us": 12564.3,
+          "union_us": 12564.3
+        },
+        "AscendCL@aclnnSwiGluTiling": {
+          "count": 2,
+          "inclusive_sum_us": 57.75,
+          "union_us": 57.75
+        },
+        "AscendCL@aclrtCreateEventExWithFlag": {
+          "count": 2272,
+          "inclusive_sum_us": 9133.3,
+          "union_us": 9133.3
+        },
+        "AscendCL@aclrtCtxGetSysParamOpt": {
+          "count": 2248,
+          "inclusive_sum_us": 4697.3,
+          "union_us": 4697.3
+        },
+        "AscendCL@aclrtDestroyEvent": {
+          "count": 2020,
+          "inclusive_sum_us": 2344.66,
+          "union_us": 2344.66
+        },
+        "AscendCL@aclrtGetCurrentContext": {
+          "count": 656,
+          "inclusive_sum_us": 591.18,
+          "union_us": 591.18
+        },
+        "AscendCL@aclrtGetDeviceCount": {
+          "count": 2,
+          "inclusive_sum_us": 7.7,
+          "union_us": 7.7
+        },
+        "AscendCL@aclrtGetHardwareSyncAddr": {
+          "count": 1400,
+          "inclusive_sum_us": 1472.17,
+          "union_us": 1472.17
+        },
+        "AscendCL@aclrtGetResInCurrentThread": {
+          "count": 7462,
+          "inclusive_sum_us": 8089.0,
+          "union_us": 8089.0
+        },
+        "AscendCL@aclrtGetStreamAttribute": {
+          "count": 13228,
+          "inclusive_sum_us": 8436.2,
+          "union_us": 8436.2
+        },
+        "AscendCL@aclrtLaunchKernelWithHostArgs": {
+          "count": 14137,
+          "inclusive_sum_us": 87630.25,
+          "union_us": 87630.25
+        },
+        "AscendCL@aclrtMallocHostWithCfg": {
+          "count": 3,
+          "inclusive_sum_us": 416.84,
+          "union_us": 416.84
+        },
+        "AscendCL@aclrtMallocPhysical": {
+          "count": 27,
+          "inclusive_sum_us": 42852.8,
+          "union_us": 42852.8
+        },
+        "AscendCL@aclrtMapMem": {
+          "count": 27,
+          "inclusive_sum_us": 1142.21,
+          "union_us": 1142.21
+        },
+        "AscendCL@aclrtMemcpyAsync": {
+          "count": 481,
+          "inclusive_sum_us": 6601.73,
+          "union_us": 6601.73
+        },
+        "AscendCL@aclrtMemcpyAsyncWithCondition": {
+          "count": 8,
+          "inclusive_sum_us": 122.55,
+          "union_us": 122.55
+        },
+        "AscendCL@aclrtPointerGetAttributes": {
+          "count": 6374,
+          "inclusive_sum_us": 12617.81,
+          "union_us": 12617.81
+        },
+        "AscendCL@aclrtQueryEventStatus": {
+          "count": 417,
+          "inclusive_sum_us": 385.76,
+          "union_us": 385.76
+        },
+        "AscendCL@aclrtRecordEvent": {
+          "count": 2950,
+          "inclusive_sum_us": 31934.77,
+          "union_us": 31934.77
+        },
+        "AscendCL@aclrtStreamGetId": {
+          "count": 10544,
+          "inclusive_sum_us": 5184.3,
+          "union_us": 5184.3
+        },
+        "AscendCL@aclrtStreamWaitEvent": {
+          "count": 2280,
+          "inclusive_sum_us": 12335.91,
+          "union_us": 12335.91
+        },
+        "AscendCL@aclrtSynchronizeDeviceWithTimeout": {
+          "count": 1,
+          "inclusive_sum_us": 33.33,
+          "union_us": 33.33
+        },
+        "AscendCL@aclrtSynchronizeEvent": {
+          "count": 8,
+          "inclusive_sum_us": 98433.05,
+          "union_us": 98433.05
+        },
+        "AscendCL@aclrtSynchronizeStreamWithTimeout": {
+          "count": 42,
+          "inclusive_sum_us": 107.29,
+          "union_us": 107.29
+        },
+        "AscendCL@hcom_allGather_": {
+          "count": 8,
+          "inclusive_sum_us": 2782.94,
+          "union_us": 2782.94
+        },
+        "AscendCL@hcom_allReduce_": {
+          "count": 648,
+          "inclusive_sum_us": 193004.26,
+          "union_us": 193004.26
+        }
+      },
+      "device_compute": {
+        "kernel_count": 15605,
+        "task_types": {
+          "AI_VECTOR_CORE": 11857,
+          "AI_CORE": 2168,
+          "MIX_AIC": 1260,
+          "MIX_AIV": 320
+        },
+        "active_union_us": 373605.76,
+        "first_kernel_start_ns": 1791603888676118755,
+        "last_kernel_end_ns": 1791603891356972055,
+        "kernel_window_us": 2680853.3,
+        "active_fraction_of_kernel_window": 0.1393607624855862,
+        "profiling_enable_ns": 1791603883655272455,
+        "profiling_disable_ns": 1791603891368722995,
+        "profiling_window_us": 7713450.54,
+        "active_fraction_of_profiling_window": 0.04843562009798017,
+        "streams": {
+          "47": {
+            "kernel_count": 15605,
+            "active_union_us": 373605.76
+          }
+        },
+        "mapped_pd_overlap_us": null,
+        "mapped_pd_overlap_fraction_of_compute_union": null
+      },
+      "device_communication_tasks": {
+        "count": 0,
+        "inclusive_sum_us": 0.0,
+        "union_us": 0.0
+      },
+      "excluded_communication_process_spans": {
+        "count": 10062,
+        "inclusive_sum_us": 4306027.86,
+        "union_us": 1990513.4
+      },
+      "other_hardware_tasks": {
+        "EVENT_RECORD:EVENT_RECORD": {
+          "count": 2722,
+          "inclusive_sum_us": 54.44,
+          "union_us": 54.44
+        },
+        "EVENT_WAIT:EVENT_WAIT": {
+          "count": 1290,
+          "inclusive_sum_us": 2331820.24,
+          "union_us": 2331354.84
+        },
+        "Notify Wait:Notify Wait": {
+          "count": 2822,
+          "inclusive_sum_us": 1973285.76,
+          "union_us": 1866816.38
+        },
+        "PCIE_DMA_SQE:MEMCPY_ASYNC": {
+          "count": 126,
+          "inclusive_sum_us": 513.42,
+          "union_us": 513.42
+        },
+        "SDMA:SDMA": {
+          "count": 3620,
+          "inclusive_sum_us": 336766.68,
+          "union_us": 116582.16
+        },
+        "SDMA_SQE:MEMCPY_ASYNC": {
+          "count": 321,
+          "inclusive_sum_us": 206.74,
+          "union_us": 206.74
+        },
+        "Write Value:Write Value": {
+          "count": 2964,
+          "inclusive_sum_us": 5462.02,
+          "union_us": 4946.06
+        }
+      },
+      "per_forward_equivalent": {
+        "all_reduce_cpu_calls": 81.0,
+        "python_event_record_calls": 122.0,
+        "python_event_wait_calls": 121.0,
+        "cann_stream_wait_event_calls": 285.0,
+        "cann_record_event_calls": 368.75,
+        "device_compute_active_union_us": 46700.72
+      }
+    },
+    {
+      "mode": "shared_overlap8",
+      "rank": 0,
+      "source": "local-results/tp4/overlap-profile/dp0_pp0_tp0_dcp0_ep0_rank0_405579_20261010030542751_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+      "source_sha256": "4a2192c4a4107279ff5d479eda8a29560472a79ad042c83c5fb6503846f853e6",
+      "source_bytes": 113951009,
+      "profiler_info": "local-results/tp4/overlap-profile/dp0_pp0_tp0_dcp0_ep0_rank0_405579_20261010030542751_ascend_pt/profiler_info_0.json",
+      "profiler_info_sha256": "d3f70222f2683987b88d608c7f6dddfe60d5c14baddbd855f947a0b6fe0aa678",
+      "device_label": "NPU 0",
+      "complete_cpu_op_count": 127859,
+      "direct_model_or_decoder_forward_range_candidates": {},
+      "model_forward_equivalents": {
+        "count": 9,
+        "kind": "inferred_from_40_MoE_and_30_GDN_calls_per_model_forward",
+        "independent_logits_all_gather_count": 9,
+        "direct_complete_model_range_observed": false,
+        "direct_complete_model_inclusive_us": null,
+        "moe_layer_calls": 360,
+        "gdn_layer_calls": 270
+      },
+      "cpu_operations": {
+        "Event::record": {
+          "count": 1941,
+          "inclusive_sum_us": 156017.44,
+          "exclusive_of_contained_cpu_ops_sum_us": 135353.61,
+          "per_thread_union_sum_us": 156017.44,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "Event::synchronize": {
+          "count": 9,
+          "inclusive_sum_us": 29678.31,
+          "exclusive_of_contained_cpu_ops_sum_us": 29678.31,
+          "per_thread_union_sum_us": 29678.31,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "Event::wait": {
+          "count": 1849,
+          "inclusive_sum_us": 131580.35,
+          "exclusive_of_contained_cpu_ops_sum_us": 105940.0,
+          "per_thread_union_sum_us": 131580.35,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::all_gather": {
+          "count": 9,
+          "inclusive_sum_us": 5276.75,
+          "exclusive_of_contained_cpu_ops_sum_us": 2569.23,
+          "per_thread_union_sum_us": 5276.75,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::all_reduce": {
+          "count": 729,
+          "inclusive_sum_us": 309207.2,
+          "exclusive_of_contained_cpu_ops_sum_us": 137240.54,
+          "per_thread_union_sum_us": 309207.2,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::maybe_all_reduce_tensor_model_parallel": {
+          "count": 360,
+          "inclusive_sum_us": 165674.76,
+          "exclusive_of_contained_cpu_ops_sum_us": 14607.42,
+          "per_thread_union_sum_us": 165674.76,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::maybe_chunk_residual": {
+          "count": 720,
+          "inclusive_sum_us": 9945.92,
+          "exclusive_of_contained_cpu_ops_sum_us": 9945.92,
+          "per_thread_union_sum_us": 9945.92,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::maybe_pad_and_reduce": {
+          "count": 9,
+          "inclusive_sum_us": 4845.13,
+          "exclusive_of_contained_cpu_ops_sum_us": 297.28,
+          "per_thread_union_sum_us": 4845.13,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::moe_forward_shared": {
+          "count": 360,
+          "inclusive_sum_us": 987519.08,
+          "exclusive_of_contained_cpu_ops_sum_us": 506954.88,
+          "per_thread_union_sum_us": 987519.08,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::qwen_gdn_attention_core": {
+          "count": 270,
+          "inclusive_sum_us": 623989.99,
+          "exclusive_of_contained_cpu_ops_sum_us": 257346.73,
+          "per_thread_union_sum_us": 623989.99,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::triton_split_qkv_rmsnorm_mrope": {
+          "count": 90,
+          "inclusive_sum_us": 32868.0,
+          "exclusive_of_contained_cpu_ops_sum_us": 28730.35,
+          "per_thread_union_sum_us": 32868.0,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::unified_attention_with_output": {
+          "count": 90,
+          "inclusive_sum_us": 60060.71,
+          "exclusive_of_contained_cpu_ops_sum_us": 21543.25,
+          "per_thread_union_sum_us": 60060.71,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::unquantized_gemm": {
+          "count": 2430,
+          "inclusive_sum_us": 174529.02,
+          "exclusive_of_contained_cpu_ops_sum_us": 40648.0,
+          "per_thread_union_sum_us": 174529.02,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        }
+      },
+      "cann_runtime_apis": {
+        "AscendCL@BroadcastTo_Tiling": {
+          "count": 60,
+          "inclusive_sum_us": 1091.47,
+          "union_us": 1091.47
+        },
+        "AscendCL@ChunkFwdO_Tiling": {
+          "count": 120,
+          "inclusive_sum_us": 946.09,
+          "union_us": 946.09
+        },
+        "AscendCL@ChunkGatedDeltaRuleFwdH_Tiling": {
+          "count": 120,
+          "inclusive_sum_us": 1198.18,
+          "union_us": 1198.18
+        },
+        "AscendCL@IndexCheck_Tiling": {
+          "count": 120,
+          "inclusive_sum_us": 808.73,
+          "union_us": 808.73
+        },
+        "AscendCL@IndexPutV2_Tiling": {
+          "count": 60,
+          "inclusive_sum_us": 655.3,
+          "union_us": 655.3
+        },
+        "AscendCL@ScatterPaKvCache_Tiling": {
+          "count": 180,
+          "inclusive_sum_us": 3678.37,
+          "union_us": 3678.37
+        },
+        "AscendCL@Slice_Tiling": {
+          "count": 90,
+          "inclusive_sum_us": 1261.14,
+          "union_us": 1261.14
+        },
+        "AscendCL@Transpose_Tiling": {
+          "count": 540,
+          "inclusive_sum_us": 2878.0,
+          "union_us": 2878.0
+        },
+        "AscendCL@aclmdlRICaptureGetInfo": {
+          "count": 20259,
+          "inclusive_sum_us": 12011.13,
+          "union_us": 12011.13
+        },
+        "AscendCL@aclnnAbs": {
+          "count": 360,
+          "inclusive_sum_us": 4379.89,
+          "union_us": 4379.89
+        },
+        "AscendCL@aclnnAdd": {
+          "count": 378,
+          "inclusive_sum_us": 4308.04,
+          "union_us": 4308.04
+        },
+        "AscendCL@aclnnAddRmsNormBias": {
+          "count": 720,
+          "inclusive_sum_us": 18482.54,
+          "union_us": 18482.54
+        },
+        "AscendCL@aclnnAddRmsNormBiasGetWorkspaceSize": {
+          "count": 720,
+          "inclusive_sum_us": 15295.31,
+          "union_us": 15295.31
+        },
+        "AscendCL@aclnnAdds": {
+          "count": 900,
+          "inclusive_sum_us": 15901.29,
+          "union_us": 15901.29
+        },
+        "AscendCL@aclnnArgMax": {
+          "count": 9,
+          "inclusive_sum_us": 190.28,
+          "union_us": 190.28
+        },
+        "AscendCL@aclnnBitwiseAndTensor": {
+          "count": 9,
+          "inclusive_sum_us": 121.86,
+          "union_us": 121.86
+        },
+        "AscendCL@aclnnBitwiseNot": {
+          "count": 9,
+          "inclusive_sum_us": 112.54,
+          "union_us": 112.54
+        },
+        "AscendCL@aclnnCat": {
+          "count": 270,
+          "inclusive_sum_us": 3396.65,
+          "union_us": 3396.65
+        },
+        "AscendCL@aclnnCausalConv1d": {
+          "count": 270,
+          "inclusive_sum_us": 24456.91,
+          "union_us": 24456.91
+        },
+        "AscendCL@aclnnCausalConv1dGetWorkspaceSize": {
+          "count": 270,
+          "inclusive_sum_us": 23542.35,
+          "union_us": 23542.35
+        },
+        "AscendCL@aclnnChunkFwdO": {
+          "count": 60,
+          "inclusive_sum_us": 2739.03,
+          "union_us": 2739.03
+        },
+        "AscendCL@aclnnChunkFwdOGetWorkspaceSize": {
+          "count": 60,
+          "inclusive_sum_us": 2990.7,
+          "union_us": 2990.7
+        },
+        "AscendCL@aclnnChunkGatedDeltaRuleFwdH": {
+          "count": 60,
+          "inclusive_sum_us": 3404.93,
+          "union_us": 3404.93
+        },
+        "AscendCL@aclnnChunkGatedDeltaRuleFwdHGetWorkspaceSize": {
+          "count": 60,
+          "inclusive_sum_us": 3761.21,
+          "union_us": 3761.21
+        },
+        "AscendCL@aclnnContiguous": {
+          "count": 270,
+          "inclusive_sum_us": 16031.55,
+          "union_us": 16031.55
+        },
+        "AscendCL@aclnnContiguousGetWorkspaceSize": {
+          "count": 270,
+          "inclusive_sum_us": 14451.67,
+          "union_us": 14451.67
+        },
+        "AscendCL@aclnnEmbedding": {
+          "count": 9,
+          "inclusive_sum_us": 125.37,
+          "union_us": 125.37
+        },
+        "AscendCL@aclnnGeScalar": {
+          "count": 9,
+          "inclusive_sum_us": 188.47,
+          "union_us": 188.47
+        },
+        "AscendCL@aclnnGemmaRmsNorm": {
+          "count": 9,
+          "inclusive_sum_us": 342.54,
+          "union_us": 342.54
+        },
+        "AscendCL@aclnnGemmaRmsNormGetWorkspaceSize": {
+          "count": 9,
+          "inclusive_sum_us": 356.99,
+          "union_us": 356.99
+        },
+        "AscendCL@aclnnGroupedMatmulV5": {
+          "count": 720,
+          "inclusive_sum_us": 11561.32,
+          "union_us": 11561.32
+        },
+        "AscendCL@aclnnGtScalar": {
+          "count": 6,
+          "inclusive_sum_us": 179.06,
+          "union_us": 179.06
+        },
+        "AscendCL@aclnnIndex": {
+          "count": 528,
+          "inclusive_sum_us": 11791.63,
+          "union_us": 11791.63
+        },
+        "AscendCL@aclnnIndexPutImpl": {
+          "count": 60,
+          "inclusive_sum_us": 6720.26,
+          "union_us": 6720.26
+        },
+        "AscendCL@aclnnIndexPutImplGetWorkspaceSize": {
+          "count": 60,
+          "inclusive_sum_us": 5253.05,
+          "union_us": 5253.05
+        },
+        "AscendCL@aclnnInnerFusedInferAttentionScore": {
+          "count": 90,
+          "inclusive_sum_us": 3691.73,
+          "union_us": 3691.73
+        },
+        "AscendCL@aclnnInnerFusedInferAttentionScoreGetWorkspaceSize": {
+          "count": 90,
+          "inclusive_sum_us": 2422.36,
+          "union_us": 2422.36
+        },
+        "AscendCL@aclnnInnerMoeTokenUnpermute": {
+          "count": 360,
+          "inclusive_sum_us": 7050.49,
+          "union_us": 7050.49
+        },
+        "AscendCL@aclnnInnerMoeTokenUnpermuteGetWorkspaceSize": {
+          "count": 360,
+          "inclusive_sum_us": 5026.91,
+          "union_us": 5026.91
+        },
+        "AscendCL@aclnnInplaceCopy": {
+          "count": 2099,
+          "inclusive_sum_us": 27670.5,
+          "union_us": 27670.5
+        },
+        "AscendCL@aclnnInplaceCopyGetWorkspaceSize": {
+          "count": 451,
+          "inclusive_sum_us": 8663.71,
+          "union_us": 8663.71
+        },
+        "AscendCL@aclnnInplaceFillScalar": {
+          "count": 129,
+          "inclusive_sum_us": 1033.59,
+          "union_us": 1033.59
+        },
+        "AscendCL@aclnnInplaceMaskedFillScalar": {
+          "count": 9,
+          "inclusive_sum_us": 138.66,
+          "union_us": 138.66
+        },
+        "AscendCL@aclnnInplaceZero": {
+          "count": 450,
+          "inclusive_sum_us": 5200.78,
+          "union_us": 5200.78
+        },
+        "AscendCL@aclnnLtScalar": {
+          "count": 9,
+          "inclusive_sum_us": 192.28,
+          "union_us": 192.28
+        },
+        "AscendCL@aclnnMatmul": {
+          "count": 2439,
+          "inclusive_sum_us": 31730.32,
+          "union_us": 31730.32
+        },
+        "AscendCL@aclnnMoeGatingTopK": {
+          "count": 360,
+          "inclusive_sum_us": 7339.62,
+          "union_us": 7339.62
+        },
+        "AscendCL@aclnnMoeGatingTopKGetWorkspaceSize": {
+          "count": 360,
+          "inclusive_sum_us": 7698.23,
+          "union_us": 7698.23
+        },
+        "AscendCL@aclnnMoeInitRoutingV3": {
+          "count": 360,
+          "inclusive_sum_us": 6058.78,
+          "union_us": 6058.78
+        },
+        "AscendCL@aclnnMoeTokenUnpermuteGetWorkspaceSize": {
+          "count": 360,
+          "inclusive_sum_us": 8913.15,
+          "union_us": 8913.15
+        },
+        "AscendCL@aclnnMul": {
+          "count": 819,
+          "inclusive_sum_us": 11265.68,
+          "union_us": 11265.68
+        },
+        "AscendCL@aclnnMuls": {
+          "count": 9,
+          "inclusive_sum_us": 176.41,
+          "union_us": 176.41
+        },
+        "AscendCL@aclnnNeScalar": {
+          "count": 360,
+          "inclusive_sum_us": 4327.41,
+          "union_us": 4327.41
+        },
+        "AscendCL@aclnnRecurrentGatedDeltaRule": {
+          "count": 210,
+          "inclusive_sum_us": 3531.49,
+          "union_us": 3531.49
+        },
+        "AscendCL@aclnnRecurrentGatedDeltaRuleGetWorkspaceSize": {
+          "count": 210,
+          "inclusive_sum_us": 2261.5,
+          "union_us": 2261.5
+        },
+        "AscendCL@aclnnScatterPaKvCache": {
+          "count": 90,
+          "inclusive_sum_us": 4435.23,
+          "union_us": 4435.23
+        },
+        "AscendCL@aclnnScatterPaKvCacheGetWorkspaceSize": {
+          "count": 90,
+          "inclusive_sum_us": 8167.28,
+          "union_us": 8167.28
+        },
+        "AscendCL@aclnnSigmoid": {
+          "count": 450,
+          "inclusive_sum_us": 5076.32,
+          "union_us": 5076.32
+        },
+        "AscendCL@aclnnSub": {
+          "count": 90,
+          "inclusive_sum_us": 1047.95,
+          "union_us": 1047.95
+        },
+        "AscendCL@aclnnSubs": {
+          "count": 9,
+          "inclusive_sum_us": 157.83,
+          "union_us": 157.83
+        },
+        "AscendCL@aclnnSwiGlu": {
+          "count": 720,
+          "inclusive_sum_us": 13428.71,
+          "union_us": 13428.71
+        },
+        "AscendCL@aclnnSwiGluGetWorkspaceSize": {
+          "count": 720,
+          "inclusive_sum_us": 14350.22,
+          "union_us": 14350.22
+        },
+        "AscendCL@aclrtCreateEventExWithFlag": {
+          "count": 3399,
+          "inclusive_sum_us": 13665.67,
+          "union_us": 13665.67
+        },
+        "AscendCL@aclrtCtxGetSysParamOpt": {
+          "count": 2529,
+          "inclusive_sum_us": 4951.67,
+          "union_us": 4951.67
+        },
+        "AscendCL@aclrtDestroyEvent": {
+          "count": 3299,
+          "inclusive_sum_us": 3774.65,
+          "union_us": 3774.65
+        },
+        "AscendCL@aclrtGetCurrentContext": {
+          "count": 738,
+          "inclusive_sum_us": 633.22,
+          "union_us": 633.22
+        },
+        "AscendCL@aclrtGetDeviceCount": {
+          "count": 2,
+          "inclusive_sum_us": 5.93,
+          "union_us": 5.93
+        },
+        "AscendCL@aclrtGetHardwareSyncAddr": {
+          "count": 1560,
+          "inclusive_sum_us": 1649.69,
+          "union_us": 1649.69
+        },
+        "AscendCL@aclrtGetResInCurrentThread": {
+          "count": 8180,
+          "inclusive_sum_us": 9351.32,
+          "union_us": 9351.32
+        },
+        "AscendCL@aclrtGetStreamAttribute": {
+          "count": 13718,
+          "inclusive_sum_us": 8654.18,
+          "union_us": 8654.18
+        },
+        "AscendCL@aclrtLaunchKernelWithHostArgs": {
+          "count": 14547,
+          "inclusive_sum_us": 87936.84,
+          "union_us": 87936.84
+        },
+        "AscendCL@aclrtMemcpyAsync": {
+          "count": 545,
+          "inclusive_sum_us": 35860.07,
+          "union_us": 35860.07
+        },
+        "AscendCL@aclrtMemcpyAsyncWithCondition": {
+          "count": 9,
+          "inclusive_sum_us": 108.94,
+          "union_us": 108.94
+        },
+        "AscendCL@aclrtPointerGetAttributes": {
+          "count": 6804,
+          "inclusive_sum_us": 13188.66,
+          "union_us": 13188.66
+        },
+        "AscendCL@aclrtQueryEventStatus": {
+          "count": 645,
+          "inclusive_sum_us": 552.77,
+          "union_us": 552.77
+        },
+        "AscendCL@aclrtRecordEvent": {
+          "count": 4161,
+          "inclusive_sum_us": 37477.3,
+          "union_us": 37477.3
+        },
+        "AscendCL@aclrtStreamGetId": {
+          "count": 15831,
+          "inclusive_sum_us": 7427.41,
+          "union_us": 7427.41
+        },
+        "AscendCL@aclrtStreamWaitEvent": {
+          "count": 3325,
+          "inclusive_sum_us": 14532.85,
+          "union_us": 14532.85
+        },
+        "AscendCL@aclrtSynchronizeDeviceWithTimeout": {
+          "count": 1,
+          "inclusive_sum_us": 33.9,
+          "union_us": 33.9
+        },
+        "AscendCL@aclrtSynchronizeEvent": {
+          "count": 9,
+          "inclusive_sum_us": 29178.32,
+          "union_us": 29178.32
+        },
+        "AscendCL@aclrtSynchronizeStreamWithTimeout": {
+          "count": 42,
+          "inclusive_sum_us": 113.42,
+          "union_us": 113.42
+        },
+        "AscendCL@hcom_allGather_": {
+          "count": 9,
+          "inclusive_sum_us": 2945.0,
+          "union_us": 2945.0
+        },
+        "AscendCL@hcom_allReduce_": {
+          "count": 729,
+          "inclusive_sum_us": 239604.81,
+          "union_us": 239604.81
+        }
+      },
+      "device_compute": {
+        "kernel_count": 16086,
+        "task_types": {
+          "AI_VECTOR_CORE": 11907,
+          "AI_CORE": 2439,
+          "MIX_AIC": 1380,
+          "MIX_AIV": 360
+        },
+        "active_union_us": 369224.18,
+        "first_kernel_start_ns": 1791601543339622910,
+        "last_kernel_end_ns": 1791601546255322170,
+        "kernel_window_us": 2915699.26,
+        "active_fraction_of_kernel_window": 0.12663314940101195,
+        "profiling_enable_ns": 1791601542871171510,
+        "profiling_disable_ns": 1791601546268356650,
+        "profiling_window_us": 3397185.14,
+        "active_fraction_of_profiling_window": 0.108685327641578,
+        "streams": {
+          "45": {
+            "kernel_count": 5400,
+            "active_union_us": 307207.08
+          },
+          "44": {
+            "kernel_count": 10686,
+            "active_union_us": 77051.8
+          }
+        },
+        "mapped_pd_overlap_us": 15034.7,
+        "mapped_pd_overlap_fraction_of_compute_union": 0.04071970584375054
+      },
+      "device_communication_tasks": {
+        "count": 0,
+        "inclusive_sum_us": 0.0,
+        "union_us": 0.0
+      },
+      "excluded_communication_process_spans": {
+        "count": 15117,
+        "inclusive_sum_us": 3933184.44,
+        "union_us": 1617825.82
+      },
+      "other_hardware_tasks": {
+        "EVENT_RECORD:EVENT_RECORD": {
+          "count": 3677,
+          "inclusive_sum_us": 73.54,
+          "union_us": 73.54
+        },
+        "EVENT_WAIT:EVENT_WAIT": {
+          "count": 1454,
+          "inclusive_sum_us": 1808110.66,
+          "union_us": 1728915.46
+        },
+        "Notify Wait:Notify Wait": {
+          "count": 5028,
+          "inclusive_sum_us": 1942934.64,
+          "union_us": 1483487.78
+        },
+        "PCIE_DMA_SQE:MEMCPY_ASYNC": {
+          "count": 141,
+          "inclusive_sum_us": 588.04,
+          "union_us": 588.04
+        },
+        "PROFILING_DISABLE:PROFILING_DISABLE": {
+          "count": 1,
+          "inclusive_sum_us": 0.02,
+          "union_us": 0.02
+        },
+        "SDMA:SDMA": {
+          "count": 3951,
+          "inclusive_sum_us": 365236.96,
+          "union_us": 125607.52
+        },
+        "SDMA_SQE:MEMCPY_ASYNC": {
+          "count": 371,
+          "inclusive_sum_us": 429.22,
+          "union_us": 429.22
+        },
+        "Write Value:Write Value": {
+          "count": 5400,
+          "inclusive_sum_us": 7187.02,
+          "union_us": 5823.86
+        }
+      },
+      "per_forward_equivalent": {
+        "all_reduce_cpu_calls": 81.0,
+        "python_event_record_calls": 215.66666666666666,
+        "python_event_wait_calls": 205.44444444444446,
+        "cann_stream_wait_event_calls": 369.44444444444446,
+        "cann_record_event_calls": 462.3333333333333,
+        "device_compute_active_union_us": 41024.90888888889
+      }
+    },
+    {
+      "mode": "shared_overlap8",
+      "rank": 1,
+      "source": "local-results/tp4/overlap-profile/dp0_pp0_tp1_dcp0_ep1_rank1_405582_20261010030542750_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+      "source_sha256": "e3fea7f8b69687a969c6e4ed6e2e10fecc57ab6e6ab812746617eaad7d845994",
+      "source_bytes": 108322901,
+      "profiler_info": "local-results/tp4/overlap-profile/dp0_pp0_tp1_dcp0_ep1_rank1_405582_20261010030542750_ascend_pt/profiler_info_1.json",
+      "profiler_info_sha256": "ebb7fda130c3afe22b2ce8d6e442dfe5307dca6573984a393a1f78c64eb4cbf8",
+      "device_label": "NPU 1",
+      "complete_cpu_op_count": 127859,
+      "direct_model_or_decoder_forward_range_candidates": {},
+      "model_forward_equivalents": {
+        "count": 9,
+        "kind": "inferred_from_40_MoE_and_30_GDN_calls_per_model_forward",
+        "independent_logits_all_gather_count": 9,
+        "direct_complete_model_range_observed": false,
+        "direct_complete_model_inclusive_us": null,
+        "moe_layer_calls": 360,
+        "gdn_layer_calls": 270
+      },
+      "cpu_operations": {
+        "Event::record": {
+          "count": 1941,
+          "inclusive_sum_us": 158181.8,
+          "exclusive_of_contained_cpu_ops_sum_us": 136896.36,
+          "per_thread_union_sum_us": 158181.8,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "Event::synchronize": {
+          "count": 9,
+          "inclusive_sum_us": 2395.67,
+          "exclusive_of_contained_cpu_ops_sum_us": 2395.67,
+          "per_thread_union_sum_us": 2395.67,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "Event::wait": {
+          "count": 1849,
+          "inclusive_sum_us": 136867.56,
+          "exclusive_of_contained_cpu_ops_sum_us": 109785.21,
+          "per_thread_union_sum_us": 136867.56,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::all_gather": {
+          "count": 9,
+          "inclusive_sum_us": 5344.37,
+          "exclusive_of_contained_cpu_ops_sum_us": 2595.84,
+          "per_thread_union_sum_us": 5344.37,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::all_reduce": {
+          "count": 729,
+          "inclusive_sum_us": 318970.01,
+          "exclusive_of_contained_cpu_ops_sum_us": 141042.86,
+          "per_thread_union_sum_us": 318970.01,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::maybe_all_reduce_tensor_model_parallel": {
+          "count": 360,
+          "inclusive_sum_us": 170280.18,
+          "exclusive_of_contained_cpu_ops_sum_us": 14881.17,
+          "per_thread_union_sum_us": 170280.18,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::maybe_chunk_residual": {
+          "count": 720,
+          "inclusive_sum_us": 10063.04,
+          "exclusive_of_contained_cpu_ops_sum_us": 10063.04,
+          "per_thread_union_sum_us": 10063.04,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::maybe_pad_and_reduce": {
+          "count": 9,
+          "inclusive_sum_us": 4891.12,
+          "exclusive_of_contained_cpu_ops_sum_us": 356.28,
+          "per_thread_union_sum_us": 4891.12,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::moe_forward_shared": {
+          "count": 360,
+          "inclusive_sum_us": 994142.31,
+          "exclusive_of_contained_cpu_ops_sum_us": 508084.13,
+          "per_thread_union_sum_us": 994142.31,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::qwen_gdn_attention_core": {
+          "count": 270,
+          "inclusive_sum_us": 636718.0,
+          "exclusive_of_contained_cpu_ops_sum_us": 264540.3,
+          "per_thread_union_sum_us": 636718.0,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::triton_split_qkv_rmsnorm_mrope": {
+          "count": 90,
+          "inclusive_sum_us": 33355.85,
+          "exclusive_of_contained_cpu_ops_sum_us": 29264.1,
+          "per_thread_union_sum_us": 33355.85,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::unified_attention_with_output": {
+          "count": 90,
+          "inclusive_sum_us": 61223.44,
+          "exclusive_of_contained_cpu_ops_sum_us": 22054.3,
+          "per_thread_union_sum_us": 61223.44,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::unquantized_gemm": {
+          "count": 2430,
+          "inclusive_sum_us": 181171.56,
+          "exclusive_of_contained_cpu_ops_sum_us": 44092.37,
+          "per_thread_union_sum_us": 181171.56,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        }
+      },
+      "cann_runtime_apis": {
+        "AscendCL@BroadcastTo_Tiling": {
+          "count": 60,
+          "inclusive_sum_us": 1490.07,
+          "union_us": 1490.07
+        },
+        "AscendCL@ChunkFwdO_Tiling": {
+          "count": 120,
+          "inclusive_sum_us": 855.66,
+          "union_us": 855.66
+        },
+        "AscendCL@ChunkGatedDeltaRuleFwdH_Tiling": {
+          "count": 120,
+          "inclusive_sum_us": 1243.47,
+          "union_us": 1243.47
+        },
+        "AscendCL@IndexCheck_Tiling": {
+          "count": 120,
+          "inclusive_sum_us": 853.06,
+          "union_us": 853.06
+        },
+        "AscendCL@IndexPutV2_Tiling": {
+          "count": 60,
+          "inclusive_sum_us": 764.34,
+          "union_us": 764.34
+        },
+        "AscendCL@ScatterPaKvCache_Tiling": {
+          "count": 180,
+          "inclusive_sum_us": 4318.67,
+          "union_us": 4318.67
+        },
+        "AscendCL@Slice_Tiling": {
+          "count": 90,
+          "inclusive_sum_us": 1460.03,
+          "union_us": 1460.03
+        },
+        "AscendCL@Transpose_Tiling": {
+          "count": 540,
+          "inclusive_sum_us": 2958.91,
+          "union_us": 2958.91
+        },
+        "AscendCL@aclmdlRICaptureGetInfo": {
+          "count": 15723,
+          "inclusive_sum_us": 9819.15,
+          "union_us": 9819.15
+        },
+        "AscendCL@aclnnAbs": {
+          "count": 360,
+          "inclusive_sum_us": 4590.2,
+          "union_us": 4590.2
+        },
+        "AscendCL@aclnnAdd": {
+          "count": 378,
+          "inclusive_sum_us": 4333.87,
+          "union_us": 4333.87
+        },
+        "AscendCL@aclnnAddRmsNormBias": {
+          "count": 720,
+          "inclusive_sum_us": 18771.25,
+          "union_us": 18771.25
+        },
+        "AscendCL@aclnnAddRmsNormBiasGetWorkspaceSize": {
+          "count": 720,
+          "inclusive_sum_us": 13885.52,
+          "union_us": 13885.52
+        },
+        "AscendCL@aclnnAdds": {
+          "count": 900,
+          "inclusive_sum_us": 16996.29,
+          "union_us": 16996.29
+        },
+        "AscendCL@aclnnArgMax": {
+          "count": 9,
+          "inclusive_sum_us": 238.74,
+          "union_us": 238.74
+        },
+        "AscendCL@aclnnBitwiseAndTensor": {
+          "count": 9,
+          "inclusive_sum_us": 118.31,
+          "union_us": 118.31
+        },
+        "AscendCL@aclnnBitwiseNot": {
+          "count": 9,
+          "inclusive_sum_us": 114.66,
+          "union_us": 114.66
+        },
+        "AscendCL@aclnnCat": {
+          "count": 270,
+          "inclusive_sum_us": 3415.29,
+          "union_us": 3415.29
+        },
+        "AscendCL@aclnnCausalConv1d": {
+          "count": 270,
+          "inclusive_sum_us": 24889.49,
+          "union_us": 24889.49
+        },
+        "AscendCL@aclnnCausalConv1dGetWorkspaceSize": {
+          "count": 270,
+          "inclusive_sum_us": 21493.46,
+          "union_us": 21493.46
+        },
+        "AscendCL@aclnnChunkFwdO": {
+          "count": 60,
+          "inclusive_sum_us": 2559.41,
+          "union_us": 2559.41
+        },
+        "AscendCL@aclnnChunkFwdOGetWorkspaceSize": {
+          "count": 60,
+          "inclusive_sum_us": 2697.64,
+          "union_us": 2697.64
+        },
+        "AscendCL@aclnnChunkGatedDeltaRuleFwdH": {
+          "count": 60,
+          "inclusive_sum_us": 3547.58,
+          "union_us": 3547.58
+        },
+        "AscendCL@aclnnChunkGatedDeltaRuleFwdHGetWorkspaceSize": {
+          "count": 60,
+          "inclusive_sum_us": 3617.65,
+          "union_us": 3617.65
+        },
+        "AscendCL@aclnnContiguous": {
+          "count": 270,
+          "inclusive_sum_us": 16397.42,
+          "union_us": 16397.42
+        },
+        "AscendCL@aclnnContiguousGetWorkspaceSize": {
+          "count": 270,
+          "inclusive_sum_us": 13250.84,
+          "union_us": 13250.84
+        },
+        "AscendCL@aclnnEmbedding": {
+          "count": 9,
+          "inclusive_sum_us": 118.56,
+          "union_us": 118.56
+        },
+        "AscendCL@aclnnGeScalar": {
+          "count": 9,
+          "inclusive_sum_us": 192.04,
+          "union_us": 192.04
+        },
+        "AscendCL@aclnnGemmaRmsNorm": {
+          "count": 9,
+          "inclusive_sum_us": 356.31,
+          "union_us": 356.31
+        },
+        "AscendCL@aclnnGemmaRmsNormGetWorkspaceSize": {
+          "count": 9,
+          "inclusive_sum_us": 275.94,
+          "union_us": 275.94
+        },
+        "AscendCL@aclnnGroupedMatmulV5": {
+          "count": 720,
+          "inclusive_sum_us": 12305.66,
+          "union_us": 12305.66
+        },
+        "AscendCL@aclnnGtScalar": {
+          "count": 6,
+          "inclusive_sum_us": 164.42,
+          "union_us": 164.42
+        },
+        "AscendCL@aclnnIndex": {
+          "count": 528,
+          "inclusive_sum_us": 12166.31,
+          "union_us": 12166.31
+        },
+        "AscendCL@aclnnIndexPutImpl": {
+          "count": 60,
+          "inclusive_sum_us": 6950.72,
+          "union_us": 6950.72
+        },
+        "AscendCL@aclnnIndexPutImplGetWorkspaceSize": {
+          "count": 60,
+          "inclusive_sum_us": 4928.92,
+          "union_us": 4928.92
+        },
+        "AscendCL@aclnnInnerFusedInferAttentionScore": {
+          "count": 90,
+          "inclusive_sum_us": 3757.34,
+          "union_us": 3757.34
+        },
+        "AscendCL@aclnnInnerFusedInferAttentionScoreGetWorkspaceSize": {
+          "count": 90,
+          "inclusive_sum_us": 2348.15,
+          "union_us": 2348.15
+        },
+        "AscendCL@aclnnInnerMoeTokenUnpermute": {
+          "count": 360,
+          "inclusive_sum_us": 7106.99,
+          "union_us": 7106.99
+        },
+        "AscendCL@aclnnInnerMoeTokenUnpermuteGetWorkspaceSize": {
+          "count": 360,
+          "inclusive_sum_us": 4599.25,
+          "union_us": 4599.25
+        },
+        "AscendCL@aclnnInplaceCopy": {
+          "count": 2099,
+          "inclusive_sum_us": 29450.25,
+          "union_us": 29450.25
+        },
+        "AscendCL@aclnnInplaceCopyGetWorkspaceSize": {
+          "count": 451,
+          "inclusive_sum_us": 7386.73,
+          "union_us": 7386.73
+        },
+        "AscendCL@aclnnInplaceFillScalar": {
+          "count": 129,
+          "inclusive_sum_us": 1018.95,
+          "union_us": 1018.95
+        },
+        "AscendCL@aclnnInplaceMaskedFillScalar": {
+          "count": 9,
+          "inclusive_sum_us": 156.07,
+          "union_us": 156.07
+        },
+        "AscendCL@aclnnInplaceZero": {
+          "count": 450,
+          "inclusive_sum_us": 5302.25,
+          "union_us": 5302.25
+        },
+        "AscendCL@aclnnLtScalar": {
+          "count": 9,
+          "inclusive_sum_us": 200.42,
+          "union_us": 200.42
+        },
+        "AscendCL@aclnnMatmul": {
+          "count": 2439,
+          "inclusive_sum_us": 33535.65,
+          "union_us": 33535.65
+        },
+        "AscendCL@aclnnMoeGatingTopK": {
+          "count": 360,
+          "inclusive_sum_us": 7400.97,
+          "union_us": 7400.97
+        },
+        "AscendCL@aclnnMoeGatingTopKGetWorkspaceSize": {
+          "count": 360,
+          "inclusive_sum_us": 6928.74,
+          "union_us": 6928.74
+        },
+        "AscendCL@aclnnMoeInitRoutingV3": {
+          "count": 360,
+          "inclusive_sum_us": 6887.59,
+          "union_us": 6887.59
+        },
+        "AscendCL@aclnnMoeTokenUnpermuteGetWorkspaceSize": {
+          "count": 360,
+          "inclusive_sum_us": 8204.01,
+          "union_us": 8204.01
+        },
+        "AscendCL@aclnnMul": {
+          "count": 819,
+          "inclusive_sum_us": 11673.99,
+          "union_us": 11673.99
+        },
+        "AscendCL@aclnnMuls": {
+          "count": 9,
+          "inclusive_sum_us": 165.29,
+          "union_us": 165.29
+        },
+        "AscendCL@aclnnNeScalar": {
+          "count": 360,
+          "inclusive_sum_us": 4453.25,
+          "union_us": 4453.25
+        },
+        "AscendCL@aclnnRecurrentGatedDeltaRule": {
+          "count": 210,
+          "inclusive_sum_us": 3639.55,
+          "union_us": 3639.55
+        },
+        "AscendCL@aclnnRecurrentGatedDeltaRuleGetWorkspaceSize": {
+          "count": 210,
+          "inclusive_sum_us": 2015.96,
+          "union_us": 2015.96
+        },
+        "AscendCL@aclnnScatterPaKvCache": {
+          "count": 90,
+          "inclusive_sum_us": 4768.04,
+          "union_us": 4768.04
+        },
+        "AscendCL@aclnnScatterPaKvCacheGetWorkspaceSize": {
+          "count": 90,
+          "inclusive_sum_us": 8364.33,
+          "union_us": 8364.33
+        },
+        "AscendCL@aclnnSigmoid": {
+          "count": 450,
+          "inclusive_sum_us": 5316.26,
+          "union_us": 5316.26
+        },
+        "AscendCL@aclnnSub": {
+          "count": 90,
+          "inclusive_sum_us": 1083.87,
+          "union_us": 1083.87
+        },
+        "AscendCL@aclnnSubs": {
+          "count": 9,
+          "inclusive_sum_us": 153.75,
+          "union_us": 153.75
+        },
+        "AscendCL@aclnnSwiGlu": {
+          "count": 720,
+          "inclusive_sum_us": 13634.05,
+          "union_us": 13634.05
+        },
+        "AscendCL@aclnnSwiGluGetWorkspaceSize": {
+          "count": 720,
+          "inclusive_sum_us": 13029.93,
+          "union_us": 13029.93
+        },
+        "AscendCL@aclrtCreateEventExWithFlag": {
+          "count": 3399,
+          "inclusive_sum_us": 12162.66,
+          "union_us": 12162.66
+        },
+        "AscendCL@aclrtCtxGetSysParamOpt": {
+          "count": 2529,
+          "inclusive_sum_us": 5424.44,
+          "union_us": 5424.44
+        },
+        "AscendCL@aclrtDestroyEvent": {
+          "count": 3296,
+          "inclusive_sum_us": 4019.53,
+          "union_us": 4019.53
+        },
+        "AscendCL@aclrtGetCurrentContext": {
+          "count": 738,
+          "inclusive_sum_us": 685.9,
+          "union_us": 685.9
+        },
+        "AscendCL@aclrtGetDeviceCount": {
+          "count": 2,
+          "inclusive_sum_us": 7.05,
+          "union_us": 7.05
+        },
+        "AscendCL@aclrtGetHardwareSyncAddr": {
+          "count": 1560,
+          "inclusive_sum_us": 1708.35,
+          "union_us": 1708.35
+        },
+        "AscendCL@aclrtGetResInCurrentThread": {
+          "count": 8180,
+          "inclusive_sum_us": 8962.43,
+          "union_us": 8962.43
+        },
+        "AscendCL@aclrtGetStreamAttribute": {
+          "count": 13718,
+          "inclusive_sum_us": 9267.64,
+          "union_us": 9267.64
+        },
+        "AscendCL@aclrtLaunchKernelWithHostArgs": {
+          "count": 14547,
+          "inclusive_sum_us": 92153.8,
+          "union_us": 92153.8
+        },
+        "AscendCL@aclrtMemcpyAsync": {
+          "count": 545,
+          "inclusive_sum_us": 7396.42,
+          "union_us": 7396.42
+        },
+        "AscendCL@aclrtMemcpyAsyncWithCondition": {
+          "count": 9,
+          "inclusive_sum_us": 128.6,
+          "union_us": 128.6
+        },
+        "AscendCL@aclrtPointerGetAttributes": {
+          "count": 6804,
+          "inclusive_sum_us": 13642.66,
+          "union_us": 13642.66
+        },
+        "AscendCL@aclrtQueryEventStatus": {
+          "count": 641,
+          "inclusive_sum_us": 537.48,
+          "union_us": 537.48
+        },
+        "AscendCL@aclrtRecordEvent": {
+          "count": 4161,
+          "inclusive_sum_us": 41051.61,
+          "union_us": 41051.61
+        },
+        "AscendCL@aclrtStreamGetId": {
+          "count": 11295,
+          "inclusive_sum_us": 5855.09,
+          "union_us": 5855.09
+        },
+        "AscendCL@aclrtStreamWaitEvent": {
+          "count": 3325,
+          "inclusive_sum_us": 15008.77,
+          "union_us": 15008.77
+        },
+        "AscendCL@aclrtSynchronizeDeviceWithTimeout": {
+          "count": 1,
+          "inclusive_sum_us": 35.39,
+          "union_us": 35.39
+        },
+        "AscendCL@aclrtSynchronizeEvent": {
+          "count": 9,
+          "inclusive_sum_us": 1935.93,
+          "union_us": 1935.93
+        },
+        "AscendCL@aclrtSynchronizeStreamWithTimeout": {
+          "count": 42,
+          "inclusive_sum_us": 111.86,
+          "union_us": 111.86
+        },
+        "AscendCL@hcom_allGather_": {
+          "count": 9,
+          "inclusive_sum_us": 3239.75,
+          "union_us": 3239.75
+        },
+        "AscendCL@hcom_allReduce_": {
+          "count": 729,
+          "inclusive_sum_us": 230986.64,
+          "union_us": 230986.64
+        }
+      },
+      "device_compute": {
+        "kernel_count": 16086,
+        "task_types": {
+          "AI_VECTOR_CORE": 11907,
+          "AI_CORE": 2439,
+          "MIX_AIC": 1380,
+          "MIX_AIV": 360
+        },
+        "active_union_us": 370905.22,
+        "first_kernel_start_ns": 1791601543338731380,
+        "last_kernel_end_ns": 1791601546256109460,
+        "kernel_window_us": 2917378.08,
+        "active_fraction_of_kernel_window": 0.12713649373824046,
+        "profiling_enable_ns": 1791601542885593760,
+        "profiling_disable_ns": 1791601546267564820,
+        "profiling_window_us": 3381971.06,
+        "active_fraction_of_profiling_window": 0.10967131693906335,
+        "streams": {
+          "45": {
+            "kernel_count": 5400,
+            "active_union_us": 310097.38
+          },
+          "44": {
+            "kernel_count": 10686,
+            "active_union_us": 77467.46
+          }
+        },
+        "mapped_pd_overlap_us": 16659.62,
+        "mapped_pd_overlap_fraction_of_compute_union": 0.04491611091372615
+      },
+      "device_communication_tasks": {
+        "count": 0,
+        "inclusive_sum_us": 0.0,
+        "union_us": 0.0
+      },
+      "excluded_communication_process_spans": {
+        "count": 10227,
+        "inclusive_sum_us": 2131347.12,
+        "union_us": 941648.92
+      },
+      "other_hardware_tasks": {
+        "EVENT_RECORD:EVENT_RECORD": {
+          "count": 3763,
+          "inclusive_sum_us": 75.26,
+          "union_us": 75.26
+        },
+        "EVENT_WAIT:EVENT_WAIT": {
+          "count": 1367,
+          "inclusive_sum_us": 1201379.02,
+          "union_us": 1040878.82
+        },
+        "Notify Wait:Notify Wait": {
+          "count": 2406,
+          "inclusive_sum_us": 822045.66,
+          "union_us": 806649.36
+        },
+        "PCIE_DMA_SQE:MEMCPY_ASYNC": {
+          "count": 141,
+          "inclusive_sum_us": 548.46,
+          "union_us": 548.46
+        },
+        "PROFILING_DISABLE:PROFILING_DISABLE": {
+          "count": 1,
+          "inclusive_sum_us": 0.02,
+          "union_us": 0.02
+        },
+        "SDMA:SDMA": {
+          "count": 3951,
+          "inclusive_sum_us": 362544.16,
+          "union_us": 125438.96
+        },
+        "SDMA_SQE:MEMCPY_ASYNC": {
+          "count": 371,
+          "inclusive_sum_us": 506.34,
+          "union_us": 506.34
+        },
+        "Write Value:Write Value": {
+          "count": 3132,
+          "inclusive_sum_us": 5108.38,
+          "union_us": 4683.84
+        }
+      },
+      "per_forward_equivalent": {
+        "all_reduce_cpu_calls": 81.0,
+        "python_event_record_calls": 215.66666666666666,
+        "python_event_wait_calls": 205.44444444444446,
+        "cann_stream_wait_event_calls": 369.44444444444446,
+        "cann_record_event_calls": 462.3333333333333,
+        "device_compute_active_union_us": 41211.69111111111
+      }
+    },
+    {
+      "mode": "shared_overlap8",
+      "rank": 2,
+      "source": "local-results/tp4/overlap-profile/dp0_pp0_tp2_dcp0_ep2_rank2_405584_20261010030542750_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+      "source_sha256": "669e8794352bf6ee1aa796048be5814efa404e59da14f2239fcf1f4f5a0cc57c",
+      "source_bytes": 108351391,
+      "profiler_info": "local-results/tp4/overlap-profile/dp0_pp0_tp2_dcp0_ep2_rank2_405584_20261010030542750_ascend_pt/profiler_info_2.json",
+      "profiler_info_sha256": "cf43c0ec594b5cb6f1a2e68490334e945010da816469e77ff2e4cdc93e76f38c",
+      "device_label": "NPU 2",
+      "complete_cpu_op_count": 127859,
+      "direct_model_or_decoder_forward_range_candidates": {},
+      "model_forward_equivalents": {
+        "count": 9,
+        "kind": "inferred_from_40_MoE_and_30_GDN_calls_per_model_forward",
+        "independent_logits_all_gather_count": 9,
+        "direct_complete_model_range_observed": false,
+        "direct_complete_model_inclusive_us": null,
+        "moe_layer_calls": 360,
+        "gdn_layer_calls": 270
+      },
+      "cpu_operations": {
+        "Event::record": {
+          "count": 1941,
+          "inclusive_sum_us": 157612.37,
+          "exclusive_of_contained_cpu_ops_sum_us": 136123.49,
+          "per_thread_union_sum_us": 157612.37,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "Event::synchronize": {
+          "count": 9,
+          "inclusive_sum_us": 13547.29,
+          "exclusive_of_contained_cpu_ops_sum_us": 13547.29,
+          "per_thread_union_sum_us": 13547.29,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "Event::wait": {
+          "count": 1849,
+          "inclusive_sum_us": 134513.14,
+          "exclusive_of_contained_cpu_ops_sum_us": 107128.7,
+          "per_thread_union_sum_us": 134513.14,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::all_gather": {
+          "count": 9,
+          "inclusive_sum_us": 5270.56,
+          "exclusive_of_contained_cpu_ops_sum_us": 2584.03,
+          "per_thread_union_sum_us": 5270.56,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::all_reduce": {
+          "count": 729,
+          "inclusive_sum_us": 310955.24,
+          "exclusive_of_contained_cpu_ops_sum_us": 136851.77,
+          "per_thread_union_sum_us": 310955.24,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::maybe_all_reduce_tensor_model_parallel": {
+          "count": 360,
+          "inclusive_sum_us": 166590.17,
+          "exclusive_of_contained_cpu_ops_sum_us": 14924.32,
+          "per_thread_union_sum_us": 166590.17,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::maybe_chunk_residual": {
+          "count": 720,
+          "inclusive_sum_us": 9954.83,
+          "exclusive_of_contained_cpu_ops_sum_us": 9954.83,
+          "per_thread_union_sum_us": 9954.83,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::maybe_pad_and_reduce": {
+          "count": 9,
+          "inclusive_sum_us": 4725.66,
+          "exclusive_of_contained_cpu_ops_sum_us": 315.65,
+          "per_thread_union_sum_us": 4725.66,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::moe_forward_shared": {
+          "count": 360,
+          "inclusive_sum_us": 994617.08,
+          "exclusive_of_contained_cpu_ops_sum_us": 507257.06,
+          "per_thread_union_sum_us": 994617.08,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::qwen_gdn_attention_core": {
+          "count": 270,
+          "inclusive_sum_us": 629038.47,
+          "exclusive_of_contained_cpu_ops_sum_us": 258956.42,
+          "per_thread_union_sum_us": 629038.47,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::triton_split_qkv_rmsnorm_mrope": {
+          "count": 90,
+          "inclusive_sum_us": 32991.98,
+          "exclusive_of_contained_cpu_ops_sum_us": 28811.56,
+          "per_thread_union_sum_us": 32991.98,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::unified_attention_with_output": {
+          "count": 90,
+          "inclusive_sum_us": 59420.71,
+          "exclusive_of_contained_cpu_ops_sum_us": 21612.91,
+          "per_thread_union_sum_us": 59420.71,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::unquantized_gemm": {
+          "count": 2430,
+          "inclusive_sum_us": 180423.45,
+          "exclusive_of_contained_cpu_ops_sum_us": 43045.99,
+          "per_thread_union_sum_us": 180423.45,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        }
+      },
+      "cann_runtime_apis": {
+        "AscendCL@BroadcastTo_Tiling": {
+          "count": 60,
+          "inclusive_sum_us": 1247.29,
+          "union_us": 1247.29
+        },
+        "AscendCL@ChunkFwdO_Tiling": {
+          "count": 120,
+          "inclusive_sum_us": 845.67,
+          "union_us": 845.67
+        },
+        "AscendCL@ChunkGatedDeltaRuleFwdH_Tiling": {
+          "count": 120,
+          "inclusive_sum_us": 1146.66,
+          "union_us": 1146.66
+        },
+        "AscendCL@IndexCheck_Tiling": {
+          "count": 120,
+          "inclusive_sum_us": 783.11,
+          "union_us": 783.11
+        },
+        "AscendCL@IndexPutV2_Tiling": {
+          "count": 60,
+          "inclusive_sum_us": 662.8,
+          "union_us": 662.8
+        },
+        "AscendCL@ScatterPaKvCache_Tiling": {
+          "count": 180,
+          "inclusive_sum_us": 3663.15,
+          "union_us": 3663.15
+        },
+        "AscendCL@Slice_Tiling": {
+          "count": 90,
+          "inclusive_sum_us": 1394.2,
+          "union_us": 1394.2
+        },
+        "AscendCL@Transpose_Tiling": {
+          "count": 540,
+          "inclusive_sum_us": 2900.26,
+          "union_us": 2900.26
+        },
+        "AscendCL@aclmdlRICaptureGetInfo": {
+          "count": 15723,
+          "inclusive_sum_us": 10056.09,
+          "union_us": 10056.09
+        },
+        "AscendCL@aclnnAbs": {
+          "count": 360,
+          "inclusive_sum_us": 4372.05,
+          "union_us": 4372.05
+        },
+        "AscendCL@aclnnAdd": {
+          "count": 378,
+          "inclusive_sum_us": 4470.48,
+          "union_us": 4470.48
+        },
+        "AscendCL@aclnnAddRmsNormBias": {
+          "count": 720,
+          "inclusive_sum_us": 18090.38,
+          "union_us": 18090.38
+        },
+        "AscendCL@aclnnAddRmsNormBiasGetWorkspaceSize": {
+          "count": 720,
+          "inclusive_sum_us": 13965.15,
+          "union_us": 13965.15
+        },
+        "AscendCL@aclnnAdds": {
+          "count": 900,
+          "inclusive_sum_us": 15831.92,
+          "union_us": 15831.92
+        },
+        "AscendCL@aclnnArgMax": {
+          "count": 9,
+          "inclusive_sum_us": 199.0,
+          "union_us": 199.0
+        },
+        "AscendCL@aclnnBitwiseAndTensor": {
+          "count": 9,
+          "inclusive_sum_us": 127.46,
+          "union_us": 127.46
+        },
+        "AscendCL@aclnnBitwiseNot": {
+          "count": 9,
+          "inclusive_sum_us": 129.59,
+          "union_us": 129.59
+        },
+        "AscendCL@aclnnCat": {
+          "count": 270,
+          "inclusive_sum_us": 3340.8,
+          "union_us": 3340.8
+        },
+        "AscendCL@aclnnCausalConv1d": {
+          "count": 270,
+          "inclusive_sum_us": 23497.33,
+          "union_us": 23497.33
+        },
+        "AscendCL@aclnnCausalConv1dGetWorkspaceSize": {
+          "count": 270,
+          "inclusive_sum_us": 20925.85,
+          "union_us": 20925.85
+        },
+        "AscendCL@aclnnChunkFwdO": {
+          "count": 60,
+          "inclusive_sum_us": 2622.4,
+          "union_us": 2622.4
+        },
+        "AscendCL@aclnnChunkFwdOGetWorkspaceSize": {
+          "count": 60,
+          "inclusive_sum_us": 2606.89,
+          "union_us": 2606.89
+        },
+        "AscendCL@aclnnChunkGatedDeltaRuleFwdH": {
+          "count": 60,
+          "inclusive_sum_us": 3257.78,
+          "union_us": 3257.78
+        },
+        "AscendCL@aclnnChunkGatedDeltaRuleFwdHGetWorkspaceSize": {
+          "count": 60,
+          "inclusive_sum_us": 3399.84,
+          "union_us": 3399.84
+        },
+        "AscendCL@aclnnContiguous": {
+          "count": 270,
+          "inclusive_sum_us": 15563.57,
+          "union_us": 15563.57
+        },
+        "AscendCL@aclnnContiguousGetWorkspaceSize": {
+          "count": 270,
+          "inclusive_sum_us": 12566.65,
+          "union_us": 12566.65
+        },
+        "AscendCL@aclnnEmbedding": {
+          "count": 9,
+          "inclusive_sum_us": 115.95,
+          "union_us": 115.95
+        },
+        "AscendCL@aclnnGeScalar": {
+          "count": 9,
+          "inclusive_sum_us": 183.1,
+          "union_us": 183.1
+        },
+        "AscendCL@aclnnGemmaRmsNorm": {
+          "count": 9,
+          "inclusive_sum_us": 322.62,
+          "union_us": 322.62
+        },
+        "AscendCL@aclnnGemmaRmsNormGetWorkspaceSize": {
+          "count": 9,
+          "inclusive_sum_us": 305.14,
+          "union_us": 305.14
+        },
+        "AscendCL@aclnnGroupedMatmulV5": {
+          "count": 720,
+          "inclusive_sum_us": 11760.68,
+          "union_us": 11760.68
+        },
+        "AscendCL@aclnnGtScalar": {
+          "count": 6,
+          "inclusive_sum_us": 176.91,
+          "union_us": 176.91
+        },
+        "AscendCL@aclnnIndex": {
+          "count": 528,
+          "inclusive_sum_us": 11606.57,
+          "union_us": 11606.57
+        },
+        "AscendCL@aclnnIndexPutImpl": {
+          "count": 60,
+          "inclusive_sum_us": 6613.1,
+          "union_us": 6613.1
+        },
+        "AscendCL@aclnnIndexPutImplGetWorkspaceSize": {
+          "count": 60,
+          "inclusive_sum_us": 4491.2,
+          "union_us": 4491.2
+        },
+        "AscendCL@aclnnInnerFusedInferAttentionScore": {
+          "count": 90,
+          "inclusive_sum_us": 3499.84,
+          "union_us": 3499.84
+        },
+        "AscendCL@aclnnInnerFusedInferAttentionScoreGetWorkspaceSize": {
+          "count": 90,
+          "inclusive_sum_us": 2231.1,
+          "union_us": 2231.1
+        },
+        "AscendCL@aclnnInnerMoeTokenUnpermute": {
+          "count": 360,
+          "inclusive_sum_us": 6804.89,
+          "union_us": 6804.89
+        },
+        "AscendCL@aclnnInnerMoeTokenUnpermuteGetWorkspaceSize": {
+          "count": 360,
+          "inclusive_sum_us": 4434.43,
+          "union_us": 4434.43
+        },
+        "AscendCL@aclnnInplaceCopy": {
+          "count": 2099,
+          "inclusive_sum_us": 28854.68,
+          "union_us": 28854.68
+        },
+        "AscendCL@aclnnInplaceCopyGetWorkspaceSize": {
+          "count": 451,
+          "inclusive_sum_us": 7282.69,
+          "union_us": 7282.69
+        },
+        "AscendCL@aclnnInplaceFillScalar": {
+          "count": 129,
+          "inclusive_sum_us": 998.8,
+          "union_us": 998.8
+        },
+        "AscendCL@aclnnInplaceMaskedFillScalar": {
+          "count": 9,
+          "inclusive_sum_us": 147.5,
+          "union_us": 147.5
+        },
+        "AscendCL@aclnnInplaceZero": {
+          "count": 450,
+          "inclusive_sum_us": 5002.56,
+          "union_us": 5002.56
+        },
+        "AscendCL@aclnnLtScalar": {
+          "count": 9,
+          "inclusive_sum_us": 176.44,
+          "union_us": 176.44
+        },
+        "AscendCL@aclnnMatmul": {
+          "count": 2439,
+          "inclusive_sum_us": 31384.39,
+          "union_us": 31384.39
+        },
+        "AscendCL@aclnnMoeGatingTopK": {
+          "count": 360,
+          "inclusive_sum_us": 7024.94,
+          "union_us": 7024.94
+        },
+        "AscendCL@aclnnMoeGatingTopKGetWorkspaceSize": {
+          "count": 360,
+          "inclusive_sum_us": 6979.78,
+          "union_us": 6979.78
+        },
+        "AscendCL@aclnnMoeInitRoutingV3": {
+          "count": 360,
+          "inclusive_sum_us": 6451.88,
+          "union_us": 6451.88
+        },
+        "AscendCL@aclnnMoeTokenUnpermuteGetWorkspaceSize": {
+          "count": 360,
+          "inclusive_sum_us": 7958.52,
+          "union_us": 7958.52
+        },
+        "AscendCL@aclnnMul": {
+          "count": 819,
+          "inclusive_sum_us": 11353.65,
+          "union_us": 11353.65
+        },
+        "AscendCL@aclnnMuls": {
+          "count": 9,
+          "inclusive_sum_us": 179.35,
+          "union_us": 179.35
+        },
+        "AscendCL@aclnnNeScalar": {
+          "count": 360,
+          "inclusive_sum_us": 4365.87,
+          "union_us": 4365.87
+        },
+        "AscendCL@aclnnRecurrentGatedDeltaRule": {
+          "count": 210,
+          "inclusive_sum_us": 3345.34,
+          "union_us": 3345.34
+        },
+        "AscendCL@aclnnRecurrentGatedDeltaRuleGetWorkspaceSize": {
+          "count": 210,
+          "inclusive_sum_us": 1954.26,
+          "union_us": 1954.26
+        },
+        "AscendCL@aclnnScatterPaKvCache": {
+          "count": 90,
+          "inclusive_sum_us": 4221.57,
+          "union_us": 4221.57
+        },
+        "AscendCL@aclnnScatterPaKvCacheGetWorkspaceSize": {
+          "count": 90,
+          "inclusive_sum_us": 7523.42,
+          "union_us": 7523.42
+        },
+        "AscendCL@aclnnSigmoid": {
+          "count": 450,
+          "inclusive_sum_us": 5219.97,
+          "union_us": 5219.97
+        },
+        "AscendCL@aclnnSub": {
+          "count": 90,
+          "inclusive_sum_us": 1070.46,
+          "union_us": 1070.46
+        },
+        "AscendCL@aclnnSubs": {
+          "count": 9,
+          "inclusive_sum_us": 142.69,
+          "union_us": 142.69
+        },
+        "AscendCL@aclnnSwiGlu": {
+          "count": 720,
+          "inclusive_sum_us": 13203.85,
+          "union_us": 13203.85
+        },
+        "AscendCL@aclnnSwiGluGetWorkspaceSize": {
+          "count": 720,
+          "inclusive_sum_us": 13137.34,
+          "union_us": 13137.34
+        },
+        "AscendCL@aclrtCreateEventExWithFlag": {
+          "count": 3399,
+          "inclusive_sum_us": 13178.9,
+          "union_us": 13178.9
+        },
+        "AscendCL@aclrtCtxGetSysParamOpt": {
+          "count": 2529,
+          "inclusive_sum_us": 5395.95,
+          "union_us": 5395.95
+        },
+        "AscendCL@aclrtDestroyEvent": {
+          "count": 3304,
+          "inclusive_sum_us": 3880.61,
+          "union_us": 3880.61
+        },
+        "AscendCL@aclrtGetCurrentContext": {
+          "count": 738,
+          "inclusive_sum_us": 627.18,
+          "union_us": 627.18
+        },
+        "AscendCL@aclrtGetDeviceCount": {
+          "count": 2,
+          "inclusive_sum_us": 7.25,
+          "union_us": 7.25
+        },
+        "AscendCL@aclrtGetHardwareSyncAddr": {
+          "count": 1560,
+          "inclusive_sum_us": 1711.29,
+          "union_us": 1711.29
+        },
+        "AscendCL@aclrtGetResInCurrentThread": {
+          "count": 8180,
+          "inclusive_sum_us": 9474.08,
+          "union_us": 9474.08
+        },
+        "AscendCL@aclrtGetStreamAttribute": {
+          "count": 13718,
+          "inclusive_sum_us": 9492.74,
+          "union_us": 9492.74
+        },
+        "AscendCL@aclrtLaunchKernelWithHostArgs": {
+          "count": 14547,
+          "inclusive_sum_us": 94897.49,
+          "union_us": 94897.49
+        },
+        "AscendCL@aclrtMemcpyAsync": {
+          "count": 545,
+          "inclusive_sum_us": 16489.07,
+          "union_us": 16489.07
+        },
+        "AscendCL@aclrtMemcpyAsyncWithCondition": {
+          "count": 9,
+          "inclusive_sum_us": 120.58,
+          "union_us": 120.58
+        },
+        "AscendCL@aclrtPointerGetAttributes": {
+          "count": 6804,
+          "inclusive_sum_us": 14181.71,
+          "union_us": 14181.71
+        },
+        "AscendCL@aclrtQueryEventStatus": {
+          "count": 650,
+          "inclusive_sum_us": 570.81,
+          "union_us": 570.81
+        },
+        "AscendCL@aclrtRecordEvent": {
+          "count": 4161,
+          "inclusive_sum_us": 40633.93,
+          "union_us": 40633.93
+        },
+        "AscendCL@aclrtStreamGetId": {
+          "count": 11295,
+          "inclusive_sum_us": 5602.54,
+          "union_us": 5602.54
+        },
+        "AscendCL@aclrtStreamWaitEvent": {
+          "count": 3325,
+          "inclusive_sum_us": 15568.9,
+          "union_us": 15568.9
+        },
+        "AscendCL@aclrtSynchronizeDeviceWithTimeout": {
+          "count": 1,
+          "inclusive_sum_us": 35.27,
+          "union_us": 35.27
+        },
+        "AscendCL@aclrtSynchronizeEvent": {
+          "count": 9,
+          "inclusive_sum_us": 13046.98,
+          "union_us": 13046.98
+        },
+        "AscendCL@aclrtSynchronizeStreamWithTimeout": {
+          "count": 42,
+          "inclusive_sum_us": 111.86,
+          "union_us": 111.86
+        },
+        "AscendCL@hcom_allGather_": {
+          "count": 9,
+          "inclusive_sum_us": 3122.58,
+          "union_us": 3122.58
+        },
+        "AscendCL@hcom_allReduce_": {
+          "count": 729,
+          "inclusive_sum_us": 218508.88,
+          "union_us": 218508.88
+        }
+      },
+      "device_compute": {
+        "kernel_count": 16086,
+        "task_types": {
+          "AI_VECTOR_CORE": 11907,
+          "AI_CORE": 2439,
+          "MIX_AIC": 1380,
+          "MIX_AIV": 360
+        },
+        "active_union_us": 372634.34,
+        "first_kernel_start_ns": 1791601543338734525,
+        "last_kernel_end_ns": 1791601546255319365,
+        "kernel_window_us": 2916584.84,
+        "active_fraction_of_kernel_window": 0.12776392954164845,
+        "profiling_enable_ns": 1791601542873375705,
+        "profiling_disable_ns": 1791601546266393185,
+        "profiling_window_us": 3393017.48,
+        "active_fraction_of_profiling_window": 0.1098238786556443,
+        "streams": {
+          "45": {
+            "kernel_count": 5400,
+            "active_union_us": 310965.0
+          },
+          "44": {
+            "kernel_count": 10686,
+            "active_union_us": 72318.08
+          }
+        },
+        "mapped_pd_overlap_us": 10648.74,
+        "mapped_pd_overlap_fraction_of_compute_union": 0.028576915375002745
+      },
+      "device_communication_tasks": {
+        "count": 0,
+        "inclusive_sum_us": 0.0,
+        "union_us": 0.0
+      },
+      "excluded_communication_process_spans": {
+        "count": 10589,
+        "inclusive_sum_us": 3373766.56,
+        "union_us": 1553697.9
+      },
+      "other_hardware_tasks": {
+        "EVENT_RECORD:EVENT_RECORD": {
+          "count": 3706,
+          "inclusive_sum_us": 74.12,
+          "union_us": 74.12
+        },
+        "EVENT_WAIT:EVENT_WAIT": {
+          "count": 1428,
+          "inclusive_sum_us": 1796528.42,
+          "union_us": 1657550.28
+        },
+        "Notify Wait:Notify Wait": {
+          "count": 2768,
+          "inclusive_sum_us": 1451259.4,
+          "union_us": 1419522.78
+        },
+        "PCIE_DMA_SQE:MEMCPY_ASYNC": {
+          "count": 141,
+          "inclusive_sum_us": 589.78,
+          "union_us": 589.78
+        },
+        "PROFILING_DISABLE:PROFILING_DISABLE": {
+          "count": 1,
+          "inclusive_sum_us": 0.02,
+          "union_us": 0.02
+        },
+        "PROFILING_ENABLE:PROFILING_ENABLE": {
+          "count": 1,
+          "inclusive_sum_us": 0.02,
+          "union_us": 0.02
+        },
+        "SDMA:SDMA": {
+          "count": 3951,
+          "inclusive_sum_us": 363504.88,
+          "union_us": 125678.58
+        },
+        "SDMA_SQE:MEMCPY_ASYNC": {
+          "count": 371,
+          "inclusive_sum_us": 349.74,
+          "union_us": 349.74
+        },
+        "Write Value:Write Value": {
+          "count": 3132,
+          "inclusive_sum_us": 5304.38,
+          "union_us": 4861.04
+        }
+      },
+      "per_forward_equivalent": {
+        "all_reduce_cpu_calls": 81.0,
+        "python_event_record_calls": 215.66666666666666,
+        "python_event_wait_calls": 205.44444444444446,
+        "cann_stream_wait_event_calls": 369.44444444444446,
+        "cann_record_event_calls": 462.3333333333333,
+        "device_compute_active_union_us": 41403.81555555556
+      }
+    },
+    {
+      "mode": "shared_overlap8",
+      "rank": 3,
+      "source": "local-results/tp4/overlap-profile/dp0_pp0_tp3_dcp0_ep3_rank3_405588_20261010030542751_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+      "source_sha256": "cd4fdde4ac3b694bce3b3e86fea86ba4bf4d8731bf245a4c10842d754d228403",
+      "source_bytes": 108324944,
+      "profiler_info": "local-results/tp4/overlap-profile/dp0_pp0_tp3_dcp0_ep3_rank3_405588_20261010030542751_ascend_pt/profiler_info_3.json",
+      "profiler_info_sha256": "9a441906853b65f76799c622d8261472d6a7a9e6ff0a2e7d62b1c8155a32bc90",
+      "device_label": "NPU 3",
+      "complete_cpu_op_count": 127859,
+      "direct_model_or_decoder_forward_range_candidates": {},
+      "model_forward_equivalents": {
+        "count": 9,
+        "kind": "inferred_from_40_MoE_and_30_GDN_calls_per_model_forward",
+        "independent_logits_all_gather_count": 9,
+        "direct_complete_model_range_observed": false,
+        "direct_complete_model_inclusive_us": null,
+        "moe_layer_calls": 360,
+        "gdn_layer_calls": 270
+      },
+      "cpu_operations": {
+        "Event::record": {
+          "count": 1941,
+          "inclusive_sum_us": 156479.37,
+          "exclusive_of_contained_cpu_ops_sum_us": 135079.26,
+          "per_thread_union_sum_us": 156479.37,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "Event::synchronize": {
+          "count": 9,
+          "inclusive_sum_us": 19071.58,
+          "exclusive_of_contained_cpu_ops_sum_us": 19071.58,
+          "per_thread_union_sum_us": 19071.58,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "Event::wait": {
+          "count": 1849,
+          "inclusive_sum_us": 134131.0,
+          "exclusive_of_contained_cpu_ops_sum_us": 106970.3,
+          "per_thread_union_sum_us": 134131.0,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::all_gather": {
+          "count": 9,
+          "inclusive_sum_us": 5233.67,
+          "exclusive_of_contained_cpu_ops_sum_us": 2557.3,
+          "per_thread_union_sum_us": 5233.67,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::all_reduce": {
+          "count": 729,
+          "inclusive_sum_us": 311257.77,
+          "exclusive_of_contained_cpu_ops_sum_us": 137485.79,
+          "per_thread_union_sum_us": 311257.77,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::maybe_all_reduce_tensor_model_parallel": {
+          "count": 360,
+          "inclusive_sum_us": 164828.38,
+          "exclusive_of_contained_cpu_ops_sum_us": 14493.64,
+          "per_thread_union_sum_us": 164828.38,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::maybe_chunk_residual": {
+          "count": 720,
+          "inclusive_sum_us": 9642.44,
+          "exclusive_of_contained_cpu_ops_sum_us": 9642.44,
+          "per_thread_union_sum_us": 9642.44,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::maybe_pad_and_reduce": {
+          "count": 9,
+          "inclusive_sum_us": 4986.59,
+          "exclusive_of_contained_cpu_ops_sum_us": 310.48,
+          "per_thread_union_sum_us": 4986.59,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::moe_forward_shared": {
+          "count": 360,
+          "inclusive_sum_us": 984835.51,
+          "exclusive_of_contained_cpu_ops_sum_us": 497654.27,
+          "per_thread_union_sum_us": 984835.51,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::qwen_gdn_attention_core": {
+          "count": 270,
+          "inclusive_sum_us": 628759.02,
+          "exclusive_of_contained_cpu_ops_sum_us": 255995.14,
+          "per_thread_union_sum_us": 628759.02,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::triton_split_qkv_rmsnorm_mrope": {
+          "count": 90,
+          "inclusive_sum_us": 33102.08,
+          "exclusive_of_contained_cpu_ops_sum_us": 28899.32,
+          "per_thread_union_sum_us": 33102.08,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::unified_attention_with_output": {
+          "count": 90,
+          "inclusive_sum_us": 61136.88,
+          "exclusive_of_contained_cpu_ops_sum_us": 21581.42,
+          "per_thread_union_sum_us": 61136.88,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        },
+        "vllm::unquantized_gemm": {
+          "count": 2430,
+          "inclusive_sum_us": 175760.94,
+          "exclusive_of_contained_cpu_ops_sum_us": 41325.06,
+          "per_thread_union_sum_us": 175760.94,
+          "proper_containment_crossings": 0,
+          "coincident_range_pairs": 0
+        }
+      },
+      "cann_runtime_apis": {
+        "AscendCL@BroadcastTo_Tiling": {
+          "count": 60,
+          "inclusive_sum_us": 1164.5,
+          "union_us": 1164.5
+        },
+        "AscendCL@ChunkFwdO_Tiling": {
+          "count": 120,
+          "inclusive_sum_us": 950.73,
+          "union_us": 950.73
+        },
+        "AscendCL@ChunkGatedDeltaRuleFwdH_Tiling": {
+          "count": 120,
+          "inclusive_sum_us": 1377.74,
+          "union_us": 1377.74
+        },
+        "AscendCL@IndexCheck_Tiling": {
+          "count": 120,
+          "inclusive_sum_us": 843.02,
+          "union_us": 843.02
+        },
+        "AscendCL@IndexPutV2_Tiling": {
+          "count": 60,
+          "inclusive_sum_us": 655.42,
+          "union_us": 655.42
+        },
+        "AscendCL@ScatterPaKvCache_Tiling": {
+          "count": 180,
+          "inclusive_sum_us": 3985.04,
+          "union_us": 3985.04
+        },
+        "AscendCL@Slice_Tiling": {
+          "count": 90,
+          "inclusive_sum_us": 1372.76,
+          "union_us": 1372.76
+        },
+        "AscendCL@Transpose_Tiling": {
+          "count": 540,
+          "inclusive_sum_us": 2951.76,
+          "union_us": 2951.76
+        },
+        "AscendCL@aclmdlRICaptureGetInfo": {
+          "count": 15723,
+          "inclusive_sum_us": 10960.09,
+          "union_us": 10960.09
+        },
+        "AscendCL@aclnnAbs": {
+          "count": 360,
+          "inclusive_sum_us": 4690.35,
+          "union_us": 4690.35
+        },
+        "AscendCL@aclnnAdd": {
+          "count": 378,
+          "inclusive_sum_us": 4804.31,
+          "union_us": 4804.31
+        },
+        "AscendCL@aclnnAddRmsNormBias": {
+          "count": 720,
+          "inclusive_sum_us": 18966.95,
+          "union_us": 18966.95
+        },
+        "AscendCL@aclnnAddRmsNormBiasGetWorkspaceSize": {
+          "count": 720,
+          "inclusive_sum_us": 14971.62,
+          "union_us": 14971.62
+        },
+        "AscendCL@aclnnAdds": {
+          "count": 900,
+          "inclusive_sum_us": 16326.61,
+          "union_us": 16326.61
+        },
+        "AscendCL@aclnnArgMax": {
+          "count": 9,
+          "inclusive_sum_us": 202.92,
+          "union_us": 202.92
+        },
+        "AscendCL@aclnnBitwiseAndTensor": {
+          "count": 9,
+          "inclusive_sum_us": 133.69,
+          "union_us": 133.69
+        },
+        "AscendCL@aclnnBitwiseNot": {
+          "count": 9,
+          "inclusive_sum_us": 100.64,
+          "union_us": 100.64
+        },
+        "AscendCL@aclnnCat": {
+          "count": 270,
+          "inclusive_sum_us": 3506.32,
+          "union_us": 3506.32
+        },
+        "AscendCL@aclnnCausalConv1d": {
+          "count": 270,
+          "inclusive_sum_us": 25248.59,
+          "union_us": 25248.59
+        },
+        "AscendCL@aclnnCausalConv1dGetWorkspaceSize": {
+          "count": 270,
+          "inclusive_sum_us": 24315.19,
+          "union_us": 24315.19
+        },
+        "AscendCL@aclnnChunkFwdO": {
+          "count": 60,
+          "inclusive_sum_us": 2702.3,
+          "union_us": 2702.3
+        },
+        "AscendCL@aclnnChunkFwdOGetWorkspaceSize": {
+          "count": 60,
+          "inclusive_sum_us": 3053.12,
+          "union_us": 3053.12
+        },
+        "AscendCL@aclnnChunkGatedDeltaRuleFwdH": {
+          "count": 60,
+          "inclusive_sum_us": 3532.8,
+          "union_us": 3532.8
+        },
+        "AscendCL@aclnnChunkGatedDeltaRuleFwdHGetWorkspaceSize": {
+          "count": 60,
+          "inclusive_sum_us": 4091.43,
+          "union_us": 4091.43
+        },
+        "AscendCL@aclnnContiguous": {
+          "count": 270,
+          "inclusive_sum_us": 16882.95,
+          "union_us": 16882.95
+        },
+        "AscendCL@aclnnContiguousGetWorkspaceSize": {
+          "count": 270,
+          "inclusive_sum_us": 15296.79,
+          "union_us": 15296.79
+        },
+        "AscendCL@aclnnEmbedding": {
+          "count": 9,
+          "inclusive_sum_us": 131.58,
+          "union_us": 131.58
+        },
+        "AscendCL@aclnnGeScalar": {
+          "count": 9,
+          "inclusive_sum_us": 178.78,
+          "union_us": 178.78
+        },
+        "AscendCL@aclnnGemmaRmsNorm": {
+          "count": 9,
+          "inclusive_sum_us": 376.19,
+          "union_us": 376.19
+        },
+        "AscendCL@aclnnGemmaRmsNormGetWorkspaceSize": {
+          "count": 9,
+          "inclusive_sum_us": 353.59,
+          "union_us": 353.59
+        },
+        "AscendCL@aclnnGroupedMatmulV5": {
+          "count": 720,
+          "inclusive_sum_us": 11648.41,
+          "union_us": 11648.41
+        },
+        "AscendCL@aclnnGtScalar": {
+          "count": 6,
+          "inclusive_sum_us": 177.6,
+          "union_us": 177.6
+        },
+        "AscendCL@aclnnIndex": {
+          "count": 528,
+          "inclusive_sum_us": 11766.94,
+          "union_us": 11766.94
+        },
+        "AscendCL@aclnnIndexPutImpl": {
+          "count": 60,
+          "inclusive_sum_us": 6657.52,
+          "union_us": 6657.52
+        },
+        "AscendCL@aclnnIndexPutImplGetWorkspaceSize": {
+          "count": 60,
+          "inclusive_sum_us": 5682.23,
+          "union_us": 5682.23
+        },
+        "AscendCL@aclnnInnerFusedInferAttentionScore": {
+          "count": 90,
+          "inclusive_sum_us": 3859.44,
+          "union_us": 3859.44
+        },
+        "AscendCL@aclnnInnerFusedInferAttentionScoreGetWorkspaceSize": {
+          "count": 90,
+          "inclusive_sum_us": 2513.52,
+          "union_us": 2513.52
+        },
+        "AscendCL@aclnnInnerMoeTokenUnpermute": {
+          "count": 360,
+          "inclusive_sum_us": 7135.46,
+          "union_us": 7135.46
+        },
+        "AscendCL@aclnnInnerMoeTokenUnpermuteGetWorkspaceSize": {
+          "count": 360,
+          "inclusive_sum_us": 5031.66,
+          "union_us": 5031.66
+        },
+        "AscendCL@aclnnInplaceCopy": {
+          "count": 2099,
+          "inclusive_sum_us": 29572.31,
+          "union_us": 29572.31
+        },
+        "AscendCL@aclnnInplaceCopyGetWorkspaceSize": {
+          "count": 451,
+          "inclusive_sum_us": 8953.67,
+          "union_us": 8953.67
+        },
+        "AscendCL@aclnnInplaceFillScalar": {
+          "count": 129,
+          "inclusive_sum_us": 1064.37,
+          "union_us": 1064.37
+        },
+        "AscendCL@aclnnInplaceMaskedFillScalar": {
+          "count": 9,
+          "inclusive_sum_us": 145.28,
+          "union_us": 145.28
+        },
+        "AscendCL@aclnnInplaceZero": {
+          "count": 450,
+          "inclusive_sum_us": 5264.17,
+          "union_us": 5264.17
+        },
+        "AscendCL@aclnnLtScalar": {
+          "count": 9,
+          "inclusive_sum_us": 173.84,
+          "union_us": 173.84
+        },
+        "AscendCL@aclnnMatmul": {
+          "count": 2439,
+          "inclusive_sum_us": 33145.15,
+          "union_us": 33145.15
+        },
+        "AscendCL@aclnnMoeGatingTopK": {
+          "count": 360,
+          "inclusive_sum_us": 7619.23,
+          "union_us": 7619.23
+        },
+        "AscendCL@aclnnMoeGatingTopKGetWorkspaceSize": {
+          "count": 360,
+          "inclusive_sum_us": 7657.0,
+          "union_us": 7657.0
+        },
+        "AscendCL@aclnnMoeInitRoutingV3": {
+          "count": 360,
+          "inclusive_sum_us": 6012.08,
+          "union_us": 6012.08
+        },
+        "AscendCL@aclnnMoeTokenUnpermuteGetWorkspaceSize": {
+          "count": 360,
+          "inclusive_sum_us": 8982.28,
+          "union_us": 8982.28
+        },
+        "AscendCL@aclnnMul": {
+          "count": 819,
+          "inclusive_sum_us": 11391.24,
+          "union_us": 11391.24
+        },
+        "AscendCL@aclnnMuls": {
+          "count": 9,
+          "inclusive_sum_us": 170.01,
+          "union_us": 170.01
+        },
+        "AscendCL@aclnnNeScalar": {
+          "count": 360,
+          "inclusive_sum_us": 4460.86,
+          "union_us": 4460.86
+        },
+        "AscendCL@aclnnRecurrentGatedDeltaRule": {
+          "count": 210,
+          "inclusive_sum_us": 3428.8,
+          "union_us": 3428.8
+        },
+        "AscendCL@aclnnRecurrentGatedDeltaRuleGetWorkspaceSize": {
+          "count": 210,
+          "inclusive_sum_us": 2297.13,
+          "union_us": 2297.13
+        },
+        "AscendCL@aclnnScatterPaKvCache": {
+          "count": 90,
+          "inclusive_sum_us": 4786.7,
+          "union_us": 4786.7
+        },
+        "AscendCL@aclnnScatterPaKvCacheGetWorkspaceSize": {
+          "count": 90,
+          "inclusive_sum_us": 8715.78,
+          "union_us": 8715.78
+        },
+        "AscendCL@aclnnSigmoid": {
+          "count": 450,
+          "inclusive_sum_us": 5450.24,
+          "union_us": 5450.24
+        },
+        "AscendCL@aclnnSub": {
+          "count": 90,
+          "inclusive_sum_us": 1146.1,
+          "union_us": 1146.1
+        },
+        "AscendCL@aclnnSubs": {
+          "count": 9,
+          "inclusive_sum_us": 181.61,
+          "union_us": 181.61
+        },
+        "AscendCL@aclnnSwiGlu": {
+          "count": 720,
+          "inclusive_sum_us": 13900.74,
+          "union_us": 13900.74
+        },
+        "AscendCL@aclnnSwiGluGetWorkspaceSize": {
+          "count": 720,
+          "inclusive_sum_us": 14165.29,
+          "union_us": 14165.29
+        },
+        "AscendCL@aclrtCreateEventExWithFlag": {
+          "count": 3399,
+          "inclusive_sum_us": 13137.23,
+          "union_us": 13137.23
+        },
+        "AscendCL@aclrtCtxGetSysParamOpt": {
+          "count": 2529,
+          "inclusive_sum_us": 4923.18,
+          "union_us": 4923.18
+        },
+        "AscendCL@aclrtDestroyEvent": {
+          "count": 3308,
+          "inclusive_sum_us": 4117.09,
+          "union_us": 4117.09
+        },
+        "AscendCL@aclrtGetCurrentContext": {
+          "count": 738,
+          "inclusive_sum_us": 669.45,
+          "union_us": 669.45
+        },
+        "AscendCL@aclrtGetDeviceCount": {
+          "count": 2,
+          "inclusive_sum_us": 6.94,
+          "union_us": 6.94
+        },
+        "AscendCL@aclrtGetHardwareSyncAddr": {
+          "count": 1560,
+          "inclusive_sum_us": 1579.58,
+          "union_us": 1579.58
+        },
+        "AscendCL@aclrtGetResInCurrentThread": {
+          "count": 8180,
+          "inclusive_sum_us": 9287.95,
+          "union_us": 9287.95
+        },
+        "AscendCL@aclrtGetStreamAttribute": {
+          "count": 13718,
+          "inclusive_sum_us": 10190.51,
+          "union_us": 10190.51
+        },
+        "AscendCL@aclrtLaunchKernelWithHostArgs": {
+          "count": 14547,
+          "inclusive_sum_us": 90406.78,
+          "union_us": 90406.78
+        },
+        "AscendCL@aclrtMemcpyAsync": {
+          "count": 545,
+          "inclusive_sum_us": 7359.63,
+          "union_us": 7359.63
+        },
+        "AscendCL@aclrtMemcpyAsyncWithCondition": {
+          "count": 9,
+          "inclusive_sum_us": 129.67,
+          "union_us": 129.67
+        },
+        "AscendCL@aclrtPointerGetAttributes": {
+          "count": 6804,
+          "inclusive_sum_us": 13075.66,
+          "union_us": 13075.66
+        },
+        "AscendCL@aclrtQueryEventStatus": {
+          "count": 654,
+          "inclusive_sum_us": 608.1,
+          "union_us": 608.1
+        },
+        "AscendCL@aclrtRecordEvent": {
+          "count": 4161,
+          "inclusive_sum_us": 39240.18,
+          "union_us": 39240.18
+        },
+        "AscendCL@aclrtStreamGetId": {
+          "count": 11295,
+          "inclusive_sum_us": 5860.42,
+          "union_us": 5860.42
+        },
+        "AscendCL@aclrtStreamWaitEvent": {
+          "count": 3325,
+          "inclusive_sum_us": 15312.38,
+          "union_us": 15312.38
+        },
+        "AscendCL@aclrtSynchronizeDeviceWithTimeout": {
+          "count": 1,
+          "inclusive_sum_us": 37.54,
+          "union_us": 37.54
+        },
+        "AscendCL@aclrtSynchronizeEvent": {
+          "count": 9,
+          "inclusive_sum_us": 18527.43,
+          "union_us": 18527.43
+        },
+        "AscendCL@aclrtSynchronizeStreamWithTimeout": {
+          "count": 42,
+          "inclusive_sum_us": 124.85,
+          "union_us": 124.85
+        },
+        "AscendCL@hcom_allGather_": {
+          "count": 9,
+          "inclusive_sum_us": 2958.18,
+          "union_us": 2958.18
+        },
+        "AscendCL@hcom_allReduce_": {
+          "count": 729,
+          "inclusive_sum_us": 211106.55,
+          "union_us": 211106.55
+        }
+      },
+      "device_compute": {
+        "kernel_count": 16086,
+        "task_types": {
+          "AI_VECTOR_CORE": 11907,
+          "AI_CORE": 2439,
+          "MIX_AIC": 1380,
+          "MIX_AIV": 360
+        },
+        "active_union_us": 370572.12,
+        "first_kernel_start_ns": 1791601543339082805,
+        "last_kernel_end_ns": 1791601546255317845,
+        "kernel_window_us": 2916235.04,
+        "active_fraction_of_kernel_window": 0.12707210321428686,
+        "profiling_enable_ns": 1791601542868596465,
+        "profiling_disable_ns": 1791601546265152905,
+        "profiling_window_us": 3396556.44,
+        "active_fraction_of_profiling_window": 0.10910230009309076,
+        "streams": {
+          "45": {
+            "kernel_count": 5400,
+            "active_union_us": 309717.72
+          },
+          "44": {
+            "kernel_count": 10686,
+            "active_union_us": 76633.32
+          }
+        },
+        "mapped_pd_overlap_us": 15778.92,
+        "mapped_pd_overlap_fraction_of_compute_union": 0.042579889712156434
+      },
+      "device_communication_tasks": {
+        "count": 0,
+        "inclusive_sum_us": 0.0,
+        "union_us": 0.0
+      },
+      "excluded_communication_process_spans": {
+        "count": 10746,
+        "inclusive_sum_us": 3861531.78,
+        "union_us": 1768061.54
+      },
+      "other_hardware_tasks": {
+        "EVENT_RECORD:EVENT_RECORD": {
+          "count": 3828,
+          "inclusive_sum_us": 76.56,
+          "union_us": 76.56
+        },
+        "EVENT_WAIT:EVENT_WAIT": {
+          "count": 1468,
+          "inclusive_sum_us": 2101109.2,
+          "union_us": 1903611.46
+        },
+        "Notify Wait:Notify Wait": {
+          "count": 2925,
+          "inclusive_sum_us": 1748468.6,
+          "union_us": 1643043.86
+        },
+        "PCIE_DMA_SQE:MEMCPY_ASYNC": {
+          "count": 141,
+          "inclusive_sum_us": 583.34,
+          "union_us": 583.34
+        },
+        "PROFILING_DISABLE:PROFILING_DISABLE": {
+          "count": 1,
+          "inclusive_sum_us": 0.02,
+          "union_us": 0.02
+        },
+        "SDMA:SDMA": {
+          "count": 3951,
+          "inclusive_sum_us": 338139.68,
+          "union_us": 117535.36
+        },
+        "SDMA_SQE:MEMCPY_ASYNC": {
+          "count": 371,
+          "inclusive_sum_us": 391.68,
+          "union_us": 391.68
+        },
+        "Write Value:Write Value": {
+          "count": 3132,
+          "inclusive_sum_us": 6861.96,
+          "union_us": 6364.8
+        }
+      },
+      "per_forward_equivalent": {
+        "all_reduce_cpu_calls": 81.0,
+        "python_event_record_calls": 215.66666666666666,
+        "python_event_wait_calls": 205.44444444444446,
+        "cann_stream_wait_event_calls": 369.44444444444446,
+        "cann_record_event_calls": 462.3333333333333,
+        "device_compute_active_union_us": 41174.68
+      }
+    }
+  ]
+}

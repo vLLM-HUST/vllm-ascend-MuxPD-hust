@@ -28,6 +28,11 @@ class MuxPDConfig:
     layers_per_slice: int = 1
     stream_mode: str = "fenced"
     adaptive_layers: bool = False
+    prefill_first: bool = False
+    overlap_communication: str = "shared"
+    decode_graph: bool = False
+    compile_full_prefill: bool = False
+    prefill_layer_token_budget: int = 0
 
     def __post_init__(self) -> None:
         for name in (
@@ -55,14 +60,23 @@ class MuxPDConfig:
             "max_prefill_requests",
             "max_prefill_batch_tokens",
             "layers_per_slice",
+            "prefill_layer_token_budget",
         ):
             value = getattr(self, name)
-            minimum = 0 if name == "max_prefill_batch_tokens" else 1
+            minimum = (
+                0
+                if name in ("max_prefill_batch_tokens", "prefill_layer_token_budget")
+                else 1
+            )
             if type(value) is not int or value < minimum:
                 raise ValueError(f"MuxPD {name} must be an integer >= {minimum}")
         if self.execution not in ("serial", "layered", "decoupled"):
             raise ValueError(
                 "MuxPD execution must be 'serial', 'layered', or 'decoupled'"
+            )
+        if self.prefill_layer_token_budget and self.execution != "decoupled":
+            raise ValueError(
+                "MuxPD prefill_layer_token_budget requires execution='decoupled'"
             )
         if self.stream_mode not in ("fenced", "overlap"):
             raise ValueError("MuxPD stream_mode must be 'fenced' or 'overlap'")
@@ -72,6 +86,45 @@ class MuxPDConfig:
             raise ValueError("MuxPD adaptive_layers must be a boolean")
         if self.adaptive_layers and self.execution != "decoupled":
             raise ValueError("MuxPD adaptive_layers requires execution='decoupled'")
+        if type(self.prefill_first) is not bool:
+            raise ValueError("MuxPD prefill_first must be a boolean")
+        if self.prefill_first and not (
+            self.execution == "decoupled"
+            and self.adaptive_layers
+            and self.stream_mode == "fenced"
+        ):
+            raise ValueError(
+                "MuxPD prefill_first requires decoupled adaptive_layers "
+                "with stream_mode='fenced'"
+            )
+        if self.overlap_communication not in ("shared", "isolated"):
+            raise ValueError(
+                "MuxPD overlap_communication must be 'shared' or 'isolated'"
+            )
+        if self.overlap_communication == "isolated" and not (
+            self.execution == "decoupled" and self.stream_mode == "overlap"
+        ):
+            raise ValueError(
+                "MuxPD isolated overlap_communication requires "
+                "execution='decoupled' with stream_mode='overlap'"
+            )
+        if type(self.decode_graph) is not bool:
+            raise ValueError("MuxPD decode_graph must be a boolean")
+        if self.decode_graph and not (
+            self.execution == "decoupled" and self.stream_mode == "fenced"
+        ):
+            raise ValueError("MuxPD decode_graph requires decoupled fenced execution")
+        if type(self.compile_full_prefill) is not bool:
+            raise ValueError("MuxPD compile_full_prefill must be a boolean")
+        if self.compile_full_prefill and not (
+            self.decode_graph
+            and self.execution == "decoupled"
+            and self.stream_mode == "fenced"
+        ):
+            raise ValueError(
+                "MuxPD compile_full_prefill requires decode_graph with "
+                "decoupled fenced execution"
+            )
         if self.trace_path is not None:
             if not isinstance(self.trace_path, str) or not self.trace_path.strip():
                 raise ValueError("MuxPD trace_path must be a nonempty string or null")

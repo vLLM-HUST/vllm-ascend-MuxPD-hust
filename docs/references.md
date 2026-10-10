@@ -73,9 +73,51 @@ Ascend 性能或 SLO 保证。[论文 §3](https://arxiv.org/html/2504.14489v3#S
 | P 跨轮保留，D 每轮独立输出 | [`decoupled_scheduler.py`](../src/vllm_muxpd/decoupled_scheduler.py) 保存原始 P 成本与 cohort；[`decoupled_worker.py`](../src/vllm_muxpd/decoupled_worker.py) 分别采样 D 和当轮已完成 P |
 | split-prefill 完成与合并 | 本项目使用显式 cohort 完成/取消 ACK，再调用原生 vLLM retirement；未照搬 SGLang 的 batch merge 状态结构 |
 | GreenContext 与 SM 分区 | 尚未移植；`stream_mode=overlap` 仅为独立 NPU 流实验，不提供核数分区 |
-| 独立 TP communicator | [`overlap.py`](../src/vllm_muxpd/overlap.py) 实验性保留现有 communicator，按 device process group 对 collective 加事件依赖；是否足够隔离本机 TP/EP 路径需验证 |
-| 独立 workspace / graph | overlap 为各 lane 切换 workspace 与 forward context；当前要求 eager，不支持 graph capture |
-| 资源预测与争用修正 | 论文机制未接入；本地 serial EWMA 与可选 `adaptive_layers` TTFT 配额只使用本机独立步骤耗时，不是空间分区预测器或 contention guard |
+| 独立 TP communicator | 默认 shared overlap 由 [`overlap.py`](../src/vllm_muxpd/overlap.py) 对现有 device process group 加 collective 事件门控；可选 isolated overlap 由 [`communicators.py`](../src/vllm_muxpd/communicators.py) 把 P 的 TP/EP 调用路由到 sibling groups，D 保留原生组；指定 TP4+EP eager 配置已验证 |
+| 独立 workspace / decode graph | overlap 仍要求 eager；另一路 decoupled fenced 由 [`decode_graph.py`](../src/vllm_muxpd/decode_graph.py) 为 D 独立 capture/replay 原生 ACL graph，隔离静态输入、metadata 与 workspace；P 始终为 graph mode `NONE` |
+| 按 token 工作量决定 P 层数 | `prefill_layer_token_budget` 默认 `0`；非零时按完整 cohort token 数计算基础层配额，保留 `layers_per_slice` 下限并限制到剩余层；输入仍是完整 prompt |
+| 资源预测与争用修正 | 论文的硬件分区预测器与 contention guard 未接入；可选 `adaptive_layers` 将本机独立步骤 EWMA/deadline 配额与上述基础配额取较大值，未校准时仍可使用 token-work 配额 |
+| 完整 P 的执行开销 | 可选 `compile_full_prefill` 允许 fresh、完整层配额 P 使用原生 FX 编译，P 仍为 graph mode `NONE`；部分 P 保持逐层 raw 执行，这不是 artifact GreenContext 或 P graph 的复刻 |
+
+当前实现保留 artifact 的工作量配额含义，但没有照搬其参数或调度器。
+`prefill_layer_token_budget` 使用实际接纳 cohort 的完整 token 总数，包含抢占
+重算输入；它不会因部分取消或层数推进而缩小，也不是硬计算量上限。
+`adaptive_layers` 的 deadline 可进一步提高配额；独立 P/D 延迟样本未齐备时，
+仍使用基础配额。`prefill_first` 只在 decoupled adaptive fenced 下可用：
+新 P 可在预览为完整 forward 时先执行，随后偿还被延后的已有 D 债务，避免
+连续新 P 饿死 D。该顺序选择不等于论文的资源分区或 SLO 保证。
+
+组件的 `decode_graph`、`compile_full_prefill`、`adaptive_layers` 和
+`prefill_first` 默认均关闭；[图模式启动脚本](../scripts/serve-qwen35-decode-graph.sh)
+显式启用它们并使用 `262144` 的 token-work 预算。独立编译 P 的阶段实验和
+最终组合配置的性能结果不同，具体比较口径、六轮汇总及 TTFT/TPOT 取舍见
+[TP4 性能报告](performance-tp4.md)。这些数据不支持把组合收益分别归因到
+某一个开关，也不证明复现了论文的收益。
+
+## HUST 原生图路径与生命周期适配
+
+本轮固定的原生代码为 HUST vLLM
+[`d0f22d2bda562156e4dbf433ce645e1769b4f804`](https://github.com/vLLM-HUST/vllm-hust/tree/d0f22d2bda562156e4dbf433ce645e1769b4f804)
+和 vllm-ascend
+[`03766ac696fde5ab1980d80ca0b8543d3580c989`](https://github.com/vLLM-HUST/vllm-ascend-hust/tree/03766ac696fde5ab1980d80ca0b8543d3580c989)。
+关键入口是原生
+[`NPUModelRunner`](https://github.com/vLLM-HUST/vllm-ascend-hust/blob/03766ac696fde5ab1980d80ca0b8543d3580c989/vllm_ascend/worker/model_runner_v1.py)、
+[`ACLGraphWrapper`](https://github.com/vLLM-HUST/vllm-ascend-hust/blob/03766ac696fde5ab1980d80ca0b8543d3580c989/vllm_ascend/compilation/acl_graph.py)
+和 [GDN metadata builder](https://github.com/vLLM-HUST/vllm-ascend-hust/blob/03766ac696fde5ab1980d80ca0b8543d3580c989/vllm_ascend/ops/gdn_attn_builder.py)。
+插件复用其 D metadata 更新和 capture/replay，不重新实现 attention kernel。
+
+插件图模式要求 `VLLM_COMPILE` + `FULL_DECODE_ONLY`，仅支持 decoupled
+fenced；它不支持 graph + overlap。D 有独立 wrapper、静态缓冲、workspace
+和 capture/replay stream。P dispatcher 与 forward context 强制 graph mode
+`NONE`，包括单 token 的新 P、profile 和 dummy run。可选完整 P 编译只改变
+`skip_compiled`；启动预热先于 D capture，运行时只允许新 P 整网成功返回后
+报告 `full_forward_return`，不能将挂起的 P 中途切为 compiled 执行。
+具体 guard、完成条件和观测计数见 [设计文档](design.md#独立-decode-acl-graph)。
+
+原生模块持有进程全局 `GraphParams`。插件关闭时释放自己的 D graph 并恢复
+包装，由 owner 负责共享 KV 清理；它不清除原生全局 `GraphParams`。因此
+同一进程内关闭后重新初始化 graph worker 会被拒绝，需要重启进程。
+该限制不能被描述成已支持任意模型卸载、热更新或进程内多引擎复用。
 
 vLLM 的调度发射即递增 computed token 数，与分层执行完成不是同一时刻。
 因此 decoupled scheduler 显式保护 pending P，不以 computed token 数推断其
@@ -88,5 +130,18 @@ vLLM 的调度发射即递增 computed token 数，与分层执行完成不是�
 pending P 时拒绝 keep / `PAUSED_ALL`，禁止原生暂停或 cache reset 提前回收
 悬挂状态。具体协议及测试边界见 [design.md](design.md#跨迭代-prefill-协议)。
 本节的实现映射本身不证明设备并发、性能优于 baseline 或达到 SLO。
-设备 compute 区间重叠另有 [指定 capture 的独立证据](../evidence/2026-10-10/README.md#device-profile-independent-pd-compute-intervals)；
-其范围不扩展到每核资源隔离、完整负载利用率或论文性能结果。
+shared TP2 compute 区间重叠有 [指定 capture 的独立证据](../evidence/2026-10-10/README.md#device-profile-independent-pd-compute-intervals)；
+TP4 的 shared/isolated 通信、独立 D graph、完整 P FX 执行和优化组合另有
+[本轮原始回执及源码清单](../evidence/2026-10-10-tp4-optimization/README.md)。
+isolated8 已通过指定 TP4+EP eager 正确性与生命周期检查，profile 中事件数
+减少，但计算交叠没有增加，性能也未超过原生；不能将它与 graph fenced 的
+结果拼成未验证的 graph overlap 支持。上述证据范围均不扩展到每核资源隔离、
+任意负载利用率或论文性能结果。
+
+论文和 artifact 的逐项差异详见
+[固定源码对照](../evidence/2026-10-10-tp4-optimization/original-comparison.md)。
+原生 eager、原生 graph 与插件 graph 的单 token P 状态复用诊断见
+[三路调查](../evidence/2026-10-10-tp4-optimization/one-token-prefill-investigation.md)：
+原生 graph 在该探针中出现单 token P 的首输出不稳定；双 token P 的后续差异
+在三路均存在。它是固定版本的兼容性线索，尚不足以确认缓存泄漏或将所有文本
+差异归因为同一个问题。

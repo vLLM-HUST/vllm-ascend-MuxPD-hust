@@ -80,6 +80,9 @@ class LayeredMuxPDScheduler(MuxPDScheduler):
             ids = set(primary.request_ids)
             prefills = [r for r in p_candidates if r.request_id in ids]
             decodes = []
+        prefills, decodes = self._adjust_phase_selection(
+            prefills, decodes, snapshots, now
+        )
         selected = tuple(r.request_id for r in (*prefills, *decodes))
         output = self._schedule_layered_selection(selected, snapshots)
         if selected and not output.total_num_scheduled_tokens:
@@ -136,6 +139,10 @@ class LayeredMuxPDScheduler(MuxPDScheduler):
             self.muxpd_stats["empty_steps"] += 1
         self._record_muxpd_step(output, decision, snapshots, now)
         return output
+
+    def _adjust_phase_selection(self, prefills, decodes, snapshots, now):
+        """Customize admission before native KV or token state is advanced."""
+        return prefills, decodes
 
     def _schedule_layered_selection(self, selected, snapshots):
         """Apply native lifecycle changes and verify full per-request costs."""

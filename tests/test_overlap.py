@@ -113,6 +113,41 @@ def test_collective_failure_poisoning_and_install_rollback():
     assert "all_gather" not in vars(comm)
 
 
+def test_same_stream_fifo_skips_wait_but_switch_uses_latest_collective():
+    class EqualStream(Stream):
+        def __eq__(self, other):
+            return isinstance(other, EqualStream) and self.name == other.name
+
+    runtime = Runtime()
+    group = object()
+    tp, ep = Communicator(group), Communicator(group)
+    gates = CollectiveGates(runtime).install([tp, ep])
+    runtime.stream = EqualStream("decode")
+    tp.all_reduce(1)
+    first = runtime.records[-1]
+    # current_stream() may return another Python wrapper for the same stream.
+    runtime.stream = EqualStream("decode")
+    ep.all_gather(2)
+    second = runtime.records[-1]
+    assert second != first
+    assert runtime.waits == []
+    assert len(runtime.records) == 2
+
+    runtime.stream = EqualStream("prefill")
+    tp.reduce_scatter(3)
+    assert runtime.waits == [("prefill", second)]
+    ep.all_reduce(4)
+    prefill_tail = runtime.records[-1]
+    assert len(runtime.records) == 4
+    assert runtime.waits == [("prefill", second)]
+
+    runtime.stream = EqualStream("decode")
+    tp.all_gather(5)
+    assert runtime.waits == [("prefill", second), ("decode", prefill_tail)]
+    assert len(runtime.records) == gates.calls == 5
+    gates.restore()
+
+
 def test_nested_gate_install_and_cross_thread_calls_rejected():
     runtime = Runtime()
     comm = Communicator(object())
@@ -128,6 +163,7 @@ def test_nested_gate_install_and_cross_thread_calls_rejected():
 
 def test_streams_share_initial_preparation_barrier_then_run_independently():
     instance, runtime, workspace, context, ascend = backend()
+    assert instance.active_lane is None
     caller = instance.capture()
     decode = instance.lane_state("decode", Stream("decode"))
     prefill = instance.lane_state("prefill", Stream("prefill"))
@@ -136,12 +172,14 @@ def test_streams_share_initial_preparation_barrier_then_run_independently():
     with pytest.raises(RuntimeError, match="preparation lane"):
         instance.restore(prefill)
     instance.restore(decode)
+    assert instance.active_lane == "decode"
     assert runtime.waits == [("decode", initial)]
     context._forward_context = "decode-attention"
     instance.fence()  # Includes first runner's global new-block zeroing.
     prep_done = runtime.records[-1]
     saved_decode = instance.capture()
     instance.restore(caller)
+    assert instance.active_lane is None
     assert workspace._manager is caller.workspace_manager
     instance.restore(prefill)
     assert runtime.waits[-1] == ("prefill", prep_done)
@@ -265,8 +303,10 @@ def test_restore_preserves_external_method_replacement():
     runtime = Runtime()
     comm = Communicator(object())
     gates = CollectiveGates(runtime).install([comm])
+
     def replacement(value):
         return value
+
     comm.all_reduce = replacement
     with pytest.raises(RuntimeError, match="changed externally"):
         gates.restore()
