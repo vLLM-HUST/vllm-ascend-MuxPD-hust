@@ -1,0 +1,35 @@
+{
+  "recorded_date": "2026-10-10",
+  "timezone": "UTC",
+  "code_commit": "c65c5f09320a4ee97da57d8d54c8a148d13d6b56",
+  "test_command": "source /root/workspace/runtime/env.sh; /root/workspace/.venv/bin/python -m pytest tests -q",
+  "test_result": {
+    "passed": 158,
+    "skipped": 1,
+    "warnings": 14,
+    "duration_s": 30.22,
+    "skip_reason": "overlap-only test parameter under fenced backend"
+  },
+  "lint": "ruff check .: passed",
+  "git_diff_check": "passed",
+  "build": {
+    "command": "uv build --out-dir /tmp/muxpd-dist",
+    "status": "passed",
+    "artifacts": [
+      {
+        "name": "vllm_ascend_muxpd-0.1.0-py3-none-any.whl",
+        "sha256": "3f6cb0e3e0bd5b3dcd2e630621a28cc0c760674e58287a25d36f6262428a194d"
+      },
+      {
+        "name": "vllm_ascend_muxpd-0.1.0.tar.gz",
+        "sha256": "15f7da0606ba2bdc40464c3b902ddeb11073bd5be145acb7a1851ee2132ea039"
+      }
+    ]
+  },
+  "native_repositories": "vllm-hust remains clean; pre-existing vllm-ascend-hust csrc/build_aclnn.sh change retained",
+  "ci_runs": [
+    "https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/actions/runs/38017702763",
+    "https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/actions/runs/38017705013"
+  ],
+  "hardware_evidence_scope": "Receipts document each configuration separately; earlier fixed-quota runs precede strict layer-progress telemetry and adaptive quotas."
+}
