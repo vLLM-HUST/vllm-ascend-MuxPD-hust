@@ -94,10 +94,20 @@ def _check_progress_source(row, scheduled, pending, completed, cancelled):
         "none",
         "layer_hooks",
         "full_forward_return",
+        "group_forward_return",
     ):
         raise AssertionError("Invalid prefill progress source")
     if (source == "none") != (not pending):
         raise AssertionError("Prefill progress source does not match cohort ownership")
+    grouped = scheduled.get("compile_prefill_groups", False)
+    if type(grouped) is not bool or (
+        pending and grouped != (source == "group_forward_return")
+    ):
+        raise AssertionError("Group progress source/config mismatch")
+    if source == "group_forward_return" and (
+        row["layers_total"] != 40 or row["layers_completed"] % 4
+    ):
+        raise AssertionError("Group progress is not an actual four-layer boundary")
     if type(scheduled.get("compile_full_prefill")) is not bool:
         raise AssertionError("Missing compiled-prefill scheduling configuration")
     if source == "full_forward_return" and not (

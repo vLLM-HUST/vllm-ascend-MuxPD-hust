@@ -12,6 +12,30 @@ checker = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(checker)
 
 
+def test_group_source_is_distinct_and_config_bound():
+    schedule = {"compile_full_prefill": False, "compile_prefill_groups": True}
+    receipt = {
+        "progress_source": "group_forward_return",
+        "layers_total": 40,
+        "layers_completed": 4,
+    }
+    checker._check_progress_source(receipt, schedule, {"P"}, set(), set())
+    for updates in (
+        {"layers_completed": 2},
+        {"layers_total": 4},
+        {"progress_source": "layer_hooks"},
+        {"progress_source": "full_forward_return"},
+    ):
+        with pytest.raises(AssertionError):
+            checker._check_progress_source(
+                receipt | updates, schedule, {"P"}, set(), set()
+            )
+    with pytest.raises(AssertionError):
+        checker._check_progress_source(
+            receipt, schedule | {"compile_prefill_groups": False}, {"P"}, set(), set()
+        )
+
+
 def trace(*, legacy=False, full=False, cancel=False):
     rows = [
         {
