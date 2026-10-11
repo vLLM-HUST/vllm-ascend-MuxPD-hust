@@ -12,8 +12,8 @@
 
 模型为 Qwen3.5-35B-A3B BF16，8 张 910B2，TP8/EP8，maxseq8，
 关闭 prefix caching。原生使用 async scheduling、16K token budget 和
-FULL_DECODE_ONLY；插件使用独立通信组的 D-first overlap、D graph、
-raw P 固定四层切片。双方使用 OMP1。
+FULL_DECODE_ONLY；插件使用独立通信组的 D-first overlap、D graph，
+有 D 同轮推进时 raw P 固定四层切片。双方使用 OMP1。
 
 每档重放同一 seed101 Poisson 到达计划，20 秒连续暖场、60 秒到达窗口，
 按 80%/20% 的概率分别抽取 128→256 和 12000→8 token 请求。每个配置的六档共
@@ -77,8 +77,15 @@ PIECEWISE 图路径；这些实验功能默认关闭，尚无实机收益结论�
 
 公平基线还需覆盖原生 FULL_AND_PIECEWISE：此前 1/2/4/8 的 capture
 档位只覆盖 decode，不能代表原生 prefill 图能力。已提前登记 512/1024
-预算与对应 P 档位，先验证八个 rank 的实际 dispatch/replay、自然语言
-正确性、取消与状态复用，再独立重启进行无观测器计时。
+预算与对应 P 档位。512 配置已完成独立诊断：八个 rank 均观察到 P128、
+P129、长 P 分块、实际 P+D mixed 的已有图重放和 D FULL 对照，未观察到
+服务阶段首次 ACL 图捕获或图调用失败；这是主机调用路径证明，不是设备
+重叠或性能结论。自然语言 16/16 文本一致，取消后新请求完成。
+
+状态探针中的一 token 提示和部分合成序列仍有重复不稳定，全部保留；不能
+将传输检查通过当作数值等价。独立检查器初版遗漏了原生 engine ID 的随机
+八位后缀，按固定原生源码修正后通过；原始回执和初版失败结果未覆盖。
+接下来独立重启相同配置，移除观测器后计时。
 
 完整指标定义、探索/确认分离及保留失败规则见
 [实验协议](goodput-experiments.md)。本地原始证据保存在
