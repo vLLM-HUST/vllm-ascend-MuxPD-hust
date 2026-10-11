@@ -410,6 +410,7 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
                 layers_completed_before=output.muxpd_prefill_layers_completed_before,
                 layers_total=output.muxpd_prefill_layers_total,
                 compile_full_prefill=self.muxpd_policy.config.compile_full_prefill,
+                compile_prefill_groups=self.muxpd_policy.config.compile_prefill_groups,
                 quota=quota_info,
                 admission=self._prefill_first_admission,
             )
@@ -917,11 +918,19 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
             "none",
             "layer_hooks",
             "full_forward_return",
+            "group_forward_return",
         ):
             raise RuntimeError("Missing or invalid prefill progress source")
         if (source == "none") != (cohort is None):
             raise RuntimeError(
                 "Prefill progress source does not match cohort ownership"
+            )
+        grouped = self.muxpd_policy.config.compile_prefill_groups
+        if cohort and (grouped != (source == "group_forward_return")):
+            raise RuntimeError("Prefill group progress source/config mismatch")
+        if source == "group_forward_return" and (total != 40 or progress % 4):
+            raise RuntimeError(
+                "Prefill group progress must end at an actual four-layer boundary"
             )
         if source == "full_forward_return" and not (
             self.muxpd_policy.config.compile_full_prefill

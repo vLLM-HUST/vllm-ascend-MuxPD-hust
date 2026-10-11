@@ -77,13 +77,21 @@ class LayerInterleaver:
         self.tasks[name] = CooperativeTask(name, function, state)
 
     def checkpoint(self, *, final: bool = False) -> None:
+        self.checkpoint_group(1, final=final)
+
+    def checkpoint_group(self, layers: int, *, final: bool = False) -> None:
+        """A successful atomic group returned; never yield inside compiled code."""
+        if type(layers) is not int or layers < 1:
+            raise ValueError("Completed group size must be a positive integer")
         task = self.active
         if task is None:
             return
         self._check_thread()
         if getcurrent() is not task.coroutine:
             raise RuntimeError("Decoder hook called outside its cooperative task")
-        task.completed_layers += 1
+        if not final and task.completed_layers + layers > self._target_layer:
+            raise RuntimeError("Atomic prefill group exceeds its layer quota")
+        task.completed_layers += layers
         if not final and task.completed_layers >= self._target_layer:
             if self._slice_observer is not None:
                 self._slice_observer.stop()

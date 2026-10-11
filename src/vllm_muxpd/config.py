@@ -32,6 +32,7 @@ class MuxPDConfig:
     overlap_communication: str = "shared"
     decode_graph: bool = False
     compile_full_prefill: bool = False
+    compile_prefill_groups: bool = False
     prefill_layer_token_budget: int = 0
     decode_budget_guard: bool = False
 
@@ -125,8 +126,7 @@ class MuxPDConfig:
         if self.decode_graph and not (
             self.execution == "decoupled"
             and (
-                self.stream_mode == "fenced"
-                or self.overlap_communication == "isolated"
+                self.stream_mode == "fenced" or self.overlap_communication == "isolated"
             )
         ):
             raise ValueError(
@@ -143,6 +143,24 @@ class MuxPDConfig:
             raise ValueError(
                 "MuxPD compile_full_prefill requires decode_graph with "
                 "decoupled fenced execution"
+            )
+        if type(self.compile_prefill_groups) is not bool:
+            raise ValueError("MuxPD compile_prefill_groups must be a boolean")
+        if self.compile_prefill_groups and not (
+            self.execution == "decoupled"
+            and self.decode_graph
+            and self.stream_mode == "overlap"
+            and self.overlap_communication == "isolated"
+            and self.layers_per_slice == 4
+            and self.prefill_layer_token_budget == 0
+            and not self.adaptive_layers
+            and not self.prefill_first
+            and not self.decode_budget_guard
+            and not self.compile_full_prefill
+        ):
+            raise ValueError(
+                "MuxPD compile_prefill_groups requires isolated graph overlap, "
+                "fixed q4, work budget zero and no other prefill experiment"
             )
         if self.trace_path is not None:
             if not isinstance(self.trace_path, str) or not self.trace_path.strip():

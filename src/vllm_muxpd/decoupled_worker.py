@@ -60,15 +60,19 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
     def _snapshot_prefill_progress(self) -> None:
         if self._prefill_task is not None:
             task = self._prefill_task.tasks["prefill"]
-            complete_return = (
-                task.done and getattr(self, "_prefill_full_forward_return", False)
+            complete_return = task.done and getattr(
+                self, "_prefill_full_forward_return", False
             )
             self._iteration_prefill_layers_completed = (
                 self._decoder_layer_count if complete_return else task.completed_layers
             )
             self._iteration_prefill_layers_total = self._decoder_layer_count
             self._iteration_prefill_progress_source = (
-                "full_forward_return" if complete_return else "layer_hooks"
+                "group_forward_return"
+                if getattr(self, "_prefill_groups_enabled", False)
+                else "full_forward_return"
+                if complete_return
+                else "layer_hooks"
             )
 
     def _execute_compiled_prefill(self, output: SchedulerOutput, controller: Any):
@@ -320,14 +324,21 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
             return None
 
         budget = None
-        if pending and not scheduler_output.muxpd_pause_prefill and not (
-            pending <= (cancelled | self._prefill_cancelled)
+        if (
+            pending
+            and not scheduler_output.muxpd_pause_prefill
+            and not (pending <= (cancelled | self._prefill_cancelled))
         ):
             budget = scheduler_output.muxpd_layers_per_slice
             if type(budget) is not int or budget < 1:
                 raise ValueError("MuxPD layer budget must be a positive integer")
             if scheduler_output.muxpd_finish_prefill:
                 budget = None
+            if getattr(self, "_prefill_groups_enabled", False) and budget not in (
+                None,
+                4,
+            ):
+                raise ValueError("Prefill FX groups require an atomic four-layer quota")
 
         if new_prefills:
             output = _select_requests(
