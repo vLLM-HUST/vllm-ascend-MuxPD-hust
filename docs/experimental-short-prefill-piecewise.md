@@ -4,7 +4,9 @@ This independent candidate remains **disabled by default**. The TP8 finite
 126-request diagnosis of runtime `b95372ee9c5f5f568c6d0899724ecd66a48a527b`
 passed its host graph/path and lifecycle contract, and natural-language text
 matched the reference in 16/16 cases. A repeated synthetic P128 request diverged
-at generated-token index 4; matched-input numerical diagnosis is still needed.
+at generated-token index 4. A later matched 21-request run per configuration
+found the same two sequences in native, raw-layer and short-P graph services;
+the candidate's initial pair remained unstable. Numerical equivalence is unproven.
 There is no candidate device profile or performance result. It is based on
 plugin `9e740ba` and excludes the separate short-FX and early sampling experiments.
 
@@ -130,15 +132,26 @@ The older native P128 repeats were stable, but used a **different prompt token
 array** and generated 16 rather than eight tokens. They are not a matched
 reference and cannot establish a candidate regression or explain it away.
 This P128 result must not be folded into the already known native one-/two-token
-instability. A separately registered matched-payload numerical comparison is
-required before advancing the candidate. No cause—numerical variation, graph
-replay, or cache/state aliasing—has been established.
+instability. A separately registered matched-payload comparison has now completed:
+three fresh services each replayed the original first 17 requests and four extra
+P128 requests after P511, with no observer or prior generation. Independent raw
+SSE and complete request-history audits passed for all 63 requests. Every role
+produced the same two P128 sequences, first differing at index 4. Native and raw
+had stable initial pairs; the candidate did not. All three varied within the
+post-P511 repetitions. Full token arrays matched for 11/21 native/raw, 11/21
+native/candidate and 18/21 raw/candidate request pairs. These are descriptive
+configuration-bundle comparisons, not quality scores or a single graph-toggle
+ablation. No cause—numerical variation, graph replay or cache/state aliasing—has
+been established. See the
+[published independent review](https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/blob/b98acb63a2010782ececb8b92e1021ca50a8a200/evidence/2026-10-11-matched-numeric/review.md).
 
 The retained numerical records are
 `short-piecewise-fixed4-omp1-diagnostic-numeric-review.{json,md}` and
 `short-piecewise-fixed4-omp1-diagnostic-p128-supplement.{json,md}` under
 `local-results/tp8-goodput`. Their source reports and raw streams remain intact.
-Host/path proof PASS does not close this numerical gate or justify timing.
+Host/path proof PASS and complete transport do not establish numerical equivalence.
+The user has moved further experiments to paired TP4 services and selected
+interactive workloads; the TP8 records do not prove any TP4 performance gain.
 
 ## Device evidence requirements before timing
 
