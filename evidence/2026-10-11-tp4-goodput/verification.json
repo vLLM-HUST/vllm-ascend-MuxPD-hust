@@ -1,0 +1,9 @@
+{
+  "passed": true,
+  "verified_utc": "2026-10-11T14:29:10.003996+00:00",
+  "asset_sha256": "58e97810b71bfb32c4717c1e590695f6ca6cebb09e1922577e6758c18ce41502",
+  "verified_files": 763,
+  "verified_uncompressed_bytes": 1093786647,
+  "method": "Stream-decompress every tar member; exact path/size/SHA match; no filesystem extraction",
+  "raw_auditor_rerun": false
+}
