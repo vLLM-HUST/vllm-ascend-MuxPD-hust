@@ -1,0 +1,102 @@
+{
+  "schema": "tp4-groupfx-rank-returns-cpu-validation-v1",
+  "created_utc": "2026-10-11T16:29:02.617499+00:00",
+  "source": {
+    "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/check_groupfx_rank_returns.py",
+    "bytes": 16683,
+    "sha256": "ff6a0269e8f57dfae1e029515c4e83f8742deb0eff89ec5aedee96458e076084"
+  },
+  "test_source": {
+    "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/test_groupfx_rank_returns.py",
+    "bytes": 6650,
+    "sha256": "2cc36db828a736d2f8b426ed8d4612f9a19fa33b0e2dfd711b3acdbdae02f4f9"
+  },
+  "pytest": {
+    "argv": [
+      "/root/workspace/.venv/bin/python",
+      "-m",
+      "pytest",
+      "local-results/tp4-prefill-group-fx/test_groupfx_rank_returns.py",
+      "-q"
+    ],
+    "returncode": 0,
+    "passed": 14,
+    "duration_seconds": 0.57,
+    "log": {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/rank-returns-pytest-final.log",
+      "bytes": 99,
+      "sha256": "029eb1704925b65f1fdfc5dca600ddd45949eebb6cd06736ff6cd451d7a137e4"
+    }
+  },
+  "checks": [
+    {
+      "kind": "AST",
+      "passed": true,
+      "files": [
+        "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/check_groupfx_rank_returns.py",
+        "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/test_groupfx_rank_returns.py"
+      ]
+    },
+    {
+      "kind": "ruff",
+      "argv": [
+        "/root/workspace/.venv/bin/ruff",
+        "check",
+        "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/check_groupfx_rank_returns.py",
+        "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/test_groupfx_rank_returns.py"
+      ],
+      "returncode": 0,
+      "log": {
+        "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/rank-returns-ruff-final.log",
+        "bytes": 19,
+        "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+      }
+    },
+    {
+      "kind": "format",
+      "argv": [
+        "/root/workspace/.venv/bin/ruff",
+        "format",
+        "--check",
+        "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/check_groupfx_rank_returns.py",
+        "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/test_groupfx_rank_returns.py"
+      ],
+      "returncode": 0,
+      "log": {
+        "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/rank-returns-format-final.log",
+        "bytes": 26,
+        "sha256": "3bc53bf3e981a98a34a852e175bf9b77af841edea74fca595d9aedcbaf9a4938"
+      }
+    },
+    {
+      "kind": "help",
+      "argv": [
+        "/root/workspace/.venv/bin/python",
+        "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/check_groupfx_rank_returns.py",
+        "--help"
+      ],
+      "returncode": 0,
+      "log": {
+        "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/rank-returns-help-final.log",
+        "bytes": 701,
+        "sha256": "a131f3f5db5e54a7289a8ef6a754933d2471fac91115498f16708eab12199f1d"
+      }
+    }
+  ],
+  "initial_logs": [
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/rank-returns-pytest-initial.log",
+      "bytes": 99,
+      "sha256": "1e29590c734e3070c508ee1346ac2050ae707789b5b91f7bb2c7f9972ef5cadf"
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/rank-returns-ruff-initial.log",
+      "bytes": 34424,
+      "sha256": "b389d61348e893236de1ff27ee35e85074529ecc58e4f70844560e22b4f0097b"
+    }
+  ],
+  "hardware_requests": 0,
+  "runtime_edits": false,
+  "scope": "CPU fixture validation only; actual rank proof awaits stopped server log and lifecycle report.",
+  "all_cpu_processes_terminal": true
+}
