@@ -47,7 +47,7 @@ aggregation; archive verification establishes byte preservation.
 
 ## Replay one raw audit
 
-Use Python 3.10+ with `httpx`. Extract into a new directory. Recorded paths in
+Use Python 3.10+; the auditor uses only the standard library. Extract into a new directory. Recorded paths in
 original JSON remain absolute; supply explicit relocated inputs to the auditor:
 
 ```bash
@@ -67,6 +67,10 @@ Serial audits instead use `scripts/benchmark_goodput.py` and
 `scripts/benchmark_contention.py` from the archive. No new requests or hardware
 are needed for audit replay. Regenerating measurements requires the pinned
 runtime/model and the explicit service configuration in the manifests.
+
+The example audit was rerun successfully after extracting its exact inputs into
+a new directory. `portable-replay.json` records that post-archive check; it is
+separate from the archived original measurements.
 
 `protocol-seed-wording-erratum.json` records a prose correction: the immutable
 protocol load description says seed42, but actual frozen payloads use the plan
