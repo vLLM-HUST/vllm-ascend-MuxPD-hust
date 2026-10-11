@@ -1,10 +1,14 @@
 # Experimental four-layer prefill FX groups
 
-This independent, default-off prototype starts from plugin `9e740ba`. It has
-CPU contract tests, but **no device compilation, hardware correctness or
-performance validation**. It does not include the short-prefill PIECEWISE or
-pipelined-sampler experiments. Do not use the counters below as evidence of
-hardware speedup.
+This independent, default-off prototype starts from plugin `9e740ba`. TP4
+validation at runtime `f09a100` now covers actual compilation on four ranks,
+finite serving, and one intermediate cancellation followed by reuse. It remains
+experimental: synthetic cross-role token sequences match in only 9/19 cases,
+including early D differences tracked in
+[Issue #11](https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/issues/11).
+The [validation report](validation-tp4-prefill-group-fx.md) records the evidence
+and its limits. No group-FX throughput or Goodput benefit has been established.
+This does not include the short-prefill PIECEWISE or pipelined-sampler experiments.
 
 ## Execution and restrictions
 
@@ -122,11 +126,20 @@ without invoking `torch.compile` or allocating device tensors. Other fixtures
 exercise actual worker startup/teardown/progress methods, scheduler receipts,
 cooperative cancellation, config restoration and missing/changed handles.
 
-Hardware validation remains a separate, unexecuted gate: actual ten AOT group
-compilations and returns on every rank; first residual=None and later tensors;
-GDN and full-attention outputs; D FULL and P NONE; isolated P groups/workspace;
-P-only and P with D1/4/7; token-range endpoints including one-token prefill;
-first/intermediate/final cancellation and KV reuse; known native state/numerical
-variance; startup memory/compile latency. Inspect compiled artifacts for correct
-layer prefixes and shared-state mutation. Only after correctness and real device
-traces should a clean, matched q4/backend benchmark assess throughput/Goodput.
+The completed TP4 diagnostic verifies ten AOT group startup returns per rank,
+correct absolute GDN/attention layer prefixes in all 40 P artifacts, independent
+D backbone compilation and four captured D entries per rank, P-only token shapes
+1/128/129/16383, and a four-D/12K-P cancellation with ACK at 8/40 layers followed
+by reuse. All 16 natural-language text/answer comparisons pass. These observations
+do not resolve the early synthetic D differences or prove opaque communication
+routing, kernel overlap, or every dynamic path being warm.
+
+Further gates remain: same-input numerical/state diagnosis; direct device traces;
+broader D1/4/7 and first/intermediate/final or partial-cohort cancellation coverage;
+hardware KV pressure; and clean startup memory/compile-latency measurements.
+The observed early fourth-token divergence precedes the later 12K request and
+maps by the synchronous scheduling protocol to D1 plus pending P384. It must not
+be dismissed as the previously observed P128 repeat variance. No clean performance
+comparison followed this diagnostic. Only after the correctness boundary and
+required device checks are resolved should a matched q4/backend benchmark assess
+throughput/Goodput.
