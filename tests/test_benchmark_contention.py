@@ -75,6 +75,56 @@ def test_sse_split_bytes_prompt_ids_empty_text_and_exact_raw_body():
     assert row["events"][-1]["kind"] == "done"
 
 
+@pytest.mark.parametrize("separator", ["\u0085", "\u2028", "\u2029"])
+@pytest.mark.parametrize("newline", ["\n", "\r\n"])
+@pytest.mark.parametrize("chunk_size", [1, 7, 65536])
+def test_unicode_line_separator_in_json_is_payload(separator, newline, chunk_size):
+    # The real failing stream contained an unescaped U+2029 (e2 80 a9) in
+    # choice.text. Python str.splitlines() truncated its otherwise valid JSON.
+    payload = bench.request_plan(args())[0]["payload"]
+    source = frames(payload)
+    source[0]["choices"][0]["text"] = "before" + separator + "after"
+    body = b"".join(
+        wire(frame if isinstance(frame, str) else json.dumps(frame, ensure_ascii=False),
+             newline)
+        for frame in source
+    )
+    assert separator.encode("utf-8") in body
+    row = row_for(payload)
+    signals = []
+    receipt = bench.SSEReceipt(row, lambda: signals.append(True))
+    for offset in range(0, len(body), chunk_size):
+        receipt.feed(body[offset:offset + chunk_size], 11 + offset / 10000)
+    receipt.finalize()
+    receipt.preserve_raw()
+    assert signals == [True]
+    assert row["text"] == "before" + separator + "after"
+    assert row["token_ids"] == [100, 101, 102, 103]
+    assert row["usage"]["completion_tokens"] == payload["max_tokens"]
+    assert row["events"][-1]["kind"] == "done"
+    assert base64.b64decode(row["raw_sse_base64"]) == body
+
+
+@pytest.mark.parametrize("newline", ["\n", "\r\n"])
+def test_multiline_data_fields_keep_unicode_payload_and_ignore_comments(newline):
+    payload = bench.request_plan(args())[0]["payload"]
+    source = frames(payload)
+    source[0]["choices"][0]["text"] = "\u0085\u2028\u2029"
+    data = json.dumps(source[0], ensure_ascii=False, indent=2)
+    first = newline.join([
+        ": heartbeat", "event: completion",
+        *("data: " + line for line in data.split("\n")), "", "",
+    ]).encode()
+    body = first + b"".join(wire(frame, newline) for frame in source[1:])
+    row = row_for(payload)
+    receipt = bench.SSEReceipt(row, lambda: None)
+    receipt.feed(body, 11)
+    receipt.finalize()
+    assert row["text"] == "\u0085\u2028\u2029"
+    assert row["token_ids"] == [100, 101, 102, 103]
+    assert len(row["events"]) == len(source)
+
+
 @pytest.mark.parametrize("fault", [
     "prompt", "missing_prompt", "token_bool", "missing_ids", "usage",
     "missing_done", "extra_done", "truncated", "response_id", "finish",
