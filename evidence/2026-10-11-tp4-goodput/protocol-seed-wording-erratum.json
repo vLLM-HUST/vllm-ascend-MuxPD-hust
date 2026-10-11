@@ -1,0 +1,16 @@
+{
+  "schema": "muxpd-protocol-wording-erratum-v1",
+  "recorded_utc": "2026-10-11T14:06:03.874575+00:00",
+  "correction": "The immutable protocol load description says temp0seed42ignoreEOS. Actual immutable plan payload seed equals the plan run seed: pilot 101; held-out 1001/1002/1003. Only priming uses 42. Plans and payload hashes, execution, SLOs, rates and selection are unchanged. Both roles replay the same plan.",
+  "protocols": [
+    {
+      "path": "local-results/tp4-goodput/confirmation-protocol.json",
+      "sha256": "1b4d8df62f6c9aef4b73b8933030837897ff2810f3002e19b10c4604c073f40c"
+    },
+    {
+      "path": "local-results/tp4-goodput/confirmation-serial-protocol.json",
+      "sha256": "bd45f18e5fbb8ceb8c1c8250cef4aac98669343caf5a4b16d5d23cf8b2997665"
+    }
+  ],
+  "authority": "scripts/benchmark_goodput.py build_plan payload seed=seed and validate_plan; plans are authoritative."
+}

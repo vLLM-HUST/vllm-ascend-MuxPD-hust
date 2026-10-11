@@ -47,7 +47,17 @@ P TTFT 1 s 观察目标；吞吐低 1.96%–3.54%，P TTFT P95 增加 22.62%–2
 TBT P99 与每请求双 SLO goodput，并调优原生 chunk budget / async 基线。
 实验性 **isolated graph overlap** 的固定 8 层入口与运行方法见
 [Goodput 实验说明](docs/goodput-experiments.md)。默认 graph 脚本仍为 fenced；
-新路径尚无持续容量收益结论。
+新路径尚无持续容量收益结论。同条件 OMP1 的逐档结果、goodput 改善信号与
+高负载吞吐代价见 [TP8 持续到达探索进展](docs/performance-tp8-goodput-exploration.md)。
+
+针对短输出流与长 prefill 争用的 TP4 交互场景，新增显式入口
+[`serve-qwen35-streaming.sh`](scripts/serve-qwen35-streaming.sh)：raw P 四层切片、
+独立 decode 图和通信组。三个独立到达 seed、交换卡组的六个确认窗口中，
+满足 TTFT≤1 s 且每个单 token 间隔≤100 ms 的请求由 **117/378 增至 368/378**，
+Goodput 为原生 16K 对照的 **3.15×**；固定窗口吞吐约 **+0.48%**，视为基本持平。
+收益是减少每请求最坏停顿，代价是 TTFT 和 pooled token-gap P99 增加。
+适用负载、全部对照和复现证据见 [TP4 Goodput 报告](docs/performance-tp4-goodput.md)。
+这是特定到达率下的交互 SLO 收益，不是最大吞吐或任意负载加速保证。
 
 早期 [TP2 验证](evidence/2026-10-10/README.md) 和
 [TP4 eager 验证](evidence/2026-10-10-tp4/README.md) 保留原始回执与未取得收益的结果。
