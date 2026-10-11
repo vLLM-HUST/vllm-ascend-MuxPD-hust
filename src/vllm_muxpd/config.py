@@ -31,6 +31,7 @@ class MuxPDConfig:
     prefill_first: bool = False
     overlap_communication: str = "shared"
     decode_graph: bool = False
+    decode_sample_pipeline: bool = False
     compile_full_prefill: bool = False
     prefill_layer_token_budget: int = 0
     decode_budget_guard: bool = False
@@ -143,6 +144,18 @@ class MuxPDConfig:
             raise ValueError(
                 "MuxPD compile_full_prefill requires decode_graph with "
                 "decoupled fenced execution"
+            )
+        if type(self.decode_sample_pipeline) is not bool:
+            raise ValueError("MuxPD decode_sample_pipeline must be a boolean")
+        if self.decode_sample_pipeline and not (
+            self.execution == "decoupled"
+            and self.decode_graph
+            and self.stream_mode == "overlap"
+            and self.overlap_communication == "isolated"
+        ):
+            raise ValueError(
+                "MuxPD decode_sample_pipeline requires decoupled decode_graph "
+                "with isolated overlap communication"
             )
         if self.trace_path is not None:
             if not isinstance(self.trace_path, str) or not self.trace_path.strip():

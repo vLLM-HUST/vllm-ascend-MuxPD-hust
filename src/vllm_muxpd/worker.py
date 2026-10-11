@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ctypes
+import json
 import sys
 from dataclasses import dataclass, replace
 from typing import Any
@@ -26,6 +27,7 @@ from vllm_muxpd.decode_graph import (
     GraphLaneState,
     validate_decode_graph_config,
 )
+from vllm_muxpd.decode_sampling import DecodeSamplePipeline, NPUSampleCopyRuntime
 from vllm_muxpd.lanes import LayerInterleaver
 from vllm_muxpd.overlap import CollectiveGates, NPUOverlapBackend
 
@@ -232,6 +234,19 @@ def _validate_worker_config(config: Any) -> None:
         errors.append("native DBO must be disabled")
     if getattr(config.parallel_config, "use_ubatching", False):
         errors.append("native ubatching must be disabled")
+    pipeline = policy.get("decode_sample_pipeline", False)
+    if type(pipeline) is not bool:
+        errors.append("decode_sample_pipeline must be a boolean")
+    elif pipeline:
+        if not (
+            decode_graph
+            and policy.get("execution") == "decoupled"
+            and policy.get("stream_mode") == "overlap"
+            and policy.get("overlap_communication") == "isolated"
+        ):
+            errors.append("decode_sample_pipeline requires graph/isolated overlap")
+        if getattr(config.model_config, "logits_processors", None):
+            errors.append("decode_sample_pipeline rejects custom logits processors")
     if errors:
         raise ValueError(
             "MuxPD worker configuration is incompatible: " + "; ".join(errors)
@@ -247,6 +262,8 @@ class MuxPDNPUWorker(NPUWorker):
         _validate_worker_config(vllm_config)
         raw = vllm_config.scheduler_config.batch_admission_policy_config or {}
         self._decode_graph_enabled = raw.get("decode_graph", False)
+        self._decode_sample_pipeline_enabled = raw.get("decode_sample_pipeline", False)
+        self._decode_sample_pipeline: DecodeSamplePipeline | None = None
         self._decode_graph_controller: DecodeGraphController | None = None
         self._layers_per_slice = raw.get("layers_per_slice", 1)
         self._stream_mode = raw.get("stream_mode", "fenced")
@@ -321,6 +338,63 @@ class MuxPDNPUWorker(NPUWorker):
                 getattr(stream, "npu_stream", None),
             )
         self._configure_execution_backend()
+        if self._decode_sample_pipeline_enabled:
+            try:
+                self._configure_decode_sample_pipeline()
+            except BaseException:
+                if self._decode_sample_pipeline is not None:
+                    self._decode_sample_pipeline.close()
+                    self._decode_sample_pipeline = None
+                self._release_overlap_communication()
+                if self._decode_graph_controller is not None:
+                    self._decode_graph_controller.close()
+                    self._decode_graph_controller = None
+                raise
+
+    def _configure_decode_sample_pipeline(self) -> None:
+        from vllm.v1.sample.logits_processor.builtin import (
+            LogitBiasLogitsProcessor,
+            MinPLogitsProcessor,
+            MinTokensLogitsProcessor,
+        )
+
+        def assert_scope() -> None:
+            state = self._execution_backend.capture()
+            expected = self._lane_states["decode"]
+            if (
+                self._execution_backend.active_lane != "decode"
+                or state.stream != expected.stream
+                or state.workspace_manager is not expected.workspace_manager
+                or state.forward_context is not expected.forward_context
+            ):
+                raise RuntimeError("MuxPD decode sampler requires the complete D lane")
+
+        def diagnostic(record: dict) -> None:
+            logger.info(
+                "MuxPD decode sampling diagnostic %s",
+                json.dumps({
+                    "rank": self.rank,
+                    "prefill_cohort_id": getattr(self, "_prefill_cohort_id", None),
+                    **record,
+                }, sort_keys=True),
+            )
+
+        raw = self.vllm_config.scheduler_config.batch_admission_policy_config or {}
+
+        self._decode_sample_pipeline = DecodeSamplePipeline(
+            self.decode_runner,
+            NPUSampleCopyRuntime(self.decode_runner, self._streams["decode"]),
+            assert_scope,
+            builtin_processor_types=(
+                LogitBiasLogitsProcessor, MinPLogitsProcessor, MinTokensLogitsProcessor,
+            ),
+            diagnostic=diagnostic if raw.get("trace_path") else None,
+        )
+        logger.info(
+            "MuxPD decode sample pipeline rank=%d enabled for plain greedy D; "
+            "native retirement and ACK boundaries are unchanged",
+            self.rank,
+        )
 
     def _configure_execution_backend(self) -> None:
         """Compose graph ownership with stream ordering before loading weights."""
@@ -712,6 +786,12 @@ class MuxPDNPUWorker(NPUWorker):
                     handle.remove()
                 self._hook_handles = []
             finally:
+                pipeline = getattr(self, "_decode_sample_pipeline", None)
+                if pipeline is not None:
+                    # P may have failed after early D2H was submitted. Do not
+                    # restore methods or release the pinned buffer until D is
+                    # joined. A failed join retains the ticket for retry.
+                    pipeline.close()
                 controller = getattr(self, "_decode_graph_controller", None)
                 if controller is not None:
                     for stream in self._streams.values():
@@ -734,6 +814,7 @@ class MuxPDNPUWorker(NPUWorker):
                 finally:
                     self.decode_runner = None
                     self._decode_graph_controller = None
+                    self._decode_sample_pipeline = None
                     self._lane_states = {}
                     self._streams = {}
                     self._muxpd_shutdown_complete = True

@@ -514,3 +514,39 @@ def test_shutdown_preserves_resources_and_can_retry_failed_safety_joins(
     assert native_calls == [state.worker]
     assert state.worker.decode_runner is None
     assert state.worker._muxpd_shutdown_complete
+
+
+@pytest.mark.integration
+def test_shutdown_retains_pending_decode_copy_if_its_join_fails(
+    worker_factory, monkeypatch,
+):
+    state = worker_factory()
+    events = []
+    pipe = NS(fail=True, pending=True)
+
+    def close():
+        events.append("sample_copy_join")
+        if pipe.fail:
+            raise RuntimeError("decode copy still in flight")
+        pipe.pending = False
+
+    pipe.close = close
+    state.worker._decode_sample_pipeline = pipe
+    for stream in state.worker._streams.values():
+        stream.synchronize = lambda: None
+    state.decode.update_stream.synchronize = lambda: None
+    monkeypatch.setattr(
+        state.module.NPUWorker, "shutdown",
+        lambda worker: events.append("native_cleanup"),
+    )
+    with pytest.raises(RuntimeError, match="copy still in flight"):
+        state.worker.shutdown()
+    assert pipe.pending
+    assert state.worker._decode_sample_pipeline is pipe
+    assert state.worker.decode_runner is state.decode
+    assert not state.controller.snapshot()["closed"]
+    assert events == ["sample_copy_join"]
+    pipe.fail = False
+    state.worker.shutdown()
+    assert events == ["sample_copy_join", "sample_copy_join", "native_cleanup"]
+    assert state.worker._decode_sample_pipeline is None

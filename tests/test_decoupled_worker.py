@@ -669,6 +669,102 @@ def test_short_decode_does_not_limit_prefill_slice_quota(simulation):
 
 
 @pytest.mark.integration
+@pytest.mark.parametrize("cancel", [False, True])
+def test_early_decode_submit_keeps_native_ack_and_cancellation_boundary(
+    simulation, monkeypatch, cancel,
+):
+    worker, events = simulation
+    caller = worker._execution_backend.capture()
+    pipe = SimpleNamespace(pending=False, submissions=0)
+
+    def assert_idle():
+        assert not pipe.pending
+
+    def enqueue():
+        backend = worker._execution_backend
+        assert backend.active_lane == "decode"
+        assert backend.capture() == worker._lane_states["decode"]
+        assert worker.decode_runner.execute_model_state is not None
+        assert worker.decode_runner.sample_count == 0
+        pipe.pending = True
+        pipe.submissions += 1
+        events.append(("early_decode_sample",))
+        return True
+
+    pipe.assert_idle = assert_idle
+    pipe.enqueue = enqueue
+    worker._decode_sample_pipeline = pipe
+    native = worker.decode_runner.sample_tokens
+
+    def retire(grammar):
+        # Only the normal worker sampler call commits outputs. P's first slice
+        # must already have been submitted, and its cohort remains pinned.
+        if pipe.pending:
+            assert worker._prefill_task.tasks["prefill"].completed_layers == 1
+            events.append(("late_decode_retirement",))
+            pipe.pending = False
+        return native(grammar)
+
+    monkeypatch.setattr(worker.decode_runner, "sample_tokens", retire)
+    worker.execute_model(schedule(new_p=("p",), pending=("p",), decode=("d",)))
+    supported = worker._decode_graph_enabled and worker._stream_mode == "overlap"
+    assert pipe.submissions == int(supported)
+    assert worker.decode_runner.sample_count == 0
+    assert worker.model_runner.sample_count == 0
+    assert worker._execution_backend.capture() == caller
+    if supported:
+        early = events.index(("early_decode_sample",))
+        first_prefill = next(
+            i for i, event in enumerate(events) if event[0] == "prefill"
+        )
+        assert early < first_prefill
+    result = worker.sample_tokens(None)
+    assert result.req_ids == ["d"]
+    assert not result.muxpd_completed_prefill_ids
+    assert not result.muxpd_cancelled_prefill_ids
+    assert worker._prefill_task is not None
+    worker.execute_model(schedule(
+        pending=("p",), cancel=("p",) if cancel else (), finish=not cancel,
+    ))
+    result = worker.sample_tokens(None)
+    assert result.muxpd_cancelled_prefill_ids == ({"p"} if cancel else set())
+    assert result.muxpd_completed_prefill_ids == (set() if cancel else {"p"})
+    assert pipe.submissions == int(supported)  # P-only never submits D sampling.
+    worker.execute_model(schedule(decode=("d",)))
+    worker.sample_tokens(None)
+    assert pipe.submissions == int(supported)  # D-only retains the native path.
+
+
+@pytest.mark.integration
+def test_early_decode_scope_restored_after_failed_submission(simulation):
+    worker, _ = simulation
+    if not (worker._decode_graph_enabled and worker._stream_mode == "overlap"):
+        pytest.skip("early sampling is only supported on isolated graph overlap")
+    backend = worker._execution_backend
+    backend.begin_batch(preparation_lane=None)
+    caller = backend.capture()
+    pipe = SimpleNamespace(pending=False)
+
+    def enqueue():
+        assert backend.capture() == worker._lane_states["decode"]
+        pipe.pending = True  # A device copy may already have been enqueued.
+        raise RuntimeError("sample copy submission failed")
+
+    def assert_idle():
+        if pipe.pending:
+            raise RuntimeError("sample ticket still owned")
+
+    pipe.enqueue = enqueue
+    pipe.assert_idle = assert_idle
+    worker._decode_sample_pipeline = pipe
+    with pytest.raises(RuntimeError, match="sample copy submission"):
+        worker._enqueue_decode_sample()
+    assert backend.capture() == caller
+    with pytest.raises(RuntimeError, match="sample ticket still owned"):
+        worker.execute_model(schedule(decode=("d",)))
+
+
+@pytest.mark.integration
 def test_progress_receipt_resets_without_cohort_and_changes_with_slice_budget(
     simulation,
 ):

@@ -191,11 +191,13 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
             # Independent HCCL groups remove the cross-lane collective chain.
             # Launch captured D first so its device work can overlap raw P's
             # host submission. Native D replay/update synchronization remains
-            # inside execute_model; sampling still follows both submissions.
+            # inside execute_model; retirement follows both submissions. The
+            # opt-in pipeline may enqueue greedy D sampling/copy before P.
             # Eager D retains P-first ordering. Both paths use two lane steps,
             # without a host greenlet round trip at every decoder layer.
             if self._decode_graph_enabled:
                 self._run_lane(decode, "decode", None)
+                self._enqueue_decode_sample()
                 self._run_lane(prefill, "prefill", prefill_budget)
             else:
                 self._run_lane(prefill, "prefill", prefill_budget)
@@ -218,6 +220,26 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
         if not task.done and remaining > 0:
             self._run_lane(prefill, "prefill", remaining)
 
+    def _enqueue_decode_sample(self) -> None:
+        pipeline = getattr(self, "_decode_sample_pipeline", None)
+        if pipeline is None:
+            return
+        backend = self._execution_backend
+        caller = backend.capture()
+        try:
+            backend.restore(self._lane_states["decode"])
+            if pipeline.enqueue():
+                key = "decode_samples_enqueued"
+                self.muxpd_stats[key] = self.muxpd_stats.get(key, 0) + 1
+        finally:
+            try:
+                if pipeline.pending:
+                    # Publish the copy's D tail even if P subsequently fails.
+                    # This is an event record, not a host completion wait.
+                    backend.fence()
+            finally:
+                backend.restore(caller)
+
     @torch.inference_mode()
     def _abort_prefill(self) -> None:
         if self._prefill_task is None:
@@ -236,6 +258,9 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
     def execute_model(self, scheduler_output: SchedulerOutput) -> None:
         if self._awaiting_sample:
             raise RuntimeError("MuxPD requires sampler ACK before another iteration")
+        pipeline = getattr(self, "_decode_sample_pipeline", None)
+        if pipeline is not None:
+            pipeline.assert_idle()
         previous_completed_decode_only = self._decode_only_fast_path
         self._step_profiler()
         if getattr(scheduler_output, "muxpd_execution", None) != "decoupled":
