@@ -1685,3 +1685,58 @@ def test_decode_guard_recomputes_actual_shape_after_partial_kv_admission(
     assert output.num_scheduled_tokens == {"d": 1}
     retire(scheduler, output)
     assert not scheduler._prefill_first_decode_debt
+
+
+@pytest.mark.parametrize("phase", ["prefill", "decode"])
+def test_decode_guard_estimate_cache_has_deterministic_lru_bound(make_scheduler, phase):
+    scheduler = guard_scheduler(make_scheduler)
+    cache = (
+        scheduler._guard_prefill_cost
+        if phase == "prefill"
+        else scheduler._guard_decode_cost
+    )
+    keys = (
+        [((i + 1,), False, 0) for i in range(257)]
+        if phase == "prefill"
+        else [(1, i, i) for i in range(257)]
+    )
+    value = {"completed_lane_span": (1.0, 1)} if phase == "prefill" else (1.0, 1)
+    for key in keys[:256]:
+        scheduler._guard_cache_store(cache, key, value, phase)
+    assert scheduler._guard_cache_read(cache, keys[0]) == value
+    scheduler._guard_cache_store(cache, keys[256], value, phase)
+    assert len(cache) == 256 and keys[0] in cache and keys[1] not in cache
+    assert scheduler._guard_cache_evictions[phase] == 1
+    scheduler._guard_cache_store(cache, keys[0], value, phase)
+    assert len(cache) == 256 and scheduler._guard_cache_evictions[phase] == 1
+    assert scheduler._guard_cache_stats()["entry_limit_per_mapping"] == 256
+
+
+def test_decode_guard_evicted_shape_returns_cold_without_changing_request_state(
+    make_scheduler, clock
+):
+    scheduler = guard_scheduler(make_scheduler)
+    calibrate_guard_decode(scheduler, clock)
+    seed_raw_slice(scheduler)
+    before = scheduler.requests["d"].num_computed_tokens
+    for tokens in range(1000, 1256):
+        scheduler._guard_cache_store(
+            scheduler._guard_prefill_cost,
+            ((tokens,), False, 0),
+            {"completed_lane_span": (1.0, 1)},
+            "prefill",
+        )
+    assert scheduler._raw_slice_estimate((64,), False) == (None, None)
+    assert scheduler.requests["d"].num_computed_tokens == before
+    assert (
+        not scheduler._prefill_first_decode_debt and scheduler._prefill_cohort is None
+    )
+    scheduler.add_request(request("p", 64))
+    output = scheduler.schedule()
+    assert output.muxpd_layers_per_slice == 1
+    guard = last_quota(scheduler)["decode_budget"]
+    assert guard["mode"] == "cold_start"
+    assert guard["estimate_cache"]["entries"]["prefill"] == 256
+    assert guard["estimate_cache"]["evictions"]["prefill"] == 2
+    clock.now += 0.020
+    retire(scheduler, output)

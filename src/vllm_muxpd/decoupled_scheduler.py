@@ -12,6 +12,7 @@ import json
 import math
 import os
 import time
+from collections import OrderedDict
 from dataclasses import dataclass, replace
 from typing import Any
 
@@ -23,6 +24,8 @@ from vllm.v1.request import Request
 from .multiplex_scheduler import LayeredMuxPDScheduler
 from .policy import Decision, remaining_tokens, request_phase
 from .scheduler import MuxPDScheduler
+
+_GUARD_ESTIMATE_CACHE_LIMIT = 256
 
 
 def _output_for_update(output: SchedulerOutput, ids: set[str]) -> SchedulerOutput:
@@ -93,10 +96,13 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         # Guard estimates are separate from whole-P (potentially compiled) EWMA.
         # Exact P token-length multisets and D batch/context buckets prevent a
         # small, unrelated calibration shape from silently licensing more work.
-        self._guard_prefill_cost: dict[
+        self._guard_prefill_cost: OrderedDict[
             tuple[tuple[int, ...], bool, int], dict[str, tuple[float, int]]
-        ] = {}
-        self._guard_decode_cost: dict[tuple[int, int, int], tuple[float, int]] = {}
+        ] = OrderedDict()
+        self._guard_decode_cost: OrderedDict[
+            tuple[int, int, int], tuple[float, int]
+        ] = OrderedDict()
+        self._guard_cache_evictions = {"prefill": 0, "decode": 0}
         self._guard_live_decodes: dict[str, int] = {}
         self._decode_completed_at: dict[str, float] = {}
         # Reuse the common validated allocator setup, without the layered-only
@@ -557,7 +563,7 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         first_slice = remaining == self._decoder_layer_count
         first_sample, first_source = self._raw_slice_estimate(p_shape, True)
         p_sample, p_source = self._raw_slice_estimate(p_shape, False)
-        d_sample = self._guard_decode_cost.get(d_shape)
+        d_sample = self._guard_cache_read(self._guard_decode_cost, d_shape)
         ages = {
             rid: max(0.0, (now - self._decode_completed_at[rid]) * 1000)
             for rid in contexts
@@ -643,10 +649,40 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
             "ttft_budget_ms": config.ttft_slo_ms,
             "estimated_remaining_ttft_ms": projected,
             "ttft_feasible": ttft_feasible,
+            "estimate_cache": self._guard_cache_stats(),
+        }
+
+    @staticmethod
+    def _guard_cache_read(cache, key):
+        value = cache.get(key)
+        if value is not None:
+            cache.move_to_end(key)
+        return value
+
+    def _guard_cache_store(self, cache, key, value, phase):
+        if key not in cache and len(cache) >= _GUARD_ESTIMATE_CACHE_LIMIT:
+            cache.popitem(last=False)
+            self._guard_cache_evictions[phase] += 1
+        cache[key] = value
+        cache.move_to_end(key)
+
+    def _guard_cache_stats(self):
+        return {
+            "entry_limit_per_mapping": _GUARD_ESTIMATE_CACHE_LIMIT,
+            "entries": {
+                "prefill": len(self._guard_prefill_cost),
+                "decode": len(self._guard_decode_cost),
+            },
+            "evictions": self._guard_cache_evictions.copy(),
         }
 
     def _raw_slice_estimate(self, shape, first):
-        samples = self._guard_prefill_cost.get((shape, first, 1 if first else 0), {})
+        samples = (
+            self._guard_cache_read(
+                self._guard_prefill_cost, (shape, first, 1 if first else 0)
+            )
+            or {}
+        )
         # Keep the two estimands separate. A completed lane measurement takes
         # precedence; the first cold host proxy must not poison all later slices.
         for source in ("completed_lane_span", "completed_host_step_proxy"):
@@ -1006,6 +1042,7 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
                     {
                         "decode_budget_sample": guard_sample,
                         "prefill_slice_timing": slice_timing,
+                        "estimate_cache": self._guard_cache_stats(),
                     }
                     if self.muxpd_policy.config.decode_budget_guard
                     else {}
@@ -1086,10 +1123,14 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         ):
             return {"phase": None, "reason": "invalid_cancelled_or_paused_sample"}
         if cohort is None and step.guard_decode_shape:
-            old, count = self._guard_decode_cost.get(step.guard_decode_shape, (0.0, 0))
-            self._guard_decode_cost[step.guard_decode_shape] = (
-                max(old, duration),
-                count + 1,
+            old, count = self._guard_cache_read(
+                self._guard_decode_cost, step.guard_decode_shape
+            ) or (0.0, 0)
+            self._guard_cache_store(
+                self._guard_decode_cost,
+                step.guard_decode_shape,
+                (max(old, duration), count + 1),
+                "decode",
             )
             return {"phase": "decode", "shape": list(step.guard_decode_shape)}
         if cohort:
@@ -1123,9 +1164,14 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
                 cost = span if first else span / delta
                 if cost <= 0:
                     return {"phase": None, "reason": "zero_slice_span"}
-                observations = self._guard_prefill_cost.setdefault(key, {})
+                observations = (
+                    self._guard_cache_read(self._guard_prefill_cost, key) or {}
+                )
                 old, count = observations.get(sample_source, (0.0, 0))
                 observations[sample_source] = (max(old, cost), count + 1)
+                self._guard_cache_store(
+                    self._guard_prefill_cost, key, observations, "prefill"
+                )
                 return {
                     "phase": "raw_prefill_layer",
                     "shape": list(shape),

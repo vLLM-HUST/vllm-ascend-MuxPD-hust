@@ -179,6 +179,8 @@ TTFT、逐 token TBT 或平均 TPOT 达标：未知形状、单层已经超预�
 等待等仍会影响实际延迟。trace 会记录预算冲突和 TTFT 可行性；回执/配额校验
 不能代替实际服务测量。配置示例及估计范围见
 [decode budget guard 设计](docs/design.md#可选-decode-budget-guard)。
+P、D 估计缓存各限 256 个条目，按最近使用顺序逐出；样本被逐出后重新冷启动，
+不改变请求、KV 或取消状态。trace 记录条目数和累计逐出次数。
 
 初始延迟系数是可配置启动值，不能作为 MuxWise 论文 contention predictor 的复现。
 PP/DP/CP、speculative decoding、KV/EC transfer、streaming-input continuation
