@@ -1,0 +1,144 @@
+{
+  "registered_plan": "confirmation-v2-remaining-plan.json",
+  "controller_sha256": "004cca7c159fe52ebcb89e542eff00cd00b2069cab1cdec02757edc8f358d0a6",
+  "started_at": "2026-10-11T05:36:15.099814+00:00",
+  "complete": true,
+  "stages": [
+    {
+      "stage": "native2k-confirm",
+      "role": "native",
+      "commands": [
+        {
+          "argv": [
+            "/root/workspace/.venv/bin/python",
+            "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/start_stage.py",
+            "native2k-confirm",
+            "--role",
+            "native",
+            "--token-budget",
+            "2048"
+          ],
+          "started_at": "2026-10-11T05:36:16.147235+00:00",
+          "returncode": 0,
+          "finished_at": "2026-10-11T05:36:16.248155+00:00"
+        },
+        {
+          "argv": [
+            "/root/workspace/.venv/bin/python",
+            "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/run_bench_stage.py",
+            "native2k-confirm",
+            "--base-url",
+            "http://127.0.0.1:8000",
+            "--producer-sha",
+            "6f373ff7383ccc61579d4e9406ee0c9b9523ee8a4ef0d5330d76471e421f6712"
+          ],
+          "started_at": "2026-10-11T05:36:16.248767+00:00",
+          "returncode": 0,
+          "finished_at": "2026-10-11T05:41:50.323611+00:00"
+        },
+        {
+          "argv": [
+            "/root/workspace/.venv/bin/python",
+            "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/stop_service.py",
+            "native2k-confirm"
+          ],
+          "started_at": "2026-10-11T05:41:50.324305+00:00",
+          "returncode": 0,
+          "finished_at": "2026-10-11T05:41:51.697486+00:00"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "stage": "native16k-confirm",
+      "role": "native",
+      "commands": [
+        {
+          "argv": [
+            "/root/workspace/.venv/bin/python",
+            "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/start_stage.py",
+            "native16k-confirm",
+            "--role",
+            "native",
+            "--token-budget",
+            "16384"
+          ],
+          "started_at": "2026-10-11T05:41:52.767303+00:00",
+          "returncode": 0,
+          "finished_at": "2026-10-11T05:41:52.869340+00:00"
+        },
+        {
+          "argv": [
+            "/root/workspace/.venv/bin/python",
+            "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/run_bench_stage.py",
+            "native16k-confirm",
+            "--base-url",
+            "http://127.0.0.1:8000",
+            "--producer-sha",
+            "6f373ff7383ccc61579d4e9406ee0c9b9523ee8a4ef0d5330d76471e421f6712"
+          ],
+          "started_at": "2026-10-11T05:41:52.869899+00:00",
+          "returncode": 0,
+          "finished_at": "2026-10-11T05:46:44.166078+00:00"
+        },
+        {
+          "argv": [
+            "/root/workspace/.venv/bin/python",
+            "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/stop_service.py",
+            "native16k-confirm"
+          ],
+          "started_at": "2026-10-11T05:46:44.166840+00:00",
+          "returncode": 0,
+          "finished_at": "2026-10-11T05:46:45.541255+00:00"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "stage": "guard-v2-confirm",
+      "role": "candidate",
+      "commands": [
+        {
+          "argv": [
+            "/root/workspace/.venv/bin/python",
+            "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/start_stage.py",
+            "guard-v2-confirm",
+            "--role",
+            "candidate",
+            "--token-budget",
+            "16384"
+          ],
+          "started_at": "2026-10-11T05:46:46.642698+00:00",
+          "returncode": 0,
+          "finished_at": "2026-10-11T05:46:46.745461+00:00"
+        },
+        {
+          "argv": [
+            "/root/workspace/.venv/bin/python",
+            "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/run_bench_stage.py",
+            "guard-v2-confirm",
+            "--base-url",
+            "http://127.0.0.1:8002",
+            "--producer-sha",
+            "6f373ff7383ccc61579d4e9406ee0c9b9523ee8a4ef0d5330d76471e421f6712"
+          ],
+          "started_at": "2026-10-11T05:46:46.746097+00:00",
+          "returncode": 0,
+          "finished_at": "2026-10-11T05:51:54.643576+00:00"
+        },
+        {
+          "argv": [
+            "/root/workspace/.venv/bin/python",
+            "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/stop_service.py",
+            "guard-v2-confirm"
+          ],
+          "started_at": "2026-10-11T05:51:54.644428+00:00",
+          "returncode": 0,
+          "finished_at": "2026-10-11T05:51:56.017998+00:00"
+        }
+      ],
+      "complete": true
+    }
+  ],
+  "finished_at": "2026-10-11T05:51:56.019682+00:00"
+}

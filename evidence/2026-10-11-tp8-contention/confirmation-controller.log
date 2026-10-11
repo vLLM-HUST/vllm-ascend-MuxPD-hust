@@ -1,0 +1,42 @@
+START native2k-confirm
+native2k-confirm 274215
+native2k-confirm ready
+RUN native2k-confirm-decode-control.json
+DONE native2k-confirm-decode-control.json 0
+RUN native2k-confirm-p8k.json
+DONE native2k-confirm-p8k.json 0
+RUN native2k-confirm-p12k.json
+DONE native2k-confirm-p12k.json 0
+RUN native2k-confirm-p12k-burst.json
+DONE native2k-confirm-p12k-burst.json 0
+native2k-confirm all benchmarks complete
+{"stage": "native2k-confirm", "remaining_pids": []}
+COMPLETE native2k-confirm
+START native16k-confirm
+native16k-confirm 293912
+native16k-confirm ready
+RUN native16k-confirm-decode-control.json
+DONE native16k-confirm-decode-control.json 0
+RUN native16k-confirm-p8k.json
+DONE native16k-confirm-p8k.json 0
+RUN native16k-confirm-p12k.json
+DONE native16k-confirm-p12k.json 0
+RUN native16k-confirm-p12k-burst.json
+DONE native16k-confirm-p12k-burst.json 0
+native16k-confirm all benchmarks complete
+{"stage": "native16k-confirm", "remaining_pids": []}
+COMPLETE native16k-confirm
+START guard-v2-confirm
+guard-v2-confirm 309543
+guard-v2-confirm ready
+RUN guard-v2-confirm-decode-control.json
+DONE guard-v2-confirm-decode-control.json 0
+RUN guard-v2-confirm-p8k.json
+DONE guard-v2-confirm-p8k.json 0
+RUN guard-v2-confirm-p12k.json
+DONE guard-v2-confirm-p12k.json 0
+RUN guard-v2-confirm-p12k-burst.json
+DONE guard-v2-confirm-p12k-burst.json 0
+guard-v2-confirm all benchmarks complete
+{"stage": "guard-v2-confirm", "remaining_pids": []}
+COMPLETE guard-v2-confirm

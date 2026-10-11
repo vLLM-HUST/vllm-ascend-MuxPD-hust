@@ -1,0 +1,55 @@
+{
+  "implementation_commit": "0e270a5",
+  "base_commit": "7cb5088137a0d46a39408a9f034f5261a9307519",
+  "cpu_tests": {
+    "command": "source /root/workspace/runtime/env.sh; python -m pytest tests -q",
+    "exit_code": 0,
+    "passed": 551,
+    "skipped": 2,
+    "elapsed_s": 43.35,
+    "log": "candidate-cpu-tests.log"
+  },
+  "ruff": {
+    "command": "python -m ruff check .",
+    "exit_code": 0
+  },
+  "diff_check_exit_code": 0,
+  "pr": "https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/pull/7",
+  "push_ci": "https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/actions/runs/38112969858",
+  "pr_ci": "https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/actions/runs/38112986139",
+  "hardware_candidate_commit": "f673277",
+  "bounded_cache_followup": {
+    "command": "source /root/workspace/runtime/env.sh\n/root/workspace/.venv/bin/python -m pytest -q tests/test_decoupled_scheduler.py -k 'decode_guard' > local-results/decode-budget-cache-tests.log 2>&1",
+    "passed": 22,
+    "deselected": 74,
+    "elapsed_s": 24.18,
+    "log": "../decode-budget-cache-tests.log",
+    "ruff_exit_code": 0,
+    "diff_check_exit_code": 0
+  },
+  "hardware_candidate_v2_commit": "258aef6ce52b7fd77cfe9a7f70d1ea29a13f7d41",
+  "residual_followup": {
+    "command": "source /root/workspace/runtime/env.sh\n/root/workspace/.venv/bin/python -m pytest -q tests/test_decoupled_scheduler.py tests/test_decoupled_trace.py",
+    "passed": 180,
+    "elapsed_s": 41.27,
+    "log": "../decode-budget-v2-regression-tests.log",
+    "ruff_exit_code": 0,
+    "diff_check_exit_code": 0,
+    "independent_read_review": "passed; no worker ordering/synchronization changes"
+  },
+  "v2_full_suite": {
+    "commit": "258aef6ce52b7fd77cfe9a7f70d1ea29a13f7d41",
+    "command": "source /root/workspace/runtime/env.sh\n/root/workspace/.venv/bin/python -m pytest tests -q",
+    "passed": 582,
+    "skipped": 2,
+    "elapsed_s": 45.16,
+    "exit_code": 0,
+    "log": "candidate-v2-full-cpu-tests.log",
+    "log_finished_at": "2026-10-11T05:31:22.807150+00:00",
+    "timing_isolation": "Finished before benchmark controller launched and before API ready"
+  },
+  "v2_ci": [
+    "https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/actions/runs/38114729838",
+    "https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/actions/runs/38114732166"
+  ]
+}

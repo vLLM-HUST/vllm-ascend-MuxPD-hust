@@ -1,0 +1,3872 @@
+{
+  "audit_script_sha256": "ec5fed9c07cf167e67482e15e2fffce467da3df136c9d49ed33810174e82ea1b",
+  "classifier_script_sha256": "f9cb2fcef2af0e425b77d5de803524ee0eeff46ffba36aa43ce003cd2c68e6d2",
+  "limits": [
+    "Diagnostic profiled windows; not unprofiled latency/throughput measurements.",
+    "Eight automatic-stop worker iterations; RECORD warning means only complete exported X ranges are analyzed.",
+    "Host scopes are inclusive/nested; do not add them or treat Event synchronize as removable overhead.",
+    "Device compute excludes Communication track and recognized HCCL; active fraction is window coverage, not core occupancy.",
+    "Native and plugin can have different actual forward/replay counts despite the same client requests and iteration limit.",
+    "Client tail stall across automatic profiler stop is excluded from device-kernel span and is not an inference regression."
+  ],
+  "stages": {
+    "old-profile": [
+      {
+        "rank": 0,
+        "source": "local-results/tp8-contention/old-profile/dp0_pp0_tp0_dcp0_ep0_rank0_27446_20261011042840035_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+        "sha256": "13b1caf261134f946d2b7e02859618e7cc92e7933b2b55d0238cd63403207678",
+        "trace_event_count": 289270,
+        "selected_host_scopes": [
+          {
+            "process": "Python",
+            "name": "npu_fx_compiler inference",
+            "count": 1,
+            "inclusive_sum_us": 360709.29,
+            "max_us": 360709.29
+          },
+          {
+            "process": "Python",
+            "name": "vllm::qwen_gdn_attention_core",
+            "count": 60,
+            "inclusive_sum_us": 300921.01,
+            "max_us": 5571.41
+          },
+          {
+            "process": "Python",
+            "name": "vllm::moe_forward_shared",
+            "count": 80,
+            "inclusive_sum_us": 222342.74,
+            "max_us": 3826.15
+          },
+          {
+            "process": "Python",
+            "name": "ChunkGatedDeltaRuleFunction",
+            "count": 60,
+            "inclusive_sum_us": 202487.17,
+            "max_us": 3710.56
+          },
+          {
+            "process": "Python",
+            "name": "Event::synchronize",
+            "count": 9,
+            "inclusive_sum_us": 111825.77,
+            "max_us": 26957.87
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtSynchronizeEvent",
+            "count": 9,
+            "inclusive_sum_us": 111243.67,
+            "max_us": 26899.98
+          },
+          {
+            "process": "Python",
+            "name": "aten::copy_",
+            "count": 2133,
+            "inclusive_sum_us": 55261.46,
+            "max_us": 3818.71
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclmdlRIExecuteAsync",
+            "count": 7,
+            "inclusive_sum_us": 42603.92,
+            "max_us": 39935.47
+          },
+          {
+            "process": "Python",
+            "name": "Event::record",
+            "count": 285,
+            "inclusive_sum_us": 25769.73,
+            "max_us": 585.56
+          },
+          {
+            "process": "Python",
+            "name": "Event::wait",
+            "count": 280,
+            "inclusive_sum_us": 19438.92,
+            "max_us": 101.74
+          },
+          {
+            "process": "Python",
+            "name": "aten::_to_copy",
+            "count": 477,
+            "inclusive_sum_us": 15472.94,
+            "max_us": 3855.07
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtRecordEvent",
+            "count": 804,
+            "inclusive_sum_us": 8258.69,
+            "max_us": 50.15
+          },
+          {
+            "process": "Python",
+            "name": "vllm::all_gather",
+            "count": 9,
+            "inclusive_sum_us": 3284.0,
+            "max_us": 734.54
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtStreamWaitEvent",
+            "count": 622,
+            "inclusive_sum_us": 3195.84,
+            "max_us": 16.4
+          },
+          {
+            "process": "Python",
+            "name": "aten::argmax",
+            "count": 18,
+            "inclusive_sum_us": 1099.46,
+            "max_us": 144.71
+          },
+          {
+            "process": "Python",
+            "name": "aten::item",
+            "count": 279,
+            "inclusive_sum_us": 800.09,
+            "max_us": 18.92
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtSynchronizeStreamWithTimeout",
+            "count": 49,
+            "inclusive_sum_us": 256.66,
+            "max_us": 22.01
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclmdlRICaptureTaskUpdateEnd",
+            "count": 70,
+            "inclusive_sum_us": 177.88,
+            "max_us": 5.21
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclmdlRICaptureTaskUpdateBegin",
+            "count": 70,
+            "inclusive_sum_us": 168.89,
+            "max_us": 6.89
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtSynchronizeDeviceWithTimeout",
+            "count": 1,
+            "inclusive_sum_us": 38.37,
+            "max_us": 38.37
+          }
+        ],
+        "top_host_inclusive_scopes": [
+          {
+            "process": "Python",
+            "name": "npu_fx_compiler inference",
+            "count": 1,
+            "inclusive_sum_us": 360709.29,
+            "max_us": 360709.29
+          },
+          {
+            "process": "Python",
+            "name": "vllm::qwen_gdn_attention_core",
+            "count": 60,
+            "inclusive_sum_us": 300921.01,
+            "max_us": 5571.41
+          },
+          {
+            "process": "Python",
+            "name": "vllm::moe_forward_shared",
+            "count": 80,
+            "inclusive_sum_us": 222342.74,
+            "max_us": 3826.15
+          },
+          {
+            "process": "Python",
+            "name": "ChunkGatedDeltaRuleFunction",
+            "count": 60,
+            "inclusive_sum_us": 202487.17,
+            "max_us": 3710.56
+          },
+          {
+            "process": "CANN",
+            "name": "Node@launch",
+            "count": 5896,
+            "inclusive_sum_us": 194612.08,
+            "max_us": 1153.05
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@hcom_allReduce_",
+            "count": 162,
+            "inclusive_sum_us": 140824.58,
+            "max_us": 1153.05
+          },
+          {
+            "process": "Python",
+            "name": "Event::synchronize",
+            "count": 9,
+            "inclusive_sum_us": 111825.77,
+            "max_us": 26957.87
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtSynchronizeEvent",
+            "count": 9,
+            "inclusive_sum_us": 111243.67,
+            "max_us": 26899.98
+          },
+          {
+            "process": "Python",
+            "name": "aten::copy_",
+            "count": 2133,
+            "inclusive_sum_us": 55261.46,
+            "max_us": 3818.71
+          },
+          {
+            "process": "Python",
+            "name": "empty_tensor",
+            "count": 6725,
+            "inclusive_sum_us": 47235.66,
+            "max_us": 484.86
+          },
+          {
+            "process": "Python",
+            "name": "aten::clone",
+            "count": 1265,
+            "inclusive_sum_us": 43957.3,
+            "max_us": 365.31
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclmdlRIExecuteAsync",
+            "count": 7,
+            "inclusive_sum_us": 42603.92,
+            "max_us": 39935.47
+          },
+          {
+            "process": "Python",
+            "name": "vllm::unquantized_gemm",
+            "count": 540,
+            "inclusive_sum_us": 36731.6,
+            "max_us": 114.18
+          },
+          {
+            "process": "Python",
+            "name": "aten::contiguous",
+            "count": 900,
+            "inclusive_sum_us": 32450.0,
+            "max_us": 73.47
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtLaunchKernelWithHostArgs",
+            "count": 5096,
+            "inclusive_sum_us": 31615.26,
+            "max_us": 44.9
+          },
+          {
+            "process": "Python",
+            "name": "aten::linear",
+            "count": 549,
+            "inclusive_sum_us": 28839.98,
+            "max_us": 371.42
+          },
+          {
+            "process": "Python",
+            "name": "Event::record",
+            "count": 285,
+            "inclusive_sum_us": 25769.73,
+            "max_us": 585.56
+          },
+          {
+            "process": "Python",
+            "name": "vllm::all_reduce",
+            "count": 162,
+            "inclusive_sum_us": 24986.98,
+            "max_us": 244.86
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclnnInplaceCopy",
+            "count": 1675,
+            "inclusive_sum_us": 20826.78,
+            "max_us": 74.11
+          },
+          {
+            "process": "Python",
+            "name": "aten::matmul",
+            "count": 549,
+            "inclusive_sum_us": 20317.25,
+            "max_us": 342.06
+          },
+          {
+            "process": "CANN",
+            "name": "Communication@Launch_Ffts",
+            "count": 171,
+            "inclusive_sum_us": 20299.35,
+            "max_us": 149.71
+          },
+          {
+            "process": "Python",
+            "name": "Event::wait",
+            "count": 280,
+            "inclusive_sum_us": 19438.92,
+            "max_us": 101.74
+          },
+          {
+            "process": "Python",
+            "name": "aten::empty",
+            "count": 2026,
+            "inclusive_sum_us": 19199.73,
+            "max_us": 40.22
+          },
+          {
+            "process": "Python",
+            "name": "aten::to",
+            "count": 1330,
+            "inclusive_sum_us": 17214.510000000002,
+            "max_us": 3857.51
+          },
+          {
+            "process": "Python",
+            "name": "vllm::maybe_all_reduce_tensor_model_parallel",
+            "count": 80,
+            "inclusive_sum_us": 15545.76,
+            "max_us": 225.17
+          }
+        ],
+        "fx_inference_ranges": [
+          {
+            "ts_us": "1791692920644994.700",
+            "dur_us": 360709.29
+          }
+        ],
+        "device": {
+          "ai_core": {
+            "count": 16750,
+            "active_union_us": 294586.68,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 1033811.26,
+            "active_fraction_of_kernel_span": 0.2849520907713851
+          }
+        },
+        "compute_by_physical_stream": {
+          "physical:45": {
+            "count": 5401,
+            "active_union_us": 232176.44,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 884164.72,
+            "active_fraction_of_kernel_span": 0.26259410124394017
+          },
+          "physical:44": {
+            "count": 254,
+            "active_union_us": 2374.44,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 627367.66,
+            "active_fraction_of_kernel_span": 0.003784766336218223
+          },
+          "physical:0": {
+            "count": 4395,
+            "active_union_us": 23144.34,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 284400.92,
+            "active_fraction_of_kernel_span": 0.08137927261276089
+          },
+          "physical:2": {
+            "count": 6700,
+            "active_union_us": 36891.46,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 96857.94,
+            "active_fraction_of_kernel_span": 0.380882145542224
+          }
+        },
+        "top_device_compute_operations": [
+          {
+            "name": "aclnnMatmul_MatMulCommon_MatMulV2",
+            "count": 2439,
+            "duration_sum_us": 39172.36
+          },
+          {
+            "name": "aclnnChunkGatedDeltaRuleFwdH_ChunkGatedDeltaRuleFwdH_ChunkGatedDeltaRuleFwdH",
+            "count": 60,
+            "duration_sum_us": 28333.68
+          },
+          {
+            "name": "aclnnGroupedMatmulV5_GroupedMatmul_GroupedMatmul",
+            "count": 720,
+            "duration_sum_us": 26070.84
+          },
+          {
+            "name": "AddRmsNormBias",
+            "count": 720,
+            "duration_sum_us": 24975.06
+          },
+          {
+            "name": "aclnnInplaceCopy_TransposeAiCore_Transpose",
+            "count": 844,
+            "duration_sum_us": 14583.94
+          },
+          {
+            "name": "SwiGlu",
+            "count": 720,
+            "duration_sum_us": 14165.64
+          },
+          {
+            "name": "MoeGatingTopK",
+            "count": 360,
+            "duration_sum_us": 13695.1
+          },
+          {
+            "name": "aclnnMoeInitRoutingV3_MoeInitRoutingV3_MoeInitRoutingV3",
+            "count": 360,
+            "duration_sum_us": 12946.46
+          },
+          {
+            "name": "FusedInferAttentionScore",
+            "count": 90,
+            "duration_sum_us": 10844.52
+          },
+          {
+            "name": "aclnnIndex_IndexAiCore_Index",
+            "count": 528,
+            "duration_sum_us": 10500.98
+          },
+          {
+            "name": "recompute_w_u_fwd_kernel",
+            "count": 60,
+            "duration_sum_us": 8846.3
+          },
+          {
+            "name": "merge_16x16_to_64x64_inverse_kernel",
+            "count": 60,
+            "duration_sum_us": 7272.9
+          },
+          {
+            "name": "aclnnMul_MulAiCore_Mul",
+            "count": 819,
+            "duration_sum_us": 7176.36
+          },
+          {
+            "name": "CausalConv1d",
+            "count": 270,
+            "duration_sum_us": 6053.3
+          },
+          {
+            "name": "MoeTokenUnpermute",
+            "count": 360,
+            "duration_sum_us": 4891.46
+          },
+          {
+            "name": "split_qkv_rmsnorm_mrope_kernel",
+            "count": 90,
+            "duration_sum_us": 4702.12
+          },
+          {
+            "name": "fused_gdn_gating_kernel",
+            "count": 270,
+            "duration_sum_us": 4680.72
+          },
+          {
+            "name": "aclnnChunkFwdO_ChunkFwdO_ChunkFwdO",
+            "count": 60,
+            "duration_sum_us": 4644.0599999999995
+          },
+          {
+            "name": "aclnnContiguous_TransposeAiCore_Transpose",
+            "count": 270,
+            "duration_sum_us": 4419.84
+          },
+          {
+            "name": "aclnnCat_ConcatD_ConcatD",
+            "count": 270,
+            "duration_sum_us": 4404.84
+          }
+        ]
+      },
+      {
+        "rank": 1,
+        "source": "local-results/tp8-contention/old-profile/dp0_pp0_tp1_dcp0_ep1_rank1_27447_20261011042840035_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+        "sha256": "89a1d7a70c1a9cf9978014ff1f3f6c5a2985b18769c9bbd174902ee4d7c58fff",
+        "trace_event_count": 275662,
+        "selected_host_scopes": [
+          {
+            "process": "Python",
+            "name": "npu_fx_compiler inference",
+            "count": 1,
+            "inclusive_sum_us": 371966.09,
+            "max_us": 371966.09
+          },
+          {
+            "process": "Python",
+            "name": "vllm::qwen_gdn_attention_core",
+            "count": 60,
+            "inclusive_sum_us": 312463.16,
+            "max_us": 10370.95
+          },
+          {
+            "process": "Python",
+            "name": "vllm::moe_forward_shared",
+            "count": 80,
+            "inclusive_sum_us": 228149.99,
+            "max_us": 3481.73
+          },
+          {
+            "process": "Python",
+            "name": "ChunkGatedDeltaRuleFunction",
+            "count": 60,
+            "inclusive_sum_us": 206069.73,
+            "max_us": 3817.1
+          },
+          {
+            "process": "Python",
+            "name": "Event::synchronize",
+            "count": 9,
+            "inclusive_sum_us": 86620.42,
+            "max_us": 15932.82
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtSynchronizeEvent",
+            "count": 9,
+            "inclusive_sum_us": 86069.79,
+            "max_us": 15856.55
+          },
+          {
+            "process": "Python",
+            "name": "aten::copy_",
+            "count": 2133,
+            "inclusive_sum_us": 53607.58,
+            "max_us": 2431.43
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclmdlRIExecuteAsync",
+            "count": 7,
+            "inclusive_sum_us": 46532.4,
+            "max_us": 43595.57
+          },
+          {
+            "process": "Python",
+            "name": "Event::record",
+            "count": 285,
+            "inclusive_sum_us": 27286.32,
+            "max_us": 716.99
+          },
+          {
+            "process": "Python",
+            "name": "Event::wait",
+            "count": 280,
+            "inclusive_sum_us": 19835.57,
+            "max_us": 93.23
+          },
+          {
+            "process": "Python",
+            "name": "aten::_to_copy",
+            "count": 477,
+            "inclusive_sum_us": 15065.97,
+            "max_us": 2456.64
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtRecordEvent",
+            "count": 804,
+            "inclusive_sum_us": 8925.57,
+            "max_us": 77.22
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtStreamWaitEvent",
+            "count": 622,
+            "inclusive_sum_us": 3496.69,
+            "max_us": 29.73
+          },
+          {
+            "process": "Python",
+            "name": "vllm::all_gather",
+            "count": 9,
+            "inclusive_sum_us": 3303.51,
+            "max_us": 803.04
+          },
+          {
+            "process": "Python",
+            "name": "aten::argmax",
+            "count": 18,
+            "inclusive_sum_us": 1100.72,
+            "max_us": 144.09
+          },
+          {
+            "process": "Python",
+            "name": "aten::item",
+            "count": 279,
+            "inclusive_sum_us": 861.63,
+            "max_us": 14.61
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtSynchronizeStreamWithTimeout",
+            "count": 49,
+            "inclusive_sum_us": 259.17,
+            "max_us": 22.42
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclmdlRICaptureTaskUpdateEnd",
+            "count": 70,
+            "inclusive_sum_us": 199.27,
+            "max_us": 5.05
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclmdlRICaptureTaskUpdateBegin",
+            "count": 70,
+            "inclusive_sum_us": 173.73,
+            "max_us": 7.11
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtSynchronizeDeviceWithTimeout",
+            "count": 1,
+            "inclusive_sum_us": 47.16,
+            "max_us": 47.16
+          }
+        ],
+        "top_host_inclusive_scopes": [
+          {
+            "process": "Python",
+            "name": "npu_fx_compiler inference",
+            "count": 1,
+            "inclusive_sum_us": 371966.09,
+            "max_us": 371966.09
+          },
+          {
+            "process": "Python",
+            "name": "vllm::qwen_gdn_attention_core",
+            "count": 60,
+            "inclusive_sum_us": 312463.16,
+            "max_us": 10370.95
+          },
+          {
+            "process": "Python",
+            "name": "vllm::moe_forward_shared",
+            "count": 80,
+            "inclusive_sum_us": 228149.99,
+            "max_us": 3481.73
+          },
+          {
+            "process": "Python",
+            "name": "ChunkGatedDeltaRuleFunction",
+            "count": 60,
+            "inclusive_sum_us": 206069.73,
+            "max_us": 3817.1
+          },
+          {
+            "process": "CANN",
+            "name": "Node@launch",
+            "count": 5896,
+            "inclusive_sum_us": 186327.83,
+            "max_us": 1094.1
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@hcom_allReduce_",
+            "count": 162,
+            "inclusive_sum_us": 132130.31,
+            "max_us": 1094.1
+          },
+          {
+            "process": "Python",
+            "name": "Event::synchronize",
+            "count": 9,
+            "inclusive_sum_us": 86620.42,
+            "max_us": 15932.82
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtSynchronizeEvent",
+            "count": 9,
+            "inclusive_sum_us": 86069.79,
+            "max_us": 15856.55
+          },
+          {
+            "process": "Python",
+            "name": "aten::copy_",
+            "count": 2133,
+            "inclusive_sum_us": 53607.58,
+            "max_us": 2431.43
+          },
+          {
+            "process": "Python",
+            "name": "empty_tensor",
+            "count": 6725,
+            "inclusive_sum_us": 46534.62,
+            "max_us": 462.7
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclmdlRIExecuteAsync",
+            "count": 7,
+            "inclusive_sum_us": 46532.4,
+            "max_us": 43595.57
+          },
+          {
+            "process": "Python",
+            "name": "aten::clone",
+            "count": 1265,
+            "inclusive_sum_us": 43763.28,
+            "max_us": 433.11
+          },
+          {
+            "process": "Python",
+            "name": "vllm::unquantized_gemm",
+            "count": 540,
+            "inclusive_sum_us": 38290.38,
+            "max_us": 101.31
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtLaunchKernelWithHostArgs",
+            "count": 5096,
+            "inclusive_sum_us": 32591.64,
+            "max_us": 49.61
+          },
+          {
+            "process": "Python",
+            "name": "aten::contiguous",
+            "count": 900,
+            "inclusive_sum_us": 32144.68,
+            "max_us": 73.06
+          },
+          {
+            "process": "Python",
+            "name": "aten::linear",
+            "count": 549,
+            "inclusive_sum_us": 29719.97,
+            "max_us": 456.54
+          },
+          {
+            "process": "Python",
+            "name": "Event::record",
+            "count": 285,
+            "inclusive_sum_us": 27286.32,
+            "max_us": 716.99
+          },
+          {
+            "process": "Python",
+            "name": "vllm::all_reduce",
+            "count": 162,
+            "inclusive_sum_us": 26019.5,
+            "max_us": 287.56
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclnnInplaceCopy",
+            "count": 1675,
+            "inclusive_sum_us": 20169.1,
+            "max_us": 76.3
+          },
+          {
+            "process": "Python",
+            "name": "aten::matmul",
+            "count": 549,
+            "inclusive_sum_us": 19981.05,
+            "max_us": 430.93
+          },
+          {
+            "process": "Python",
+            "name": "Event::wait",
+            "count": 280,
+            "inclusive_sum_us": 19835.57,
+            "max_us": 93.23
+          },
+          {
+            "process": "CANN",
+            "name": "Communication@Launch_Ffts",
+            "count": 171,
+            "inclusive_sum_us": 19715.57,
+            "max_us": 145.75
+          },
+          {
+            "process": "Python",
+            "name": "aten::empty",
+            "count": 2026,
+            "inclusive_sum_us": 19413.01,
+            "max_us": 54.02
+          },
+          {
+            "process": "Python",
+            "name": "aten::to",
+            "count": 1330,
+            "inclusive_sum_us": 16874.78,
+            "max_us": 2459.17
+          },
+          {
+            "process": "Python",
+            "name": "vllm::maybe_all_reduce_tensor_model_parallel",
+            "count": 80,
+            "inclusive_sum_us": 16369.88,
+            "max_us": 238.39
+          }
+        ],
+        "fx_inference_ranges": [
+          {
+            "ts_us": "1791692920646228.590",
+            "dur_us": 371966.09
+          }
+        ],
+        "device": {
+          "ai_core": {
+            "count": 16750,
+            "active_union_us": 299891.672,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 1033342.374,
+            "active_fraction_of_kernel_span": 0.2902152079945577
+          }
+        },
+        "compute_by_physical_stream": {
+          "physical:45": {
+            "count": 5401,
+            "active_union_us": 235198.648,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 883743.023,
+            "active_fraction_of_kernel_span": 0.266139185123728
+          },
+          "physical:44": {
+            "count": 254,
+            "active_union_us": 2373.633,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 627273.587,
+            "active_fraction_of_kernel_span": 0.003784047422357032
+          },
+          "physical:0": {
+            "count": 4395,
+            "active_union_us": 24118.748,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 283998.106,
+            "active_fraction_of_kernel_span": 0.08492573538500992
+          },
+          "physical:2": {
+            "count": 6700,
+            "active_union_us": 38200.643,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 92667.388,
+            "active_fraction_of_kernel_span": 0.41223394577604794
+          }
+        },
+        "top_device_compute_operations": [
+          {
+            "name": "aclnnMatmul_MatMulCommon_MatMulV2",
+            "count": 2439,
+            "duration_sum_us": 39281.001
+          },
+          {
+            "name": "aclnnChunkGatedDeltaRuleFwdH_ChunkGatedDeltaRuleFwdH_ChunkGatedDeltaRuleFwdH",
+            "count": 60,
+            "duration_sum_us": 29287.168
+          },
+          {
+            "name": "aclnnGroupedMatmulV5_GroupedMatmul_GroupedMatmul",
+            "count": 720,
+            "duration_sum_us": 27306.579
+          },
+          {
+            "name": "AddRmsNormBias",
+            "count": 720,
+            "duration_sum_us": 25151.912
+          },
+          {
+            "name": "aclnnInplaceCopy_TransposeAiCore_Transpose",
+            "count": 844,
+            "duration_sum_us": 15162.454
+          },
+          {
+            "name": "SwiGlu",
+            "count": 720,
+            "duration_sum_us": 14151.694
+          },
+          {
+            "name": "MoeGatingTopK",
+            "count": 360,
+            "duration_sum_us": 13579.2
+          },
+          {
+            "name": "aclnnMoeInitRoutingV3_MoeInitRoutingV3_MoeInitRoutingV3",
+            "count": 360,
+            "duration_sum_us": 13182.1
+          },
+          {
+            "name": "FusedInferAttentionScore",
+            "count": 90,
+            "duration_sum_us": 10670.724
+          },
+          {
+            "name": "aclnnIndex_IndexAiCore_Index",
+            "count": 528,
+            "duration_sum_us": 10295.615
+          },
+          {
+            "name": "recompute_w_u_fwd_kernel",
+            "count": 60,
+            "duration_sum_us": 8798.303
+          },
+          {
+            "name": "merge_16x16_to_64x64_inverse_kernel",
+            "count": 60,
+            "duration_sum_us": 7333.716
+          },
+          {
+            "name": "aclnnMul_MulAiCore_Mul",
+            "count": 819,
+            "duration_sum_us": 7202.405
+          },
+          {
+            "name": "CausalConv1d",
+            "count": 270,
+            "duration_sum_us": 6155.042
+          },
+          {
+            "name": "aclnnContiguous_TransposeAiCore_Transpose",
+            "count": 270,
+            "duration_sum_us": 5759.381
+          },
+          {
+            "name": "fused_gdn_gating_kernel",
+            "count": 270,
+            "duration_sum_us": 5135.902
+          },
+          {
+            "name": "MoeTokenUnpermute",
+            "count": 360,
+            "duration_sum_us": 4999.066
+          },
+          {
+            "name": "aclnnCat_ConcatD_ConcatD",
+            "count": 270,
+            "duration_sum_us": 4874.914
+          },
+          {
+            "name": "split_qkv_rmsnorm_mrope_kernel",
+            "count": 90,
+            "duration_sum_us": 4664.687
+          },
+          {
+            "name": "aclnnChunkFwdO_ChunkFwdO_ChunkFwdO",
+            "count": 60,
+            "duration_sum_us": 4658.548
+          }
+        ]
+      },
+      {
+        "rank": 2,
+        "source": "local-results/tp8-contention/old-profile/dp0_pp0_tp2_dcp0_ep2_rank2_27448_20261011042840034_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+        "sha256": "152b1a4e93dc1df1c70b7776c6b024f82bc89d77c8093a858a239a6360d9fe78",
+        "trace_event_count": 275662,
+        "selected_host_scopes": [
+          {
+            "process": "Python",
+            "name": "npu_fx_compiler inference",
+            "count": 1,
+            "inclusive_sum_us": 368887.58,
+            "max_us": 368887.58
+          },
+          {
+            "process": "Python",
+            "name": "vllm::qwen_gdn_attention_core",
+            "count": 60,
+            "inclusive_sum_us": 301130.12,
+            "max_us": 6630.04
+          },
+          {
+            "process": "Python",
+            "name": "vllm::moe_forward_shared",
+            "count": 80,
+            "inclusive_sum_us": 223946.38,
+            "max_us": 3489.88
+          },
+          {
+            "process": "Python",
+            "name": "ChunkGatedDeltaRuleFunction",
+            "count": 60,
+            "inclusive_sum_us": 202618.99,
+            "max_us": 5010.11
+          },
+          {
+            "process": "Python",
+            "name": "Event::synchronize",
+            "count": 9,
+            "inclusive_sum_us": 94111.77,
+            "max_us": 17312.07
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtSynchronizeEvent",
+            "count": 9,
+            "inclusive_sum_us": 93525.7,
+            "max_us": 17248.27
+          },
+          {
+            "process": "Python",
+            "name": "aten::copy_",
+            "count": 2133,
+            "inclusive_sum_us": 52505.83,
+            "max_us": 3418.72
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclmdlRIExecuteAsync",
+            "count": 7,
+            "inclusive_sum_us": 47272.57,
+            "max_us": 44381.71
+          },
+          {
+            "process": "Python",
+            "name": "Event::record",
+            "count": 285,
+            "inclusive_sum_us": 26318.43,
+            "max_us": 730.16
+          },
+          {
+            "process": "Python",
+            "name": "Event::wait",
+            "count": 280,
+            "inclusive_sum_us": 19656.12,
+            "max_us": 113.34
+          },
+          {
+            "process": "Python",
+            "name": "aten::_to_copy",
+            "count": 477,
+            "inclusive_sum_us": 14865.6,
+            "max_us": 3445.15
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtRecordEvent",
+            "count": 804,
+            "inclusive_sum_us": 8493.99,
+            "max_us": 82.6
+          },
+          {
+            "process": "Python",
+            "name": "vllm::all_gather",
+            "count": 9,
+            "inclusive_sum_us": 3333.77,
+            "max_us": 803.17
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtStreamWaitEvent",
+            "count": 622,
+            "inclusive_sum_us": 3313.95,
+            "max_us": 17.66
+          },
+          {
+            "process": "Python",
+            "name": "aten::argmax",
+            "count": 18,
+            "inclusive_sum_us": 1103.75,
+            "max_us": 159.01
+          },
+          {
+            "process": "Python",
+            "name": "aten::item",
+            "count": 279,
+            "inclusive_sum_us": 786.0,
+            "max_us": 16.43
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtSynchronizeStreamWithTimeout",
+            "count": 49,
+            "inclusive_sum_us": 244.43,
+            "max_us": 24.05
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclmdlRICaptureTaskUpdateEnd",
+            "count": 70,
+            "inclusive_sum_us": 176.36,
+            "max_us": 4.95
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclmdlRICaptureTaskUpdateBegin",
+            "count": 70,
+            "inclusive_sum_us": 165.84,
+            "max_us": 7.44
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtSynchronizeDeviceWithTimeout",
+            "count": 1,
+            "inclusive_sum_us": 39.25,
+            "max_us": 39.25
+          }
+        ],
+        "top_host_inclusive_scopes": [
+          {
+            "process": "Python",
+            "name": "npu_fx_compiler inference",
+            "count": 1,
+            "inclusive_sum_us": 368887.58,
+            "max_us": 368887.58
+          },
+          {
+            "process": "Python",
+            "name": "vllm::qwen_gdn_attention_core",
+            "count": 60,
+            "inclusive_sum_us": 301130.12,
+            "max_us": 6630.04
+          },
+          {
+            "process": "Python",
+            "name": "vllm::moe_forward_shared",
+            "count": 80,
+            "inclusive_sum_us": 223946.38,
+            "max_us": 3489.88
+          },
+          {
+            "process": "CANN",
+            "name": "Node@launch",
+            "count": 5896,
+            "inclusive_sum_us": 205330.97,
+            "max_us": 4435.43
+          },
+          {
+            "process": "Python",
+            "name": "ChunkGatedDeltaRuleFunction",
+            "count": 60,
+            "inclusive_sum_us": 202618.99,
+            "max_us": 5010.11
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@hcom_allReduce_",
+            "count": 162,
+            "inclusive_sum_us": 148540.36,
+            "max_us": 4435.43
+          },
+          {
+            "process": "Python",
+            "name": "Event::synchronize",
+            "count": 9,
+            "inclusive_sum_us": 94111.77,
+            "max_us": 17312.07
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtSynchronizeEvent",
+            "count": 9,
+            "inclusive_sum_us": 93525.7,
+            "max_us": 17248.27
+          },
+          {
+            "process": "Python",
+            "name": "aten::copy_",
+            "count": 2133,
+            "inclusive_sum_us": 52505.83,
+            "max_us": 3418.72
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclmdlRIExecuteAsync",
+            "count": 7,
+            "inclusive_sum_us": 47272.57,
+            "max_us": 44381.71
+          },
+          {
+            "process": "Python",
+            "name": "empty_tensor",
+            "count": 6725,
+            "inclusive_sum_us": 46019.36,
+            "max_us": 458.65
+          },
+          {
+            "process": "Python",
+            "name": "aten::clone",
+            "count": 1265,
+            "inclusive_sum_us": 41713.92,
+            "max_us": 392.54
+          },
+          {
+            "process": "Python",
+            "name": "vllm::unquantized_gemm",
+            "count": 540,
+            "inclusive_sum_us": 36775.38,
+            "max_us": 115.12
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtLaunchKernelWithHostArgs",
+            "count": 5096,
+            "inclusive_sum_us": 33352.5,
+            "max_us": 53.54
+          },
+          {
+            "process": "Python",
+            "name": "aten::contiguous",
+            "count": 900,
+            "inclusive_sum_us": 30834.69,
+            "max_us": 75.2
+          },
+          {
+            "process": "Python",
+            "name": "aten::linear",
+            "count": 549,
+            "inclusive_sum_us": 28899.24,
+            "max_us": 495.22
+          },
+          {
+            "process": "Python",
+            "name": "Event::record",
+            "count": 285,
+            "inclusive_sum_us": 26318.43,
+            "max_us": 730.16
+          },
+          {
+            "process": "Python",
+            "name": "vllm::all_reduce",
+            "count": 162,
+            "inclusive_sum_us": 25179.44,
+            "max_us": 271.31
+          },
+          {
+            "process": "CANN",
+            "name": "Communication@Launch_Ffts",
+            "count": 171,
+            "inclusive_sum_us": 24370.11,
+            "max_us": 3359.79
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclnnInplaceCopy",
+            "count": 1675,
+            "inclusive_sum_us": 21736.24,
+            "max_us": 77.69
+          },
+          {
+            "process": "Python",
+            "name": "aten::matmul",
+            "count": 549,
+            "inclusive_sum_us": 20142.69,
+            "max_us": 461.08
+          },
+          {
+            "process": "Python",
+            "name": "Event::wait",
+            "count": 280,
+            "inclusive_sum_us": 19656.12,
+            "max_us": 113.34
+          },
+          {
+            "process": "Python",
+            "name": "aten::empty",
+            "count": 2026,
+            "inclusive_sum_us": 18757.49,
+            "max_us": 46.81
+          },
+          {
+            "process": "Python",
+            "name": "aten::to",
+            "count": 1330,
+            "inclusive_sum_us": 16509.76,
+            "max_us": 3447.0
+          },
+          {
+            "process": "Python",
+            "name": "vllm::maybe_all_reduce_tensor_model_parallel",
+            "count": 80,
+            "inclusive_sum_us": 15711.7,
+            "max_us": 224.98
+          }
+        ],
+        "fx_inference_ranges": [
+          {
+            "ts_us": "1791692920646446.450",
+            "dur_us": 368887.58
+          }
+        ],
+        "device": {
+          "ai_core": {
+            "count": 16750,
+            "active_union_us": 298360.04,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 1033108.26,
+            "active_fraction_of_kernel_span": 0.28879842660439087
+          }
+        },
+        "compute_by_physical_stream": {
+          "physical:45": {
+            "count": 5401,
+            "active_union_us": 234314.22,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 883458.14,
+            "active_fraction_of_kernel_span": 0.2652239074960586
+          },
+          "physical:44": {
+            "count": 254,
+            "active_union_us": 2394.02,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 621026.58,
+            "active_fraction_of_kernel_span": 0.0038549396710202003
+          },
+          "physical:0": {
+            "count": 4395,
+            "active_union_us": 23627.68,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 282387.08,
+            "active_fraction_of_kernel_span": 0.08367125011526731
+          },
+          "physical:2": {
+            "count": 6700,
+            "active_union_us": 38024.12,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 91946.62,
+            "active_fraction_of_kernel_span": 0.4135455985222731
+          }
+        },
+        "top_device_compute_operations": [
+          {
+            "name": "aclnnMatmul_MatMulCommon_MatMulV2",
+            "count": 2439,
+            "duration_sum_us": 38973.96
+          },
+          {
+            "name": "aclnnChunkGatedDeltaRuleFwdH_ChunkGatedDeltaRuleFwdH_ChunkGatedDeltaRuleFwdH",
+            "count": 60,
+            "duration_sum_us": 28198.46
+          },
+          {
+            "name": "aclnnGroupedMatmulV5_GroupedMatmul_GroupedMatmul",
+            "count": 720,
+            "duration_sum_us": 26767.24
+          },
+          {
+            "name": "AddRmsNormBias",
+            "count": 720,
+            "duration_sum_us": 25033.84
+          },
+          {
+            "name": "aclnnInplaceCopy_TransposeAiCore_Transpose",
+            "count": 844,
+            "duration_sum_us": 15130.04
+          },
+          {
+            "name": "SwiGlu",
+            "count": 720,
+            "duration_sum_us": 14244.0
+          },
+          {
+            "name": "MoeGatingTopK",
+            "count": 360,
+            "duration_sum_us": 13511.82
+          },
+          {
+            "name": "aclnnMoeInitRoutingV3_MoeInitRoutingV3_MoeInitRoutingV3",
+            "count": 360,
+            "duration_sum_us": 13228.22
+          },
+          {
+            "name": "FusedInferAttentionScore",
+            "count": 90,
+            "duration_sum_us": 10913.52
+          },
+          {
+            "name": "aclnnIndex_IndexAiCore_Index",
+            "count": 528,
+            "duration_sum_us": 10447.18
+          },
+          {
+            "name": "recompute_w_u_fwd_kernel",
+            "count": 60,
+            "duration_sum_us": 8835.1
+          },
+          {
+            "name": "aclnnMul_MulAiCore_Mul",
+            "count": 819,
+            "duration_sum_us": 7569.46
+          },
+          {
+            "name": "merge_16x16_to_64x64_inverse_kernel",
+            "count": 60,
+            "duration_sum_us": 7326.32
+          },
+          {
+            "name": "CausalConv1d",
+            "count": 270,
+            "duration_sum_us": 6143.74
+          },
+          {
+            "name": "aclnnContiguous_TransposeAiCore_Transpose",
+            "count": 270,
+            "duration_sum_us": 5714.74
+          },
+          {
+            "name": "MoeTokenUnpermute",
+            "count": 360,
+            "duration_sum_us": 4965.22
+          },
+          {
+            "name": "fused_gdn_gating_kernel",
+            "count": 270,
+            "duration_sum_us": 4873.44
+          },
+          {
+            "name": "split_qkv_rmsnorm_mrope_kernel",
+            "count": 90,
+            "duration_sum_us": 4710.02
+          },
+          {
+            "name": "aclnnChunkFwdO_ChunkFwdO_ChunkFwdO",
+            "count": 60,
+            "duration_sum_us": 4693.84
+          },
+          {
+            "name": "aclnnCat_ConcatD_ConcatD",
+            "count": 270,
+            "duration_sum_us": 4644.72
+          }
+        ]
+      },
+      {
+        "rank": 3,
+        "source": "local-results/tp8-contention/old-profile/dp0_pp0_tp3_dcp0_ep3_rank3_27449_20261011042840035_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+        "sha256": "544928d24ed84ba2b22fc431393e32f7af6f07daffdf1e9688fb2d50007fc7f5",
+        "trace_event_count": 275662,
+        "selected_host_scopes": [
+          {
+            "process": "Python",
+            "name": "npu_fx_compiler inference",
+            "count": 1,
+            "inclusive_sum_us": 373961.76,
+            "max_us": 373961.76
+          },
+          {
+            "process": "Python",
+            "name": "vllm::qwen_gdn_attention_core",
+            "count": 60,
+            "inclusive_sum_us": 308268.15,
+            "max_us": 5974.73
+          },
+          {
+            "process": "Python",
+            "name": "vllm::moe_forward_shared",
+            "count": 80,
+            "inclusive_sum_us": 228553.93,
+            "max_us": 3531.18
+          },
+          {
+            "process": "Python",
+            "name": "ChunkGatedDeltaRuleFunction",
+            "count": 60,
+            "inclusive_sum_us": 206663.83,
+            "max_us": 3737.24
+          },
+          {
+            "process": "Python",
+            "name": "Event::synchronize",
+            "count": 9,
+            "inclusive_sum_us": 93563.54,
+            "max_us": 18067.13
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtSynchronizeEvent",
+            "count": 9,
+            "inclusive_sum_us": 93005.14,
+            "max_us": 17986.18
+          },
+          {
+            "process": "Python",
+            "name": "aten::copy_",
+            "count": 2133,
+            "inclusive_sum_us": 53388.69,
+            "max_us": 3408.18
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclmdlRIExecuteAsync",
+            "count": 7,
+            "inclusive_sum_us": 43753.54,
+            "max_us": 40922.86
+          },
+          {
+            "process": "Python",
+            "name": "Event::record",
+            "count": 285,
+            "inclusive_sum_us": 27637.02,
+            "max_us": 732.65
+          },
+          {
+            "process": "Python",
+            "name": "Event::wait",
+            "count": 280,
+            "inclusive_sum_us": 20350.2,
+            "max_us": 116.78
+          },
+          {
+            "process": "Python",
+            "name": "aten::_to_copy",
+            "count": 477,
+            "inclusive_sum_us": 14800.39,
+            "max_us": 3435.86
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtRecordEvent",
+            "count": 804,
+            "inclusive_sum_us": 8969.98,
+            "max_us": 133.33
+          },
+          {
+            "process": "Python",
+            "name": "vllm::all_gather",
+            "count": 9,
+            "inclusive_sum_us": 3682.2200000000003,
+            "max_us": 1106.26
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtStreamWaitEvent",
+            "count": 622,
+            "inclusive_sum_us": 3556.38,
+            "max_us": 22.93
+          },
+          {
+            "process": "Python",
+            "name": "aten::argmax",
+            "count": 18,
+            "inclusive_sum_us": 1119.34,
+            "max_us": 156.7
+          },
+          {
+            "process": "Python",
+            "name": "aten::item",
+            "count": 279,
+            "inclusive_sum_us": 950.49,
+            "max_us": 35.14
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtSynchronizeStreamWithTimeout",
+            "count": 49,
+            "inclusive_sum_us": 244.06,
+            "max_us": 19.68
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclmdlRICaptureTaskUpdateEnd",
+            "count": 70,
+            "inclusive_sum_us": 203.28,
+            "max_us": 5.63
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclmdlRICaptureTaskUpdateBegin",
+            "count": 70,
+            "inclusive_sum_us": 187.15,
+            "max_us": 8.31
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtSynchronizeDeviceWithTimeout",
+            "count": 1,
+            "inclusive_sum_us": 39.85,
+            "max_us": 39.85
+          }
+        ],
+        "top_host_inclusive_scopes": [
+          {
+            "process": "Python",
+            "name": "npu_fx_compiler inference",
+            "count": 1,
+            "inclusive_sum_us": 373961.76,
+            "max_us": 373961.76
+          },
+          {
+            "process": "Python",
+            "name": "vllm::qwen_gdn_attention_core",
+            "count": 60,
+            "inclusive_sum_us": 308268.15,
+            "max_us": 5974.73
+          },
+          {
+            "process": "Python",
+            "name": "vllm::moe_forward_shared",
+            "count": 80,
+            "inclusive_sum_us": 228553.93,
+            "max_us": 3531.18
+          },
+          {
+            "process": "Python",
+            "name": "ChunkGatedDeltaRuleFunction",
+            "count": 60,
+            "inclusive_sum_us": 206663.83,
+            "max_us": 3737.24
+          },
+          {
+            "process": "CANN",
+            "name": "Node@launch",
+            "count": 5896,
+            "inclusive_sum_us": 180423.78,
+            "max_us": 1129.5
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@hcom_allReduce_",
+            "count": 162,
+            "inclusive_sum_us": 126442.77,
+            "max_us": 1129.5
+          },
+          {
+            "process": "Python",
+            "name": "Event::synchronize",
+            "count": 9,
+            "inclusive_sum_us": 93563.54,
+            "max_us": 18067.13
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtSynchronizeEvent",
+            "count": 9,
+            "inclusive_sum_us": 93005.14,
+            "max_us": 17986.18
+          },
+          {
+            "process": "Python",
+            "name": "aten::copy_",
+            "count": 2133,
+            "inclusive_sum_us": 53388.69,
+            "max_us": 3408.18
+          },
+          {
+            "process": "Python",
+            "name": "empty_tensor",
+            "count": 6725,
+            "inclusive_sum_us": 45370.7,
+            "max_us": 478.4
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclmdlRIExecuteAsync",
+            "count": 7,
+            "inclusive_sum_us": 43753.54,
+            "max_us": 40922.86
+          },
+          {
+            "process": "Python",
+            "name": "aten::clone",
+            "count": 1265,
+            "inclusive_sum_us": 43291.72,
+            "max_us": 662.29
+          },
+          {
+            "process": "Python",
+            "name": "vllm::unquantized_gemm",
+            "count": 540,
+            "inclusive_sum_us": 37976.64,
+            "max_us": 109.41
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtLaunchKernelWithHostArgs",
+            "count": 5096,
+            "inclusive_sum_us": 32335.87,
+            "max_us": 138.43
+          },
+          {
+            "process": "Python",
+            "name": "aten::contiguous",
+            "count": 900,
+            "inclusive_sum_us": 31599.5,
+            "max_us": 79.65
+          },
+          {
+            "process": "Python",
+            "name": "aten::linear",
+            "count": 549,
+            "inclusive_sum_us": 29292.57,
+            "max_us": 504.47
+          },
+          {
+            "process": "Python",
+            "name": "Event::record",
+            "count": 285,
+            "inclusive_sum_us": 27637.02,
+            "max_us": 732.65
+          },
+          {
+            "process": "Python",
+            "name": "vllm::all_reduce",
+            "count": 162,
+            "inclusive_sum_us": 26072.95,
+            "max_us": 388.97
+          },
+          {
+            "process": "Python",
+            "name": "Event::wait",
+            "count": 280,
+            "inclusive_sum_us": 20350.2,
+            "max_us": 116.78
+          },
+          {
+            "process": "CANN",
+            "name": "Communication@Launch_Ffts",
+            "count": 171,
+            "inclusive_sum_us": 20055.6,
+            "max_us": 157.92
+          },
+          {
+            "process": "Python",
+            "name": "aten::matmul",
+            "count": 549,
+            "inclusive_sum_us": 19806.17,
+            "max_us": 468.07
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclnnInplaceCopy",
+            "count": 1675,
+            "inclusive_sum_us": 19680.02,
+            "max_us": 87.97
+          },
+          {
+            "process": "Python",
+            "name": "aten::empty",
+            "count": 2026,
+            "inclusive_sum_us": 18735.11,
+            "max_us": 38.45
+          },
+          {
+            "process": "Python",
+            "name": "aten::to",
+            "count": 1330,
+            "inclusive_sum_us": 16542.27,
+            "max_us": 3437.99
+          },
+          {
+            "process": "Python",
+            "name": "vllm::maybe_all_reduce_tensor_model_parallel",
+            "count": 80,
+            "inclusive_sum_us": 16349.41,
+            "max_us": 228.75
+          }
+        ],
+        "fx_inference_ranges": [
+          {
+            "ts_us": "1791692920647401.020",
+            "dur_us": 373961.76
+          }
+        ],
+        "device": {
+          "ai_core": {
+            "count": 16750,
+            "active_union_us": 297130.3,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 1032656.46,
+            "active_fraction_of_kernel_span": 0.28773392847414136
+          }
+        },
+        "compute_by_physical_stream": {
+          "physical:45": {
+            "count": 5401,
+            "active_union_us": 233581.28,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 883032.24,
+            "active_fraction_of_kernel_span": 0.26452180273734965
+          },
+          "physical:44": {
+            "count": 254,
+            "active_union_us": 2377.64,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 627288.28,
+            "active_fraction_of_kernel_span": 0.0037903466010874615
+          },
+          "physical:0": {
+            "count": 4395,
+            "active_union_us": 23578.38,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 284034.62,
+            "active_fraction_of_kernel_span": 0.08301234546690119
+          },
+          "physical:2": {
+            "count": 6700,
+            "active_union_us": 37593.0,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 95510.8,
+            "active_fraction_of_kernel_span": 0.39359946728537504
+          }
+        },
+        "top_device_compute_operations": [
+          {
+            "name": "aclnnMatmul_MatMulCommon_MatMulV2",
+            "count": 2439,
+            "duration_sum_us": 39264.34
+          },
+          {
+            "name": "aclnnChunkGatedDeltaRuleFwdH_ChunkGatedDeltaRuleFwdH_ChunkGatedDeltaRuleFwdH",
+            "count": 60,
+            "duration_sum_us": 28240.2
+          },
+          {
+            "name": "aclnnGroupedMatmulV5_GroupedMatmul_GroupedMatmul",
+            "count": 720,
+            "duration_sum_us": 26852.28
+          },
+          {
+            "name": "AddRmsNormBias",
+            "count": 720,
+            "duration_sum_us": 25147.16
+          },
+          {
+            "name": "aclnnInplaceCopy_TransposeAiCore_Transpose",
+            "count": 844,
+            "duration_sum_us": 14742.62
+          },
+          {
+            "name": "SwiGlu",
+            "count": 720,
+            "duration_sum_us": 14157.72
+          },
+          {
+            "name": "MoeGatingTopK",
+            "count": 360,
+            "duration_sum_us": 13459.22
+          },
+          {
+            "name": "aclnnMoeInitRoutingV3_MoeInitRoutingV3_MoeInitRoutingV3",
+            "count": 360,
+            "duration_sum_us": 13312.0
+          },
+          {
+            "name": "FusedInferAttentionScore",
+            "count": 90,
+            "duration_sum_us": 10902.56
+          },
+          {
+            "name": "aclnnIndex_IndexAiCore_Index",
+            "count": 528,
+            "duration_sum_us": 10306.14
+          },
+          {
+            "name": "recompute_w_u_fwd_kernel",
+            "count": 60,
+            "duration_sum_us": 8834.78
+          },
+          {
+            "name": "merge_16x16_to_64x64_inverse_kernel",
+            "count": 60,
+            "duration_sum_us": 7364.94
+          },
+          {
+            "name": "aclnnMul_MulAiCore_Mul",
+            "count": 819,
+            "duration_sum_us": 7227.56
+          },
+          {
+            "name": "CausalConv1d",
+            "count": 270,
+            "duration_sum_us": 6174.9800000000005
+          },
+          {
+            "name": "aclnnContiguous_TransposeAiCore_Transpose",
+            "count": 270,
+            "duration_sum_us": 5153.88
+          },
+          {
+            "name": "fused_gdn_gating_kernel",
+            "count": 270,
+            "duration_sum_us": 5065.78
+          },
+          {
+            "name": "MoeTokenUnpermute",
+            "count": 360,
+            "duration_sum_us": 4911.84
+          },
+          {
+            "name": "split_qkv_rmsnorm_mrope_kernel",
+            "count": 90,
+            "duration_sum_us": 4672.72
+          },
+          {
+            "name": "aclnnChunkFwdO_ChunkFwdO_ChunkFwdO",
+            "count": 60,
+            "duration_sum_us": 4669.14
+          },
+          {
+            "name": "aclnnCat_ConcatD_ConcatD",
+            "count": 270,
+            "duration_sum_us": 4665.94
+          }
+        ]
+      },
+      {
+        "rank": 4,
+        "source": "local-results/tp8-contention/old-profile/dp0_pp0_tp4_dcp0_ep4_rank4_27450_20261011042840034_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+        "sha256": "358b3d7f992af369c2c1069d7b676e9b0c5e3781b17ea823a6fd4e7f794ac802",
+        "trace_event_count": 275663,
+        "selected_host_scopes": [
+          {
+            "process": "Python",
+            "name": "npu_fx_compiler inference",
+            "count": 1,
+            "inclusive_sum_us": 380426.01,
+            "max_us": 380426.01
+          },
+          {
+            "process": "Python",
+            "name": "vllm::qwen_gdn_attention_core",
+            "count": 60,
+            "inclusive_sum_us": 311087.62,
+            "max_us": 7600.86
+          },
+          {
+            "process": "Python",
+            "name": "vllm::moe_forward_shared",
+            "count": 80,
+            "inclusive_sum_us": 235606.77,
+            "max_us": 10108.76
+          },
+          {
+            "process": "Python",
+            "name": "ChunkGatedDeltaRuleFunction",
+            "count": 60,
+            "inclusive_sum_us": 209564.73,
+            "max_us": 5895.28
+          },
+          {
+            "process": "Python",
+            "name": "Event::synchronize",
+            "count": 9,
+            "inclusive_sum_us": 63940.54,
+            "max_us": 14315.7
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtSynchronizeEvent",
+            "count": 9,
+            "inclusive_sum_us": 63374.57,
+            "max_us": 14257.9
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclmdlRIExecuteAsync",
+            "count": 7,
+            "inclusive_sum_us": 55072.44,
+            "max_us": 52442.29
+          },
+          {
+            "process": "Python",
+            "name": "aten::copy_",
+            "count": 2133,
+            "inclusive_sum_us": 53399.27,
+            "max_us": 2911.07
+          },
+          {
+            "process": "Python",
+            "name": "Event::record",
+            "count": 285,
+            "inclusive_sum_us": 26899.2,
+            "max_us": 687.38
+          },
+          {
+            "process": "Python",
+            "name": "Event::wait",
+            "count": 280,
+            "inclusive_sum_us": 19488.78,
+            "max_us": 93.66
+          },
+          {
+            "process": "Python",
+            "name": "aten::_to_copy",
+            "count": 477,
+            "inclusive_sum_us": 14629.03,
+            "max_us": 2975.29
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtRecordEvent",
+            "count": 804,
+            "inclusive_sum_us": 9014.13,
+            "max_us": 68.55
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtStreamWaitEvent",
+            "count": 622,
+            "inclusive_sum_us": 3557.78,
+            "max_us": 20.57
+          },
+          {
+            "process": "Python",
+            "name": "vllm::all_gather",
+            "count": 9,
+            "inclusive_sum_us": 3434.29,
+            "max_us": 996.26
+          },
+          {
+            "process": "Python",
+            "name": "aten::argmax",
+            "count": 18,
+            "inclusive_sum_us": 1383.31,
+            "max_us": 285.34
+          },
+          {
+            "process": "Python",
+            "name": "aten::item",
+            "count": 279,
+            "inclusive_sum_us": 882.11,
+            "max_us": 20.95
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtSynchronizeStreamWithTimeout",
+            "count": 49,
+            "inclusive_sum_us": 276.35,
+            "max_us": 22.67
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclmdlRICaptureTaskUpdateBegin",
+            "count": 70,
+            "inclusive_sum_us": 222.57,
+            "max_us": 37.22
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclmdlRICaptureTaskUpdateEnd",
+            "count": 70,
+            "inclusive_sum_us": 207.72,
+            "max_us": 6.64
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtSynchronizeDeviceWithTimeout",
+            "count": 1,
+            "inclusive_sum_us": 41.57,
+            "max_us": 41.57
+          }
+        ],
+        "top_host_inclusive_scopes": [
+          {
+            "process": "Python",
+            "name": "npu_fx_compiler inference",
+            "count": 1,
+            "inclusive_sum_us": 380426.01,
+            "max_us": 380426.01
+          },
+          {
+            "process": "Python",
+            "name": "vllm::qwen_gdn_attention_core",
+            "count": 60,
+            "inclusive_sum_us": 311087.62,
+            "max_us": 7600.86
+          },
+          {
+            "process": "Python",
+            "name": "vllm::moe_forward_shared",
+            "count": 80,
+            "inclusive_sum_us": 235606.77,
+            "max_us": 10108.76
+          },
+          {
+            "process": "Python",
+            "name": "ChunkGatedDeltaRuleFunction",
+            "count": 60,
+            "inclusive_sum_us": 209564.73,
+            "max_us": 5895.28
+          },
+          {
+            "process": "CANN",
+            "name": "Node@launch",
+            "count": 5896,
+            "inclusive_sum_us": 204410.92,
+            "max_us": 6287.88
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@hcom_allReduce_",
+            "count": 162,
+            "inclusive_sum_us": 146731.05,
+            "max_us": 6287.88
+          },
+          {
+            "process": "Python",
+            "name": "Event::synchronize",
+            "count": 9,
+            "inclusive_sum_us": 63940.54,
+            "max_us": 14315.7
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtSynchronizeEvent",
+            "count": 9,
+            "inclusive_sum_us": 63374.57,
+            "max_us": 14257.9
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclmdlRIExecuteAsync",
+            "count": 7,
+            "inclusive_sum_us": 55072.44,
+            "max_us": 52442.29
+          },
+          {
+            "process": "Python",
+            "name": "aten::copy_",
+            "count": 2133,
+            "inclusive_sum_us": 53399.27,
+            "max_us": 2911.07
+          },
+          {
+            "process": "Python",
+            "name": "empty_tensor",
+            "count": 6725,
+            "inclusive_sum_us": 47586.07,
+            "max_us": 544.39
+          },
+          {
+            "process": "Python",
+            "name": "aten::clone",
+            "count": 1265,
+            "inclusive_sum_us": 43139.44,
+            "max_us": 565.41
+          },
+          {
+            "process": "Python",
+            "name": "vllm::unquantized_gemm",
+            "count": 540,
+            "inclusive_sum_us": 37995.64,
+            "max_us": 112.14
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtLaunchKernelWithHostArgs",
+            "count": 5096,
+            "inclusive_sum_us": 33913.55,
+            "max_us": 67.65
+          },
+          {
+            "process": "Python",
+            "name": "aten::contiguous",
+            "count": 900,
+            "inclusive_sum_us": 31555.57,
+            "max_us": 70.07
+          },
+          {
+            "process": "Python",
+            "name": "aten::linear",
+            "count": 549,
+            "inclusive_sum_us": 29861.13,
+            "max_us": 519.29
+          },
+          {
+            "process": "Python",
+            "name": "Event::record",
+            "count": 285,
+            "inclusive_sum_us": 26899.2,
+            "max_us": 687.38
+          },
+          {
+            "process": "Python",
+            "name": "vllm::all_reduce",
+            "count": 162,
+            "inclusive_sum_us": 26618.54,
+            "max_us": 322.89
+          },
+          {
+            "process": "CANN",
+            "name": "Communication@Launch_Ffts",
+            "count": 171,
+            "inclusive_sum_us": 22017.57,
+            "max_us": 183.92
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclnnInplaceCopy",
+            "count": 1675,
+            "inclusive_sum_us": 21842.64,
+            "max_us": 98.38
+          },
+          {
+            "process": "Python",
+            "name": "aten::matmul",
+            "count": 549,
+            "inclusive_sum_us": 20237.58,
+            "max_us": 473.54
+          },
+          {
+            "process": "Python",
+            "name": "Event::wait",
+            "count": 280,
+            "inclusive_sum_us": 19488.78,
+            "max_us": 93.66
+          },
+          {
+            "process": "Python",
+            "name": "aten::empty",
+            "count": 2026,
+            "inclusive_sum_us": 19432.62,
+            "max_us": 61.68
+          },
+          {
+            "process": "Python",
+            "name": "vllm::unified_attention_with_output",
+            "count": 20,
+            "inclusive_sum_us": 18480.96,
+            "max_us": 5587.03
+          },
+          {
+            "process": "Python",
+            "name": "vllm::maybe_all_reduce_tensor_model_parallel",
+            "count": 80,
+            "inclusive_sum_us": 16522.78,
+            "max_us": 245.18
+          }
+        ],
+        "fx_inference_ranges": [
+          {
+            "ts_us": "1791692920647144.170",
+            "dur_us": 380426.01
+          }
+        ],
+        "device": {
+          "ai_core": {
+            "count": 16750,
+            "active_union_us": 297873.44,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 1033173.82,
+            "active_fraction_of_kernel_span": 0.2883091249834418
+          }
+        },
+        "compute_by_physical_stream": {
+          "physical:45": {
+            "count": 5401,
+            "active_union_us": 234802.96,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 883526.38,
+            "active_fraction_of_kernel_span": 0.2657565923498515
+          },
+          "physical:44": {
+            "count": 254,
+            "active_union_us": 2400.0,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 627197.14,
+            "active_fraction_of_kernel_span": 0.0038265480611088245
+          },
+          "physical:0": {
+            "count": 4395,
+            "active_union_us": 23443.56,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 283893.06,
+            "active_fraction_of_kernel_span": 0.08257884148347973
+          },
+          "physical:2": {
+            "count": 6700,
+            "active_union_us": 37226.92,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 83935.14,
+            "active_fraction_of_kernel_span": 0.44352007990932046
+          }
+        },
+        "top_device_compute_operations": [
+          {
+            "name": "aclnnMatmul_MatMulCommon_MatMulV2",
+            "count": 2439,
+            "duration_sum_us": 39159.52
+          },
+          {
+            "name": "aclnnChunkGatedDeltaRuleFwdH_ChunkGatedDeltaRuleFwdH_ChunkGatedDeltaRuleFwdH",
+            "count": 60,
+            "duration_sum_us": 28140.52
+          },
+          {
+            "name": "aclnnGroupedMatmulV5_GroupedMatmul_GroupedMatmul",
+            "count": 720,
+            "duration_sum_us": 26554.42
+          },
+          {
+            "name": "AddRmsNormBias",
+            "count": 720,
+            "duration_sum_us": 25116.06
+          },
+          {
+            "name": "aclnnInplaceCopy_TransposeAiCore_Transpose",
+            "count": 844,
+            "duration_sum_us": 14775.54
+          },
+          {
+            "name": "SwiGlu",
+            "count": 720,
+            "duration_sum_us": 14166.08
+          },
+          {
+            "name": "MoeGatingTopK",
+            "count": 360,
+            "duration_sum_us": 13534.52
+          },
+          {
+            "name": "aclnnMoeInitRoutingV3_MoeInitRoutingV3_MoeInitRoutingV3",
+            "count": 360,
+            "duration_sum_us": 13441.26
+          },
+          {
+            "name": "FusedInferAttentionScore",
+            "count": 90,
+            "duration_sum_us": 11005.64
+          },
+          {
+            "name": "aclnnIndex_IndexAiCore_Index",
+            "count": 528,
+            "duration_sum_us": 10843.48
+          },
+          {
+            "name": "recompute_w_u_fwd_kernel",
+            "count": 60,
+            "duration_sum_us": 8829.9
+          },
+          {
+            "name": "merge_16x16_to_64x64_inverse_kernel",
+            "count": 60,
+            "duration_sum_us": 7314.26
+          },
+          {
+            "name": "aclnnMul_MulAiCore_Mul",
+            "count": 819,
+            "duration_sum_us": 7205.02
+          },
+          {
+            "name": "CausalConv1d",
+            "count": 270,
+            "duration_sum_us": 6179.36
+          },
+          {
+            "name": "fused_gdn_gating_kernel",
+            "count": 270,
+            "duration_sum_us": 5162.92
+          },
+          {
+            "name": "MoeTokenUnpermute",
+            "count": 360,
+            "duration_sum_us": 4961.24
+          },
+          {
+            "name": "split_qkv_rmsnorm_mrope_kernel",
+            "count": 90,
+            "duration_sum_us": 4764.22
+          },
+          {
+            "name": "aclnnContiguous_TransposeAiCore_Transpose",
+            "count": 270,
+            "duration_sum_us": 4715.16
+          },
+          {
+            "name": "aclnnChunkFwdO_ChunkFwdO_ChunkFwdO",
+            "count": 60,
+            "duration_sum_us": 4693.66
+          },
+          {
+            "name": "aclnnCat_ConcatD_ConcatD",
+            "count": 270,
+            "duration_sum_us": 4243.56
+          }
+        ]
+      },
+      {
+        "rank": 5,
+        "source": "local-results/tp8-contention/old-profile/dp0_pp0_tp5_dcp0_ep5_rank5_27451_20261011042840035_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+        "sha256": "614d4941c041b24bd0b932cb8bd55a27b326f09a5e62b827144e7fbd4b1a4d0d",
+        "trace_event_count": 275662,
+        "selected_host_scopes": [
+          {
+            "process": "Python",
+            "name": "npu_fx_compiler inference",
+            "count": 1,
+            "inclusive_sum_us": 383419.66,
+            "max_us": 383419.66
+          },
+          {
+            "process": "Python",
+            "name": "vllm::qwen_gdn_attention_core",
+            "count": 60,
+            "inclusive_sum_us": 314586.32,
+            "max_us": 6173.8
+          },
+          {
+            "process": "Python",
+            "name": "vllm::moe_forward_shared",
+            "count": 80,
+            "inclusive_sum_us": 232903.2,
+            "max_us": 3727.71
+          },
+          {
+            "process": "Python",
+            "name": "ChunkGatedDeltaRuleFunction",
+            "count": 60,
+            "inclusive_sum_us": 212223.2,
+            "max_us": 4461.78
+          },
+          {
+            "process": "Python",
+            "name": "Event::synchronize",
+            "count": 9,
+            "inclusive_sum_us": 68184.39,
+            "max_us": 14299.62
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtSynchronizeEvent",
+            "count": 9,
+            "inclusive_sum_us": 67612.78,
+            "max_us": 14225.12
+          },
+          {
+            "process": "Python",
+            "name": "aten::copy_",
+            "count": 2133,
+            "inclusive_sum_us": 54881.08,
+            "max_us": 2411.34
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclmdlRIExecuteAsync",
+            "count": 7,
+            "inclusive_sum_us": 47415.42,
+            "max_us": 44547.83
+          },
+          {
+            "process": "Python",
+            "name": "Event::record",
+            "count": 285,
+            "inclusive_sum_us": 28271.79,
+            "max_us": 971.43
+          },
+          {
+            "process": "Python",
+            "name": "Event::wait",
+            "count": 280,
+            "inclusive_sum_us": 20207.91,
+            "max_us": 131.92
+          },
+          {
+            "process": "Python",
+            "name": "aten::_to_copy",
+            "count": 477,
+            "inclusive_sum_us": 14486.48,
+            "max_us": 2438.93
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtRecordEvent",
+            "count": 804,
+            "inclusive_sum_us": 8933.91,
+            "max_us": 70.98
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtStreamWaitEvent",
+            "count": 622,
+            "inclusive_sum_us": 3635.38,
+            "max_us": 48.88
+          },
+          {
+            "process": "Python",
+            "name": "vllm::all_gather",
+            "count": 9,
+            "inclusive_sum_us": 3503.31,
+            "max_us": 846.49
+          },
+          {
+            "process": "Python",
+            "name": "aten::argmax",
+            "count": 18,
+            "inclusive_sum_us": 1157.82,
+            "max_us": 159.13
+          },
+          {
+            "process": "Python",
+            "name": "aten::item",
+            "count": 279,
+            "inclusive_sum_us": 855.3,
+            "max_us": 11.82
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtSynchronizeStreamWithTimeout",
+            "count": 49,
+            "inclusive_sum_us": 262.29,
+            "max_us": 22.23
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclmdlRICaptureTaskUpdateEnd",
+            "count": 70,
+            "inclusive_sum_us": 208.41,
+            "max_us": 6.01
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclmdlRICaptureTaskUpdateBegin",
+            "count": 70,
+            "inclusive_sum_us": 195.05,
+            "max_us": 7.91
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtSynchronizeDeviceWithTimeout",
+            "count": 1,
+            "inclusive_sum_us": 39.97,
+            "max_us": 39.97
+          }
+        ],
+        "top_host_inclusive_scopes": [
+          {
+            "process": "Python",
+            "name": "npu_fx_compiler inference",
+            "count": 1,
+            "inclusive_sum_us": 383419.66,
+            "max_us": 383419.66
+          },
+          {
+            "process": "Python",
+            "name": "vllm::qwen_gdn_attention_core",
+            "count": 60,
+            "inclusive_sum_us": 314586.32,
+            "max_us": 6173.8
+          },
+          {
+            "process": "Python",
+            "name": "vllm::moe_forward_shared",
+            "count": 80,
+            "inclusive_sum_us": 232903.2,
+            "max_us": 3727.71
+          },
+          {
+            "process": "Python",
+            "name": "ChunkGatedDeltaRuleFunction",
+            "count": 60,
+            "inclusive_sum_us": 212223.2,
+            "max_us": 4461.78
+          },
+          {
+            "process": "CANN",
+            "name": "Node@launch",
+            "count": 5896,
+            "inclusive_sum_us": 205577.24,
+            "max_us": 1330.25
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@hcom_allReduce_",
+            "count": 162,
+            "inclusive_sum_us": 148216.36,
+            "max_us": 1330.25
+          },
+          {
+            "process": "Python",
+            "name": "Event::synchronize",
+            "count": 9,
+            "inclusive_sum_us": 68184.39,
+            "max_us": 14299.62
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtSynchronizeEvent",
+            "count": 9,
+            "inclusive_sum_us": 67612.78,
+            "max_us": 14225.12
+          },
+          {
+            "process": "Python",
+            "name": "aten::copy_",
+            "count": 2133,
+            "inclusive_sum_us": 54881.08,
+            "max_us": 2411.34
+          },
+          {
+            "process": "Python",
+            "name": "empty_tensor",
+            "count": 6725,
+            "inclusive_sum_us": 48474.48,
+            "max_us": 487.67
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclmdlRIExecuteAsync",
+            "count": 7,
+            "inclusive_sum_us": 47415.42,
+            "max_us": 44547.83
+          },
+          {
+            "process": "Python",
+            "name": "aten::clone",
+            "count": 1265,
+            "inclusive_sum_us": 44254.94,
+            "max_us": 460.13
+          },
+          {
+            "process": "Python",
+            "name": "vllm::unquantized_gemm",
+            "count": 540,
+            "inclusive_sum_us": 39753.09,
+            "max_us": 114.28
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtLaunchKernelWithHostArgs",
+            "count": 5096,
+            "inclusive_sum_us": 33853.09,
+            "max_us": 55.64
+          },
+          {
+            "process": "Python",
+            "name": "aten::contiguous",
+            "count": 900,
+            "inclusive_sum_us": 32535.55,
+            "max_us": 75.57
+          },
+          {
+            "process": "Python",
+            "name": "aten::linear",
+            "count": 549,
+            "inclusive_sum_us": 31102.46,
+            "max_us": 488.64
+          },
+          {
+            "process": "Python",
+            "name": "Event::record",
+            "count": 285,
+            "inclusive_sum_us": 28271.79,
+            "max_us": 971.43
+          },
+          {
+            "process": "Python",
+            "name": "vllm::all_reduce",
+            "count": 162,
+            "inclusive_sum_us": 26969.77,
+            "max_us": 278.54
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclnnInplaceCopy",
+            "count": 1675,
+            "inclusive_sum_us": 21483.52,
+            "max_us": 86.51
+          },
+          {
+            "process": "Python",
+            "name": "aten::matmul",
+            "count": 549,
+            "inclusive_sum_us": 21296.3,
+            "max_us": 459.67
+          },
+          {
+            "process": "CANN",
+            "name": "Communication@Launch_Ffts",
+            "count": 171,
+            "inclusive_sum_us": 21170.3,
+            "max_us": 165.58
+          },
+          {
+            "process": "Python",
+            "name": "Event::wait",
+            "count": 280,
+            "inclusive_sum_us": 20207.91,
+            "max_us": 131.92
+          },
+          {
+            "process": "Python",
+            "name": "aten::empty",
+            "count": 2026,
+            "inclusive_sum_us": 19747.04,
+            "max_us": 43.23
+          },
+          {
+            "process": "Python",
+            "name": "vllm::maybe_all_reduce_tensor_model_parallel",
+            "count": 80,
+            "inclusive_sum_us": 16839.63,
+            "max_us": 234.13
+          },
+          {
+            "process": "Python",
+            "name": "aten::to",
+            "count": 1330,
+            "inclusive_sum_us": 16252.11,
+            "max_us": 2441.16
+          }
+        ],
+        "fx_inference_ranges": [
+          {
+            "ts_us": "1791692920646438.070",
+            "dur_us": 383419.66
+          }
+        ],
+        "device": {
+          "ai_core": {
+            "count": 16750,
+            "active_union_us": 298056.72,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 1033283.88,
+            "active_fraction_of_kernel_span": 0.2884557920326793
+          }
+        },
+        "compute_by_physical_stream": {
+          "physical:45": {
+            "count": 5401,
+            "active_union_us": 235146.46,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 883734.14,
+            "active_fraction_of_kernel_span": 0.26608280630643055
+          },
+          "physical:44": {
+            "count": 254,
+            "active_union_us": 2366.04,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 627137.94,
+            "active_fraction_of_kernel_span": 0.0037727585098742394
+          },
+          "physical:0": {
+            "count": 4395,
+            "active_union_us": 23113.74,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 283570.88,
+            "active_fraction_of_kernel_span": 0.08150956826032349
+          },
+          "physical:2": {
+            "count": 6700,
+            "active_union_us": 37430.48,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 91504.48,
+            "active_fraction_of_kernel_span": 0.40905625604342
+          }
+        },
+        "top_device_compute_operations": [
+          {
+            "name": "aclnnMatmul_MatMulCommon_MatMulV2",
+            "count": 2439,
+            "duration_sum_us": 39018.6
+          },
+          {
+            "name": "aclnnChunkGatedDeltaRuleFwdH_ChunkGatedDeltaRuleFwdH_ChunkGatedDeltaRuleFwdH",
+            "count": 60,
+            "duration_sum_us": 29244.8
+          },
+          {
+            "name": "aclnnGroupedMatmulV5_GroupedMatmul_GroupedMatmul",
+            "count": 720,
+            "duration_sum_us": 26925.38
+          },
+          {
+            "name": "AddRmsNormBias",
+            "count": 720,
+            "duration_sum_us": 24996.54
+          },
+          {
+            "name": "aclnnInplaceCopy_TransposeAiCore_Transpose",
+            "count": 844,
+            "duration_sum_us": 14834.72
+          },
+          {
+            "name": "SwiGlu",
+            "count": 720,
+            "duration_sum_us": 14130.68
+          },
+          {
+            "name": "MoeGatingTopK",
+            "count": 360,
+            "duration_sum_us": 13676.08
+          },
+          {
+            "name": "aclnnMoeInitRoutingV3_MoeInitRoutingV3_MoeInitRoutingV3",
+            "count": 360,
+            "duration_sum_us": 13586.98
+          },
+          {
+            "name": "FusedInferAttentionScore",
+            "count": 90,
+            "duration_sum_us": 10736.56
+          },
+          {
+            "name": "aclnnIndex_IndexAiCore_Index",
+            "count": 528,
+            "duration_sum_us": 10299.48
+          },
+          {
+            "name": "recompute_w_u_fwd_kernel",
+            "count": 60,
+            "duration_sum_us": 8790.64
+          },
+          {
+            "name": "merge_16x16_to_64x64_inverse_kernel",
+            "count": 60,
+            "duration_sum_us": 7338.5599999999995
+          },
+          {
+            "name": "aclnnMul_MulAiCore_Mul",
+            "count": 819,
+            "duration_sum_us": 7190.82
+          },
+          {
+            "name": "CausalConv1d",
+            "count": 270,
+            "duration_sum_us": 6056.76
+          },
+          {
+            "name": "aclnnContiguous_TransposeAiCore_Transpose",
+            "count": 270,
+            "duration_sum_us": 5091.76
+          },
+          {
+            "name": "MoeTokenUnpermute",
+            "count": 360,
+            "duration_sum_us": 4965.84
+          },
+          {
+            "name": "fused_gdn_gating_kernel",
+            "count": 270,
+            "duration_sum_us": 4953.48
+          },
+          {
+            "name": "aclnnChunkFwdO_ChunkFwdO_ChunkFwdO",
+            "count": 60,
+            "duration_sum_us": 4697.26
+          },
+          {
+            "name": "split_qkv_rmsnorm_mrope_kernel",
+            "count": 90,
+            "duration_sum_us": 4683.62
+          },
+          {
+            "name": "aclnnCat_ConcatD_ConcatD",
+            "count": 270,
+            "duration_sum_us": 4666.34
+          }
+        ]
+      },
+      {
+        "rank": 6,
+        "source": "local-results/tp8-contention/old-profile/dp0_pp0_tp6_dcp0_ep6_rank6_27452_20261011042840035_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+        "sha256": "e3877ae0032fea0837686d908ca9daaba712d8b5fb1f6508d986dcdad5383a8d",
+        "trace_event_count": 275662,
+        "selected_host_scopes": [
+          {
+            "process": "Python",
+            "name": "npu_fx_compiler inference",
+            "count": 1,
+            "inclusive_sum_us": 364696.82,
+            "max_us": 364696.82
+          },
+          {
+            "process": "Python",
+            "name": "vllm::qwen_gdn_attention_core",
+            "count": 60,
+            "inclusive_sum_us": 300501.64,
+            "max_us": 6250.7
+          },
+          {
+            "process": "Python",
+            "name": "vllm::moe_forward_shared",
+            "count": 80,
+            "inclusive_sum_us": 223330.47,
+            "max_us": 4249.6
+          },
+          {
+            "process": "Python",
+            "name": "ChunkGatedDeltaRuleFunction",
+            "count": 60,
+            "inclusive_sum_us": 201957.04,
+            "max_us": 4617.76
+          },
+          {
+            "process": "Python",
+            "name": "Event::synchronize",
+            "count": 9,
+            "inclusive_sum_us": 100418.73,
+            "max_us": 22515.36
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtSynchronizeEvent",
+            "count": 9,
+            "inclusive_sum_us": 99912.69,
+            "max_us": 22459.52
+          },
+          {
+            "process": "Python",
+            "name": "aten::copy_",
+            "count": 2133,
+            "inclusive_sum_us": 53533.98,
+            "max_us": 3355.78
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclmdlRIExecuteAsync",
+            "count": 7,
+            "inclusive_sum_us": 48039.420000000006,
+            "max_us": 45113.08
+          },
+          {
+            "process": "Python",
+            "name": "Event::record",
+            "count": 285,
+            "inclusive_sum_us": 25675.75,
+            "max_us": 764.69
+          },
+          {
+            "process": "Python",
+            "name": "Event::wait",
+            "count": 280,
+            "inclusive_sum_us": 18807.69,
+            "max_us": 88.65
+          },
+          {
+            "process": "Python",
+            "name": "aten::_to_copy",
+            "count": 477,
+            "inclusive_sum_us": 14935.6,
+            "max_us": 3382.85
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtRecordEvent",
+            "count": 804,
+            "inclusive_sum_us": 9051.18,
+            "max_us": 76.63
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtStreamWaitEvent",
+            "count": 622,
+            "inclusive_sum_us": 3697.52,
+            "max_us": 20.05
+          },
+          {
+            "process": "Python",
+            "name": "vllm::all_gather",
+            "count": 9,
+            "inclusive_sum_us": 3381.16,
+            "max_us": 894.89
+          },
+          {
+            "process": "Python",
+            "name": "aten::argmax",
+            "count": 18,
+            "inclusive_sum_us": 1123.47,
+            "max_us": 175.64
+          },
+          {
+            "process": "Python",
+            "name": "aten::item",
+            "count": 279,
+            "inclusive_sum_us": 841.74,
+            "max_us": 18.73
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtSynchronizeStreamWithTimeout",
+            "count": 49,
+            "inclusive_sum_us": 274.01,
+            "max_us": 24.18
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclmdlRICaptureTaskUpdateEnd",
+            "count": 70,
+            "inclusive_sum_us": 217.32,
+            "max_us": 7.21
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclmdlRICaptureTaskUpdateBegin",
+            "count": 70,
+            "inclusive_sum_us": 202.7,
+            "max_us": 8.93
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtSynchronizeDeviceWithTimeout",
+            "count": 1,
+            "inclusive_sum_us": 38.94,
+            "max_us": 38.94
+          }
+        ],
+        "top_host_inclusive_scopes": [
+          {
+            "process": "Python",
+            "name": "npu_fx_compiler inference",
+            "count": 1,
+            "inclusive_sum_us": 364696.82,
+            "max_us": 364696.82
+          },
+          {
+            "process": "Python",
+            "name": "vllm::qwen_gdn_attention_core",
+            "count": 60,
+            "inclusive_sum_us": 300501.64,
+            "max_us": 6250.7
+          },
+          {
+            "process": "Python",
+            "name": "vllm::moe_forward_shared",
+            "count": 80,
+            "inclusive_sum_us": 223330.47,
+            "max_us": 4249.6
+          },
+          {
+            "process": "CANN",
+            "name": "Node@launch",
+            "count": 5896,
+            "inclusive_sum_us": 205324.03,
+            "max_us": 1269.79
+          },
+          {
+            "process": "Python",
+            "name": "ChunkGatedDeltaRuleFunction",
+            "count": 60,
+            "inclusive_sum_us": 201957.04,
+            "max_us": 4617.76
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@hcom_allReduce_",
+            "count": 162,
+            "inclusive_sum_us": 146478.2,
+            "max_us": 1269.79
+          },
+          {
+            "process": "Python",
+            "name": "Event::synchronize",
+            "count": 9,
+            "inclusive_sum_us": 100418.73,
+            "max_us": 22515.36
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtSynchronizeEvent",
+            "count": 9,
+            "inclusive_sum_us": 99912.69,
+            "max_us": 22459.52
+          },
+          {
+            "process": "Python",
+            "name": "aten::copy_",
+            "count": 2133,
+            "inclusive_sum_us": 53533.98,
+            "max_us": 3355.78
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclmdlRIExecuteAsync",
+            "count": 7,
+            "inclusive_sum_us": 48039.420000000006,
+            "max_us": 45113.08
+          },
+          {
+            "process": "Python",
+            "name": "empty_tensor",
+            "count": 6725,
+            "inclusive_sum_us": 46493.87,
+            "max_us": 501.96
+          },
+          {
+            "process": "Python",
+            "name": "aten::clone",
+            "count": 1265,
+            "inclusive_sum_us": 42652.44,
+            "max_us": 460.99
+          },
+          {
+            "process": "Python",
+            "name": "vllm::unquantized_gemm",
+            "count": 540,
+            "inclusive_sum_us": 37391.41,
+            "max_us": 107.02
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtLaunchKernelWithHostArgs",
+            "count": 5096,
+            "inclusive_sum_us": 35082.93,
+            "max_us": 68.57
+          },
+          {
+            "process": "Python",
+            "name": "aten::contiguous",
+            "count": 900,
+            "inclusive_sum_us": 31418.42,
+            "max_us": 71.9
+          },
+          {
+            "process": "Python",
+            "name": "aten::linear",
+            "count": 549,
+            "inclusive_sum_us": 29427.22,
+            "max_us": 523.11
+          },
+          {
+            "process": "Python",
+            "name": "vllm::all_reduce",
+            "count": 162,
+            "inclusive_sum_us": 25915.04,
+            "max_us": 272.36
+          },
+          {
+            "process": "Python",
+            "name": "Event::record",
+            "count": 285,
+            "inclusive_sum_us": 25675.75,
+            "max_us": 764.69
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclnnInplaceCopy",
+            "count": 1675,
+            "inclusive_sum_us": 22063.87,
+            "max_us": 104.84
+          },
+          {
+            "process": "CANN",
+            "name": "Communication@Launch_Ffts",
+            "count": 171,
+            "inclusive_sum_us": 21799.23,
+            "max_us": 169.82
+          },
+          {
+            "process": "Python",
+            "name": "aten::matmul",
+            "count": 549,
+            "inclusive_sum_us": 20098.05,
+            "max_us": 483.09
+          },
+          {
+            "process": "Python",
+            "name": "aten::empty",
+            "count": 2026,
+            "inclusive_sum_us": 19171.05,
+            "max_us": 37.47
+          },
+          {
+            "process": "Python",
+            "name": "Event::wait",
+            "count": 280,
+            "inclusive_sum_us": 18807.69,
+            "max_us": 88.65
+          },
+          {
+            "process": "Python",
+            "name": "aten::to",
+            "count": 1330,
+            "inclusive_sum_us": 16671.59,
+            "max_us": 3384.77
+          },
+          {
+            "process": "Python",
+            "name": "vllm::maybe_all_reduce_tensor_model_parallel",
+            "count": 80,
+            "inclusive_sum_us": 16129.87,
+            "max_us": 232.05
+          }
+        ],
+        "fx_inference_ranges": [
+          {
+            "ts_us": "1791692920645714.520",
+            "dur_us": 364696.82
+          }
+        ],
+        "device": {
+          "ai_core": {
+            "count": 16750,
+            "active_union_us": 298075.86,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 1033430.88,
+            "active_fraction_of_kernel_span": 0.2884332815756386
+          }
+        },
+        "compute_by_physical_stream": {
+          "physical:45": {
+            "count": 5401,
+            "active_union_us": 235299.98,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 883900.2,
+            "active_fraction_of_kernel_span": 0.266206501593732
+          },
+          "physical:44": {
+            "count": 254,
+            "active_union_us": 2391.0,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 627254.02,
+            "active_fraction_of_kernel_span": 0.003811852812039371
+          },
+          "physical:0": {
+            "count": 4395,
+            "active_union_us": 23335.54,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 283861.3,
+            "active_fraction_of_kernel_span": 0.08220754290916021
+          },
+          "physical:2": {
+            "count": 6700,
+            "active_union_us": 37049.34,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 91086.76,
+            "active_fraction_of_kernel_span": 0.4067478083532667
+          }
+        },
+        "top_device_compute_operations": [
+          {
+            "name": "aclnnMatmul_MatMulCommon_MatMulV2",
+            "count": 2439,
+            "duration_sum_us": 38817.78
+          },
+          {
+            "name": "aclnnChunkGatedDeltaRuleFwdH_ChunkGatedDeltaRuleFwdH_ChunkGatedDeltaRuleFwdH",
+            "count": 60,
+            "duration_sum_us": 29377.14
+          },
+          {
+            "name": "aclnnGroupedMatmulV5_GroupedMatmul_GroupedMatmul",
+            "count": 720,
+            "duration_sum_us": 26816.8
+          },
+          {
+            "name": "AddRmsNormBias",
+            "count": 720,
+            "duration_sum_us": 25288.22
+          },
+          {
+            "name": "aclnnInplaceCopy_TransposeAiCore_Transpose",
+            "count": 844,
+            "duration_sum_us": 14831.3
+          },
+          {
+            "name": "SwiGlu",
+            "count": 720,
+            "duration_sum_us": 13925.74
+          },
+          {
+            "name": "aclnnMoeInitRoutingV3_MoeInitRoutingV3_MoeInitRoutingV3",
+            "count": 360,
+            "duration_sum_us": 13454.92
+          },
+          {
+            "name": "MoeGatingTopK",
+            "count": 360,
+            "duration_sum_us": 13307.06
+          },
+          {
+            "name": "FusedInferAttentionScore",
+            "count": 90,
+            "duration_sum_us": 10586.2
+          },
+          {
+            "name": "aclnnIndex_IndexAiCore_Index",
+            "count": 528,
+            "duration_sum_us": 10358.72
+          },
+          {
+            "name": "recompute_w_u_fwd_kernel",
+            "count": 60,
+            "duration_sum_us": 8830.84
+          },
+          {
+            "name": "merge_16x16_to_64x64_inverse_kernel",
+            "count": 60,
+            "duration_sum_us": 7307.5599999999995
+          },
+          {
+            "name": "aclnnMul_MulAiCore_Mul",
+            "count": 819,
+            "duration_sum_us": 7049.68
+          },
+          {
+            "name": "CausalConv1d",
+            "count": 270,
+            "duration_sum_us": 6216.22
+          },
+          {
+            "name": "fused_gdn_gating_kernel",
+            "count": 270,
+            "duration_sum_us": 5164.72
+          },
+          {
+            "name": "MoeTokenUnpermute",
+            "count": 360,
+            "duration_sum_us": 5106.52
+          },
+          {
+            "name": "aclnnCat_ConcatD_ConcatD",
+            "count": 270,
+            "duration_sum_us": 4822.6
+          },
+          {
+            "name": "aclnnContiguous_TransposeAiCore_Transpose",
+            "count": 270,
+            "duration_sum_us": 4714.14
+          },
+          {
+            "name": "aclnnChunkFwdO_ChunkFwdO_ChunkFwdO",
+            "count": 60,
+            "duration_sum_us": 4682.42
+          },
+          {
+            "name": "split_qkv_rmsnorm_mrope_kernel",
+            "count": 90,
+            "duration_sum_us": 4665.74
+          }
+        ]
+      },
+      {
+        "rank": 7,
+        "source": "local-results/tp8-contention/old-profile/dp0_pp0_tp7_dcp0_ep7_rank7_27453_20261011042840035_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+        "sha256": "9d1d0fa64d25b0b20e5d1375d8e77cac3259619abbc8f8a1b6ad36a0aa8635a3",
+        "trace_event_count": 275662,
+        "selected_host_scopes": [
+          {
+            "process": "Python",
+            "name": "npu_fx_compiler inference",
+            "count": 1,
+            "inclusive_sum_us": 386268.07,
+            "max_us": 386268.07
+          },
+          {
+            "process": "Python",
+            "name": "vllm::qwen_gdn_attention_core",
+            "count": 60,
+            "inclusive_sum_us": 323805.56,
+            "max_us": 11454.1
+          },
+          {
+            "process": "Python",
+            "name": "vllm::moe_forward_shared",
+            "count": 80,
+            "inclusive_sum_us": 236475.66999999998,
+            "max_us": 4343.61
+          },
+          {
+            "process": "Python",
+            "name": "ChunkGatedDeltaRuleFunction",
+            "count": 60,
+            "inclusive_sum_us": 219610.63,
+            "max_us": 9729.03
+          },
+          {
+            "process": "Python",
+            "name": "aten::copy_",
+            "count": 2133,
+            "inclusive_sum_us": 56924.21,
+            "max_us": 2807.3
+          },
+          {
+            "process": "Python",
+            "name": "Event::synchronize",
+            "count": 9,
+            "inclusive_sum_us": 56918.979999999996,
+            "max_us": 13740.77
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtSynchronizeEvent",
+            "count": 9,
+            "inclusive_sum_us": 56321.81,
+            "max_us": 13620.4
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclmdlRIExecuteAsync",
+            "count": 7,
+            "inclusive_sum_us": 47696.58,
+            "max_us": 44816.91
+          },
+          {
+            "process": "Python",
+            "name": "Event::record",
+            "count": 285,
+            "inclusive_sum_us": 27698.01,
+            "max_us": 597.91
+          },
+          {
+            "process": "Python",
+            "name": "Event::wait",
+            "count": 280,
+            "inclusive_sum_us": 20394.27,
+            "max_us": 138.54
+          },
+          {
+            "process": "Python",
+            "name": "aten::_to_copy",
+            "count": 477,
+            "inclusive_sum_us": 14864.41,
+            "max_us": 2833.05
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtRecordEvent",
+            "count": 804,
+            "inclusive_sum_us": 9309.56,
+            "max_us": 59.66
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtStreamWaitEvent",
+            "count": 622,
+            "inclusive_sum_us": 3774.84,
+            "max_us": 24.77
+          },
+          {
+            "process": "Python",
+            "name": "vllm::all_gather",
+            "count": 9,
+            "inclusive_sum_us": 3487.73,
+            "max_us": 875.86
+          },
+          {
+            "process": "Python",
+            "name": "aten::argmax",
+            "count": 18,
+            "inclusive_sum_us": 1161.06,
+            "max_us": 169.61
+          },
+          {
+            "process": "Python",
+            "name": "aten::item",
+            "count": 279,
+            "inclusive_sum_us": 897.25,
+            "max_us": 53.29
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtSynchronizeStreamWithTimeout",
+            "count": 49,
+            "inclusive_sum_us": 286.83,
+            "max_us": 24.0
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclmdlRICaptureTaskUpdateEnd",
+            "count": 70,
+            "inclusive_sum_us": 205.34,
+            "max_us": 6.75
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclmdlRICaptureTaskUpdateBegin",
+            "count": 70,
+            "inclusive_sum_us": 196.82,
+            "max_us": 7.51
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtSynchronizeDeviceWithTimeout",
+            "count": 1,
+            "inclusive_sum_us": 40.4,
+            "max_us": 40.4
+          }
+        ],
+        "top_host_inclusive_scopes": [
+          {
+            "process": "Python",
+            "name": "npu_fx_compiler inference",
+            "count": 1,
+            "inclusive_sum_us": 386268.07,
+            "max_us": 386268.07
+          },
+          {
+            "process": "Python",
+            "name": "vllm::qwen_gdn_attention_core",
+            "count": 60,
+            "inclusive_sum_us": 323805.56,
+            "max_us": 11454.1
+          },
+          {
+            "process": "Python",
+            "name": "vllm::moe_forward_shared",
+            "count": 80,
+            "inclusive_sum_us": 236475.66999999998,
+            "max_us": 4343.61
+          },
+          {
+            "process": "Python",
+            "name": "ChunkGatedDeltaRuleFunction",
+            "count": 60,
+            "inclusive_sum_us": 219610.63,
+            "max_us": 9729.03
+          },
+          {
+            "process": "CANN",
+            "name": "Node@launch",
+            "count": 5896,
+            "inclusive_sum_us": 203381.35,
+            "max_us": 1286.44
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@hcom_allReduce_",
+            "count": 162,
+            "inclusive_sum_us": 145377.24,
+            "max_us": 1286.44
+          },
+          {
+            "process": "Python",
+            "name": "aten::copy_",
+            "count": 2133,
+            "inclusive_sum_us": 56924.21,
+            "max_us": 2807.3
+          },
+          {
+            "process": "Python",
+            "name": "Event::synchronize",
+            "count": 9,
+            "inclusive_sum_us": 56918.979999999996,
+            "max_us": 13740.77
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtSynchronizeEvent",
+            "count": 9,
+            "inclusive_sum_us": 56321.81,
+            "max_us": 13620.4
+          },
+          {
+            "process": "Python",
+            "name": "empty_tensor",
+            "count": 6725,
+            "inclusive_sum_us": 55745.72,
+            "max_us": 5863.97
+          },
+          {
+            "process": "Python",
+            "name": "aten::clone",
+            "count": 1265,
+            "inclusive_sum_us": 51806.16,
+            "max_us": 5945.58
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclmdlRIExecuteAsync",
+            "count": 7,
+            "inclusive_sum_us": 47696.58,
+            "max_us": 44816.91
+          },
+          {
+            "process": "Python",
+            "name": "vllm::unquantized_gemm",
+            "count": 540,
+            "inclusive_sum_us": 40011.33,
+            "max_us": 168.83
+          },
+          {
+            "process": "Python",
+            "name": "aten::contiguous",
+            "count": 900,
+            "inclusive_sum_us": 39497.09,
+            "max_us": 5948.33
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclrtLaunchKernelWithHostArgs",
+            "count": 5096,
+            "inclusive_sum_us": 34724.67,
+            "max_us": 78.98
+          },
+          {
+            "process": "Python",
+            "name": "aten::linear",
+            "count": 549,
+            "inclusive_sum_us": 31517.5,
+            "max_us": 513.85
+          },
+          {
+            "process": "Python",
+            "name": "Event::record",
+            "count": 285,
+            "inclusive_sum_us": 27698.01,
+            "max_us": 597.91
+          },
+          {
+            "process": "Python",
+            "name": "vllm::all_reduce",
+            "count": 162,
+            "inclusive_sum_us": 27306.16,
+            "max_us": 378.96
+          },
+          {
+            "process": "Python",
+            "name": "aten::matmul",
+            "count": 549,
+            "inclusive_sum_us": 21819.81,
+            "max_us": 482.97
+          },
+          {
+            "process": "CANN",
+            "name": "AscendCL@aclnnInplaceCopy",
+            "count": 1675,
+            "inclusive_sum_us": 21738.95,
+            "max_us": 88.31
+          },
+          {
+            "process": "CANN",
+            "name": "Communication@Launch_Ffts",
+            "count": 171,
+            "inclusive_sum_us": 21527.44,
+            "max_us": 172.24
+          },
+          {
+            "process": "Python",
+            "name": "Event::wait",
+            "count": 280,
+            "inclusive_sum_us": 20394.27,
+            "max_us": 138.54
+          },
+          {
+            "process": "Python",
+            "name": "aten::empty",
+            "count": 2026,
+            "inclusive_sum_us": 20280.76,
+            "max_us": 90.93
+          },
+          {
+            "process": "Python",
+            "name": "vllm::maybe_all_reduce_tensor_model_parallel",
+            "count": 80,
+            "inclusive_sum_us": 16962.67,
+            "max_us": 269.25
+          },
+          {
+            "process": "Python",
+            "name": "aten::to",
+            "count": 1330,
+            "inclusive_sum_us": 16707.96,
+            "max_us": 2835.18
+          }
+        ],
+        "fx_inference_ranges": [
+          {
+            "ts_us": "1791692920647433.040",
+            "dur_us": 386268.07
+          }
+        ],
+        "device": {
+          "ai_core": {
+            "count": 16750,
+            "active_union_us": 298981.44,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 1033259.88,
+            "active_fraction_of_kernel_span": 0.2893574460667146
+          }
+        },
+        "compute_by_physical_stream": {
+          "physical:45": {
+            "count": 5401,
+            "active_union_us": 235952.74,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 884186.64,
+            "active_fraction_of_kernel_span": 0.266858522087599
+          },
+          "physical:44": {
+            "count": 254,
+            "active_union_us": 2381.3,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 627200.3,
+            "active_fraction_of_kernel_span": 0.0037967137451943183
+          },
+          "physical:0": {
+            "count": 4395,
+            "active_union_us": 23501.44,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 283610.82,
+            "active_fraction_of_kernel_span": 0.08286510366564999
+          },
+          "physical:2": {
+            "count": 6700,
+            "active_union_us": 37145.96,
+            "cross_stream_overlap_us": 0.0,
+            "overlap_fraction_of_active_union": 0.0,
+            "max_simultaneously_active_streams": 1,
+            "first_last_kernel_span_us": 91178.74,
+            "active_fraction_of_kernel_span": 0.4073971629790014
+          }
+        },
+        "top_device_compute_operations": [
+          {
+            "name": "aclnnMatmul_MatMulCommon_MatMulV2",
+            "count": 2439,
+            "duration_sum_us": 38808.28
+          },
+          {
+            "name": "aclnnChunkGatedDeltaRuleFwdH_ChunkGatedDeltaRuleFwdH_ChunkGatedDeltaRuleFwdH",
+            "count": 60,
+            "duration_sum_us": 29792.76
+          },
+          {
+            "name": "aclnnGroupedMatmulV5_GroupedMatmul_GroupedMatmul",
+            "count": 720,
+            "duration_sum_us": 26805.96
+          },
+          {
+            "name": "AddRmsNormBias",
+            "count": 720,
+            "duration_sum_us": 25032.1
+          },
+          {
+            "name": "aclnnInplaceCopy_TransposeAiCore_Transpose",
+            "count": 844,
+            "duration_sum_us": 15094.12
+          },
+          {
+            "name": "SwiGlu",
+            "count": 720,
+            "duration_sum_us": 14181.24
+          },
+          {
+            "name": "MoeGatingTopK",
+            "count": 360,
+            "duration_sum_us": 13686.24
+          },
+          {
+            "name": "aclnnMoeInitRoutingV3_MoeInitRoutingV3_MoeInitRoutingV3",
+            "count": 360,
+            "duration_sum_us": 13521.14
+          },
+          {
+            "name": "FusedInferAttentionScore",
+            "count": 90,
+            "duration_sum_us": 10881.66
+          },
+          {
+            "name": "aclnnIndex_IndexAiCore_Index",
+            "count": 528,
+            "duration_sum_us": 10459.66
+          },
+          {
+            "name": "recompute_w_u_fwd_kernel",
+            "count": 60,
+            "duration_sum_us": 8815.3
+          },
+          {
+            "name": "merge_16x16_to_64x64_inverse_kernel",
+            "count": 60,
+            "duration_sum_us": 7328.46
+          },
+          {
+            "name": "aclnnMul_MulAiCore_Mul",
+            "count": 819,
+            "duration_sum_us": 7031.82
+          },
+          {
+            "name": "CausalConv1d",
+            "count": 270,
+            "duration_sum_us": 6050.1
+          },
+          {
+            "name": "aclnnContiguous_TransposeAiCore_Transpose",
+            "count": 270,
+            "duration_sum_us": 5392.9
+          },
+          {
+            "name": "MoeTokenUnpermute",
+            "count": 360,
+            "duration_sum_us": 4906.62
+          },
+          {
+            "name": "fused_gdn_gating_kernel",
+            "count": 270,
+            "duration_sum_us": 4878.82
+          },
+          {
+            "name": "split_qkv_rmsnorm_mrope_kernel",
+            "count": 90,
+            "duration_sum_us": 4713.56
+          },
+          {
+            "name": "aclnnChunkFwdO_ChunkFwdO_ChunkFwdO",
+            "count": 60,
+            "duration_sum_us": 4670.46
+          },
+          {
+            "name": "aclnnCat_ConcatD_ConcatD",
+            "count": 270,
+            "duration_sum_us": 4623.82
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -118,6 +118,66 @@ def test_no_active_task_leaves_normal_model_hooks_inert():
     assert not backend.fences
 
 
+def test_slice_observer_runs_inside_lane_before_its_existing_completion_fence():
+    events = []
+
+    class Backend(FakeBackend):
+        def fence(self):
+            events.append(("fence", self.state))
+            super().fence()
+
+    backend = Backend()
+    interleaver = LayerInterleaver(backend)
+
+    class Observer:
+        def start(self):
+            events.append(("start", backend.state))
+
+        def stop(self):
+            events.append(("stop", backend.state))
+
+    def forward():
+        for layer in range(3):
+            events.append(("layer", layer))
+            interleaver.checkpoint(final=layer == 2)
+
+    interleaver.add("p", forward, "prefill")
+    interleaver.step("p", 2, observer=Observer())
+    assert events == [
+        ("start", "prefill"), ("layer", 0), ("layer", 1),
+        ("stop", "prefill"), ("fence", "prefill"),
+    ]
+    assert backend.state == "caller"
+    events.clear()
+    interleaver.step("p", 2, observer=Observer())
+    assert events == [
+        ("start", "prefill"), ("layer", 2),
+        ("stop", "prefill"), ("fence", "prefill"),
+    ]
+    assert interleaver.tasks["p"].done
+    assert backend.state == "caller"
+
+
+def test_failed_slice_has_no_success_observation_and_restores_caller():
+    backend = FakeBackend()
+    interleaver = LayerInterleaver(backend)
+    observed = []
+
+    def failure():
+        raise RuntimeError("forward failed")
+
+    observer = SimpleNamespace(
+        start=lambda: observed.append("start"),
+        stop=lambda: observed.append("stop"),
+    )
+    interleaver.add("p", failure, "prefill")
+    with pytest.raises(RuntimeError, match="forward failed"):
+        interleaver.step("p", observer=observer)
+    assert observed == ["start"]
+    assert interleaver._slice_observer is None
+    assert backend.state == "caller"
+
+
 def test_failure_before_initial_barrier_does_not_restore_unstarted_lane():
     class InitialBarrierBackend(FakeBackend):
         def restore(self, state):

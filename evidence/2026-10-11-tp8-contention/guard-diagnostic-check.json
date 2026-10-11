@@ -1,0 +1,29 @@
+{
+  "passed": true,
+  "cohorts": 26,
+  "max_complete_prompt_tokens": 16383,
+  "max_decode_steps_before_prefill_completion": 39,
+  "prefill_retirements": {
+    "completed": 29,
+    "cancelled": 1
+  },
+  "receipt_checks": {
+    "layer_progress_steps": 1046
+  },
+  "model_layers_by_pid": {
+    "189423": 40
+  },
+  "quota_reasons": {
+    "decode_budget_quota": 253,
+    "uncalibrated": 793
+  },
+  "progress_sources": {
+    "full_forward_return": 16,
+    "none": 793,
+    "layer_hooks": 237
+  },
+  "work_quota_sources": {
+    "prefill_layer_token_budget": 253
+  },
+  "scope": "host lifecycle/progress receipts; kernel overlap needs profiling"
+}

@@ -31,3 +31,6 @@ select = ["E", "F", "I"]
 [tool.ruff.lint.per-file-ignores]
 # Preserve the exact audit scripts whose hashes appear in archived receipts.
 "evidence/**/*.py" = ["E501"]
+
+# Keep executed experiment controllers byte-identical to their recorded hashes.
+"evidence/2026-10-11-tp8-contention/**/*.py" = ["E501", "E701", "E702", "I001"]

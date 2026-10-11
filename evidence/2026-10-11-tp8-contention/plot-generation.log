@@ -1,0 +1,43 @@
+{
+  "created_utc": "2026-10-11T05:54:23.967681+00:00",
+  "python_version": "3.12.13 (main, Aug  3 2026, 03:58:42) [GCC 12.3.1 (openEuler 12.3.1-105.oe2403sp3)]",
+  "input_validation_passed": true,
+  "figures_generated": true,
+  "plot_inputs": "plot-inputs.json",
+  "plot_inputs_sha256": "c1f0bd3e91f29d6ddd67b6dda20541a73b26047c55ac661f992de6f5e0f3ba85",
+  "plot_script_sha256": "68435270f76ede09d3729fc0e4cc7bae83aa8623005cad397586105bc790c48e",
+  "audit_sha256": "e8cf8a168981e1b041f25b4bdb922fca1a4b96addada5e88874f54dcb1732c2c",
+  "matplotlib_version": "3.10.7",
+  "figures": [
+    {
+      "file": "contention-timeline.svg",
+      "sha256": "4aa2b6a19f4901c2fdd9a11191dc0c556703c0ca2b5451b795fcfeeaa410310a",
+      "local_preview": {
+        "file": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/plot-previews/contention-timeline.png",
+        "sha256": "43294c115af464d0dd9d0a9cd56c55983166fcf4cc8c7e3818c04fb87708005c",
+        "published": false,
+        "reason": "Local inspection; SVG is public"
+      }
+    },
+    {
+      "file": "contention-ecdf.svg",
+      "sha256": "8905a6acf19f7220bed515a27f1a0986d81315d9e3cfdf0a8323f86bcf8df212",
+      "local_preview": {
+        "file": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/plot-previews/contention-ecdf.png",
+        "sha256": "95f3982073f89878809c18338b9a6913bbbb88ba9ef7aa9e8ed6718a3b663c50",
+        "published": false,
+        "reason": "Local inspection; SVG is public"
+      }
+    },
+    {
+      "file": "contention-scoped-gaps.svg",
+      "sha256": "4fcf4bba4ace427a2408f21649b68f90ae05517a19255ed191b85a8e22fc5b07",
+      "local_preview": {
+        "file": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/plot-previews/contention-scoped-gaps.png",
+        "sha256": "76b45e7846a1da641cf3c56f1f5d0a3b09fcfb9c1364e1734d19a6a67cf3a333",
+        "published": false,
+        "reason": "Local inspection; SVG is public"
+      }
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "passed": true,
+  "tests": 8,
+  "fixtures_only": true,
+  "no_real_evidence_compressed": true,
+  "at": "2026-10-11T05:58:42.887593+00:00",
+  "command": "python3 local-results/tp8-contention/archive_evidence.py self-test",
+  "independent_review_fix": "Resolve unpack target before containment check; parent symlink/dotdot tested",
+  "artifacts": {
+    "archive_evidence.py": {
+      "bytes": 34660,
+      "sha256": "49397cf719e9e5b6c3158dfb2e66f1eac61812f18a0308844df8fc7a150cb131"
+    },
+    "archive-self-test.log": {
+      "bytes": 1384,
+      "sha256": "5382229a32e7e5d3379410e06f33376ffcf8ac572b69d8ebb3e2311342db38b5"
+    }
+  }
+}

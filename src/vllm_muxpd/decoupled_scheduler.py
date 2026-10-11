@@ -12,6 +12,7 @@ import json
 import math
 import os
 import time
+from collections import OrderedDict
 from dataclasses import dataclass, replace
 from typing import Any
 
@@ -23,6 +24,8 @@ from vllm.v1.request import Request
 from .multiplex_scheduler import LayeredMuxPDScheduler
 from .policy import Decision, remaining_tokens, request_phase
 from .scheduler import MuxPDScheduler
+
+_GUARD_ESTIMATE_CACHE_LIMIT = 256
 
 
 def _output_for_update(output: SchedulerOutput, ids: set[str]) -> SchedulerOutput:
@@ -68,6 +71,7 @@ class _Step:
     expected_layers: int
     calibration_phase: str | None
     deferred_decode_ids: frozenset[str]
+    guard_decode_shape: tuple[int, int, int] | None = None
 
 
 class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
@@ -89,6 +93,21 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         self._latency_samples = {"prefill": 0, "decode": 0}
         self._prefill_first_decode_debt: set[str] = set()
         self._prefill_first_admission: dict[str, Any] = {}
+        # Guard estimates are separate from whole-P (potentially compiled) EWMA.
+        # Exact P token-length multisets and D batch/context buckets prevent a
+        # small, unrelated calibration shape from silently licensing more work.
+        self._guard_prefill_cost: OrderedDict[
+            tuple[tuple[int, ...], bool, int], dict[str, tuple[float, int]]
+        ] = OrderedDict()
+        self._guard_decode_cost: OrderedDict[
+            tuple[int, int, int], tuple[float, int]
+        ] = OrderedDict()
+        self._guard_decode_residual: OrderedDict[
+            tuple[int, int, int], tuple[float, int]
+        ] = OrderedDict()
+        self._guard_cache_evictions = {"prefill": 0, "decode": 0, "decode_residual": 0}
+        self._guard_live_decodes: dict[str, int] = {}
+        self._decode_completed_at: dict[str, float] = {}
         # Reuse the common validated allocator setup, without the layered-only
         # execution/worker checks in LayeredMuxPDScheduler.__init__.
         MuxPDScheduler.__init__(self, vllm_config, *args, **kwargs)
@@ -138,6 +157,7 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         if request.is_finished():
             self._arrival_monotonic.pop(request.request_id, None)
             self._prefill_first_decode_debt.discard(request.request_id)
+            self._decode_completed_at.pop(request.request_id, None)
         cohort = self._prefill_cohort
         if cohort is not None and request.request_id in cohort.pending_ids:
             # Remove native ownership immediately, but retain the block refcounts
@@ -158,6 +178,7 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
             raise RuntimeError("Cannot preempt a pending decoupled prefill")
         super()._preempt_request(request, timestamp)
         self._prefill_first_decode_debt.discard(request.request_id)
+        self._decode_completed_at.pop(request.request_id, None)
 
     def reset_prefix_cache(self, reset_running_requests=False, reset_connector=False):
         if self._prefill_cohort is not None and reset_running_requests:
@@ -205,6 +226,10 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
             )
             if self._pause_state == PauseState.PAUSED_ALL:
                 snapshots = ()
+            if self.muxpd_policy.config.decode_budget_guard:
+                self._guard_live_decodes = {
+                    r.request_id: r.context_length for r in snapshots
+                }
             selected = snapshots[
                 : min(
                     self.max_num_running_reqs,
@@ -254,8 +279,10 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         if throttle_prefills or self._decoupled_step is not None:
             raise RuntimeError("Decoupled MuxPD requires one synchronous worker step")
         started = time.monotonic()
+        self._guard_live_decodes = {}
         self._prefill_first_admission = {
             "enabled": self.muxpd_policy.config.prefill_first,
+            "decode_budget_guard": self.muxpd_policy.config.decode_budget_guard,
             "reason": "pending_cohort" if self._prefill_cohort else "unchanged",
             "decode_debt_ids": sorted(self._prefill_first_decode_debt),
             "deferred_decode_ids": [],
@@ -276,6 +303,13 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
             output = self._schedule_while_prefilling(started)
             new_prefill_ids = set()
         decode_ids = set(output.num_scheduled_tokens) - new_prefill_ids
+        if self.muxpd_policy.config.decode_budget_guard:
+            running_ids = {r.request_id for r in self.running}
+            self._guard_live_decodes = {
+                rid: context
+                for rid, context in self._guard_live_decodes.items()
+                if rid in running_ids
+            }
         deferred_decode_ids = frozenset()
         if self._prefill_first_admission["reason"] in (
             "deadline_prefill_first",
@@ -310,7 +344,13 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         output.muxpd_prefill_cohort_id = cohort.sequence if cohort else None
         output.muxpd_pause_prefill = paused
         output.muxpd_finish_prefill = bool(
-            cohort is not None and not decode_ids and not paused
+            cohort is not None
+            and not paused
+            and not (
+                self._guard_live_decodes
+                if self.muxpd_policy.config.decode_budget_guard
+                else decode_ids
+            )
         )
         quota_info = self._apply_layer_quota(output, started)
         output.muxpd_prefill_layers_completed_before = (
@@ -335,7 +375,9 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
                 )
         calibration_phase = (
             "prefill"
-            if new_prefill_ids and not decode_ids
+            if new_prefill_ids
+            and not decode_ids
+            and expected_layers == self._decoder_layer_count
             else "decode"
             if cohort is None and decode_ids
             else None
@@ -348,6 +390,11 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
             expected_layers,
             calibration_phase,
             deferred_decode_ids,
+            self._decode_shape(
+                [self._guard_live_decodes[rid] for rid in sorted(decode_ids)]
+            )
+            if self.muxpd_policy.config.decode_budget_guard and decode_ids
+            else None,
         )
         if self._muxpd_trace is not None:
             self._trace_decoupled(
@@ -374,11 +421,16 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         Excluding D here is essential: Scheduler.schedule has not yet advanced
         any native token counters or allocated this iteration's KV blocks.
         """
-        if not self.muxpd_policy.config.prefill_first:
+        config = self.muxpd_policy.config
+        if not (config.prefill_first or config.decode_budget_guard):
             return prefills, decodes
         all_decodes = [r for r in snapshots if request_phase(r) == "decode"][
             : min(self.max_num_running_reqs, self.max_num_scheduled_tokens)
         ]
+        if config.decode_budget_guard:
+            self._guard_live_decodes = {
+                r.request_id: r.context_length for r in all_decodes
+            }
         if self._prefill_first_decode_debt:
             # The base selector may have chosen P-only for a prompt that fills
             # the token budget. Debt still takes precedence over that fallback.
@@ -399,9 +451,23 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
                     deferred_decode_ids=[request.request_id for request in all_decodes],
                 )
             return prefills, decodes
+        if not config.prefill_first:
+            return prefills, decodes
         tokens = sum(remaining_tokens(request) for request in prefills)
         base_quota, work_quota = self._base_layer_quota(tokens)
         self._prefill_first_admission["preview"] = {"work_quota": work_quota}
+        if config.decode_budget_guard:
+            _, guard = self._decode_budget_quota(
+                tuple(sorted(remaining_tokens(r) for r in prefills)),
+                self._decoder_layer_count,
+                self._decoder_layer_count,
+                min(self._arrival_monotonic[r.request_id] for r in prefills),
+                now,
+            )
+            self._prefill_first_admission["preview"]["decode_budget"] = guard
+            if guard["cap_layers"] < self._decoder_layer_count:
+                self._prefill_first_admission["reason"] = "decode_budget_retain_slicing"
+                return prefills, decodes
         if (
             self.muxpd_policy.config.prefill_layer_token_budget
             and base_quota >= self._decoder_layer_count
@@ -444,6 +510,212 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         return duration * max(1.0, tokens / measured_tokens)
 
     def _apply_layer_quota(self, output, now: float) -> dict:
+        info = self._apply_desired_layer_quota(output, now)
+        if not self.muxpd_policy.config.decode_budget_guard:
+            return info
+        cohort = self._prefill_cohort
+        if cohort is None:
+            info["decode_budget"] = None
+            return info
+        remaining = self._decoder_layer_count - cohort.completed_layers
+        quota, guard = self._decode_budget_quota(
+            tuple(sorted(cohort.original_output.num_scheduled_tokens.values())),
+            remaining,
+            output.muxpd_layers_per_slice,
+            cohort.arrival_monotonic,
+            now,
+        )
+        guard["desired_reason"] = info["reason"]
+        guard["selected_decode_ids"] = sorted(
+            set(output.num_scheduled_tokens) - set(output.muxpd_prefill_request_ids)
+        )
+        guard["control_step"] = bool(
+            output.muxpd_pause_prefill
+            or set(output.muxpd_cancel_prefill_request_ids) == cohort.pending_ids
+        )
+        info["decode_budget"] = guard
+        info["reason"] = "decode_budget_quota"
+        output.muxpd_layers_per_slice = quota
+        # No-selected-D is not no-live-D: an oversized complete prompt can use
+        # the entire token admission budget while existing D waits for one turn.
+        output.muxpd_finish_prefill = quota == remaining and not guard["control_step"]
+        return info
+
+    @staticmethod
+    def _decode_shape(contexts: list[int]) -> tuple[int, int, int] | None:
+        if not contexts:
+            return None
+        return (
+            len(contexts),
+            (sum(contexts) - 1).bit_length(),
+            (max(contexts) - 1).bit_length(),
+        )
+
+    def _decode_budget_quota(self, p_shape, remaining, desired, arrival, now):
+        """Cap P work using local observations; never promise a hard SLO.
+
+        First-layer startup and continuation costs have distinct observations.
+        Prefer completed lane spans; retain a separate conservative host-step
+        fallback that includes D twice. Neither is a cross-rank worst-case bound.
+        Compiled whole-P timings cannot train the raw layer estimator. Unknown
+        shapes and infeasible budgets still advance one P layer.
+        """
+        config = self.muxpd_policy.config
+        contexts = self._guard_live_decodes
+        d_shape = self._decode_shape(list(contexts.values()))
+        first_slice = remaining == self._decoder_layer_count
+        first_sample, first_source = self._raw_slice_estimate(p_shape, True)
+        p_sample, p_source = self._raw_slice_estimate(p_shape, False)
+        solo_sample = self._guard_cache_read(self._guard_decode_cost, d_shape)
+        residual_sample = self._guard_cache_read(self._guard_decode_residual, d_shape)
+        # A continuation's fenced non-P residual is a different estimand from
+        # solo D, whose first graph/shape transition can dominate its lifetime
+        # maximum. Never use this residual to license a fresh P/P-first turn.
+        if not first_slice and residual_sample:
+            d_sample, d_source = residual_sample, "fenced_continuation_residual"
+        else:
+            d_sample = solo_sample
+            d_source = "solo_decode_round_trip" if solo_sample else None
+        ages = {
+            rid: max(0.0, (now - self._decode_completed_at[rid]) * 1000)
+            for rid in contexts
+            if rid in self._decode_completed_at
+        }
+        p_ms = config.estimate_safety_factor * p_sample[0] if p_sample else None
+        first_ms = (
+            config.estimate_safety_factor * first_sample[0] if first_sample else None
+        )
+        d_ms = config.estimate_safety_factor * d_sample[0] if d_sample else None
+        cold = []
+        if not p_sample:
+            cold.append("unmeasured_raw_continuation_shape")
+        if first_slice and not first_sample:
+            cold.append("unmeasured_raw_first_layer_shape")
+        if not d_sample:
+            cold.append("unmeasured_decode_batch_context_bucket")
+        if set(ages) != set(contexts):
+            cold.append("unknown_decode_retirement_time")
+        age = max(ages.values(), default=0.0)
+        slack = config.tpot_slo_ms - age - d_ms if d_ms is not None else None
+        calibrated = not cold
+        if not contexts:
+            mode, cap, quota = "no_live_decode", remaining, remaining
+        elif not calibrated:
+            mode, cap, quota = "cold_start", 1, 1
+        else:
+            mode = "measured_slice_budget"
+            cap = min(
+                remaining,
+                max(1, 1 + math.floor((slack - first_ms) / p_ms))
+                if first_slice
+                else max(1, math.floor(max(0.0, slack) / p_ms)),
+            )
+            quota = min(remaining, desired, cap)
+        cohort_age = max(0.0, (now - arrival) * 1000)
+        projected = (
+            (first_ms + (remaining - 1) * p_ms if first_slice else remaining * p_ms)
+            + math.ceil(remaining / quota) * d_ms
+            if calibrated
+            else None
+        )
+        ttft_feasible = (
+            cohort_age + projected <= config.ttft_slo_ms
+            if projected is not None
+            else False
+            if cohort_age >= config.ttft_slo_ms
+            else None
+        )
+        return quota, {
+            "version": 2,
+            "mode": mode,
+            "calibrated": calibrated,
+            "cold_reasons": cold,
+            "estimate_source": "observed_max_raw_slice_spans_plus_nonprefill_cost",
+            "estimate_scope": (
+                "continuation residual includes D/RPC/cross-rank tail; "
+                "driver lane span is not an all-rank maximum; "
+                "host fallback includes D twice; not a hard SLO bound"
+            ),
+            "active_decode_ids": sorted(contexts),
+            "active_decode_context_tokens": contexts.copy(),
+            "decode_age_ms": ages,
+            "decode_shape": list(d_shape) if d_shape else None,
+            "prefill_shape_tokens": list(p_shape),
+            "first_slice": first_slice,
+            "first_layer_samples": first_sample[1] if first_sample else 0,
+            "first_layer_estimate_source": first_source,
+            "prefill_samples": p_sample[1] if p_sample else 0,
+            "prefill_estimate_source": p_source,
+            "decode_samples": d_sample[1] if d_sample else 0,
+            "decode_estimate_source": d_source,
+            "solo_decode_samples": solo_sample[1] if solo_sample else 0,
+            "residual_decode_samples": residual_sample[1] if residual_sample else 0,
+            "estimated_raw_layer_ms": p_ms,
+            "estimated_first_layer_ms": first_ms,
+            "estimated_decode_cost_ms": d_ms,
+            "estimated_solo_decode_ms": (
+                config.estimate_safety_factor * solo_sample[0] if solo_sample else None
+            ),
+            "estimated_decode_residual_ms": (
+                config.estimate_safety_factor * residual_sample[0]
+                if residual_sample
+                else None
+            ),
+            "decode_budget_ms": config.tpot_slo_ms,
+            "decode_slack_ms": slack,
+            "desired_layers_per_slice": desired,
+            "cap_layers": cap,
+            "selected_layers_per_slice": quota,
+            "minimum_progress_exceeds_budget": bool(
+                contexts and calibrated and slack < (first_ms if first_slice else p_ms)
+            ),
+            "cohort_age_ms": cohort_age,
+            "ttft_budget_ms": config.ttft_slo_ms,
+            "estimated_remaining_ttft_ms": projected,
+            "ttft_feasible": ttft_feasible,
+            "estimate_cache": self._guard_cache_stats(),
+        }
+
+    @staticmethod
+    def _guard_cache_read(cache, key):
+        value = cache.get(key)
+        if value is not None:
+            cache.move_to_end(key)
+        return value
+
+    def _guard_cache_store(self, cache, key, value, phase):
+        if key not in cache and len(cache) >= _GUARD_ESTIMATE_CACHE_LIMIT:
+            cache.popitem(last=False)
+            self._guard_cache_evictions[phase] += 1
+        cache[key] = value
+        cache.move_to_end(key)
+
+    def _guard_cache_stats(self):
+        return {
+            "entry_limit_per_mapping": _GUARD_ESTIMATE_CACHE_LIMIT,
+            "entries": {
+                "prefill": len(self._guard_prefill_cost),
+                "decode": len(self._guard_decode_cost),
+                "decode_residual": len(self._guard_decode_residual),
+            },
+            "evictions": self._guard_cache_evictions.copy(),
+        }
+
+    def _raw_slice_estimate(self, shape, first):
+        samples = (
+            self._guard_cache_read(
+                self._guard_prefill_cost, (shape, first, 1 if first else 0)
+            )
+            or {}
+        )
+        # Keep the two estimands separate. A completed lane measurement takes
+        # precedence; the first cold host proxy must not poison all later slices.
+        for source in ("completed_lane_span", "completed_host_step_proxy"):
+            if source in samples:
+                return samples[source], source
+        return None, None
+
+    def _apply_desired_layer_quota(self, output, now: float) -> dict:
         config = self.muxpd_policy.config
         cohort = self._prefill_cohort
         calibrated = bool(self._prefill_latency) and self._decode_latency_ms is not None
@@ -701,6 +973,7 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         completed, cancelled, progress, source = self._validate_receipt(
             step, model_runner_output
         )
+        slice_timing = self._validate_slice_timing(step, model_runner_output, source)
         completed_at = time.monotonic()
         duration_ms = (completed_at - step.started_at) * 1000
         cohort = self._prefill_cohort
@@ -714,6 +987,9 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
             and not cancelled
             and not step.output.muxpd_cancel_prefill_request_ids
             and calibration_ids <= self.requests.keys()
+        )
+        guard_sample = self._observe_guard_latency(
+            step, cohort, progress, source, duration_ms, cancelled, slice_timing
         )
         # Validation precedes every mutation. An ACK proves the worker can no
         # longer access this member's buffers, including late-aborted completions.
@@ -760,6 +1036,10 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         self.muxpd_stats["cancelled_prefill_requests"] += len(cancelled)
         if step.decode_output.total_num_scheduled_tokens:
             self.muxpd_policy.last_decode_at = completed_at
+        if self.muxpd_policy.config.decode_budget_guard:
+            for rid in set(step.decode_output.num_scheduled_tokens) | completed:
+                if rid in self.requests:
+                    self._decode_completed_at[rid] = completed_at
         if valid_latency_sample:
             self._observe_latency(
                 step.calibration_phase,
@@ -783,8 +1063,193 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
                 if valid_latency_sample
                 else None,
                 decode_debt_ids=sorted(self._prefill_first_decode_debt),
+                **(
+                    {
+                        "decode_budget_sample": guard_sample,
+                        "prefill_slice_timing": slice_timing,
+                        "estimate_cache": self._guard_cache_stats(),
+                    }
+                    if self.muxpd_policy.config.decode_budget_guard
+                    else {}
+                ),
             )
         return result
+
+    def _validate_slice_timing(self, step, model_output, source):
+        """Validate optional lane timing before estimator or lifecycle mutation."""
+        timing = getattr(model_output, "muxpd_prefill_slice_timing", None)
+        if timing is None:
+            return None
+        cohort = self._prefill_cohort
+        if (
+            not self.muxpd_policy.config.decode_budget_guard
+            or cohort is None
+            or step.output.muxpd_pause_prefill
+            or step.output.muxpd_cancel_prefill_request_ids
+            or not isinstance(timing, dict)
+        ):
+            raise RuntimeError("Unexpected prefill slice timing receipt")
+        delta = step.expected_layers - cohort.completed_layers
+        for name, expected in (
+            ("version", 1),
+            ("layer_delta", delta),
+            ("prefill_tokens", cohort.original_output.total_num_scheduled_tokens),
+        ):
+            if type(timing.get(name)) is not int or timing[name] != expected:
+                raise RuntimeError(f"Invalid prefill slice timing {name}")
+        expected_first = cohort.completed_layers == 0
+        if (
+            type(timing.get("first_slice")) is not bool
+            or timing["first_slice"] != expected_first
+            or timing.get("mode")
+            != (
+                "compiled_full_forward"
+                if source == "full_forward_return"
+                else "raw_layers"
+            )
+            or type(timing.get("device_complete")) is not bool
+        ):
+            raise RuntimeError("Invalid prefill slice timing execution mode")
+        for name in ("host_submit_ms", "device_elapsed_ms"):
+            value = timing.get(name)
+            if value is None and name == "device_elapsed_ms":
+                continue
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, (float, int))
+                or not math.isfinite(value)
+                or value < 0
+            ):
+                raise RuntimeError(f"Invalid prefill slice timing {name}")
+        if timing["device_complete"] != (timing.get("device_elapsed_ms") is not None):
+            raise RuntimeError("Prefill slice device timing lacks completion")
+        if timing["device_complete"] and not (
+            step.decode_output.num_scheduled_tokens
+            or step.expected_layers == self._decoder_layer_count
+        ):
+            raise RuntimeError("Prefill slice has no existing sampling completion")
+        return timing.copy()
+
+    def _observe_guard_latency(
+        self, step, cohort, progress, source, duration, cancelled, timing
+    ):
+        if not self.muxpd_policy.config.decode_budget_guard:
+            return None
+        involved = set(step.decode_output.num_scheduled_tokens)
+        if cohort:
+            involved.update(cohort.original_output.num_scheduled_tokens)
+        if (
+            not math.isfinite(duration)
+            or duration <= 0
+            or cancelled
+            or step.output.muxpd_cancel_prefill_request_ids
+            or step.output.muxpd_pause_prefill
+            or not involved <= self.requests.keys()
+        ):
+            return {"phase": None, "reason": "invalid_cancelled_or_paused_sample"}
+        if cohort is None and step.guard_decode_shape:
+            old, count = self._guard_cache_read(
+                self._guard_decode_cost, step.guard_decode_shape
+            ) or (0.0, 0)
+            self._guard_cache_store(
+                self._guard_decode_cost,
+                step.guard_decode_shape,
+                (max(old, duration), count + 1),
+                "decode",
+            )
+            return {"phase": "decode", "shape": list(step.guard_decode_shape)}
+        if cohort:
+            delta = progress - cohort.completed_layers
+            sampled = bool(step.decode_output.num_scheduled_tokens) or (
+                progress == self._decoder_layer_count
+            )
+            if (
+                source == "layer_hooks"
+                and delta > 0
+                and delta < self._decoder_layer_count
+                and sampled
+            ):
+                shape = tuple(
+                    sorted(cohort.original_output.num_scheduled_tokens.values())
+                )
+                first = cohort.completed_layers == 0
+                # q>1 first slices remain separate observations. Their entire
+                # span must never become the fixed cost of a q=1 first layer.
+                key = (shape, first, delta if first else 0)
+                sample_source = (
+                    "completed_lane_span"
+                    if timing is not None and timing["device_complete"]
+                    else "completed_host_step_proxy"
+                )
+                span = (
+                    max(timing["host_submit_ms"], timing["device_elapsed_ms"])
+                    if sample_source == "completed_lane_span"
+                    else duration
+                )
+                cost = span if first else span / delta
+                if cost <= 0:
+                    return {"phase": None, "reason": "zero_slice_span"}
+                observations = (
+                    self._guard_cache_read(self._guard_prefill_cost, key) or {}
+                )
+                old, count = observations.get(sample_source, (0.0, 0))
+                observations[sample_source] = (max(old, cost), count + 1)
+                self._guard_cache_store(
+                    self._guard_prefill_cost, key, observations, "prefill"
+                )
+                residual_sample = None
+                if (
+                    not first
+                    and progress < self._decoder_layer_count
+                    and step.guard_decode_shape
+                    and step.decode_output.num_scheduled_tokens
+                    and sample_source == "completed_lane_span"
+                ):
+                    # Fenced P starts after D's incoming dependency and ends
+                    # before its existing sampler completes the whole step.
+                    # Subtract the DEVICE span, not max(host, device): host
+                    # submit can overlap device work and is not this interval.
+                    # This is non-P wall residual, never pure D or a hard bound.
+                    residual = duration - timing["device_elapsed_ms"]
+                    accepted = math.isfinite(residual) and residual > 0
+                    residual_sample = {
+                        "accepted": accepted,
+                        "reason": "completed_fenced_continuation"
+                        if accepted
+                        else "nonpositive_or_nonfinite_residual",
+                        "decode_shape": list(step.guard_decode_shape),
+                        "host_step_ms": duration,
+                        "prefill_device_elapsed_ms": timing["device_elapsed_ms"],
+                        "prefill_host_submit_ms": timing["host_submit_ms"],
+                        "residual_ms": residual,
+                    }
+                    if accepted:
+                        old, count = self._guard_cache_read(
+                            self._guard_decode_residual, step.guard_decode_shape
+                        ) or (0.0, 0)
+                        self._guard_cache_store(
+                            self._guard_decode_residual,
+                            step.guard_decode_shape,
+                            (max(old, residual), count + 1),
+                            "decode_residual",
+                        )
+                return {
+                    "phase": "raw_prefill_layer",
+                    "shape": list(shape),
+                    "layer_delta": delta,
+                    "first_slice": first,
+                    "measurement_source": sample_source,
+                    "sample_span_ms": span,
+                    "sample_cost_ms": cost,
+                    "host_step_ms_per_layer": duration / delta,
+                    "host_step_minus_lane_span_ms": (
+                        max(0.0, duration - span)
+                        if sample_source == "completed_lane_span"
+                        else None
+                    ),
+                    "decode_residual_sample": residual_sample,
+                }
+        return {"phase": None, "reason": "no_completed_raw_slice_or_solo_decode"}
 
     def _trace_decoupled(self, event: str, **fields) -> None:
         if self._muxpd_trace is not None:

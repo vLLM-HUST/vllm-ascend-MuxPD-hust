@@ -1,0 +1,11 @@
+{
+  "output": {
+    "file": "guard-v2-estimator-audit.json",
+    "bytes": 474031,
+    "sha256": "45eb1db086adcc81eb8b39596f381cbbb644d74ccdf5847b287c60908f10e5c1"
+  },
+  "residual_samples": 50,
+  "residual_selected_steps": 55,
+  "actual_quota_increase_steps": 39,
+  "paired_steps": 983
+}

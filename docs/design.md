@@ -16,7 +16,7 @@ MuxWise 的阶段分离机制。用户显式选择 MuxPD 调度器后，prefill 
 | `stream_mode=overlap` | 独立流与 workspace；`shared` 通信组使用事件门控，`isolated` 为 P 新建 TP/EP 通信组 | eager 实验路径；shared 有 TP2/TP4 证据，isolated 已验证指定 TP4+EP 配置；不支持 graph |
 | `decode_graph=true` | 独立 D runner 捕获和重放原生 ACL graph；P 始终使用 graph mode `NONE` | 仅 decoupled fenced；指定 TP4+EP 配置已验证，完整 P 另有可选 FX 编译 |
 | NPU 资源分区 | 分别控制 P/D 的 Cube / Vector 资源 | 尚未接入控核；待逐算子支持与 profiler 验证 |
-| 层数自适应与资源预测 | 已有 token-work 基础配额、本机 EWMA/deadline 层数配额及 prefill-first | 尚无论文的硬件分区预测器、在线争用修正或 SLO 保证；不能使用 NVIDIA 的回归参数 |
+| 层数自适应与资源预测 | 已有 token-work、EWMA/deadline、prefill-first，以及可选 decode budget guard | guard 使用本机片段观测；尚无论文的硬件分区预测器、在线争用修正或 SLO 保证 |
 
 串行同阶段调度消除了 mixed batch 和 token chunk，但长 prefill 仍会阻塞
 decode。它是接入与对照基础，不能称为完整 MuxWise，也不能据此声称改善了
@@ -27,9 +27,10 @@ decoupled 默认同样固定，可显式启用下述工作量和 TTFT 层数配�
 pending cohort 和可用 KV 容量约束，不是请求到达至首 token 的硬上界。
 
 组件默认与调优脚本不同：`adaptive_layers`、`prefill_first`、`decode_graph`、
-`compile_full_prefill` 默认均为 `false`，`prefill_layer_token_budget` 默认为 `0`。
+`compile_full_prefill`、`decode_budget_guard` 默认均为 `false`，
+`prefill_layer_token_budget` 默认为 `0`。
 [`serve-qwen35-decode-graph.sh`](../scripts/serve-qwen35-decode-graph.sh) 显式选择
-fenced graph、上述四个开关及 `262144` 的工作量预算，并捕获 D batch size
+fenced graph、前四个开关及 `262144` 的工作量预算，保持 guard 关闭，并捕获 D batch size
 1/2/4/8。该组合的验证范围和延迟取舍见 [TP4 性能报告](performance-tp4.md)，
 不能据此认为单独开启某个选项或任意负载都会改善性能。
 
@@ -79,7 +80,9 @@ D 使用另一个 runner。若本轮同时有 P 和 D，fenced 后端先完成 D
 避免共享 communicator 把整个 D 网络串在 P 前面；isolated overlap 先提交
 P 的整个层片段，再提交 D，二者使用独立通信组。下述 prefill-first 可在调度
 阶段选择一次 P-only 步骤。每轮只采样 D 和本轮完成的 P。
-若当轮没有 D，worker 一次运行剩余 P 层，避免空闲时人为拖长 TTFT。
+guard 关闭时，若当轮没有 D，scheduler 请求一次运行剩余 P 层。
+guard 开启时还检查存活但未被本轮选中的 D；只有没有可运行 D 才直接完成剩余 P。
+worker 只遵从显式完成标志，不能根据本轮 D batch 为空自行放宽配额。
 
 原生调度在发射完整 P 时已经增加 `num_computed_tokens`，但此时尚未完成
 forward 或产生首 token。本插件显式记录 pending cohort，后续迭代暂时从
@@ -97,6 +100,7 @@ forward 或产生首 token。本插件显式记录 pending cohort，后续迭代
 | `muxpd_completed_prefill_ids` / `muxpd_cancelled_prefill_ids` | worker 的完成及取消 ACK；二者不相交 |
 | `muxpd_prefill_layers_completed` / `muxpd_prefill_layers_total` | worker 已提交的层数及模型总层数；不单独表示设备任务已完成 |
 | `muxpd_prefill_progress_source` | `none` 表示无 P；`layer_hooks` 表示逐层 hook；`full_forward_return` 仅用于获准编译的新 P 完整 forward 成功返回 |
+| `muxpd_prefill_slice_timing` | guard 启用时的可选首片/续片计时；包含层增量、完整 P token 数、host 发射跨度和已有同步确认完成后的 driver-rank 设备跨度 |
 
 worker 回执只包含当轮 D 和本轮完成 P 的样本。scheduler 先校验 cohort、
 样本行及 ACK，再分别调用原生 `update_from_output()` 回收 D 子输出和已保存
@@ -124,10 +128,11 @@ budget > 0: base_layers = max(layers_per_slice,
 重算时需要重放的已生成 token；不会随着层数推进或部分取消而缩小。调度预览
 使用候选请求总量，KV 分配后按实际接纳的 cohort 重新计算。该预算不改变完整
 prompt 的 token admission，也不是硬工作量上限：配置层数下限和 deadline
-都可能要求执行更多层。没有 D 时仍一次完成剩余 P；暂停和整组取消不推进层数。
+都可能要求执行更多层。可选 guard 在此基础上限制实际层数；没有存活 D 时仍
+一次完成剩余 P，暂停和整组取消不推进层数。
 
 `adaptive_layers` 默认为 `false`，只能与 `execution=decoupled` 同时使用。
-启用后先观测独立完整 P 和独立 D 的耗时；两类有效样本未齐备时使用上述基础
+启用后先观测独立完整 P 和独立 D 的耗时；未开启 guard 时，两类有效样本未齐备使用上述基础
 配额，只有工作量预算为 `0` 时才保持固定 `layers_per_slice`。
 采样窗口是 host 从 schedule 到 worker 回执的墙钟时间，
 包含调度、通信和采样开销，不是 profiler 的逐层 kernel 时长。混合 P/D、
@@ -148,7 +153,8 @@ P 样本按 token 数的二次幂范围分桶，同桶不同长度先归一到�
 `prefill_first` 默认 `false`，要求 decoupled、fenced 和 `adaptive_layers=true`。
 若新 P 的预览配额足以完成整个模型，可以在原生 token 记账前选择 P-only，
 避免它先等待一轮完整 D。非零工作量预算可在 EWMA 尚未校准时触发这个选择；
-否则需要已校准的 deadline 估计。被延后的已有 D 记为债务，下一轮有可运行
+否则需要已校准的 deadline 估计。开启 guard 后，预览还必须通过下述片段预算，
+未知样本不能直接触发整 P 优先。被延后的已有 D 记为债务，下一轮有可运行
 D 时先偿还，再接纳新 P。完整 prompt 占满 token 容量而被选为 P-only 时
 同样记债，即使它的首 token 立即结束也不能让后续 P 连续越过 D。取消、
 抢占和请求 ID 复用会清理相应债务；P 的 KV 分配失败时回退以保持 D 推进。
@@ -164,6 +170,88 @@ scheduler 要求回执的总层数与模型一致、累计提交层数与本轮�
 开启以及整个 cohort 完成；悬挂 P 不能中途改用这个来源。这个计数用于检测
 错序和执行进度；缓存释放仍只能依据完成或
 取消 ACK，不能因看见最后一个层 hook 就提前复用设备内存。
+
+### 可选 decode budget guard
+
+`decode_budget_guard` 是布尔值，默认 `false`。它要求 `execution="decoupled"`、
+`adaptive_layers=true`、`stream_mode="fenced"`，不接受 serial、layered 或 overlap。
+可与独立 decode graph、完整 P 编译、工作量预算和 prefill-first 同时使用；这些
+选项各自原有的校验条件仍成立。已选择 decoupled scheduler/worker 时，可使用以下
+完整 policy JSON。命令行提供的 JSON 会替换原 policy 配置，不能只假定合并一个字段。
+
+```json
+{
+  "execution": "decoupled",
+  "stream_mode": "fenced",
+  "adaptive_layers": true,
+  "decode_budget_guard": true,
+  "layers_per_slice": 8,
+  "ttft_slo_ms": 1000,
+  "tpot_slo_ms": 100,
+  "trace_path": "local-results/guard-{pid}.jsonl"
+}
+```
+
+guard 先保留工作量/TTFT 算出的期望配额，再用 `tpot_slo_ms` 减去距最近 D
+结果退休的时间和匹配的非 P 耗时估计，给 P 片段分配剩余预算。实际配额取
+期望配额、剩余层数和预算可容纳层数的较小值，允许低于 `layers_per_slice`。
+至少推进一层；若这一层也放不进预算，记录 `minimum_progress_exceeds_budget`，
+而不是永远暂停 P。TTFT 已超期也不能强制越过 D 预算，估计冲突记为
+`ttft_feasible=false`；缺少有效估计时可行性为未知，已经超期则明确为不可行。
+
+学习使用以下不同观测，不把整段 P 的 EWMA 当作逐层成本：
+
+- P 按原始 cohort 的完整 token 长度组合精确匹配，包括重算的输出历史；部分
+  取消不缩小这个形状。首片只用实际推进一层的观测作为启动成本，续片单独保存
+  每层成本。首次推进多层的跨度按其实际层数保留，不冒充一层启动成本。
+- 独立 D 使用无 pending P 的 D 步骤，按 batch 请求数、总上下文长度与最大
+  上下文长度的二次幂区间匹配。另一个缓存保存已完成 fenced P 续片的非 P
+  残差：`host_step_ms - device_elapsed_ms`，不能减去 host/device 的较大值。
+  只接纳非首片、非末片、raw 层执行且本轮实际选中 D 的有效完成样本；零或
+  负残差记录拒绝原因，不截断成零。样本按实际选中的 D 形状保存。
+  pending P 优先使用匹配的残差，没有时使用独立 D 观测；新 P 与 P-first
+  预判仍只用独立 D。残差包含 D、RPC、其他 host 工作和跨 rank 尾部等待，
+  不是纯 D 时间或最坏情况上界，也不删除独立 D 的首次较慢观测。
+  形状不匹配、尚无首层/续层样本或退休时间未知，仍回到一层冷启动；无需
+  专门暂停 P 增加一次 D 校准步骤。
+- 设备计时不增加同步。只有现有采样已证明片段完成时，才可使用
+  `max(host_submit_ms, device_elapsed_ms)`；它是 driver rank 的 lane 跨度，含
+  host 发射空隙，不是纯 kernel 时间或全部 TP rank 的最大值。未完成的 P-only
+  片段不提供可用完成耗时。缺少有效 lane 计时时，使用已有采样完成的整步 host
+  耗时作为后备，其中包含 D；再加独立 D 成本会重复计入 D。
+- 同一类观测保留已见最大值，并应用 `estimate_safety_factor`；lane 与 host
+  后备历史分开保存，有有效 lane 样本时优先使用。取消、暂停、晚到 abort 和
+  `full_forward_return` 不训练 raw 逐层成本。这里的 guard 不使用 `ewma_alpha`，
+  该参数仍控制上文的独立阶段 deadline EWMA。
+
+P、独立 D 和 fenced 续片残差的估计映射各最多保存 256 个条目，命中或更新时移动至最近使用位置，
+插入超限时逐出最久未使用的条目。P 的首片/续片及不同首片层数各占独立条目，
+不是保证缓存 256 个完整形状。逐出只影响估计，使用可用后备或回到一层冷启动，不
+修改正在运行的 cohort、D 债务或 KV 生命周期。trace 的 `estimate_cache` 记录
+固定上限、当前条目数与各缓存累计逐出次数。预算协议 v2 的
+`decode_estimate_source` 区分 `solo_decode_round_trip` 与
+`fenced_continuation_residual`；`estimated_decode_cost_ms` 是实际采用的估计，
+`estimated_solo_decode_ms` 始终保留独立 D 的含义。checker 兼容 v1，校验
+v2 来源选择、残差观测算术和配额；它不重放整个缓存历史，也不证明硬 SLO。
+
+对于新 P，预算模型为“一层启动跨度 + 其余层数 × 续层成本”；继续运行的 P
+只使用续层成本。完整 token 准入与 KV 所有权不变。原生分配只接纳部分候选 P
+时，按实际 cohort 重新匹配样本并计算配额。即使完整 prompt 占满 token 预算、
+本轮不能选 D，也不能据此当作 D 已消失并完成全部 P；下一轮 pending P 可以
+与独立 D 批次继续推进。P-only 延后的 D 保留执行债务，即使 `prefill_first=false`
+也适用；取消和原生抢占会清理对应债务。真正没有可运行 D 时直接完成剩余 P。
+
+`quota.decode_budget` 记录 active/selected D、原 P 形状、匹配样本数、计时来源、
+期望/实际层数、预算上限及可行性。`decode_budget_sample` 和
+`prefill_slice_timing` 保存学习与设备计时依据；取消 ACK 和严格层进度仍按原协议验证。
+`check_decoupled_trace.py` 验证回执和配额算术，并兼容没有 guard 字段的旧 trace；
+它没有完整重放预测器的全部历史，不能独立证明估计准确。
+
+这是尽量减少 D 停顿的本机启发式，不是硬性 SLO 保证。冷启动、算子差异、
+跨 rank 尾部等待和单层不可再分等都会造成估计偏差；首层过慢也可能立即超预算。
+开启 guard 可能改善 D 间隔，同时增加 P 的 TTFT 或降低吞吐。需保留关闭 guard
+的匹配对照，分别测量服务端/客户端间隔、TTFT、吞吐和 goodput；不能把 SSE
+多 token 事件间隔称为精确逐 token TBT，也不能据此声称复现论文的硬件资源分区。
 
 ## 取消、暂停与缓存生命周期
 

@@ -379,6 +379,127 @@ def test_no_decode_finishes_prefill_without_extra_engine_iterations(simulation):
 
 
 @pytest.mark.integration
+def test_no_selected_decode_does_not_override_explicit_partial_prefill(simulation):
+    worker, _ = simulation
+    output = schedule(new_p=("p",), pending=("p",), finish=False)
+    worker.execute_model(output)
+    first = worker.sample_tokens(None)
+    assert not first.req_ids
+    assert not first.muxpd_completed_prefill_ids
+    assert first.muxpd_prefill_layers_completed == 1
+    assert worker.model_runner.sample_count == 0
+    assert worker._prefill_task is not None
+    worker.execute_model(schedule(pending=("p",), decode=("d",)))
+    second = worker.sample_tokens(None)
+    assert second.req_ids == ["d"]
+    assert second.muxpd_prefill_layers_completed == 2
+    worker.execute_model(schedule(pending=("p",), finish=True))
+    assert worker.sample_tokens(None).muxpd_completed_prefill_ids == {"p"}
+
+
+def enable_fake_slice_timing(worker, monkeypatch):
+    module = importlib.import_module("vllm_muxpd.decoupled_worker")
+    events = []
+
+    class Event:
+        def __init__(self, *, enable_timing):
+            assert enable_timing
+            events.append(self)
+            self.queries = 0
+
+        def record(self, stream):
+            assert stream is worker._streams["prefill"]
+            assert worker._execution_backend.capture().stream is stream
+
+        def query(self):
+            # These fixtures use synchronous samplers and deliberately expose
+            # no completion signal in an unfinished P-only iteration.
+            assert worker.decode_runner.sample_count or worker.model_runner.sample_count
+            self.queries += 1
+            return True
+
+        def elapsed_time(self, other):
+            assert other.queries == 1
+            return 5.0
+
+        def synchronize(self):
+            pytest.fail("slice timing must reuse the existing sampler barrier")
+
+    monkeypatch.setattr(module.torch.npu, "Event", Event)
+    worker._prefill_slice_timing_enabled = True
+    return events
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("simulation", ["fenced", "graph"], indirect=True)
+def test_slice_timing_only_reads_device_span_after_actual_sampler(
+    simulation, monkeypatch
+):
+    worker, _ = simulation
+    timers = enable_fake_slice_timing(worker, monkeypatch)
+    worker.execute_model(schedule(new_p=("p",), pending=("p",)))
+    first = worker.sample_tokens(None).muxpd_prefill_slice_timing
+    assert first["first_slice"] and first["layer_delta"] == 1
+    assert first["prefill_tokens"] == 32
+    assert first["mode"] == "raw_layers"
+    assert first["host_submit_ms"] >= 0
+    assert first["device_elapsed_ms"] is None
+    assert not first["device_complete"]
+    assert sum(timer.queries for timer in timers) == 0
+
+    worker.execute_model(schedule(pending=("p",), decode=("d",)))
+    second = worker.sample_tokens(None).muxpd_prefill_slice_timing
+    assert not second["first_slice"] and second["layer_delta"] == 1
+    assert second["device_complete"] and second["device_elapsed_ms"] == 5.0
+    assert second["prefill_tokens"] == 32
+    assert sum(timer.queries for timer in timers) == 1
+
+    worker.execute_model(schedule(pending=("p",), cancel=("p",), pause=True))
+    aborted = worker.sample_tokens(None)
+    assert aborted.muxpd_prefill_slice_timing is None
+    assert aborted.muxpd_cancelled_prefill_ids == {"p"}
+    assert len(timers) == 4
+
+
+@pytest.mark.integration
+def test_disabled_slice_timing_allocates_no_events(simulation, monkeypatch):
+    worker, _ = simulation
+    module = importlib.import_module("vllm_muxpd.decoupled_worker")
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("disabled slice timing must not allocate timing events")
+
+    monkeypatch.setattr(module.torch.npu, "Event", forbidden)
+    worker.execute_model(schedule(new_p=("p",), pending=("p",), decode=("d",)))
+    assert worker.sample_tokens(None).muxpd_prefill_slice_timing is None
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("simulation", ["fenced", "graph"], indirect=True)
+def test_partial_cancel_keeps_forward_progress_without_training_timer(
+    simulation, monkeypatch
+):
+    worker, _ = simulation
+    timers = enable_fake_slice_timing(worker, monkeypatch)
+    worker.execute_model(schedule(new_p=("p", "q"), pending=("p", "q")))
+    worker.sample_tokens(None)
+    assert len(timers) == 2
+    worker.execute_model(
+        schedule(pending=("p", "q"), decode=("d",), cancel=("p",))
+    )
+    partial = worker.sample_tokens(None)
+    assert partial.muxpd_prefill_layers_completed == 2
+    assert partial.muxpd_prefill_slice_timing is None
+    assert not partial.muxpd_cancelled_prefill_ids
+    worker.execute_model(schedule(pending=("p", "q"), finish=True))
+    done = worker.sample_tokens(None)
+    assert done.muxpd_completed_prefill_ids == {"q"}
+    assert done.muxpd_cancelled_prefill_ids == {"p"}
+    assert done.muxpd_prefill_slice_timing is None
+    assert len(timers) == 2
+
+
+@pytest.mark.integration
 def test_cancel_entire_cohort_unwinds_and_synchronizes_before_ack(simulation):
     worker, events = simulation
     worker.execute_model(schedule(new_p=("p",), pending=("p",)))
@@ -811,11 +932,14 @@ def test_decode_preparation_skip_preserves_failure_and_retry_protocol(
 @pytest.mark.parametrize("simulation", ["graph"], indirect=True)
 @pytest.mark.parametrize("raw_hooks", [False, True])
 @pytest.mark.parametrize("quota", [None, 3, 4])
+@pytest.mark.parametrize("timed", [False, True])
 def test_compiled_fresh_full_prefill_records_return_and_preserves_sampler_lane(
-    simulation, monkeypatch, raw_hooks, quota
+    simulation, monkeypatch, raw_hooks, quota, timed
 ):
     worker, events = simulation
     controller = enable_fake_prefill_compile(worker, events)
+    if timed:
+        enable_fake_slice_timing(worker, monkeypatch)
     native = worker.model_runner.execute_model
 
     def execute(output):
@@ -852,6 +976,13 @@ def test_compiled_fresh_full_prefill_records_return_and_preserves_sampler_lane(
     assert receipt.muxpd_prefill_layers_completed == 3
     assert receipt.muxpd_prefill_progress_source == "full_forward_return"
     assert receipt.muxpd_completed_prefill_ids == {"p"}
+    timing = receipt.muxpd_prefill_slice_timing
+    if timed:
+        assert timing["mode"] == "compiled_full_forward"
+        assert timing["layer_delta"] == 3
+        assert timing["first_slice"] and timing["device_complete"]
+    else:
+        assert timing is None
     assert worker.model_runner.sample_count == 1
     assert events.index(("compile_exit",)) < events.index(("prefill_sample",))
     assert worker._prefill_task is None

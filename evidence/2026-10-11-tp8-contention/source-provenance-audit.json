@@ -1,0 +1,965 @@
+{
+  "schema_version": 1,
+  "checked_at_utc": "2026-10-11T05:56:57.725678+00:00",
+  "passed": true,
+  "audit_file": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/contention-audit.json",
+  "audit_sha256": "e8cf8a168981e1b041f25b4bdb922fca1a4b96addada5e88874f54dcb1732c2c",
+  "audit_script_sha256": "438398e832941668682ce27e6ad69ad4a29e298d417d2fc08ec98d559f3f4722",
+  "role_source_checks": [
+    {
+      "role": "native16k",
+      "stages": [
+        {
+          "stage": "native16k-initial",
+          "manifest": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/native16k-initial-manifest.json",
+          "manifest_sha256": "c27771e5c7956fe01810245063c6f02de107395d6a450954a58bbfda7ae61bf2",
+          "plugin_source": "/root/workspace/vllm-ascend-MuxPD-hust/src",
+          "recorded_plugin_commit": "7cb5088137a0d46a39408a9f034f5261a9307519",
+          "recorded_plugin_source_hashes": {
+            "multiplex_scheduler.py": "46633e9f61aa5987781b40243fda757650ca1aa8f06daa79a82a92b006d9cfa0",
+            "lanes.py": "a25dcf34efe7232b90e44decc791ee366a3f7282f7a74c68ad76f1ab94e1da16",
+            "worker.py": "c80ad48dd9e82e1e671ddda7d39ae2ede4c761b8ca2fa779f9dfd312fd668ad5",
+            "scheduler.py": "6e834a636350035954eb69d6d4feb0b9f062f1547d434a12b65909b002aa5e62",
+            "slice_timing.py": "dd880b9bc886a3f851deea80ee4a85b7eba56b6810c1c4ef450895901f5d698c",
+            "overlap.py": "aa524df4aebdb941a949f7152d5b27c8a6fc61ec6801791a1e490bdfaa274fd2",
+            "policy.py": "8f4bfbdbbd78a7dd9885d622de6ecd1509e1d7e62210bb4fc06f414179250a6a",
+            "config.py": "6ddfa3d444333f7ed5ec65b495c66588d5d9e7920d11af819f1416c3e8133b12",
+            "decoupled_worker.py": "1732b3c90e45faf9b12ec3c9d334ba1691ee42380dff4308c6ee93231bd16316",
+            "communicators.py": "78b8847dafaaf4995788a3a41552629bc67ff352f85dd589afa4cb311758eaa4",
+            "decoupled_scheduler.py": "3bcd04d59d723a35095946416edfe05f73189a75798990a84156753d779ffec0",
+            "__init__.py": "5a5e1c36f1c9a6d1b47e75b444a047349ed4c28f891bed4f0978da5499fa822c",
+            "decode_graph.py": "ac78d456dfcd492b0cb9ae678cda2336367dfbfa3b70887777135c96edadb9e7"
+          },
+          "current_snapshot_file_checks": [],
+          "process_argv": [
+            "/root/workspace/.venv/bin/python",
+            "-m",
+            "vllm.entrypoints.openai.api_server",
+            "--model",
+            "/root/workspace/models/Qwen3.5-35B-A3B",
+            "--served-model-name",
+            "Qwen3.5-35B-A3B",
+            "--host",
+            "127.0.0.1",
+            "--port",
+            "8000",
+            "--tensor-parallel-size",
+            "8",
+            "--enable-expert-parallel",
+            "--dtype",
+            "bfloat16",
+            "--max-model-len",
+            "16384",
+            "--max-num-seqs",
+            "8",
+            "--max-num-batched-tokens",
+            "16384",
+            "--gpu-memory-utilization",
+            "0.85",
+            "--language-model-only",
+            "--no-enable-prefix-caching",
+            "--mamba-cache-mode",
+            "none",
+            "--no-async-scheduling",
+            "--no-enforce-eager",
+            "--compilation-config",
+            "{\"mode\":3,\"cudagraph_mode\":\"FULL_DECODE_ONLY\",\"cudagraph_capture_sizes\":[1,2,4,8],\"max_cudagraph_capture_size\":8}",
+            "--enable-chunked-prefill"
+          ],
+          "muxpd_selector_arguments": [],
+          "benchmark_sha256": "6f373ff7383ccc61579d4e9406ee0c9b9523ee8a4ef0d5330d76471e421f6712"
+        },
+        {
+          "stage": "native16k-confirm",
+          "manifest": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/native16k-confirm-manifest.json",
+          "manifest_sha256": "15728a85960cb3f14f88591375ebdc4e689ca37473d8e496d8f9a720c1500daf",
+          "plugin_source": "/root/workspace/vllm-ascend-MuxPD-hust/src",
+          "recorded_plugin_commit": "258aef6ce52b7fd77cfe9a7f70d1ea29a13f7d41",
+          "recorded_plugin_source_hashes": {
+            "multiplex_scheduler.py": "46633e9f61aa5987781b40243fda757650ca1aa8f06daa79a82a92b006d9cfa0",
+            "lanes.py": "a25dcf34efe7232b90e44decc791ee366a3f7282f7a74c68ad76f1ab94e1da16",
+            "worker.py": "c80ad48dd9e82e1e671ddda7d39ae2ede4c761b8ca2fa779f9dfd312fd668ad5",
+            "scheduler.py": "6e834a636350035954eb69d6d4feb0b9f062f1547d434a12b65909b002aa5e62",
+            "slice_timing.py": "dd880b9bc886a3f851deea80ee4a85b7eba56b6810c1c4ef450895901f5d698c",
+            "overlap.py": "aa524df4aebdb941a949f7152d5b27c8a6fc61ec6801791a1e490bdfaa274fd2",
+            "policy.py": "8f4bfbdbbd78a7dd9885d622de6ecd1509e1d7e62210bb4fc06f414179250a6a",
+            "config.py": "6ddfa3d444333f7ed5ec65b495c66588d5d9e7920d11af819f1416c3e8133b12",
+            "decoupled_worker.py": "472bfcc71fe4de5b807a9717f43a25eb32a91bca1093990d3105897385d822d7",
+            "communicators.py": "78b8847dafaaf4995788a3a41552629bc67ff352f85dd589afa4cb311758eaa4",
+            "decoupled_scheduler.py": "7f7349d195ca5e3359d9441d5cd05d2c8b685716f004ef929c95ba32ef6a7256",
+            "__init__.py": "5a5e1c36f1c9a6d1b47e75b444a047349ed4c28f891bed4f0978da5499fa822c",
+            "decode_graph.py": "ac78d456dfcd492b0cb9ae678cda2336367dfbfa3b70887777135c96edadb9e7"
+          },
+          "current_snapshot_file_checks": [],
+          "process_argv": [
+            "/root/workspace/.venv/bin/python",
+            "-m",
+            "vllm.entrypoints.openai.api_server",
+            "--model",
+            "/root/workspace/models/Qwen3.5-35B-A3B",
+            "--served-model-name",
+            "Qwen3.5-35B-A3B",
+            "--host",
+            "127.0.0.1",
+            "--port",
+            "8000",
+            "--tensor-parallel-size",
+            "8",
+            "--enable-expert-parallel",
+            "--dtype",
+            "bfloat16",
+            "--max-model-len",
+            "16384",
+            "--max-num-seqs",
+            "8",
+            "--max-num-batched-tokens",
+            "16384",
+            "--gpu-memory-utilization",
+            "0.85",
+            "--language-model-only",
+            "--no-enable-prefix-caching",
+            "--mamba-cache-mode",
+            "none",
+            "--no-async-scheduling",
+            "--no-enforce-eager",
+            "--compilation-config",
+            "{\"mode\":3,\"cudagraph_mode\":\"FULL_DECODE_ONLY\",\"cudagraph_capture_sizes\":[1,2,4,8],\"max_cudagraph_capture_size\":8}",
+            "--enable-chunked-prefill"
+          ],
+          "muxpd_selector_arguments": [],
+          "benchmark_sha256": "6f373ff7383ccc61579d4e9406ee0c9b9523ee8a4ef0d5330d76471e421f6712"
+        }
+      ],
+      "process_arguments_identical": true,
+      "recorded_plugin_commits_match": false,
+      "recorded_plugin_source_hashes_match": false,
+      "plugin_source_pair_equality_required": false,
+      "passed": true,
+      "scope": "Native invocations do not select a MuxPD worker/scheduler. Plugin files were recorded as ambient repository provenance and changed between native stages; they are not asserted to be the native implementation."
+    },
+    {
+      "role": "native2k",
+      "stages": [
+        {
+          "stage": "native2k-initial",
+          "manifest": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/native2k-initial-manifest.json",
+          "manifest_sha256": "32e1c82c12db3ac8ac200ee05f956f8a2006c857a5aef3c7857db35aefdacd22",
+          "plugin_source": "/root/workspace/vllm-ascend-MuxPD-hust/src",
+          "recorded_plugin_commit": "7cb5088137a0d46a39408a9f034f5261a9307519",
+          "recorded_plugin_source_hashes": {
+            "multiplex_scheduler.py": "46633e9f61aa5987781b40243fda757650ca1aa8f06daa79a82a92b006d9cfa0",
+            "lanes.py": "a25dcf34efe7232b90e44decc791ee366a3f7282f7a74c68ad76f1ab94e1da16",
+            "worker.py": "c80ad48dd9e82e1e671ddda7d39ae2ede4c761b8ca2fa779f9dfd312fd668ad5",
+            "scheduler.py": "6e834a636350035954eb69d6d4feb0b9f062f1547d434a12b65909b002aa5e62",
+            "slice_timing.py": "dd880b9bc886a3f851deea80ee4a85b7eba56b6810c1c4ef450895901f5d698c",
+            "overlap.py": "aa524df4aebdb941a949f7152d5b27c8a6fc61ec6801791a1e490bdfaa274fd2",
+            "policy.py": "8f4bfbdbbd78a7dd9885d622de6ecd1509e1d7e62210bb4fc06f414179250a6a",
+            "config.py": "6ddfa3d444333f7ed5ec65b495c66588d5d9e7920d11af819f1416c3e8133b12",
+            "decoupled_worker.py": "472bfcc71fe4de5b807a9717f43a25eb32a91bca1093990d3105897385d822d7",
+            "communicators.py": "78b8847dafaaf4995788a3a41552629bc67ff352f85dd589afa4cb311758eaa4",
+            "decoupled_scheduler.py": "0196d27d5f85de48f33d3fa9347247c41e4631f907221c8039e6b01e3576bebb",
+            "__init__.py": "5a5e1c36f1c9a6d1b47e75b444a047349ed4c28f891bed4f0978da5499fa822c",
+            "decode_graph.py": "ac78d456dfcd492b0cb9ae678cda2336367dfbfa3b70887777135c96edadb9e7"
+          },
+          "current_snapshot_file_checks": [],
+          "process_argv": [
+            "/root/workspace/.venv/bin/python",
+            "-m",
+            "vllm.entrypoints.openai.api_server",
+            "--model",
+            "/root/workspace/models/Qwen3.5-35B-A3B",
+            "--served-model-name",
+            "Qwen3.5-35B-A3B",
+            "--host",
+            "127.0.0.1",
+            "--port",
+            "8000",
+            "--tensor-parallel-size",
+            "8",
+            "--enable-expert-parallel",
+            "--dtype",
+            "bfloat16",
+            "--max-model-len",
+            "16384",
+            "--max-num-seqs",
+            "8",
+            "--max-num-batched-tokens",
+            "2048",
+            "--gpu-memory-utilization",
+            "0.85",
+            "--language-model-only",
+            "--no-enable-prefix-caching",
+            "--mamba-cache-mode",
+            "none",
+            "--no-async-scheduling",
+            "--no-enforce-eager",
+            "--compilation-config",
+            "{\"mode\":3,\"cudagraph_mode\":\"FULL_DECODE_ONLY\",\"cudagraph_capture_sizes\":[1,2,4,8],\"max_cudagraph_capture_size\":8}",
+            "--enable-chunked-prefill"
+          ],
+          "muxpd_selector_arguments": [],
+          "benchmark_sha256": "6f373ff7383ccc61579d4e9406ee0c9b9523ee8a4ef0d5330d76471e421f6712"
+        },
+        {
+          "stage": "native2k-confirm",
+          "manifest": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/native2k-confirm-manifest.json",
+          "manifest_sha256": "f4d679c6372c60f7688f429c18679ce332cb10d9cf2b6bfbd1835a5e7d76e886",
+          "plugin_source": "/root/workspace/vllm-ascend-MuxPD-hust/src",
+          "recorded_plugin_commit": "258aef6ce52b7fd77cfe9a7f70d1ea29a13f7d41",
+          "recorded_plugin_source_hashes": {
+            "multiplex_scheduler.py": "46633e9f61aa5987781b40243fda757650ca1aa8f06daa79a82a92b006d9cfa0",
+            "lanes.py": "a25dcf34efe7232b90e44decc791ee366a3f7282f7a74c68ad76f1ab94e1da16",
+            "worker.py": "c80ad48dd9e82e1e671ddda7d39ae2ede4c761b8ca2fa779f9dfd312fd668ad5",
+            "scheduler.py": "6e834a636350035954eb69d6d4feb0b9f062f1547d434a12b65909b002aa5e62",
+            "slice_timing.py": "dd880b9bc886a3f851deea80ee4a85b7eba56b6810c1c4ef450895901f5d698c",
+            "overlap.py": "aa524df4aebdb941a949f7152d5b27c8a6fc61ec6801791a1e490bdfaa274fd2",
+            "policy.py": "8f4bfbdbbd78a7dd9885d622de6ecd1509e1d7e62210bb4fc06f414179250a6a",
+            "config.py": "6ddfa3d444333f7ed5ec65b495c66588d5d9e7920d11af819f1416c3e8133b12",
+            "decoupled_worker.py": "472bfcc71fe4de5b807a9717f43a25eb32a91bca1093990d3105897385d822d7",
+            "communicators.py": "78b8847dafaaf4995788a3a41552629bc67ff352f85dd589afa4cb311758eaa4",
+            "decoupled_scheduler.py": "7f7349d195ca5e3359d9441d5cd05d2c8b685716f004ef929c95ba32ef6a7256",
+            "__init__.py": "5a5e1c36f1c9a6d1b47e75b444a047349ed4c28f891bed4f0978da5499fa822c",
+            "decode_graph.py": "ac78d456dfcd492b0cb9ae678cda2336367dfbfa3b70887777135c96edadb9e7"
+          },
+          "current_snapshot_file_checks": [],
+          "process_argv": [
+            "/root/workspace/.venv/bin/python",
+            "-m",
+            "vllm.entrypoints.openai.api_server",
+            "--model",
+            "/root/workspace/models/Qwen3.5-35B-A3B",
+            "--served-model-name",
+            "Qwen3.5-35B-A3B",
+            "--host",
+            "127.0.0.1",
+            "--port",
+            "8000",
+            "--tensor-parallel-size",
+            "8",
+            "--enable-expert-parallel",
+            "--dtype",
+            "bfloat16",
+            "--max-model-len",
+            "16384",
+            "--max-num-seqs",
+            "8",
+            "--max-num-batched-tokens",
+            "2048",
+            "--gpu-memory-utilization",
+            "0.85",
+            "--language-model-only",
+            "--no-enable-prefix-caching",
+            "--mamba-cache-mode",
+            "none",
+            "--no-async-scheduling",
+            "--no-enforce-eager",
+            "--compilation-config",
+            "{\"mode\":3,\"cudagraph_mode\":\"FULL_DECODE_ONLY\",\"cudagraph_capture_sizes\":[1,2,4,8],\"max_cudagraph_capture_size\":8}",
+            "--enable-chunked-prefill"
+          ],
+          "muxpd_selector_arguments": [],
+          "benchmark_sha256": "6f373ff7383ccc61579d4e9406ee0c9b9523ee8a4ef0d5330d76471e421f6712"
+        }
+      ],
+      "process_arguments_identical": true,
+      "recorded_plugin_commits_match": false,
+      "recorded_plugin_source_hashes_match": false,
+      "plugin_source_pair_equality_required": false,
+      "passed": true,
+      "scope": "Native invocations do not select a MuxPD worker/scheduler. Plugin files were recorded as ambient repository provenance and changed between native stages; they are not asserted to be the native implementation."
+    },
+    {
+      "role": "old-work256",
+      "stages": [
+        {
+          "stage": "old-work256-initial",
+          "manifest": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/old-work256-initial-manifest.json",
+          "manifest_sha256": "8af862b0d8f9c05fa9ab8023b4042fdc4b03c09e74de4dddec093aa056cd8378",
+          "plugin_source": "/root/workspace/baselines/muxpd-7cb5088/src",
+          "recorded_plugin_commit": "7cb5088137a0d46a39408a9f034f5261a9307519",
+          "recorded_plugin_source_hashes": {
+            "multiplex_scheduler.py": "46633e9f61aa5987781b40243fda757650ca1aa8f06daa79a82a92b006d9cfa0",
+            "lanes.py": "ee6fafcce5aa5a47f950f0dac7f6edae1084c1a3e8ba9f331b72d03eec2d3891",
+            "worker.py": "a2812dbc681978db732b0193339983a0afb93951f3acc1dcb0d2d0db12f03981",
+            "scheduler.py": "6e834a636350035954eb69d6d4feb0b9f062f1547d434a12b65909b002aa5e62",
+            "overlap.py": "aa524df4aebdb941a949f7152d5b27c8a6fc61ec6801791a1e490bdfaa274fd2",
+            "policy.py": "8f4bfbdbbd78a7dd9885d622de6ecd1509e1d7e62210bb4fc06f414179250a6a",
+            "config.py": "c41d177fcc698960fee52a4527e90ce264f9d9f63f9d049243411bd2bd9bc90a",
+            "decoupled_worker.py": "99e59fe80c5de729a8f5f1e07ae0b7e30ff9f7f7cc21b1b77e745d8fa31231e7",
+            "communicators.py": "78b8847dafaaf4995788a3a41552629bc67ff352f85dd589afa4cb311758eaa4",
+            "decoupled_scheduler.py": "7b9be6f31675cbbb2891b90bd0ab16737b7acf2c3198a4bdf65e5ca478598baa",
+            "__init__.py": "5a5e1c36f1c9a6d1b47e75b444a047349ed4c28f891bed4f0978da5499fa822c",
+            "decode_graph.py": "ac78d456dfcd492b0cb9ae678cda2336367dfbfa3b70887777135c96edadb9e7"
+          },
+          "current_snapshot_file_checks": [
+            {
+              "path": "/root/workspace/baselines/muxpd-7cb5088/src/vllm_muxpd/multiplex_scheduler.py",
+              "recorded_sha256": "46633e9f61aa5987781b40243fda757650ca1aa8f06daa79a82a92b006d9cfa0",
+              "current_sha256": "46633e9f61aa5987781b40243fda757650ca1aa8f06daa79a82a92b006d9cfa0",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/baselines/muxpd-7cb5088/src/vllm_muxpd/lanes.py",
+              "recorded_sha256": "ee6fafcce5aa5a47f950f0dac7f6edae1084c1a3e8ba9f331b72d03eec2d3891",
+              "current_sha256": "ee6fafcce5aa5a47f950f0dac7f6edae1084c1a3e8ba9f331b72d03eec2d3891",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/baselines/muxpd-7cb5088/src/vllm_muxpd/worker.py",
+              "recorded_sha256": "a2812dbc681978db732b0193339983a0afb93951f3acc1dcb0d2d0db12f03981",
+              "current_sha256": "a2812dbc681978db732b0193339983a0afb93951f3acc1dcb0d2d0db12f03981",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/baselines/muxpd-7cb5088/src/vllm_muxpd/scheduler.py",
+              "recorded_sha256": "6e834a636350035954eb69d6d4feb0b9f062f1547d434a12b65909b002aa5e62",
+              "current_sha256": "6e834a636350035954eb69d6d4feb0b9f062f1547d434a12b65909b002aa5e62",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/baselines/muxpd-7cb5088/src/vllm_muxpd/overlap.py",
+              "recorded_sha256": "aa524df4aebdb941a949f7152d5b27c8a6fc61ec6801791a1e490bdfaa274fd2",
+              "current_sha256": "aa524df4aebdb941a949f7152d5b27c8a6fc61ec6801791a1e490bdfaa274fd2",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/baselines/muxpd-7cb5088/src/vllm_muxpd/policy.py",
+              "recorded_sha256": "8f4bfbdbbd78a7dd9885d622de6ecd1509e1d7e62210bb4fc06f414179250a6a",
+              "current_sha256": "8f4bfbdbbd78a7dd9885d622de6ecd1509e1d7e62210bb4fc06f414179250a6a",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/baselines/muxpd-7cb5088/src/vllm_muxpd/config.py",
+              "recorded_sha256": "c41d177fcc698960fee52a4527e90ce264f9d9f63f9d049243411bd2bd9bc90a",
+              "current_sha256": "c41d177fcc698960fee52a4527e90ce264f9d9f63f9d049243411bd2bd9bc90a",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/baselines/muxpd-7cb5088/src/vllm_muxpd/decoupled_worker.py",
+              "recorded_sha256": "99e59fe80c5de729a8f5f1e07ae0b7e30ff9f7f7cc21b1b77e745d8fa31231e7",
+              "current_sha256": "99e59fe80c5de729a8f5f1e07ae0b7e30ff9f7f7cc21b1b77e745d8fa31231e7",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/baselines/muxpd-7cb5088/src/vllm_muxpd/communicators.py",
+              "recorded_sha256": "78b8847dafaaf4995788a3a41552629bc67ff352f85dd589afa4cb311758eaa4",
+              "current_sha256": "78b8847dafaaf4995788a3a41552629bc67ff352f85dd589afa4cb311758eaa4",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/baselines/muxpd-7cb5088/src/vllm_muxpd/decoupled_scheduler.py",
+              "recorded_sha256": "7b9be6f31675cbbb2891b90bd0ab16737b7acf2c3198a4bdf65e5ca478598baa",
+              "current_sha256": "7b9be6f31675cbbb2891b90bd0ab16737b7acf2c3198a4bdf65e5ca478598baa",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/baselines/muxpd-7cb5088/src/vllm_muxpd/__init__.py",
+              "recorded_sha256": "5a5e1c36f1c9a6d1b47e75b444a047349ed4c28f891bed4f0978da5499fa822c",
+              "current_sha256": "5a5e1c36f1c9a6d1b47e75b444a047349ed4c28f891bed4f0978da5499fa822c",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/baselines/muxpd-7cb5088/src/vllm_muxpd/decode_graph.py",
+              "recorded_sha256": "ac78d456dfcd492b0cb9ae678cda2336367dfbfa3b70887777135c96edadb9e7",
+              "current_sha256": "ac78d456dfcd492b0cb9ae678cda2336367dfbfa3b70887777135c96edadb9e7",
+              "matches": true
+            }
+          ],
+          "process_argv": [
+            "/root/workspace/.venv/bin/python",
+            "-m",
+            "vllm.entrypoints.openai.api_server",
+            "--model",
+            "/root/workspace/models/Qwen3.5-35B-A3B",
+            "--served-model-name",
+            "Qwen3.5-35B-A3B",
+            "--host",
+            "127.0.0.1",
+            "--port",
+            "8002",
+            "--tensor-parallel-size",
+            "8",
+            "--enable-expert-parallel",
+            "--dtype",
+            "bfloat16",
+            "--max-model-len",
+            "16384",
+            "--max-num-seqs",
+            "8",
+            "--max-num-batched-tokens",
+            "16384",
+            "--gpu-memory-utilization",
+            "0.85",
+            "--language-model-only",
+            "--no-enable-prefix-caching",
+            "--mamba-cache-mode",
+            "none",
+            "--no-async-scheduling",
+            "--no-enforce-eager",
+            "--compilation-config",
+            "{\"mode\":3,\"cudagraph_mode\":\"FULL_DECODE_ONLY\",\"cudagraph_capture_sizes\":[1,2,4,8],\"max_cudagraph_capture_size\":8}",
+            "--no-enable-chunked-prefill",
+            "--scheduler-cls",
+            "vllm_muxpd.decoupled_scheduler.DecoupledMuxPDScheduler",
+            "--worker-cls",
+            "vllm_muxpd.decoupled_worker.DecoupledMuxPDNPUWorker",
+            "--batch-admission-policy",
+            "vllm_muxpd.policy.MuxPDPolicy",
+            "--batch-admission-policy-config",
+            "{\"execution\":\"decoupled\",\"stream_mode\":\"fenced\",\"layers_per_slice\":8,\"adaptive_layers\":true,\"prefill_first\":true,\"decode_graph\":true,\"compile_full_prefill\":true,\"prefill_layer_token_budget\":262144}"
+          ],
+          "muxpd_selector_arguments": [
+            "--scheduler-cls",
+            "vllm_muxpd.decoupled_scheduler.DecoupledMuxPDScheduler",
+            "--worker-cls",
+            "vllm_muxpd.decoupled_worker.DecoupledMuxPDNPUWorker",
+            "vllm_muxpd.policy.MuxPDPolicy"
+          ],
+          "benchmark_sha256": "6f373ff7383ccc61579d4e9406ee0c9b9523ee8a4ef0d5330d76471e421f6712"
+        },
+        {
+          "stage": "old-work256-confirm-clean",
+          "manifest": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/old-work256-confirm-clean-manifest.json",
+          "manifest_sha256": "aec1d3b6e61f237e775f2ec7c1e7e8f2b8e365db8758e6e76d62aeaa996186a1",
+          "plugin_source": "/root/workspace/baselines/muxpd-7cb5088/src",
+          "recorded_plugin_commit": "7cb5088137a0d46a39408a9f034f5261a9307519",
+          "recorded_plugin_source_hashes": {
+            "multiplex_scheduler.py": "46633e9f61aa5987781b40243fda757650ca1aa8f06daa79a82a92b006d9cfa0",
+            "lanes.py": "ee6fafcce5aa5a47f950f0dac7f6edae1084c1a3e8ba9f331b72d03eec2d3891",
+            "worker.py": "a2812dbc681978db732b0193339983a0afb93951f3acc1dcb0d2d0db12f03981",
+            "scheduler.py": "6e834a636350035954eb69d6d4feb0b9f062f1547d434a12b65909b002aa5e62",
+            "overlap.py": "aa524df4aebdb941a949f7152d5b27c8a6fc61ec6801791a1e490bdfaa274fd2",
+            "policy.py": "8f4bfbdbbd78a7dd9885d622de6ecd1509e1d7e62210bb4fc06f414179250a6a",
+            "config.py": "c41d177fcc698960fee52a4527e90ce264f9d9f63f9d049243411bd2bd9bc90a",
+            "decoupled_worker.py": "99e59fe80c5de729a8f5f1e07ae0b7e30ff9f7f7cc21b1b77e745d8fa31231e7",
+            "communicators.py": "78b8847dafaaf4995788a3a41552629bc67ff352f85dd589afa4cb311758eaa4",
+            "decoupled_scheduler.py": "7b9be6f31675cbbb2891b90bd0ab16737b7acf2c3198a4bdf65e5ca478598baa",
+            "__init__.py": "5a5e1c36f1c9a6d1b47e75b444a047349ed4c28f891bed4f0978da5499fa822c",
+            "decode_graph.py": "ac78d456dfcd492b0cb9ae678cda2336367dfbfa3b70887777135c96edadb9e7"
+          },
+          "current_snapshot_file_checks": [
+            {
+              "path": "/root/workspace/baselines/muxpd-7cb5088/src/vllm_muxpd/multiplex_scheduler.py",
+              "recorded_sha256": "46633e9f61aa5987781b40243fda757650ca1aa8f06daa79a82a92b006d9cfa0",
+              "current_sha256": "46633e9f61aa5987781b40243fda757650ca1aa8f06daa79a82a92b006d9cfa0",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/baselines/muxpd-7cb5088/src/vllm_muxpd/lanes.py",
+              "recorded_sha256": "ee6fafcce5aa5a47f950f0dac7f6edae1084c1a3e8ba9f331b72d03eec2d3891",
+              "current_sha256": "ee6fafcce5aa5a47f950f0dac7f6edae1084c1a3e8ba9f331b72d03eec2d3891",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/baselines/muxpd-7cb5088/src/vllm_muxpd/worker.py",
+              "recorded_sha256": "a2812dbc681978db732b0193339983a0afb93951f3acc1dcb0d2d0db12f03981",
+              "current_sha256": "a2812dbc681978db732b0193339983a0afb93951f3acc1dcb0d2d0db12f03981",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/baselines/muxpd-7cb5088/src/vllm_muxpd/scheduler.py",
+              "recorded_sha256": "6e834a636350035954eb69d6d4feb0b9f062f1547d434a12b65909b002aa5e62",
+              "current_sha256": "6e834a636350035954eb69d6d4feb0b9f062f1547d434a12b65909b002aa5e62",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/baselines/muxpd-7cb5088/src/vllm_muxpd/overlap.py",
+              "recorded_sha256": "aa524df4aebdb941a949f7152d5b27c8a6fc61ec6801791a1e490bdfaa274fd2",
+              "current_sha256": "aa524df4aebdb941a949f7152d5b27c8a6fc61ec6801791a1e490bdfaa274fd2",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/baselines/muxpd-7cb5088/src/vllm_muxpd/policy.py",
+              "recorded_sha256": "8f4bfbdbbd78a7dd9885d622de6ecd1509e1d7e62210bb4fc06f414179250a6a",
+              "current_sha256": "8f4bfbdbbd78a7dd9885d622de6ecd1509e1d7e62210bb4fc06f414179250a6a",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/baselines/muxpd-7cb5088/src/vllm_muxpd/config.py",
+              "recorded_sha256": "c41d177fcc698960fee52a4527e90ce264f9d9f63f9d049243411bd2bd9bc90a",
+              "current_sha256": "c41d177fcc698960fee52a4527e90ce264f9d9f63f9d049243411bd2bd9bc90a",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/baselines/muxpd-7cb5088/src/vllm_muxpd/decoupled_worker.py",
+              "recorded_sha256": "99e59fe80c5de729a8f5f1e07ae0b7e30ff9f7f7cc21b1b77e745d8fa31231e7",
+              "current_sha256": "99e59fe80c5de729a8f5f1e07ae0b7e30ff9f7f7cc21b1b77e745d8fa31231e7",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/baselines/muxpd-7cb5088/src/vllm_muxpd/communicators.py",
+              "recorded_sha256": "78b8847dafaaf4995788a3a41552629bc67ff352f85dd589afa4cb311758eaa4",
+              "current_sha256": "78b8847dafaaf4995788a3a41552629bc67ff352f85dd589afa4cb311758eaa4",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/baselines/muxpd-7cb5088/src/vllm_muxpd/decoupled_scheduler.py",
+              "recorded_sha256": "7b9be6f31675cbbb2891b90bd0ab16737b7acf2c3198a4bdf65e5ca478598baa",
+              "current_sha256": "7b9be6f31675cbbb2891b90bd0ab16737b7acf2c3198a4bdf65e5ca478598baa",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/baselines/muxpd-7cb5088/src/vllm_muxpd/__init__.py",
+              "recorded_sha256": "5a5e1c36f1c9a6d1b47e75b444a047349ed4c28f891bed4f0978da5499fa822c",
+              "current_sha256": "5a5e1c36f1c9a6d1b47e75b444a047349ed4c28f891bed4f0978da5499fa822c",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/baselines/muxpd-7cb5088/src/vllm_muxpd/decode_graph.py",
+              "recorded_sha256": "ac78d456dfcd492b0cb9ae678cda2336367dfbfa3b70887777135c96edadb9e7",
+              "current_sha256": "ac78d456dfcd492b0cb9ae678cda2336367dfbfa3b70887777135c96edadb9e7",
+              "matches": true
+            }
+          ],
+          "process_argv": [
+            "/root/workspace/.venv/bin/python",
+            "-m",
+            "vllm.entrypoints.openai.api_server",
+            "--model",
+            "/root/workspace/models/Qwen3.5-35B-A3B",
+            "--served-model-name",
+            "Qwen3.5-35B-A3B",
+            "--host",
+            "127.0.0.1",
+            "--port",
+            "8002",
+            "--tensor-parallel-size",
+            "8",
+            "--enable-expert-parallel",
+            "--dtype",
+            "bfloat16",
+            "--max-model-len",
+            "16384",
+            "--max-num-seqs",
+            "8",
+            "--max-num-batched-tokens",
+            "16384",
+            "--gpu-memory-utilization",
+            "0.85",
+            "--language-model-only",
+            "--no-enable-prefix-caching",
+            "--mamba-cache-mode",
+            "none",
+            "--no-async-scheduling",
+            "--no-enforce-eager",
+            "--compilation-config",
+            "{\"mode\":3,\"cudagraph_mode\":\"FULL_DECODE_ONLY\",\"cudagraph_capture_sizes\":[1,2,4,8],\"max_cudagraph_capture_size\":8}",
+            "--no-enable-chunked-prefill",
+            "--scheduler-cls",
+            "vllm_muxpd.decoupled_scheduler.DecoupledMuxPDScheduler",
+            "--worker-cls",
+            "vllm_muxpd.decoupled_worker.DecoupledMuxPDNPUWorker",
+            "--batch-admission-policy",
+            "vllm_muxpd.policy.MuxPDPolicy",
+            "--batch-admission-policy-config",
+            "{\"execution\":\"decoupled\",\"stream_mode\":\"fenced\",\"layers_per_slice\":8,\"adaptive_layers\":true,\"prefill_first\":true,\"decode_graph\":true,\"compile_full_prefill\":true,\"prefill_layer_token_budget\":262144}"
+          ],
+          "muxpd_selector_arguments": [
+            "--scheduler-cls",
+            "vllm_muxpd.decoupled_scheduler.DecoupledMuxPDScheduler",
+            "--worker-cls",
+            "vllm_muxpd.decoupled_worker.DecoupledMuxPDNPUWorker",
+            "vllm_muxpd.policy.MuxPDPolicy"
+          ],
+          "benchmark_sha256": "6f373ff7383ccc61579d4e9406ee0c9b9523ee8a4ef0d5330d76471e421f6712"
+        }
+      ],
+      "process_arguments_identical": true,
+      "recorded_plugin_commits_match": true,
+      "recorded_plugin_source_hashes_match": true,
+      "plugin_source_pair_equality_required": true,
+      "passed": true,
+      "scope": "Selected plugin commits and all recorded source bytes match between stages and the currently retained source snapshots."
+    },
+    {
+      "role": "guard",
+      "stages": [
+        {
+          "stage": "guard-v2-initial",
+          "manifest": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/guard-v2-initial-manifest.json",
+          "manifest_sha256": "ee1c70eee0c7d72a0769c5d3212abe02033cf3d6a93eed36ed22da5bb86f6d0d",
+          "plugin_source": "/root/workspace/vllm-ascend-MuxPD-hust/src",
+          "recorded_plugin_commit": "258aef6ce52b7fd77cfe9a7f70d1ea29a13f7d41",
+          "recorded_plugin_source_hashes": {
+            "multiplex_scheduler.py": "46633e9f61aa5987781b40243fda757650ca1aa8f06daa79a82a92b006d9cfa0",
+            "lanes.py": "a25dcf34efe7232b90e44decc791ee366a3f7282f7a74c68ad76f1ab94e1da16",
+            "worker.py": "c80ad48dd9e82e1e671ddda7d39ae2ede4c761b8ca2fa779f9dfd312fd668ad5",
+            "scheduler.py": "6e834a636350035954eb69d6d4feb0b9f062f1547d434a12b65909b002aa5e62",
+            "slice_timing.py": "dd880b9bc886a3f851deea80ee4a85b7eba56b6810c1c4ef450895901f5d698c",
+            "overlap.py": "aa524df4aebdb941a949f7152d5b27c8a6fc61ec6801791a1e490bdfaa274fd2",
+            "policy.py": "8f4bfbdbbd78a7dd9885d622de6ecd1509e1d7e62210bb4fc06f414179250a6a",
+            "config.py": "6ddfa3d444333f7ed5ec65b495c66588d5d9e7920d11af819f1416c3e8133b12",
+            "decoupled_worker.py": "472bfcc71fe4de5b807a9717f43a25eb32a91bca1093990d3105897385d822d7",
+            "communicators.py": "78b8847dafaaf4995788a3a41552629bc67ff352f85dd589afa4cb311758eaa4",
+            "decoupled_scheduler.py": "7f7349d195ca5e3359d9441d5cd05d2c8b685716f004ef929c95ba32ef6a7256",
+            "__init__.py": "5a5e1c36f1c9a6d1b47e75b444a047349ed4c28f891bed4f0978da5499fa822c",
+            "decode_graph.py": "ac78d456dfcd492b0cb9ae678cda2336367dfbfa3b70887777135c96edadb9e7"
+          },
+          "current_snapshot_file_checks": [
+            {
+              "path": "/root/workspace/vllm-ascend-MuxPD-hust/src/vllm_muxpd/multiplex_scheduler.py",
+              "recorded_sha256": "46633e9f61aa5987781b40243fda757650ca1aa8f06daa79a82a92b006d9cfa0",
+              "current_sha256": "46633e9f61aa5987781b40243fda757650ca1aa8f06daa79a82a92b006d9cfa0",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/vllm-ascend-MuxPD-hust/src/vllm_muxpd/lanes.py",
+              "recorded_sha256": "a25dcf34efe7232b90e44decc791ee366a3f7282f7a74c68ad76f1ab94e1da16",
+              "current_sha256": "a25dcf34efe7232b90e44decc791ee366a3f7282f7a74c68ad76f1ab94e1da16",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/vllm-ascend-MuxPD-hust/src/vllm_muxpd/worker.py",
+              "recorded_sha256": "c80ad48dd9e82e1e671ddda7d39ae2ede4c761b8ca2fa779f9dfd312fd668ad5",
+              "current_sha256": "c80ad48dd9e82e1e671ddda7d39ae2ede4c761b8ca2fa779f9dfd312fd668ad5",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/vllm-ascend-MuxPD-hust/src/vllm_muxpd/scheduler.py",
+              "recorded_sha256": "6e834a636350035954eb69d6d4feb0b9f062f1547d434a12b65909b002aa5e62",
+              "current_sha256": "6e834a636350035954eb69d6d4feb0b9f062f1547d434a12b65909b002aa5e62",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/vllm-ascend-MuxPD-hust/src/vllm_muxpd/slice_timing.py",
+              "recorded_sha256": "dd880b9bc886a3f851deea80ee4a85b7eba56b6810c1c4ef450895901f5d698c",
+              "current_sha256": "dd880b9bc886a3f851deea80ee4a85b7eba56b6810c1c4ef450895901f5d698c",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/vllm-ascend-MuxPD-hust/src/vllm_muxpd/overlap.py",
+              "recorded_sha256": "aa524df4aebdb941a949f7152d5b27c8a6fc61ec6801791a1e490bdfaa274fd2",
+              "current_sha256": "aa524df4aebdb941a949f7152d5b27c8a6fc61ec6801791a1e490bdfaa274fd2",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/vllm-ascend-MuxPD-hust/src/vllm_muxpd/policy.py",
+              "recorded_sha256": "8f4bfbdbbd78a7dd9885d622de6ecd1509e1d7e62210bb4fc06f414179250a6a",
+              "current_sha256": "8f4bfbdbbd78a7dd9885d622de6ecd1509e1d7e62210bb4fc06f414179250a6a",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/vllm-ascend-MuxPD-hust/src/vllm_muxpd/config.py",
+              "recorded_sha256": "6ddfa3d444333f7ed5ec65b495c66588d5d9e7920d11af819f1416c3e8133b12",
+              "current_sha256": "6ddfa3d444333f7ed5ec65b495c66588d5d9e7920d11af819f1416c3e8133b12",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/vllm-ascend-MuxPD-hust/src/vllm_muxpd/decoupled_worker.py",
+              "recorded_sha256": "472bfcc71fe4de5b807a9717f43a25eb32a91bca1093990d3105897385d822d7",
+              "current_sha256": "472bfcc71fe4de5b807a9717f43a25eb32a91bca1093990d3105897385d822d7",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/vllm-ascend-MuxPD-hust/src/vllm_muxpd/communicators.py",
+              "recorded_sha256": "78b8847dafaaf4995788a3a41552629bc67ff352f85dd589afa4cb311758eaa4",
+              "current_sha256": "78b8847dafaaf4995788a3a41552629bc67ff352f85dd589afa4cb311758eaa4",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/vllm-ascend-MuxPD-hust/src/vllm_muxpd/decoupled_scheduler.py",
+              "recorded_sha256": "7f7349d195ca5e3359d9441d5cd05d2c8b685716f004ef929c95ba32ef6a7256",
+              "current_sha256": "7f7349d195ca5e3359d9441d5cd05d2c8b685716f004ef929c95ba32ef6a7256",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/vllm-ascend-MuxPD-hust/src/vllm_muxpd/__init__.py",
+              "recorded_sha256": "5a5e1c36f1c9a6d1b47e75b444a047349ed4c28f891bed4f0978da5499fa822c",
+              "current_sha256": "5a5e1c36f1c9a6d1b47e75b444a047349ed4c28f891bed4f0978da5499fa822c",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/vllm-ascend-MuxPD-hust/src/vllm_muxpd/decode_graph.py",
+              "recorded_sha256": "ac78d456dfcd492b0cb9ae678cda2336367dfbfa3b70887777135c96edadb9e7",
+              "current_sha256": "ac78d456dfcd492b0cb9ae678cda2336367dfbfa3b70887777135c96edadb9e7",
+              "matches": true
+            }
+          ],
+          "process_argv": [
+            "/root/workspace/.venv/bin/python",
+            "-m",
+            "vllm.entrypoints.openai.api_server",
+            "--model",
+            "/root/workspace/models/Qwen3.5-35B-A3B",
+            "--served-model-name",
+            "Qwen3.5-35B-A3B",
+            "--host",
+            "127.0.0.1",
+            "--port",
+            "8002",
+            "--tensor-parallel-size",
+            "8",
+            "--enable-expert-parallel",
+            "--dtype",
+            "bfloat16",
+            "--max-model-len",
+            "16384",
+            "--max-num-seqs",
+            "8",
+            "--max-num-batched-tokens",
+            "16384",
+            "--gpu-memory-utilization",
+            "0.85",
+            "--language-model-only",
+            "--no-enable-prefix-caching",
+            "--mamba-cache-mode",
+            "none",
+            "--no-async-scheduling",
+            "--no-enforce-eager",
+            "--compilation-config",
+            "{\"mode\":3,\"cudagraph_mode\":\"FULL_DECODE_ONLY\",\"cudagraph_capture_sizes\":[1,2,4,8],\"max_cudagraph_capture_size\":8}",
+            "--no-enable-chunked-prefill",
+            "--scheduler-cls",
+            "vllm_muxpd.decoupled_scheduler.DecoupledMuxPDScheduler",
+            "--worker-cls",
+            "vllm_muxpd.decoupled_worker.DecoupledMuxPDNPUWorker",
+            "--batch-admission-policy",
+            "vllm_muxpd.policy.MuxPDPolicy",
+            "--batch-admission-policy-config",
+            "{\"execution\":\"decoupled\",\"stream_mode\":\"fenced\",\"layers_per_slice\":8,\"adaptive_layers\":true,\"prefill_first\":true,\"decode_graph\":true,\"compile_full_prefill\":true,\"prefill_layer_token_budget\":262144,\"decode_budget_guard\":true}"
+          ],
+          "muxpd_selector_arguments": [
+            "--scheduler-cls",
+            "vllm_muxpd.decoupled_scheduler.DecoupledMuxPDScheduler",
+            "--worker-cls",
+            "vllm_muxpd.decoupled_worker.DecoupledMuxPDNPUWorker",
+            "vllm_muxpd.policy.MuxPDPolicy"
+          ],
+          "benchmark_sha256": "6f373ff7383ccc61579d4e9406ee0c9b9523ee8a4ef0d5330d76471e421f6712"
+        },
+        {
+          "stage": "guard-v2-confirm",
+          "manifest": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/guard-v2-confirm-manifest.json",
+          "manifest_sha256": "4cddb4035ae04fa18a79462f06c7e34999e01762f2d1ab590b5ca7c9dcc84693",
+          "plugin_source": "/root/workspace/vllm-ascend-MuxPD-hust/src",
+          "recorded_plugin_commit": "258aef6ce52b7fd77cfe9a7f70d1ea29a13f7d41",
+          "recorded_plugin_source_hashes": {
+            "multiplex_scheduler.py": "46633e9f61aa5987781b40243fda757650ca1aa8f06daa79a82a92b006d9cfa0",
+            "lanes.py": "a25dcf34efe7232b90e44decc791ee366a3f7282f7a74c68ad76f1ab94e1da16",
+            "worker.py": "c80ad48dd9e82e1e671ddda7d39ae2ede4c761b8ca2fa779f9dfd312fd668ad5",
+            "scheduler.py": "6e834a636350035954eb69d6d4feb0b9f062f1547d434a12b65909b002aa5e62",
+            "slice_timing.py": "dd880b9bc886a3f851deea80ee4a85b7eba56b6810c1c4ef450895901f5d698c",
+            "overlap.py": "aa524df4aebdb941a949f7152d5b27c8a6fc61ec6801791a1e490bdfaa274fd2",
+            "policy.py": "8f4bfbdbbd78a7dd9885d622de6ecd1509e1d7e62210bb4fc06f414179250a6a",
+            "config.py": "6ddfa3d444333f7ed5ec65b495c66588d5d9e7920d11af819f1416c3e8133b12",
+            "decoupled_worker.py": "472bfcc71fe4de5b807a9717f43a25eb32a91bca1093990d3105897385d822d7",
+            "communicators.py": "78b8847dafaaf4995788a3a41552629bc67ff352f85dd589afa4cb311758eaa4",
+            "decoupled_scheduler.py": "7f7349d195ca5e3359d9441d5cd05d2c8b685716f004ef929c95ba32ef6a7256",
+            "__init__.py": "5a5e1c36f1c9a6d1b47e75b444a047349ed4c28f891bed4f0978da5499fa822c",
+            "decode_graph.py": "ac78d456dfcd492b0cb9ae678cda2336367dfbfa3b70887777135c96edadb9e7"
+          },
+          "current_snapshot_file_checks": [
+            {
+              "path": "/root/workspace/vllm-ascend-MuxPD-hust/src/vllm_muxpd/multiplex_scheduler.py",
+              "recorded_sha256": "46633e9f61aa5987781b40243fda757650ca1aa8f06daa79a82a92b006d9cfa0",
+              "current_sha256": "46633e9f61aa5987781b40243fda757650ca1aa8f06daa79a82a92b006d9cfa0",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/vllm-ascend-MuxPD-hust/src/vllm_muxpd/lanes.py",
+              "recorded_sha256": "a25dcf34efe7232b90e44decc791ee366a3f7282f7a74c68ad76f1ab94e1da16",
+              "current_sha256": "a25dcf34efe7232b90e44decc791ee366a3f7282f7a74c68ad76f1ab94e1da16",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/vllm-ascend-MuxPD-hust/src/vllm_muxpd/worker.py",
+              "recorded_sha256": "c80ad48dd9e82e1e671ddda7d39ae2ede4c761b8ca2fa779f9dfd312fd668ad5",
+              "current_sha256": "c80ad48dd9e82e1e671ddda7d39ae2ede4c761b8ca2fa779f9dfd312fd668ad5",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/vllm-ascend-MuxPD-hust/src/vllm_muxpd/scheduler.py",
+              "recorded_sha256": "6e834a636350035954eb69d6d4feb0b9f062f1547d434a12b65909b002aa5e62",
+              "current_sha256": "6e834a636350035954eb69d6d4feb0b9f062f1547d434a12b65909b002aa5e62",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/vllm-ascend-MuxPD-hust/src/vllm_muxpd/slice_timing.py",
+              "recorded_sha256": "dd880b9bc886a3f851deea80ee4a85b7eba56b6810c1c4ef450895901f5d698c",
+              "current_sha256": "dd880b9bc886a3f851deea80ee4a85b7eba56b6810c1c4ef450895901f5d698c",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/vllm-ascend-MuxPD-hust/src/vllm_muxpd/overlap.py",
+              "recorded_sha256": "aa524df4aebdb941a949f7152d5b27c8a6fc61ec6801791a1e490bdfaa274fd2",
+              "current_sha256": "aa524df4aebdb941a949f7152d5b27c8a6fc61ec6801791a1e490bdfaa274fd2",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/vllm-ascend-MuxPD-hust/src/vllm_muxpd/policy.py",
+              "recorded_sha256": "8f4bfbdbbd78a7dd9885d622de6ecd1509e1d7e62210bb4fc06f414179250a6a",
+              "current_sha256": "8f4bfbdbbd78a7dd9885d622de6ecd1509e1d7e62210bb4fc06f414179250a6a",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/vllm-ascend-MuxPD-hust/src/vllm_muxpd/config.py",
+              "recorded_sha256": "6ddfa3d444333f7ed5ec65b495c66588d5d9e7920d11af819f1416c3e8133b12",
+              "current_sha256": "6ddfa3d444333f7ed5ec65b495c66588d5d9e7920d11af819f1416c3e8133b12",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/vllm-ascend-MuxPD-hust/src/vllm_muxpd/decoupled_worker.py",
+              "recorded_sha256": "472bfcc71fe4de5b807a9717f43a25eb32a91bca1093990d3105897385d822d7",
+              "current_sha256": "472bfcc71fe4de5b807a9717f43a25eb32a91bca1093990d3105897385d822d7",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/vllm-ascend-MuxPD-hust/src/vllm_muxpd/communicators.py",
+              "recorded_sha256": "78b8847dafaaf4995788a3a41552629bc67ff352f85dd589afa4cb311758eaa4",
+              "current_sha256": "78b8847dafaaf4995788a3a41552629bc67ff352f85dd589afa4cb311758eaa4",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/vllm-ascend-MuxPD-hust/src/vllm_muxpd/decoupled_scheduler.py",
+              "recorded_sha256": "7f7349d195ca5e3359d9441d5cd05d2c8b685716f004ef929c95ba32ef6a7256",
+              "current_sha256": "7f7349d195ca5e3359d9441d5cd05d2c8b685716f004ef929c95ba32ef6a7256",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/vllm-ascend-MuxPD-hust/src/vllm_muxpd/__init__.py",
+              "recorded_sha256": "5a5e1c36f1c9a6d1b47e75b444a047349ed4c28f891bed4f0978da5499fa822c",
+              "current_sha256": "5a5e1c36f1c9a6d1b47e75b444a047349ed4c28f891bed4f0978da5499fa822c",
+              "matches": true
+            },
+            {
+              "path": "/root/workspace/vllm-ascend-MuxPD-hust/src/vllm_muxpd/decode_graph.py",
+              "recorded_sha256": "ac78d456dfcd492b0cb9ae678cda2336367dfbfa3b70887777135c96edadb9e7",
+              "current_sha256": "ac78d456dfcd492b0cb9ae678cda2336367dfbfa3b70887777135c96edadb9e7",
+              "matches": true
+            }
+          ],
+          "process_argv": [
+            "/root/workspace/.venv/bin/python",
+            "-m",
+            "vllm.entrypoints.openai.api_server",
+            "--model",
+            "/root/workspace/models/Qwen3.5-35B-A3B",
+            "--served-model-name",
+            "Qwen3.5-35B-A3B",
+            "--host",
+            "127.0.0.1",
+            "--port",
+            "8002",
+            "--tensor-parallel-size",
+            "8",
+            "--enable-expert-parallel",
+            "--dtype",
+            "bfloat16",
+            "--max-model-len",
+            "16384",
+            "--max-num-seqs",
+            "8",
+            "--max-num-batched-tokens",
+            "16384",
+            "--gpu-memory-utilization",
+            "0.85",
+            "--language-model-only",
+            "--no-enable-prefix-caching",
+            "--mamba-cache-mode",
+            "none",
+            "--no-async-scheduling",
+            "--no-enforce-eager",
+            "--compilation-config",
+            "{\"mode\":3,\"cudagraph_mode\":\"FULL_DECODE_ONLY\",\"cudagraph_capture_sizes\":[1,2,4,8],\"max_cudagraph_capture_size\":8}",
+            "--no-enable-chunked-prefill",
+            "--scheduler-cls",
+            "vllm_muxpd.decoupled_scheduler.DecoupledMuxPDScheduler",
+            "--worker-cls",
+            "vllm_muxpd.decoupled_worker.DecoupledMuxPDNPUWorker",
+            "--batch-admission-policy",
+            "vllm_muxpd.policy.MuxPDPolicy",
+            "--batch-admission-policy-config",
+            "{\"execution\":\"decoupled\",\"stream_mode\":\"fenced\",\"layers_per_slice\":8,\"adaptive_layers\":true,\"prefill_first\":true,\"decode_graph\":true,\"compile_full_prefill\":true,\"prefill_layer_token_budget\":262144,\"decode_budget_guard\":true}"
+          ],
+          "muxpd_selector_arguments": [
+            "--scheduler-cls",
+            "vllm_muxpd.decoupled_scheduler.DecoupledMuxPDScheduler",
+            "--worker-cls",
+            "vllm_muxpd.decoupled_worker.DecoupledMuxPDNPUWorker",
+            "vllm_muxpd.policy.MuxPDPolicy"
+          ],
+          "benchmark_sha256": "6f373ff7383ccc61579d4e9406ee0c9b9523ee8a4ef0d5330d76471e421f6712"
+        }
+      ],
+      "process_arguments_identical": true,
+      "recorded_plugin_commits_match": true,
+      "recorded_plugin_source_hashes_match": true,
+      "plugin_source_pair_equality_required": true,
+      "passed": true,
+      "scope": "Selected plugin commits and all recorded source bytes match between stages and the currently retained source snapshots."
+    }
+  ],
+  "plan_and_producer_checks": {
+    "decode-control": {
+      "status": "passed",
+      "missing_stages": [],
+      "errors": [],
+      "plan_sha256_values": [
+        "10ea58b3bb23fc0a01bf9e2a7b59a337332425e2aaba9a3dcb6d48bd71ca6bf8"
+      ],
+      "producer_sha256_values": [
+        "6f373ff7383ccc61579d4e9406ee0c9b9523ee8a4ef0d5330d76471e421f6712"
+      ]
+    },
+    "p8k": {
+      "status": "passed",
+      "missing_stages": [],
+      "errors": [],
+      "plan_sha256_values": [
+        "55e1fe528e52447677eca9e608d658927dd16edb03cd2cdbb4a35f516cee17e8"
+      ],
+      "producer_sha256_values": [
+        "6f373ff7383ccc61579d4e9406ee0c9b9523ee8a4ef0d5330d76471e421f6712"
+      ]
+    },
+    "p12k": {
+      "status": "passed",
+      "missing_stages": [],
+      "errors": [],
+      "plan_sha256_values": [
+        "c56fd692b60791c0b2a614d4375b939b1b04e6bea19ce6179dd1bab4b3680566"
+      ],
+      "producer_sha256_values": [
+        "6f373ff7383ccc61579d4e9406ee0c9b9523ee8a4ef0d5330d76471e421f6712"
+      ]
+    },
+    "p12k-burst": {
+      "status": "passed",
+      "missing_stages": [],
+      "errors": [],
+      "plan_sha256_values": [
+        "4115aca1bf339bac27562e00ff0586b8958baaa5c78adecfd1882f4f3bbebf33"
+      ],
+      "producer_sha256_values": [
+        "6f373ff7383ccc61579d4e9406ee0c9b9523ee8a4ef0d5330d76471e421f6712"
+      ]
+    }
+  },
+  "producer_source": "/root/workspace/vllm-ascend-MuxPD-hust/scripts/benchmark_contention.py",
+  "producer_source_sha256": "6f373ff7383ccc61579d4e9406ee0c9b9523ee8a4ef0d5330d76471e421f6712",
+  "shared_native_runtime_commit_check": [
+    {
+      "repository": "/root/workspace/vllm-hust",
+      "initial_recorded_commit": "d0f22d2bda562156e4dbf433ce645e1769b4f804",
+      "current_head": "d0f22d2bda562156e4dbf433ce645e1769b4f804",
+      "matches": true
+    },
+    {
+      "repository": "/root/workspace/vllm-ascend-hust",
+      "initial_recorded_commit": "03766ac696fde5ab1980d80ca0b8543d3580c989",
+      "current_head": "03766ac696fde5ab1980d80ca0b8543d3580c989",
+      "matches": true
+    }
+  ],
+  "initial_environment_manifest_sha256": "00fb09f7e43464e6a49111844584902d0cdd6c984cc4896f6995a03a9302b9ec",
+  "limitations": [
+    "Current file checks are read-only snapshots, not a continuous runtime integrity monitor.",
+    "Native runtime commits were recorded in the shared initial environment and match current HEAD; no claim is made that every native source byte was independently snapshotted on every step.",
+    "This provenance audit does not certify semantic token correctness or device overlap."
+  ],
+  "reproduction": {
+    "working_directory": "/root/workspace/vllm-ascend-MuxPD-hust",
+    "command": "python - <<'PY'\nimport hashlib, json, subprocess\nfrom datetime import datetime, timezone\nfrom pathlib import Path\nroot = Path('/root/workspace/vllm-ascend-MuxPD-hust')\nbase = root / 'local-results/tp8-contention'\ndef digest(path):\n    return hashlib.sha256(Path(path).read_bytes()).hexdigest()\naudit_path = base / 'contention-audit.json'\naudit = json.loads(audit_path.read_text())\nassert audit['final']['status'] == 'passed' and audit['all_audited_reports_passed']\nassert digest(audit_path) == 'e8cf8a168981e1b041f25b4bdb922fca1a4b96addada5e88874f54dcb1732c2c'\nassert digest(base / 'audit_contention.py') == audit['audit_script_sha256']\nroles = []\nfor role, stages in audit['final']['role_stages'].items():\n    rows = []\n    native = role in ('native16k', 'native2k')\n    for stage in stages:\n        path = base / (stage + '-manifest.json')\n        manifest = json.loads(path.read_text())\n        manifest_sha = digest(path)\n        recorded = {r['manifest_sha256'] for r in audit['reports'] if r['stage'] == stage}\n        assert recorded == {manifest_sha}\n        argv = manifest.get('process_argv', manifest['argv'])\n        assert isinstance(argv, list) and all(isinstance(v, str) for v in argv)\n        selectors = [v for v in argv if v.startswith(('--worker-cls', '--scheduler-cls')) or 'vllm_muxpd' in v]\n        if native:\n            assert not selectors\n        source_hashes = {name.split('/vllm_muxpd/', 1)[-1]: value for name, value in manifest['source_hashes'].items()}\n        assert len(source_hashes) == len(manifest['source_hashes'])\n        file_checks = []\n        if not native:\n            for name, expected in manifest['source_hashes'].items():\n                actual = digest(name) if Path(name).is_file() else None\n                assert actual == expected, name\n                file_checks.append({'path': name, 'recorded_sha256': expected, 'current_sha256': actual, 'matches': actual == expected})\n        rows.append({'stage': stage, 'manifest': str(path), 'manifest_sha256': manifest_sha,\n                     'plugin_source': manifest['plugin_source'], 'recorded_plugin_commit': manifest['plugin_commit'],\n                     'recorded_plugin_source_hashes': source_hashes, 'current_snapshot_file_checks': file_checks,\n                     'process_argv': argv, 'muxpd_selector_arguments': selectors,\n                     'benchmark_sha256': manifest['benchmark_sha256']})\n    commits_match = rows[0]['recorded_plugin_commit'] == rows[1]['recorded_plugin_commit']\n    hashes_match = rows[0]['recorded_plugin_source_hashes'] == rows[1]['recorded_plugin_source_hashes']\n    argv_match = rows[0]['process_argv'] == rows[1]['process_argv']\n    if not native:\n        assert commits_match and hashes_match\n    assert argv_match, role\n    roles.append({'role': role, 'stages': rows, 'process_arguments_identical': argv_match,\n                  'recorded_plugin_commits_match': commits_match, 'recorded_plugin_source_hashes_match': hashes_match,\n                  'plugin_source_pair_equality_required': not native, 'passed': True,\n                  'scope': 'Native invocations do not select a MuxPD worker/scheduler. Plugin files were recorded as ambient repository provenance and changed between native stages; they are not asserted to be the native implementation.' if native else 'Selected plugin commits and all recorded source bytes match between stages and the currently retained source snapshots.'})\nplan_checks = audit['final']['comparison_checks']\nfor workload, checks in plan_checks.items():\n    assert checks['status'] == 'passed' and len(checks['plan_sha256_values']) == 1\n    assert checks['producer_sha256_values'] == ['6f373ff7383ccc61579d4e9406ee0c9b9523ee8a4ef0d5330d76471e421f6712']\nenv_path = base / 'environment-initial.json'\nenv = json.loads(env_path.read_text())\nruntime = []\nfor key, repository in [('vllm_commit', '/root/workspace/vllm-hust'), ('ascend_commit', '/root/workspace/vllm-ascend-hust')]:\n    current = subprocess.check_output(['git', '-C', repository, 'rev-parse', 'HEAD'], text=True).strip()\n    recorded = env[key].strip()\n    assert current == recorded\n    runtime.append({'repository': repository, 'initial_recorded_commit': recorded, 'current_head': current, 'matches': True})\nproducer_path = root / 'scripts/benchmark_contention.py'\nassert digest(producer_path) == '6f373ff7383ccc61579d4e9406ee0c9b9523ee8a4ef0d5330d76471e421f6712'\nresult = {'schema_version': 1, 'checked_at_utc': datetime.now(timezone.utc).isoformat(), 'passed': True,\n          'audit_file': str(audit_path), 'audit_sha256': digest(audit_path), 'audit_script_sha256': audit['audit_script_sha256'],\n          'role_source_checks': roles, 'plan_and_producer_checks': plan_checks,\n          'producer_source': str(producer_path), 'producer_source_sha256': digest(producer_path),\n          'shared_native_runtime_commit_check': runtime, 'initial_environment_manifest_sha256': digest(env_path),\n          'limitations': ['Current file checks are read-only snapshots, not a continuous runtime integrity monitor.',\n                          'Native runtime commits were recorded in the shared initial environment and match current HEAD; no claim is made that every native source byte was independently snapshotted on every step.',\n                          'This provenance audit does not certify semantic token correctness or device overlap.']}\n\nprint(json.dumps(result, indent=2))\nPY",
+    "requires": "Recorded absolute manifest/source paths, or equivalent reconstructed workspace snapshots."
+  }
+}

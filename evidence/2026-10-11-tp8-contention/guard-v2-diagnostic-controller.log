@@ -1,0 +1,11 @@
+progress 0 complete
+cancel 0 complete
+full-budget 0 complete
+correctness 0 complete
+trace-check 0 complete
+{
+  "complete": true,
+  "passed": true,
+  "receipt": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/guard-v2-diagnostic-driver.json",
+  "failures": []
+}

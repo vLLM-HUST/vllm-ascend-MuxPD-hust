@@ -341,3 +341,235 @@ def test_deadline_can_raise_work_quota_and_current_receipt_stays_exact(tmp_path)
     report = check(tmp_path, rows, min_decode_steps=0)
     assert report["work_quota_sources"] == {"prefill_layer_token_budget": 1}
     assert report["progress_sources"] == {"full_forward_return": 1}
+
+
+def guard_trace(*, measured=False, selected=True):
+    rows = work_trace()
+    if not selected:
+        rows[0]["scheduled_tokens"].pop("d")
+        rows[0]["expected_tokens"].pop("d")
+        rows[0]["request_phases"].pop("d")
+    for row in rows:
+        if row["event"] == "decoupled_complete":
+            if row["step"] == 1 and not selected:
+                row["decode_ids"] = []
+            continue
+        if row["event"] != "decoupled_schedule":
+            continue
+        before = row["layers_completed_before"]
+        remaining = row["layers_total"] - before
+        row["quota"]["enabled"] = True
+        row["quota"]["work_quota"].update(
+            prefill_layer_token_budget=256,
+            configured_layers_per_slice=4,
+            base_layers_per_slice=4,
+        )
+        row["quota"]["reason"] = "decode_budget_quota"
+        if row["step"] == 1 and not selected:
+            row["decode_ids"] = []
+        row["quota"]["decode_budget"] = {
+            "version": 1,
+            "desired_reason": "token_budget_quota",
+            "desired_layers_per_slice": remaining,
+            "active_decode_ids": ["d"],
+            "active_decode_context_tokens": {"d": 65},
+            "selected_decode_ids": row["decode_ids"],
+            "decode_shape": [1, 7, 7],
+            "decode_age_ms": {"d": 0},
+            "prefill_shape_tokens": [64],
+            "first_slice": before == 0,
+            "first_layer_samples": 1 if measured else 0,
+            "prefill_samples": 1 if measured else 0,
+            "decode_samples": 1 if measured else 0,
+            "estimated_first_layer_ms": 40 if measured else None,
+            "estimated_raw_layer_ms": 40 if measured else None,
+            "estimated_solo_decode_ms": 60 if measured else None,
+            "calibrated": measured,
+            "decode_budget_ms": 100,
+            "decode_slack_ms": 40 if measured else None,
+            "mode": "measured_slice_budget" if measured else "cold_start",
+            "cap_layers": 1,
+            "selected_layers_per_slice": 1,
+            "control_step": False,
+            "minimum_progress_exceeds_budget": False,
+            "cohort_age_ms": 0,
+            "ttft_budget_ms": 1000,
+            "estimated_remaining_ttft_ms": remaining * 100 if measured else None,
+            "ttft_feasible": True if measured else None,
+        }
+    return rows
+
+
+@pytest.mark.parametrize("measured", [False, True])
+@pytest.mark.parametrize("selected", [False, True])
+def test_guard_trace_accepts_downward_cap_with_live_but_unselected_decode(
+    tmp_path, measured, selected
+):
+    report = check(tmp_path, guard_trace(measured=measured, selected=selected))
+    assert report["quota_reasons"] == {"decode_budget_quota": 4}
+
+
+@pytest.mark.parametrize(
+    "fault",
+    [
+        "upward_cap",
+        "fake_drain",
+        "missing_active",
+        "shape_change",
+        "ttft",
+        "unearned_estimate",
+        "desired_floor",
+        "protocol_downgrade",
+        "first_slice",
+        "sample_count",
+        "minimum_progress",
+        "first_layer_cost",
+        "slack",
+    ],
+)
+def test_guard_trace_rejects_quota_and_evidence_corruption(tmp_path, fault):
+    rows = guard_trace(measured=True)
+    guard = rows[1]["quota"]["decode_budget"]
+    if fault == "upward_cap":
+        guard["cap_layers"] = 2
+    elif fault == "fake_drain":
+        rows[1]["finish_prefill"] = True
+    elif fault == "missing_active":
+        guard["active_decode_ids"] = []
+    elif fault == "shape_change":
+        rows[3]["quota"]["decode_budget"]["prefill_shape_tokens"] = [32, 32]
+    elif fault == "ttft":
+        guard["ttft_feasible"] = False
+    elif fault == "unearned_estimate":
+        guard["prefill_samples"] = 0
+    elif fault == "desired_floor":
+        guard["desired_layers_per_slice"] = 1
+    elif fault == "protocol_downgrade":
+        del rows[3]["quota"]["decode_budget"]
+    elif fault == "first_slice":
+        guard["first_slice"] = False
+    elif fault == "sample_count":
+        guard["decode_samples"] = True
+    elif fault == "minimum_progress":
+        guard["minimum_progress_exceeds_budget"] = True
+    elif fault == "first_layer_cost":
+        guard["estimated_first_layer_ms"] = 10
+    else:
+        guard["decode_slack_ms"] = 100
+    with pytest.raises(AssertionError):
+        check(tmp_path, rows)
+
+
+def residual_trace():
+    rows = guard_trace(measured=True)
+    for row in rows:
+        if row["event"] != "decoupled_schedule":
+            continue
+        guard = row["quota"]["decode_budget"]
+        guard.update(
+            version=2,
+            solo_decode_samples=1,
+            residual_decode_samples=1,
+            estimated_decode_cost_ms=60,
+            estimated_decode_residual_ms=60,
+            decode_estimate_source=(
+                "solo_decode_round_trip"
+                if row["layers_completed_before"] == 0
+                else "fenced_continuation_residual"
+            ),
+        )
+    complete = next(
+        row for row in rows if row["event"] == "decoupled_complete" and row["step"] == 2
+    )
+    complete.update(
+        duration_ms=70,
+        prefill_slice_timing={
+            "device_complete": True,
+            "first_slice": False,
+            "mode": "raw_layers",
+            "device_elapsed_ms": 10,
+            "host_submit_ms": 20,
+        },
+        decode_budget_sample={
+            "phase": "raw_prefill_layer",
+            "decode_residual_sample": {
+                "accepted": True,
+                "reason": "completed_fenced_continuation",
+                "decode_shape": [1, 7, 7],
+                "host_step_ms": 70,
+                "prefill_device_elapsed_ms": 10,
+                "prefill_host_submit_ms": 20,
+                "residual_ms": 60,
+            },
+        },
+    )
+    return rows
+
+
+def test_guard_v2_checks_residual_source_and_observation(tmp_path):
+    assert check(tmp_path, residual_trace())["passed"]
+
+
+@pytest.mark.parametrize(
+    "fault",
+    [
+        "fresh_residual",
+        "source",
+        "count",
+        "cost",
+        "host_subtraction",
+        "shape",
+        "accept_negative",
+        "first",
+        "final",
+        "incomplete",
+    ],
+)
+def test_guard_v2_rejects_residual_corruption(tmp_path, fault):
+    rows = residual_trace()
+    scheduled = rows[3]
+    complete = rows[4]
+    guard = scheduled["quota"]["decode_budget"]
+    sample = complete["decode_budget_sample"]["decode_residual_sample"]
+    if fault == "fresh_residual":
+        rows[1]["quota"]["decode_budget"]["decode_estimate_source"] = (
+            "fenced_continuation_residual"
+        )
+    elif fault == "source":
+        guard["decode_estimate_source"] = "solo_decode_round_trip"
+    elif fault == "count":
+        guard["residual_decode_samples"] = 0
+    elif fault == "cost":
+        guard["estimated_decode_cost_ms"] = 30
+    elif fault == "host_subtraction":
+        sample["residual_ms"] = 50
+    elif fault == "shape":
+        sample["decode_shape"] = [2, 8, 7]
+    elif fault == "accept_negative":
+        complete["duration_ms"] = sample["host_step_ms"] = 5
+        sample["residual_ms"] = -5
+    elif fault in ("first", "final"):
+        # Test sample eligibility independently of unrelated layer arithmetic.
+        scheduled["layers_completed_before"] = 0 if fault == "first" else 3
+        complete["layers_completed"] = 1 if fault == "first" else 4
+        with pytest.raises(AssertionError, match="continuation"):
+            checker._check_decode_residual_sample(complete, scheduled)
+        return
+    else:
+        complete["prefill_slice_timing"]["device_complete"] = False
+    with pytest.raises(AssertionError):
+        check(tmp_path, rows)
+
+
+@pytest.mark.parametrize("host_ms", [5, 10])
+def test_guard_v2_preserves_rejected_nonpositive_residual(tmp_path, host_ms):
+    rows = residual_trace()
+    complete = rows[4]
+    sample = complete["decode_budget_sample"]["decode_residual_sample"]
+    complete["duration_ms"] = sample["host_step_ms"] = host_ms
+    sample.update(
+        accepted=False,
+        reason="nonpositive_or_nonfinite_residual",
+        residual_ms=host_ms - 10,
+    )
+    assert check(tmp_path, rows)["passed"]

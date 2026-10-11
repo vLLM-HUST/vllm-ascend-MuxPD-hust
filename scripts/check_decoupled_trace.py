@@ -116,7 +116,9 @@ def _check_progress_source(row, scheduled, pending, completed, cancelled):
         raise AssertionError("Full-forward progress is not a fresh complete prefill")
 
 
-def _check_work_quota(row, cohort, cohort_tokens, configurations, scheduled_prefills):
+def _check_work_quota(
+    row, cohort, cohort_tokens, configurations, scheduled_prefills, guard_shapes
+):
     info = row["quota"]
     work = info["work_quota"]
     if not row["pending_prefill_ids"]:
@@ -155,11 +157,257 @@ def _check_work_quota(row, cohort, cohort_tokens, configurations, scheduled_pref
         raise AssertionError("Work quota does not match the layer-token formula")
     remaining = total - row["layers_completed_before"]
     expected = min(remaining, base) if budget else floor
-    if info.get("reason") in ("deadline_quota", "deadline_finish"):
+    guard = info.get("decode_budget")
+    reason = (
+        guard.get("desired_reason") if isinstance(guard, dict) else info.get("reason")
+    )
+    if reason in ("deadline_quota", "deadline_finish"):
+        if info.get("enabled") is not True or info.get("calibrated") is not True:
+            raise AssertionError("Guard used an uncalibrated deadline quota")
         rounds = _integer(info["allowed_decode_rounds"], "allowed rounds", 1)
         expected = min(remaining, max(base, math.ceil(remaining / rounds)))
+    if guard is not None:
+        expected = _check_decode_budget(
+            row, guard, expected, cohort, guard_shapes, scheduled_prefills
+        )
+    elif info.get("reason") == "decode_budget_quota":
+        raise AssertionError("Decode budget quota lacks guard evidence")
     if row["layers_per_slice"] != expected:
         raise AssertionError("Scheduled quota differs from work/deadline calculation")
+
+
+def _finite(value, name, minimum=0):
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, (int, float))
+        or not math.isfinite(value)
+        or (minimum is not None and value < minimum)
+    ):
+        raise AssertionError(f"Invalid {name}: expected finite number")
+    return value
+
+
+def _close(actual, expected, name):
+    if not math.isclose(_finite(actual, name, None), expected, abs_tol=1e-6):
+        raise AssertionError(f"Incorrect decode budget {name}")
+
+
+def _check_decode_budget(row, guard, desired, cohort, shapes, scheduled_prefills):
+    """Audit a lowered quota separately from the unchanged work/deadline desire.
+
+    The trace verifies reported observations and arithmetic, not a hard latency
+    bound. Active D includes requests excluded from this admission's token map.
+    """
+    if (
+        not isinstance(guard, dict)
+        or type(guard.get("version")) is not int
+        or (guard["version"] not in (1, 2))
+    ):
+        raise AssertionError("Invalid decode budget protocol")
+    if row["quota"]["reason"] != "decode_budget_quota":
+        raise AssertionError("Guard evidence without a decode budget quota")
+    if _integer(guard.get("desired_layers_per_slice"), "desired quota", 1) != desired:
+        raise AssertionError("Guard changed the work/deadline desired quota")
+    active = guard.get("active_decode_ids")
+    contexts = guard.get("active_decode_context_tokens")
+    selected = guard.get("selected_decode_ids")
+    ages = guard.get("decode_age_ms")
+    if (
+        not isinstance(active, list)
+        or any(not isinstance(rid, str) for rid in active)
+        or len(active) != len(set(active))
+        or not isinstance(contexts, dict)
+        or set(active) != set(contexts)
+        or selected != sorted(row["decode_ids"])
+        or not set(selected) <= set(active)
+        or set(active) & set(row["pending_prefill_ids"])
+        or not isinstance(ages, dict)
+        or not set(ages) <= set(active)
+    ):
+        raise AssertionError("Invalid active/selected decode budget evidence")
+    lengths = [_integer(n, "active decode context", 1) for n in contexts.values()]
+    shape = (
+        [len(lengths), (sum(lengths) - 1).bit_length(), (max(lengths) - 1).bit_length()]
+        if lengths
+        else None
+    )
+    if guard.get("decode_shape") != shape:
+        raise AssertionError("Decode budget context shape mismatch")
+    p_shape = guard.get("prefill_shape_tokens")
+    if not isinstance(p_shape, list) or not p_shape:
+        raise AssertionError("Missing raw prefill shape")
+    for tokens in p_shape:
+        _integer(tokens, "raw prefill shape tokens", 1)
+    if row["new_prefill_ids"]:
+        shapes[cohort] = sorted(scheduled_prefills.values())
+    if p_shape != shapes.get(cohort):
+        raise AssertionError("Guard prefill shape changed from original allocation")
+    for age in ages.values():
+        _finite(age, "decode age")
+    p_count = _integer(guard.get("prefill_samples"), "raw prefill sample count")
+    first_count = _integer(guard.get("first_layer_samples"), "first layer sample count")
+    d_count = _integer(guard.get("decode_samples"), "selected decode cost sample count")
+    p_ms = guard.get("estimated_raw_layer_ms")
+    first_ms = guard.get("estimated_first_layer_ms")
+    d_ms = guard.get("estimated_solo_decode_ms")
+    first = row["layers_completed_before"] == 0
+    if guard["version"] == 2:
+        solo_count = _integer(guard.get("solo_decode_samples"), "solo D sample count")
+        residual_count = _integer(
+            guard.get("residual_decode_samples"), "residual D sample count"
+        )
+        residual_ms = guard.get("estimated_decode_residual_ms")
+        for value, count in ((d_ms, solo_count), (residual_ms, residual_count)):
+            if count:
+                if _finite(value, "decode observation estimate") <= 0:
+                    raise AssertionError("Decode observation must be positive")
+            elif value is not None:
+                raise AssertionError("Decode observation lacks matching samples")
+        use_residual = not first and residual_count > 0
+        source = (
+            "fenced_continuation_residual"
+            if use_residual
+            else "solo_decode_round_trip"
+            if solo_count
+            else None
+        )
+        if guard.get("decode_estimate_source") != source or d_count != (
+            residual_count if use_residual else solo_count
+        ):
+            raise AssertionError("Invalid continuation/solo decode estimate source")
+        expected_d = residual_ms if use_residual else d_ms
+        d_ms = guard.get("estimated_decode_cost_ms")
+        if expected_d is None:
+            if d_ms is not None:
+                raise AssertionError("Decode cost lacks a matching observation")
+        else:
+            _close(d_ms, expected_d, "selected non-prefill cost")
+    for value, count in ((p_ms, p_count), (first_ms, first_count), (d_ms, d_count)):
+        if count:
+            if _finite(value, "estimated guard latency") <= 0:
+                raise AssertionError("Guard latency must be positive")
+        elif value is not None:
+            raise AssertionError("Guard estimate lacks a matching sample")
+    if guard.get("first_slice") is not first:
+        raise AssertionError("Guard first-slice mode differs from layer progress")
+    calibrated = bool(
+        p_count and d_count and (not first or first_count) and set(ages) == set(active)
+    )
+    if guard.get("calibrated") is not calibrated:
+        raise AssertionError("Guard calibration does not match its shape samples")
+    budget = _finite(guard.get("decode_budget_ms"), "decode budget")
+    slack = budget - max(ages.values(), default=0) - d_ms if d_ms is not None else None
+    if slack is None:
+        if guard.get("decode_slack_ms") is not None:
+            raise AssertionError("Unknown D latency cannot give measured slack")
+    else:
+        _close(guard.get("decode_slack_ms"), slack, "decode slack")
+    remaining = row["layers_total"] - row["layers_completed_before"]
+    if not active:
+        mode, cap, quota = "no_live_decode", remaining, remaining
+    elif not calibrated:
+        mode, cap, quota = "cold_start", 1, 1
+    else:
+        mode = "measured_slice_budget"
+        cap = min(
+            remaining,
+            max(1, 1 + math.floor((slack - first_ms) / p_ms))
+            if first
+            else max(1, math.floor(max(0, slack) / p_ms)),
+        )
+        quota = min(remaining, desired, cap)
+    if (
+        guard.get("mode") != mode
+        or _integer(guard.get("cap_layers"), "guard cap", 1) != cap
+        or _integer(guard.get("selected_layers_per_slice"), "guard quota", 1) != quota
+    ):
+        raise AssertionError("Guard quota differs from the measured/cold-start cap")
+    control = bool(
+        row["pause_prefill"]
+        or set(row["cancelled_prefill_ids"]) == set(row["pending_prefill_ids"])
+    )
+    if guard.get("control_step") is not control or row["finish_prefill"] != (
+        quota == remaining and not control
+    ):
+        raise AssertionError("Guard finish flag bypasses the decode cap")
+    exceeded = bool(active and calibrated and slack < (first_ms if first else p_ms))
+    if guard.get("minimum_progress_exceeds_budget") is not exceeded:
+        raise AssertionError("Guard failed to report an infeasible minimum layer")
+    age = _finite(guard.get("cohort_age_ms"), "cohort age")
+    ttft = _finite(guard.get("ttft_budget_ms"), "TTFT budget")
+    projected = (
+        (first_ms + (remaining - 1) * p_ms if first else remaining * p_ms)
+        + math.ceil(remaining / quota) * d_ms
+        if calibrated
+        else None
+    )
+    if projected is None:
+        if guard.get("estimated_remaining_ttft_ms") is not None:
+            raise AssertionError("Unknown slice costs cannot give a TTFT estimate")
+    else:
+        _close(guard.get("estimated_remaining_ttft_ms"), projected, "remaining TTFT")
+    feasible = (
+        age + projected <= ttft
+        if projected is not None
+        else False
+        if age >= ttft
+        else None
+    )
+    if guard.get("ttft_feasible") is not feasible:
+        raise AssertionError("Guard TTFT feasibility mismatch")
+    return quota
+
+
+def _check_decode_residual_sample(row, scheduled):
+    sample = (row.get("decode_budget_sample") or {}).get("decode_residual_sample")
+    if sample is None:
+        return
+    timing = row.get("prefill_slice_timing")
+    if not (
+        isinstance(sample, dict)
+        and isinstance(timing, dict)
+        and timing.get("device_complete") is True
+        and timing.get("first_slice") is False
+        and timing.get("mode") == "raw_layers"
+        and row.get("progress_source") == "layer_hooks"
+        and 0
+        < scheduled["layers_completed_before"]
+        < row["layers_completed"]
+        < row["layers_total"]
+        and scheduled["decode_ids"]
+        and not scheduled["pause_prefill"]
+        and not scheduled["cancelled_prefill_ids"]
+        and not row["cancelled_prefill_ids"]
+        and row["decode_budget_sample"].get("phase") == "raw_prefill_layer"
+    ):
+        raise AssertionError("Residual sample lacks completed raw continuation")
+    contexts = scheduled["quota"]["decode_budget"]["active_decode_context_tokens"]
+    lengths = [contexts[rid] for rid in scheduled["decode_ids"]]
+    shape = [
+        len(lengths),
+        (sum(lengths) - 1).bit_length(),
+        (max(lengths) - 1).bit_length(),
+    ]
+    if sample.get("decode_shape") != shape:
+        raise AssertionError("Residual sample differs from selected decode shape")
+    host = _finite(row["duration_ms"], "residual host step")
+    device = _finite(timing.get("device_elapsed_ms"), "residual device span")
+    _close(sample.get("host_step_ms"), host, "residual host step")
+    _close(sample.get("prefill_device_elapsed_ms"), device, "residual device span")
+    _close(
+        sample.get("prefill_host_submit_ms"),
+        _finite(timing.get("host_submit_ms"), "residual host submit"),
+        "residual host submit",
+    )
+    _close(sample.get("residual_ms"), host - device, "fenced non-P residual")
+    accepted = host > device
+    reason = (
+        "completed_fenced_continuation"
+        if accepted
+        else "nonpositive_or_nonfinite_residual"
+    )
+    if sample.get("accepted") is not accepted or sample.get("reason") != reason:
+        raise AssertionError("Invalid residual acceptance decision")
 
 
 def check(paths, require_cancellation=False, min_decode_steps=2, expected_layers=None):
@@ -184,6 +432,8 @@ def check(paths, require_cancellation=False, min_decode_steps=2, expected_layers
     cohort_work_tokens = {}
     work_configurations = {}
     work_quota_sources = collections.Counter()
+    guard_protocol = {}
+    guard_shapes = {}
     for path in paths:
         for line in Path(path).read_text().splitlines():
             row = json.loads(line)
@@ -243,6 +493,13 @@ def check(paths, require_cancellation=False, min_decode_steps=2, expected_layers
                         "Legacy trace cannot verify expected model layers"
                     )
                 info = row.get("quota")
+                has_guard = isinstance(info, dict) and "decode_budget" in info
+                if guard_protocol.setdefault(row["pid"], has_guard) != has_guard:
+                    raise AssertionError(
+                        "Decode budget protocol changed within one worker"
+                    )
+                if has_guard and not pending and info["decode_budget"] is not None:
+                    raise AssertionError("Decode budget P quota without a cohort")
                 has_work = isinstance(info, dict) and "work_quota" in info
                 previous_work = work_protocol.setdefault(row["pid"], has_work)
                 if has_work != previous_work:
@@ -258,6 +515,7 @@ def check(paths, require_cancellation=False, min_decode_steps=2, expected_layers
                         cohort_work_tokens,
                         work_configurations,
                         scheduled_prefills.get(key, {}),
+                        guard_shapes,
                     )
                     if info["work_quota"] is not None:
                         work_quota_sources[info["work_quota"]["source"]] += 1
@@ -311,6 +569,7 @@ def check(paths, require_cancellation=False, min_decode_steps=2, expected_layers
                     )
                 _check_progress_source(row, scheduled, pending, completed, cancelled)
                 progress_sources[row["progress_source"]] += 1
+            _check_decode_residual_sample(row, scheduled)
             if pending and row["decode_ids"] and not completed and cancelled != pending:
                 frames[cohort] += 1
             pending.difference_update(completed | cancelled)

@@ -1,0 +1,89 @@
+{
+  "stage": "guard-v2-diagnostic",
+  "commands": [
+    {
+      "name": "progress",
+      "output": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/guard-v2-diagnostic-progress.json",
+      "argv": [
+        "/root/workspace/.venv/bin/python",
+        "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/guard-v2-diagnostic-producers/exercise_decoupled.py",
+        "--base-url",
+        "http://127.0.0.1:8002",
+        "--output",
+        "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/guard-v2-diagnostic-progress.json"
+      ]
+    },
+    {
+      "name": "cancel",
+      "output": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/guard-v2-diagnostic-cancel.json",
+      "argv": [
+        "/root/workspace/.venv/bin/python",
+        "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/guard-v2-diagnostic-producers/exercise_decoupled.py",
+        "--base-url",
+        "http://127.0.0.1:8002",
+        "--cancel-prefill",
+        "--cancel-after",
+        "0.4",
+        "--output",
+        "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/guard-v2-diagnostic-cancel.json"
+      ]
+    },
+    {
+      "name": "full-budget",
+      "output": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/guard-v2-diagnostic-full-budget.json",
+      "argv": [
+        "/root/workspace/.venv/bin/python",
+        "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/guard-v2-diagnostic-producers/benchmark_contention.py",
+        "--base-url",
+        "http://127.0.0.1:8002",
+        "--label",
+        "guard-v2-diagnostic-diagnostic-full-budget",
+        "--decode-requests",
+        "4",
+        "--decode-input-tokens",
+        "128",
+        "--decode-output-tokens",
+        "256",
+        "--prefill-requests",
+        "1",
+        "--prefill-input-tokens",
+        "16383",
+        "--prefill-output-tokens",
+        "1",
+        "--warmup-repeats",
+        "1",
+        "--repeats",
+        "1",
+        "--prefill-start-delay",
+        "0.2",
+        "--output",
+        "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/guard-v2-diagnostic-full-budget.json"
+      ]
+    },
+    {
+      "name": "correctness",
+      "output": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/guard-v2-diagnostic-correctness.json",
+      "argv": [
+        "/root/workspace/.venv/bin/python",
+        "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/guard-v2-diagnostic-producers/compare_outputs.py",
+        "--baseline-report",
+        "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/native16k-initial-correctness.json",
+        "--candidate-url",
+        "http://127.0.0.1:8002",
+        "--repeats",
+        "2",
+        "--require-exact",
+        "--output",
+        "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/guard-v2-diagnostic-correctness.json"
+      ]
+    }
+  ],
+  "warmup_compatibility": {
+    "requested_warmup_repeats": 0,
+    "effective_warmup_repeats": 1,
+    "reason": "Frozen benchmark CLI requires warmup_repeats > 0; no producer changes",
+    "cold_first_slice_expected_in": "warmup",
+    "all_requests_diagnostic_only": true
+  },
+  "trace_glob": "guard-v2-diagnostic-trace-*.jsonl"
+}

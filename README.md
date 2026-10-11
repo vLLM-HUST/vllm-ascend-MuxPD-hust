@@ -34,6 +34,15 @@ TP4 调优加入独立 decode 图、完整 P 编译、按 cohort token 工作量
 0.87%。自然语言 16/16 对照一致，合成用例文本 33/56 一致。
 方法、原始回执及输出稳定性限制见 [TP8 实验报告](docs/performance-tp8.md)。
 
+持续 D 加长 P 的 TP8 争用实验取得明确的延迟取舍：启用可选
+`decode_budget_guard` v2 后，三种长 P 负载各六轮的 D 最大事件间隔 P95
+从原生 16K 的 385–398 ms 降到 66–68 ms，所有请求满足本轮 D 100 ms /
+P TTFT 1 s 观察目标；吞吐低 1.96%–3.54%，P TTFT P95 增加 22.62%–28.49%。
+原生 2K chunk、旧插件、无注入 P 控制及所有重复轮次均保留。
+自然语言为 16/16 文本精确一致，合成 token IDs 仍有重复及跨配置差异。
+这不是硬 SLO 保证或设备空间分区；guard 默认关闭，完整启用示例、图表与
+全部证据见 [TP8 争用实验报告](docs/performance-tp8-contention.md)。
+
 早期 [TP2 验证](evidence/2026-10-10/README.md) 和
 [TP4 eager 验证](evidence/2026-10-10-tp4/README.md) 保留原始回执与未取得收益的结果。
 不同 TP、eager/graph、缓存设置的测量不能直接混用。
@@ -144,11 +153,12 @@ CPU 测试覆盖策略与协程；原生 Scheduler 测试覆盖 KV 容量、抢�
 | `max_prefill_requests` | 8 | 单批 P 请求数上限 |
 | `max_prefill_batch_tokens` | 0 | 软 batching 上限；0 使用完整预算 |
 | `ewma_alpha` | 0.2 | 串行模式的调度至完成延迟在线估计权重 |
-| `layers_per_slice` | 1 | 实验 worker 每次提交的完整 transformer 层数 |
+| `layers_per_slice` | 1 | 基础完整 transformer 层数；decode budget guard 可将实际配额降至 1 |
 | `prefill_layer_token_budget` | 0 | decoupled 的层工作量预算；非零时按完整 P cohort 的 token 总数计算基础层配额 |
 | `execution` | serial | 必须与 scheduler/worker 类匹配 |
 | `stream_mode` | fenced | `overlap` 是需独立验证的双流执行后端 |
 | `adaptive_layers` | false | decoupled 按本机耗时和 TTFT 预算放大层配额 |
+| `decode_budget_guard` | false | adaptive fenced 按观测的 D 和 P 片段耗时限制层配额；仅是延迟预算启发式 |
 | `prefill_first` | false | adaptive fenced 判断 P 可在本轮完成时先执行 P，下一轮偿还 D 执行机会 |
 | `decode_graph` | false | decoupled fenced 的独立 FULL_DECODE_ONLY 图，须使用匹配 compilation 配置 |
 | `compile_full_prefill` | false | decode graph 模式中，新 P 可一次完成时复用原生编译路径；需启动预热 |
@@ -161,6 +171,29 @@ CPU 测试覆盖策略与协程；原生 Scheduler 测试覆盖 KV 容量、抢�
 默认 0 保留固定基础配额。`adaptive_layers=true` 在获得完整 P-only 和 D-only 样本后，
 可根据截止时间进一步放大配额。它优先减少 P 的首 token 等待，可能增加个别 D 的响应间隔，不保证
 TPOT 达标，也不进行硬件资源分区。详细算法见 [设计](docs/design.md)。
+
+可选 `decode_budget_guard=true` 只允许与 `execution="decoupled"`、
+`adaptive_layers=true` 和 `stream_mode="fenced"` 同时使用；其他组合会报错。
+组件与现有 graph 启动脚本均默认不启用。它在工作量/TTFT 配额计算后增加 D
+延迟预算限制，可以低于 `layers_per_slice`，但每次至少推进一层，避免 P 永久
+等待。缺少匹配的 P 或 D 耗时样本时先推进一层；此时 `prefill_first` 不能绕过
+限制。完整 P 的 token 准入不变：即使它占满本轮 token 预算而没有选中 D，
+已有 D 仍计入预算；只有没有存活的可运行 D 时才一次完成剩余 P。
+
+估计区分 P 首层准备成本与续层成本，按原 cohort 的完整 token 长度组合匹配；
+D 按 batch 大小及上下文长度分桶。有效的已完成 lane 计时优先，缺少该计时时
+使用已完成整步 host 耗时的保守后备估计，整网编译 P 不训练逐层成本。
+P 续片优先使用已完成 fenced 续片的“整步 host 耗时减 P 设备跨度”估计非 P
+成本；它包含 D、通信及其他开销，不是纯 D 耗时。没有匹配样本时使用独立 D
+观测；新 P 和 `prefill_first` 始终使用独立 D 观测，不复用续片残差。
+取消、暂停和晚到 abort 不用于学习。它不增加同步来获取设备时间，也不保证
+TTFT、逐 token TBT 或平均 TPOT 达标：未知形状、单层已经超预算、跨 rank
+等待等仍会影响实际延迟。trace 会记录预算冲突和 TTFT 可行性；回执/配额校验
+不能代替实际服务测量。配置示例及估计范围见
+[decode budget guard 设计](docs/design.md#可选-decode-budget-guard)。
+P、独立 D、续片非 P 残差三个估计缓存各限 256 个条目，按最近使用顺序逐出；
+逐出后使用可用的后备观测或重新冷启动，不改变请求、KV 或取消状态。
+trace 记录估计来源、条目数和累计逐出次数。
 
 初始延迟系数是可配置启动值，不能作为 MuxWise 论文 contention predictor 的复现。
 PP/DP/CP、speculative decoding、KV/EC transfer、streaming-input continuation
