@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ctypes
 import sys
+from contextlib import contextmanager
 from dataclasses import dataclass, replace
 from typing import Any
 
@@ -251,6 +252,7 @@ class MuxPDNPUWorker(NPUWorker):
         self._layers_per_slice = raw.get("layers_per_slice", 1)
         self._stream_mode = raw.get("stream_mode", "fenced")
         self._prefill_slice_timing_enabled = raw.get("decode_budget_guard", False)
+        self._short_prefill_diagnostics = bool(raw.get("trace_path"))
         if self._stream_mode not in ("fenced", "overlap"):
             raise ValueError("MuxPD stream_mode must be fenced or overlap")
         self._overlap_communication = raw.get("overlap_communication", "shared")
@@ -361,11 +363,21 @@ class MuxPDNPUWorker(NPUWorker):
             }
         try:
             if graph_workspaces is not None:
+                policy = (
+                    self.model_runner.vllm_config.scheduler_config.batch_admission_policy_config
+                    or {}
+                )
+                short_options = (
+                    {"prefill_startup_scope": self._prefill_startup_scope}
+                    if policy.get("compile_short_prefill_tokens", 0)
+                    else {}
+                )
                 self._decode_graph_controller = DecodeGraphController(
                     self.model_runner,
                     self.decode_runner,
                     self._streams["decode"],
                     graph_workspaces["decode"],
+                    **short_options,
                 )
                 self._decode_graph_controller.install_prefill_guards()
             if self._stream_mode == "overlap":
@@ -377,6 +389,28 @@ class MuxPDNPUWorker(NPUWorker):
                 self._decode_graph_controller.close()
                 self._decode_graph_controller = None
             raise
+
+    @contextmanager
+    def _prefill_startup_scope(self):
+        """Profile/prewarm short FX on P's own PG, stream and workspace."""
+        if self._interleaver is not None or self._pending_lanes:
+            raise RuntimeError("Short P preparation is restricted to startup")
+        backend = self._execution_backend
+        caller = backend.capture()
+        backend.begin_batch(preparation_lane=None)
+        try:
+            backend.restore(self._lane_states["prefill"])
+            yield
+        finally:
+            try:
+                backend.fence()
+                # The extra warmups follow native profile_run's own device
+                # sync. Complete them before memory sizing or D capture, and
+                # surface device errors during startup rather than serving.
+                self._streams["prefill"].synchronize()
+            finally:
+                backend.restore(caller)
+                backend.join(["prefill"])
 
     def _configure_overlap_communication(self, backend: NPUOverlapBackend) -> None:
         groups = [("tp", get_tp_group())]

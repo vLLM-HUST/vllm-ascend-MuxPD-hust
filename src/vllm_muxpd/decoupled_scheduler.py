@@ -410,6 +410,9 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
                 layers_completed_before=output.muxpd_prefill_layers_completed_before,
                 layers_total=output.muxpd_prefill_layers_total,
                 compile_full_prefill=self.muxpd_policy.config.compile_full_prefill,
+                compile_short_prefill_tokens=(
+                    self.muxpd_policy.config.compile_short_prefill_tokens
+                ),
                 quota=quota_info,
                 admission=self._prefill_first_admission,
             )
@@ -511,6 +514,24 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
 
     def _apply_layer_quota(self, output, now: float) -> dict:
         info = self._apply_desired_layer_quota(output, now)
+        short_limit = self.muxpd_policy.config.compile_short_prefill_tokens
+        cohort = self._prefill_cohort
+        if (
+            short_limit
+            and cohort is not None
+            and set(output.muxpd_prefill_request_ids) == cohort.pending_ids
+            and cohort.completed_layers == 0
+            and not output.muxpd_pause_prefill
+            and not output.muxpd_cancel_prefill_request_ids
+            and 0 < cohort.original_output.total_num_scheduled_tokens <= short_limit
+        ):
+            # An explicit full transaction, never a compiled forward disguised
+            # as the configured short layer slice. Existing ACK/KV ownership
+            # checks still require all pending requests to retire together.
+            output.muxpd_layers_per_slice = self._decoder_layer_count
+            output.muxpd_finish_prefill = True
+            info["reason"] = "compiled_short_prefill_full_quota"
+            return info
         if not self.muxpd_policy.config.decode_budget_guard:
             return info
         cohort = self._prefill_cohort
@@ -924,7 +945,15 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
                 "Prefill progress source does not match cohort ownership"
             )
         if source == "full_forward_return" and not (
-            self.muxpd_policy.config.compile_full_prefill
+            (
+                self.muxpd_policy.config.compile_full_prefill
+                or (
+                    cohort is not None
+                    and 0
+                    < cohort.original_output.total_num_scheduled_tokens
+                    <= self.muxpd_policy.config.compile_short_prefill_tokens
+                )
+            )
             and set(step.output.muxpd_prefill_request_ids) == pending
             and step.output.muxpd_prefill_layers_completed_before == 0
             and not step.output.muxpd_pause_prefill

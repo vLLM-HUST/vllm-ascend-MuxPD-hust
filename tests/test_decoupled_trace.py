@@ -292,6 +292,46 @@ def test_work_quota_verifies_original_cohort_work_and_keeps_legacy_separate(tmp_
     assert legacy["work_quota_sources"] == {}
 
 
+def short_fx_trace():
+    rows = trace(full=True)
+    scheduled, completed = rows[1:]
+    scheduled.update(compile_full_prefill=False, compile_short_prefill_tokens=64)
+    scheduled["quota"].update(
+        reason="compiled_short_prefill_full_quota",
+        work_quota={
+            "source": "configured_layers_per_slice",
+            "prefill_layer_token_budget": 0,
+            "cohort_full_prefill_tokens": 64,
+            "configured_layers_per_slice": 1,
+            "base_layers_per_slice": 1,
+        },
+    )
+    completed["progress_source"] = "full_forward_return"
+    return rows
+
+
+def test_short_fx_trace_audits_full_quota_and_distinct_opt_in(tmp_path):
+    check(tmp_path, short_fx_trace(), min_decode_steps=0)
+
+
+@pytest.mark.parametrize("fault", ["threshold", "quota", "cancel", "fresh", "source"])
+def test_short_fx_trace_rejects_ineligible_full_return(tmp_path, fault):
+    rows = short_fx_trace()
+    scheduled = rows[1]
+    if fault == "threshold":
+        scheduled["compile_short_prefill_tokens"] = 63
+    elif fault == "quota":
+        scheduled["layers_per_slice"] = 1
+    elif fault == "cancel":
+        scheduled["cancelled_prefill_ids"] = ["p"]
+    elif fault == "fresh":
+        scheduled["new_prefill_ids"] = []
+    else:
+        scheduled["quota"]["reason"] = "fixed_quota"
+    with pytest.raises(AssertionError):
+        check(tmp_path, rows)
+
+
 @pytest.mark.parametrize(
     "fault",
     [

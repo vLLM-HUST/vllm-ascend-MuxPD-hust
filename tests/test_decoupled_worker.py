@@ -1,6 +1,7 @@
 """Persistent forward and cancellation protocol without allocating model weights."""
 
 import importlib
+import json
 import os
 from contextlib import contextmanager
 from types import SimpleNamespace
@@ -224,9 +225,13 @@ def test_decode_only_reuses_native_rows_without_greenlet_and_preserves_lifecycle
     output.preempted_req_ids = {"preempted"}
     output.new_block_ids_to_zero = [42]
     output.scheduled_cached_reqs = CachedRequestData(
-        req_ids=["d"], resumed_req_ids={"d"}, new_token_ids=[],
-        all_token_ids={"d": [3, 4]}, new_block_ids=[([42],)],
-        num_computed_tokens=[9], num_output_tokens=[2],
+        req_ids=["d"],
+        resumed_req_ids={"d"},
+        new_token_ids=[],
+        all_token_ids={"d": [3, 4]},
+        new_block_ids=[([42],)],
+        num_computed_tokens=[9],
+        num_output_tokens=[2],
     )
     caller = worker._execution_backend.capture()
     worker.execute_model(output)
@@ -278,8 +283,12 @@ def test_decode_only_path_yields_to_persistent_prefill_then_returns(simulation, 
     assert first.req_ids == ["d"] and first.muxpd_prefill_layers_completed == 1
     task = worker._prefill_task
     worker.execute_model(
-        schedule(pending=("p",), decode=("d",), cancel=("p",) if cancel else (),
-                 finish=not cancel)
+        schedule(
+            pending=("p",),
+            decode=("d",),
+            cancel=("p",) if cancel else (),
+            finish=not cancel,
+        )
     )
     assert not worker._decode_only_fast_path
     result = worker.sample_tokens(None)
@@ -329,7 +338,8 @@ def test_decode_only_native_compaction_order_falls_back_to_merge(
     worker, _ = simulation
     worker.execute_model(schedule(decode=("d1", "d2")))
     native = ModelRunnerOutput(
-        req_ids=["d2", "d1"], req_id_to_index={"d2": 0, "d1": 1},
+        req_ids=["d2", "d1"],
+        req_id_to_index={"d2": 0, "d1": 1},
         sampled_token_ids=[[22], [11]],
     )
     monkeypatch.setattr(worker.decode_runner, "sample_tokens", lambda grammar: native)
@@ -491,9 +501,7 @@ def test_partial_cancel_keeps_forward_progress_without_training_timer(
     worker.execute_model(schedule(new_p=("p", "q"), pending=("p", "q")))
     worker.sample_tokens(None)
     assert len(timers) == 2
-    worker.execute_model(
-        schedule(pending=("p", "q"), decode=("d",), cancel=("p",))
-    )
+    worker.execute_model(schedule(pending=("p", "q"), decode=("d",), cancel=("p",)))
     partial = worker.sample_tokens(None)
     assert partial.muxpd_prefill_layers_completed == 2
     assert partial.muxpd_prefill_slice_timing is None
@@ -586,7 +594,8 @@ def test_overlap_zeroes_once_before_lanes_and_joins_only_sampled_decode(simulati
 
 @pytest.mark.integration
 def test_prefill_layer_quota_and_final_layer_retirement_with_complete_decode(
-    simulation, monkeypatch,
+    simulation,
+    monkeypatch,
 ):
     worker, events = simulation
     worker.decode_runner.layers = 4
@@ -812,6 +821,144 @@ def enable_fake_prefill_compile(worker, events):
     controller.full_prefill_compile_context = context
     worker._decode_graph_controller = controller
     return controller
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("simulation", ["graph_isolated"], indirect=True)
+@pytest.mark.parametrize("decodes", [(), ("d",)])
+def test_short_compiled_prefill_runs_after_graph_and_preserves_complete_ack(
+    simulation, monkeypatch, decodes
+):
+    worker, events = simulation
+    controller = enable_fake_prefill_compile(worker, events)
+    controller.compile_full_prefill = False
+    controller.compile_short_prefill_tokens = 32
+
+    def execute(output):
+        assert controller.active
+        assert worker._execution_backend.active_lane == "prefill"
+        assert output.total_num_scheduled_tokens == 32
+        if decodes:
+            assert worker.decode_runner.execute_model_state is not None
+        worker.model_runner.execute_model_state = output
+        return None
+
+    monkeypatch.setattr(worker.model_runner, "execute_model", execute)
+    output = schedule(new_p=("p",), pending=("p",), decode=decodes, finish=True)
+    output.muxpd_layers_per_slice = 3
+    worker.execute_model(output)
+    assert worker.model_runner.sample_count == worker.decode_runner.sample_count == 0
+    receipt = worker.sample_tokens(None)
+    assert receipt.req_ids == [*decodes, "p"]
+    assert receipt.muxpd_prefill_progress_source == "full_forward_return"
+    assert receipt.muxpd_completed_prefill_ids == {"p"}
+    assert receipt.muxpd_prefill_layers_completed == 3
+    assert worker._prefill_task is None
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("simulation", ["graph_isolated"], indirect=True)
+@pytest.mark.parametrize("case", ["partial", "aggregate", "cancel", "pause"])
+def test_short_fx_ineligible_transactions_keep_raw_hooks_and_cancel_protocol(
+    simulation, case
+):
+    worker, events = simulation
+    controller = enable_fake_prefill_compile(worker, events)
+    controller.compile_full_prefill = False
+    controller.compile_short_prefill_tokens = 32
+    pending = ("p", "p2") if case == "aggregate" else ("p",)
+    output = schedule(
+        new_p=pending,
+        pending=pending,
+        decode=("d",),
+        cancel=pending if case == "cancel" else (),
+        pause=case == "pause",
+        finish=case == "cancel",
+    )
+    worker.execute_model(output)
+    receipt = worker.sample_tokens(None)
+    assert ("compile_enter",) not in events
+    assert receipt.muxpd_prefill_progress_source == "layer_hooks"
+    if case == "cancel":
+        assert receipt.muxpd_cancelled_prefill_ids == set(pending)
+        assert worker._prefill_task is None
+    else:
+        assert worker._prefill_task is not None
+        worker.execute_model(schedule(pending=pending, decode=("d",), finish=True))
+        receipt = worker.sample_tokens(None)
+        assert receipt.muxpd_completed_prefill_ids == set(pending)
+        assert receipt.muxpd_prefill_progress_source == "layer_hooks"
+        assert ("compile_enter",) not in events
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("simulation", ["graph_isolated"], indirect=True)
+@pytest.mark.parametrize("enabled", [False, True])
+@pytest.mark.parametrize("fails", [False, True])
+def test_short_fx_diagnostic_records_per_call_not_startup_aggregate(
+    simulation, monkeypatch, enabled, fails
+):
+    from vllm_muxpd import decoupled_worker as module
+
+    worker, events = simulation
+    worker.rank = 3
+    worker._short_prefill_diagnostics = enabled
+    controller = enable_fake_prefill_compile(worker, events)
+    controller.compile_full_prefill = False
+    controller.compile_short_prefill_tokens = 32
+    controller.short_prefill_aot_successful_calls = 5
+    calls = {"prefill": 70, "decode": 13, "caller": 100}
+    worker._collective_router = SimpleNamespace(calls=calls)
+    records = []
+
+    def info(fmt, payload):
+        assert fmt == "MuxPD short FX diagnostic %s"
+        records.append(json.loads(payload))
+
+    monkeypatch.setattr(module.logger, "info", info)
+
+    def execute(output):
+        calls["prefill"] += 7
+        controller.short_prefill_aot_successful_calls += 1
+        if fails:
+            raise ValueError("forward failure")
+        worker.model_runner.execute_model_state = output
+
+    monkeypatch.setattr(worker.model_runner, "execute_model", execute)
+    if not enabled:
+
+        def unexpected_snapshot(*args):
+            raise AssertionError("Trace-off collected diagnostic state")
+
+        monkeypatch.setattr(worker, "_trace_short_prefill", unexpected_snapshot)
+    output = schedule(new_p=("p",), pending=("p",), decode=("d",), finish=True)
+    if fails:
+        with pytest.raises(ValueError, match="forward failure"):
+            worker.execute_model(output)
+    else:
+        worker.execute_model(output)
+        worker.sample_tokens(None)
+    if not enabled:
+        assert records == []
+        return
+    assert [record["phase"] for record in records] == ["begin", "end"]
+    assert all(record["rank"] == 3 for record in records)
+    assert all(record["cohort_id"] == 1 for record in records)
+    assert all(record["request_ids"] == ["p"] for record in records)
+    assert all(record["prefill_tokens"] == 32 for record in records)
+    assert records[0]["router_calls_before"] == {
+        "prefill": 70,
+        "decode": 13,
+        "caller": 100,
+    }
+    assert records[1]["aot_successful_calls_delta"] == 1
+    assert records[1]["router_calls_delta"] == {
+        "prefill": 7,
+        "decode": 0,
+        "caller": 0,
+    }
+    assert records[1]["host_forward_returned"] is not fails
+    assert not any(event[0] == "sync" for event in events)
 
 
 def caller_records(events):

@@ -59,6 +59,47 @@ def worker_factory():
     return create
 
 
+@pytest.mark.parametrize("raises", [False, "body", "sync"])
+def test_short_startup_scope_restores_caller_and_joins_only_p(
+    overlap_graph_factory, raises
+):
+    state = overlap_graph_factory()
+    worker = state.worker
+    worker._configure_execution_backend()
+    backend = worker._execution_backend
+    caller = backend.capture()
+    joins = []
+    synchronized = []
+    original_join = backend.join
+
+    def synchronize():
+        synchronized.append("prefill")
+        if raises == "sync":
+            raise ValueError("startup synchronization failure")
+
+    worker._streams["prefill"].synchronize = synchronize
+
+    def join(lanes=None):
+        joins.append(lanes)
+        return original_join(lanes)
+
+    backend.join = join
+    try:
+        with worker._prefill_startup_scope():
+            assert backend.active_lane == "prefill"
+            assert state.runtime.npu.current_stream() is worker._streams["prefill"]
+            assert state.runtime.workspace._manager is (
+                worker._lane_states["prefill"].workspace_manager
+            )
+            if raises == "body":
+                raise ValueError("startup failure")
+    except ValueError:
+        assert raises
+    assert backend.capture() == caller
+    assert joins == [["prefill"]]
+    assert synchronized == ["prefill"]
+
+
 @pytest.fixture
 def overlap_graph_factory(worker_factory, monkeypatch):
     def create(*, communication_fails=False):
@@ -69,7 +110,8 @@ def overlap_graph_factory(worker_factory, monkeypatch):
         profiled = object()
         monkeypatch.setattr(workspace, "_manager", profiled)
         monkeypatch.setattr(
-            workspace, "WorkspaceManager",
+            workspace,
+            "WorkspaceManager",
             lambda device, num_ubatches: NS(device=device, num_ubatches=num_ubatches),
         )
         runtime.workspace = workspace
@@ -81,11 +123,13 @@ def overlap_graph_factory(worker_factory, monkeypatch):
         policy.update(stream_mode="overlap", overlap_communication="isolated")
         original_controller = state.module.DecodeGraphController
         monkeypatch.setattr(
-            state.module, "DecodeGraphController",
+            state.module,
+            "DecodeGraphController",
             lambda *args: original_controller(*args, runtime=runtime),
         )
         monkeypatch.setattr(
-            state.module, "NPUOverlapBackend",
+            state.module,
+            "NPUOverlapBackend",
             lambda: NPUOverlapBackend(
                 runtime=runtime.npu,
                 forward_context_module=runtime.forward,
@@ -140,7 +184,9 @@ def test_overlap_communication_failure_restores_graph_guards(overlap_graph_facto
 @pytest.mark.integration
 @pytest.mark.parametrize("decode_fails", [False, True])
 def test_overlap_graph_kv_initialization_joins_startup_and_restores_caller(
-    overlap_graph_factory, monkeypatch, decode_fails,
+    overlap_graph_factory,
+    monkeypatch,
+    decode_fails,
 ):
     state = overlap_graph_factory()
     worker = state.worker

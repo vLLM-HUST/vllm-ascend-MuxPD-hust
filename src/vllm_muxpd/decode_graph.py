@@ -17,6 +17,8 @@ from threading import get_ident
 from types import SimpleNamespace
 from typing import Any
 
+from .short_prefill import PreparedShortPrefill, warmup_sizes
+
 _MISSING = object()
 _CAPTURE_OWNER: object | None = None
 
@@ -51,9 +53,24 @@ def validate_decode_graph_config(config: Any, policy: Any) -> None:
         )
     if type(_value(policy, "compile_full_prefill", False)) is not bool:
         errors.append("compile_full_prefill must be a boolean")
+    short_limit = _value(policy, "compile_short_prefill_tokens", 0)
+    if type(short_limit) is not int or short_limit < 0:
+        errors.append("compile_short_prefill_tokens must be a nonnegative integer")
+    elif short_limit and not (
+        stream_mode == "overlap"
+        and _value(policy, "overlap_communication") == "isolated"
+        and not _value(policy, "compile_full_prefill", False)
+    ):
+        errors.append("short compiled prefill requires isolated graph overlap")
     model = config.model_config
     compilation = config.compilation_config
     scheduler = config.scheduler_config
+    if (
+        short_limit
+        and type(short_limit) is int
+        and (short_limit > scheduler.max_num_batched_tokens)
+    ):
+        errors.append("short prefill threshold exceeds the complete token budget")
     if model.enforce_eager:
         errors.append("enforce_eager must be false for the decode graph opt-in")
     if _mode_name(compilation.cudagraph_mode) != "FULL_DECODE_ONLY":
@@ -82,9 +99,8 @@ def validate_decode_graph_config(config: Any, policy: Any) -> None:
         if getattr(config, name, None) is not None:
             errors.append(f"{name} is unsupported by decode graphs")
     offload = getattr(config, "offload_config", None)
-    if (
-        _value(_value(offload, "uva"), "cpu_offload_gb", 0)
-        or _value(_value(offload, "prefetch"), "offload_group_size", 0)
+    if _value(_value(offload, "uva"), "cpu_offload_gb", 0) or _value(
+        _value(offload, "prefetch"), "offload_group_size", 0
     ):
         errors.append("model offloading is unsupported by decode graphs")
     if errors:
@@ -244,6 +260,29 @@ class _NativeGraphRuntime:
     def graph_params(self) -> Any:
         return self.graphs.get_graph_params()
 
+    def validate_short_prefill_backend(self, owner: Any) -> None:
+        from vllm import envs
+
+        compilation = owner.ascend_config.ascend_compilation_config
+        if (
+            not envs.VLLM_USE_AOT_COMPILE
+            or not compilation.enable_npugraph_ex
+            or compilation.enable_static_kernel
+        ):
+            raise ValueError(
+                "Short P requires native AOT and npugraph_ex force-eager FX "
+                "with static kernels disabled"
+            )
+
+    def prefill_compile_model(self, owner: Any) -> Any:
+        model = self.unwrap(owner.model)
+        if hasattr(model, "language_model"):
+            model = model.language_model
+        return model.model
+
+    def warmup_short_prefill(self, owner: Any, size: int) -> None:
+        owner._dummy_run(size, with_prefill=True, is_profile=True)
+
     def unwrap(self, model: Any) -> Any:
         if isinstance(model, self.graphs.ACLGraphWrapper):
             return model.unwrap()
@@ -293,6 +332,7 @@ class DecodeGraphController:
         *,
         runtime: Any = None,
         policy: Any = None,
+        prefill_startup_scope: Any = None,
     ) -> None:
         config = owner.vllm_config
         if policy is None:
@@ -312,6 +352,19 @@ class DecodeGraphController:
         self.workspace = decode_workspace
         self.runtime = runtime or _NativeGraphRuntime()
         self._compile_full_prefill = _value(policy, "compile_full_prefill", False)
+        self.compile_short_prefill_tokens = _value(
+            policy, "compile_short_prefill_tokens", 0
+        )
+        self._short_prefill: PreparedShortPrefill | None = None
+        self._short_warmup_sizes: tuple[int, ...] = ()
+        self._prefill_startup_scope = prefill_startup_scope
+        if self.compile_short_prefill_tokens:
+            if not callable(prefill_startup_scope):
+                raise ValueError("Short P requires a dedicated startup P lane scope")
+            self.runtime.validate_short_prefill_backend(owner)
+            self._short_warmup_sizes = warmup_sizes(
+                config.compilation_config, self.compile_short_prefill_tokens
+            )
         self._compile_prefill_active = False
         self._prefill_profiled = False
         self._thread = get_ident()
@@ -360,6 +413,11 @@ class DecodeGraphController:
             "failed": self._failed,
             "closed": self._closed,
             "compile_full_prefill": self.compile_full_prefill,
+            "compile_short_prefill_tokens": self.compile_short_prefill_tokens,
+            "short_prefill_warmup_sizes": list(self._short_warmup_sizes),
+            "short_prefill_aot_successful_calls": (
+                self._short_prefill.successful_calls if self._short_prefill else 0
+            ),
             "prefill_compile_profiled": self._prefill_profiled,
             "includes_startup_warmups": True,
             "captured_graph_entries": sum(
@@ -373,10 +431,18 @@ class DecodeGraphController:
     def compile_full_prefill(self) -> bool:
         return self._compile_full_prefill
 
+    @property
+    def short_prefill_aot_successful_calls(self) -> int:
+        return self._short_prefill.successful_calls if self._short_prefill else 0
+
+    @property
+    def _compile_prefill_enabled(self) -> bool:
+        return bool(self.compile_full_prefill or self.compile_short_prefill_tokens)
+
     @contextmanager
     def _prefill_compile_context(self, *, startup: bool):
         self._check()
-        if not self.compile_full_prefill or not self._attached:
+        if not self._compile_prefill_enabled or not self._attached:
             raise RuntimeError("Full prefill compilation is not enabled and attached")
         if self._compile_prefill_active:
             raise RuntimeError("Full prefill compilation contexts cannot be nested")
@@ -401,8 +467,23 @@ class DecodeGraphController:
         return. This changes only ``skip_compiled``; the P dispatch and forward
         guards still force NONE, so P cannot capture or replay D's ACL graph.
         """
-        with self._prefill_compile_context(startup=False):
-            yield
+        prepared = self._short_prefill
+        if self.compile_short_prefill_tokens:
+            if prepared is None:
+                raise RuntimeError("Short P startup AOT preparation is incomplete")
+            prepared.check_installed()
+        before = prepared.successful_calls if prepared else 0
+        try:
+            with self._prefill_compile_context(startup=False):
+                yield
+            if prepared is not None:
+                # No raw fallback is silently labelled a compiled hit. The caller
+                # must stop if the pre-existing callable was not actually invoked.
+                prepared.require_return(before)
+        except BaseException:
+            if prepared is not None:
+                self._failed = True
+            raise
 
     def _check(self) -> None:
         if get_ident() != self._thread:
@@ -454,6 +535,8 @@ class DecodeGraphController:
                         setattr(target, name, original)
             finally:
                 self._patches.clear()
+                self._short_prefill = None
+                self._prefill_startup_scope = None
                 self._decode_graph_model = None
                 self._attached = False
                 self.owner = None
@@ -472,8 +555,9 @@ class DecodeGraphController:
         dispatch = self.owner._determine_batch_execution_and_padding
         dispatch_signature = signature(dispatch)
         model_forward = self.owner._model_forward
+        model_forward_signature = signature(model_forward)
         profile_run = None
-        if self.compile_full_prefill:
+        if self._compile_prefill_enabled:
             profile_run = getattr(self.owner, "profile_run", None)
             if not callable(profile_run):
                 raise RuntimeError(
@@ -490,6 +574,20 @@ class DecodeGraphController:
         @wraps(model_forward)
         def eager_forward(*args, **kwargs):
             self._check()
+            if (
+                self.compile_short_prefill_tokens
+                and self._compile_prefill_active
+                and self._prefill_profiled
+            ):
+                count = model_forward_signature.bind(*args, **kwargs).arguments[
+                    "num_tokens"
+                ]
+                if type(count) is not int or not (
+                    0 < count <= self.compile_short_prefill_tokens
+                ):
+                    raise RuntimeError(
+                        "Short P padded tokens exceed its prepared range"
+                    )
             ctx = self.runtime.forward._forward_context
             if ctx is None:
                 raise RuntimeError("Prefill forward requires a native forward context")
@@ -520,6 +618,7 @@ class DecodeGraphController:
         self._patch_instance(self.owner, "use_aclgraph", False)
         self._patch_instance(self.owner, "_muxpd_decode_graph_controller", self)
         if profile_run is not None:
+
             @wraps(profile_run)
             def compiled_profile_run(*args, **kwargs):
                 # Native startup profiles max_num_tokens before KV sizing and
@@ -527,8 +626,25 @@ class DecodeGraphController:
                 self._check()
                 before = self._statistics["prefill_compiled_calls"]
                 try:
-                    with self._prefill_compile_context(startup=True):
-                        result = profile_run(*args, **kwargs)
+                    if self.compile_short_prefill_tokens:
+                        with self._prefill_startup_scope():
+                            with self._prefill_compile_context(startup=True):
+                                result = profile_run(*args, **kwargs)
+                                prepared = PreparedShortPrefill(
+                                    self.runtime.prefill_compile_model(self.owner),
+                                    lambda: self._compile_prefill_active,
+                                )
+                                self._short_prefill = prepared
+                                self._patch_instance(
+                                    prepared.model, "aot_compiled_fn", prepared.observed
+                                )
+                                for size in self._short_warmup_sizes:
+                                    calls = prepared.successful_calls
+                                    self.runtime.warmup_short_prefill(self.owner, size)
+                                    prepared.require_return(calls)
+                    else:
+                        with self._prefill_compile_context(startup=True):
+                            result = profile_run(*args, **kwargs)
                     if self._statistics["prefill_compiled_calls"] == before:
                         raise RuntimeError(
                             "Native profile_run did not compile a prefill forward"
@@ -591,8 +707,10 @@ class DecodeGraphController:
             # ACLGraphWrapper sets capturing inside its first FULL call, after
             # this observer starts. A new concrete entry also proves capture if
             # a native implementation restores that flag before returning.
-            if capturing or getattr(ctx, "capturing", False) or (
-                full and not captured_before and has_captured_entry(descriptor)
+            if (
+                capturing
+                or getattr(ctx, "capturing", False)
+                or (full and not captured_before and has_captured_entry(descriptor))
             ):
                 key = "decode_capture_forward_calls"
             elif full and captured_before:
@@ -610,7 +728,7 @@ class DecodeGraphController:
     def _validate_capture(self) -> None:
         if not self._attached:
             raise RuntimeError("Decode graph model has not been attached")
-        if self.compile_full_prefill and not self._prefill_profiled:
+        if self._compile_prefill_enabled and not self._prefill_profiled:
             raise RuntimeError(
                 "Full prefill compilation requires native startup profiling"
             )
