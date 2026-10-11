@@ -1,0 +1,76 @@
+{
+  "stage": "old-profile",
+  "api_pid": 25340,
+  "started_at": "2026-10-11T04:29:28.319330+00:00",
+  "owned_processes": {
+    "25340": {
+      "state": "S",
+      "ppid": 1,
+      "starttime": "689364689",
+      "cmdline": "/root/workspace/.venv/bin/python -m vllm.entrypoints.openai.api_server --model /root/workspace/models/Qwen3.5-35B-A3B --served-model-name Qwen3.5-35B-A3B --host 127.0.0.1 --port 8002 --tensor-parallel-size 8 --enable-expert-parallel --dtype bfloat16 --max-model-len 16384 --max-num-seqs 8 --max-num-batched-tokens 16384 --gpu-memory-utilization 0.85 --language-model-only --no-enable-prefix-caching --mamba-cache-mode none --no-async-scheduling --no-enforce-eager --compilation-config {\"mode\":3,\"cudagraph_mode\":\"FULL_DECODE_ONLY\",\"cudagraph_capture_sizes\":[1,2,4,8],\"max_cudagraph_capture_size\":8} --no-enable-chunked-prefill --scheduler-cls vllm_muxpd.decoupled_scheduler.DecoupledMuxPDScheduler --worker-cls vllm_muxpd.decoupled_worker.DecoupledMuxPDNPUWorker --batch-admission-policy vllm_muxpd.policy.MuxPDPolicy --batch-admission-policy-config {\"execution\":\"decoupled\",\"stream_mode\":\"fenced\",\"layers_per_slice\":8,\"adaptive_layers\":true,\"prefill_first\":true,\"decode_graph\":true,\"compile_full_prefill\":true,\"prefill_layer_token_budget\":262144,\"trace_path\":\"/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/old-profile-trace-{pid}.jsonl\"} --profiler-config {\"profiler\": \"torch\", \"torch_profiler_dir\": \"/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/old-profile\", \"torch_profiler_with_stack\": false, \"torch_profiler_with_memory\": false, \"ignore_frontend\": true, \"max_iterations\": 8} "
+    },
+    "26679": {
+      "state": "S",
+      "ppid": 25340,
+      "starttime": "689367970",
+      "cmdline": "/root/workspace/.venv/bin/python -c from multiprocessing.resource_tracker import main;main(37) "
+    },
+    "26680": {
+      "state": "S",
+      "ppid": 25340,
+      "starttime": "689367971",
+      "cmdline": "VLLM::EngineCore                                                                                                                                   "
+    },
+    "27446": {
+      "state": "S",
+      "ppid": 26680,
+      "starttime": "689369971",
+      "cmdline": "VLLM::Worker_TP0_EP0                                                                                                                               "
+    },
+    "27447": {
+      "state": "S",
+      "ppid": 26680,
+      "starttime": "689369972",
+      "cmdline": "VLLM::Worker_TP1_EP1                                                                                                                               "
+    },
+    "27448": {
+      "state": "S",
+      "ppid": 26680,
+      "starttime": "689369972",
+      "cmdline": "VLLM::Worker_TP2_EP2                                                                                                                               "
+    },
+    "27449": {
+      "state": "S",
+      "ppid": 26680,
+      "starttime": "689369972",
+      "cmdline": "VLLM::Worker_TP3_EP3                                                                                                                               "
+    },
+    "27450": {
+      "state": "S",
+      "ppid": 26680,
+      "starttime": "689369972",
+      "cmdline": "VLLM::Worker_TP4_EP4                                                                                                                               "
+    },
+    "27451": {
+      "state": "S",
+      "ppid": 26680,
+      "starttime": "689369976",
+      "cmdline": "VLLM::Worker_TP5_EP5                                                                                                                               "
+    },
+    "27452": {
+      "state": "S",
+      "ppid": 26680,
+      "starttime": "689369976",
+      "cmdline": "VLLM::Worker_TP6_EP6                                                                                                                               "
+    },
+    "27453": {
+      "state": "S",
+      "ppid": 26680,
+      "starttime": "689369980",
+      "cmdline": "VLLM::Worker_TP7_EP7                                                                                                                               "
+    }
+  },
+  "signal": "SIGTERM to API only; native worker shutdown behavior is not a device cleanup proof",
+  "finished_at": "2026-10-11T04:29:29.602967+00:00",
+  "remaining_pids": []
+}

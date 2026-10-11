@@ -1,0 +1,138 @@
+...............................F.....                                    [100%]
+=================================== FAILURES ===================================
+______ test_decode_guard_residual_rejects_ineligible_observations[pause] _______
+
+make_scheduler = <function make_scheduler.<locals>.make at 0xfffec2eb8040>
+clock = namespace(now=1000.035), fault = 'pause'
+
+    @pytest.mark.parametrize(
+        "fault",
+        [
+            "first",
+            "final",
+            "compiled",
+            "no_decode",
+            "incomplete",
+            "cancelled",
+            "pause",
+            "late_abort",
+            "negative",
+            "zero",
+            "disabled",
+        ],
+    )
+    def test_decode_guard_residual_rejects_ineligible_observations(
+        make_scheduler, clock, fault
+    ):
+        scheduler = guard_scheduler(make_scheduler)
+        calibrate_guard_decode(scheduler, clock)
+        scheduler.add_request(request("p", 64))
+        output = scheduler.schedule()
+        clock.now += 0.020
+        retire(scheduler, output)
+        output = scheduler.schedule()
+        step, cohort = scheduler._decoupled_step, scheduler._prefill_cohort
+        timing = timed_receipt(output, host_ms=20, device_ms=10).muxpd_prefill_slice_timing
+        progress, source, cancelled = 2, "layer_hooks", set()
+        if fault == "first":
+            cohort = replace(cohort, completed_layers=0)
+            progress = 1
+            timing["first_slice"] = True
+        elif fault == "final":
+            progress = 4
+            timing["layer_delta"] = 3
+        elif fault == "compiled":
+            source = "full_forward_return"
+        elif fault == "no_decode":
+            step = replace(
+                step,
+                decode_output=replace(
+                    step.decode_output,
+                    num_scheduled_tokens={},
+                    total_num_scheduled_tokens=0,
+                ),
+                guard_decode_shape=None,
+            )
+        elif fault == "incomplete":
+            timing.update(device_complete=False, device_elapsed_ms=None)
+        elif fault == "cancelled":
+            cancelled = {"p"}
+        elif fault == "pause":
+            step = replace(step, output=replace(step.output))
+            step.output.muxpd_pause_prefill = True
+        elif fault == "late_abort":
+            scheduler.finish_requests("p", RequestStatus.FINISHED_ABORTED)
+        elif fault in ("negative", "zero"):
+            timing["device_elapsed_ms"] = 40 if fault == "negative" else 35
+        elif fault == "disabled":
+            scheduler.muxpd_policy.config = replace(
+                scheduler.muxpd_policy.config, decode_budget_guard=False
+            )
+>       sample = scheduler._observe_guard_latency(
+            step, cohort, progress, source, 35, cancelled, timing
+        )
+
+tests/test_decoupled_scheduler.py:1860: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <vllm_muxpd.decoupled_scheduler.DecoupledMuxPDScheduler object at 0xfffec2cfb980>
+step = _Step(output=SchedulerOutput(scheduled_new_reqs=[], scheduled_cached_reqs=CachedRequestData(req_ids=['d'],resumed_req_..._at=1000.035, expected_layers=2, calibration_phase=None, deferred_decode_ids=frozenset(), guard_decode_shape=(1, 7, 7))
+cohort = _PrefillCohort(sequence=2, original_output=SchedulerOutput(scheduled_new_reqs=[], scheduled_cached_reqs=CachedRequestD...zero=None, num_spec_tokens_to_schedule=0), pending_ids={'p'}, arrival_monotonic=1000.0149799728393, completed_layers=1)
+progress = 2, source = 'layer_hooks', duration = 35, cancelled = set()
+timing = {'version': 1, 'layer_delta': 1, 'first_slice': False, 'prefill_tokens': 64, ...}
+
+    def _observe_guard_latency(
+        self, step, cohort, progress, source, duration, cancelled, timing
+    ):
+        if not self.muxpd_policy.config.decode_budget_guard:
+            return None
+        involved = set(step.decode_output.num_scheduled_tokens)
+        if cohort:
+            involved.update(cohort.original_output.num_scheduled_tokens)
+        if (
+            not math.isfinite(duration)
+            or duration <= 0
+            or cancelled
+>           or step.output.muxpd_cancel_prefill_request_ids
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            or step.output.muxpd_pause_prefill
+            or not involved <= self.requests.keys()
+        ):
+E       AttributeError: 'SchedulerOutput' object has no attribute 'muxpd_cancel_prefill_request_ids'
+
+src/vllm_muxpd/decoupled_scheduler.py:1145: AttributeError
+----------------------------- Captured stdout call -----------------------------
+INFO 10-11 05:21:51 [model.py:619] Resolved architecture: LlamaForCausalLM
+INFO 10-11 05:21:51 [model.py:2111] Downcasting torch.float32 to torch.float16.
+INFO 10-11 05:21:51 [model.py:1776] Using max model len 256
+WARNING 10-11 05:21:51 [vllm.py:1096] Enforce eager set, disabling torch.compile and CUDAGraphs. This is equivalent to setting -cc.mode=none -cc.cudagraph_mode=none
+WARNING 10-11 05:21:51 [vllm.py:1144] Inductor compilation was disabled by user settings, optimizations settings that are only active during inductor compilation will be ignored.
+INFO 10-11 05:21:51 [kernel.py:292] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'])
+INFO 10-11 05:21:51 [vllm.py:1322] Cudagraph is disabled under eager mode
+INFO 10-11 05:21:51 [utils.py:174] No quantization signature detected from model files for "/tmp/pytest-of-root/pytest-8/test_decode_guard_residual_rej6/model". The model will be loaded as float. To force a quantization method, pass "--quantization <method>" explicitly.
+WARNING 10-11 05:21:51 [platform.py:1057] GPU-specific parameter is not supported on Ascend. parameter=disable_cascade_attn, value=True, action: resetting to False.
+INFO 10-11 05:21:51 [ascend_config.py:824] Dynamic EPLB is False
+INFO 10-11 05:21:51 [ascend_config.py:825] The number of redundant experts is 0
+INFO 10-11 05:21:51 [platform.py:484] Compilation disabled, using eager mode by default
+INFO 10-11 05:21:51 [platform.py:785] Set PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+INFO 10-11 05:21:51 [preemption.py:123] Preemption policy initialized: policy=builtin enabled=False
+INFO 10-11 05:21:51 [batch_admission.py:144] Batch admission policy initialized: policy=vllm_muxpd.policy.MuxPDPolicy configured=True enabled=True
+------------------------------ Captured log call -------------------------------
+INFO     vllm.config.model:model.py:619 Resolved architecture: LlamaForCausalLM
+INFO     vllm.config.model:model.py:2111 Downcasting torch.float32 to torch.float16.
+INFO     vllm.config.model:model.py:1776 Using max model len 256
+WARNING  vllm.config.vllm:vllm.py:1096 Enforce eager set, disabling torch.compile and CUDAGraphs. This is equivalent to setting -cc.mode=none -cc.cudagraph_mode=none
+WARNING  vllm.config.vllm:vllm.py:1144 Inductor compilation was disabled by user settings, optimizations settings that are only active during inductor compilation will be ignored.
+INFO     vllm.config.kernel:kernel.py:292 Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'])
+INFO     vllm.config.vllm:vllm.py:1322 Cudagraph is disabled under eager mode
+INFO     vllm.logger:utils.py:174 No quantization signature detected from model files for "/tmp/pytest-of-root/pytest-8/test_decode_guard_residual_rej6/model". The model will be loaded as float. To force a quantization method, pass "--quantization <method>" explicitly.
+WARNING  vllm.logger:platform.py:1057 GPU-specific parameter is not supported on Ascend. parameter=disable_cascade_attn, value=True, action: resetting to False.
+INFO     vllm.logger:ascend_config.py:824 Dynamic EPLB is False
+INFO     vllm.logger:ascend_config.py:825 The number of redundant experts is 0
+INFO     vllm.logger:platform.py:484 Compilation disabled, using eager mode by default
+INFO     vllm.logger:platform.py:785 Set PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+INFO     vllm.v1.core.sched.preemption:preemption.py:123 Preemption policy initialized: policy=builtin enabled=False
+INFO     vllm.v1.core.sched.batch_admission:batch_admission.py:144 Batch admission policy initialized: policy=vllm_muxpd.policy.MuxPDPolicy configured=True enabled=True
+=========================== short test summary info ============================
+FAILED tests/test_decoupled_scheduler.py::test_decode_guard_residual_rejects_ineligible_observations[pause]
+1 failed, 36 passed, 74 deselected in 27.15s

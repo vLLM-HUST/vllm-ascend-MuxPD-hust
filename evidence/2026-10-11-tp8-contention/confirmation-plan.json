@@ -1,0 +1,17 @@
+{
+  "registered_at": "2026-10-11T04:57:51.960569+00:00",
+  "before_first_candidate_measurement": true,
+  "same_workload_plan": "experiment-plan-v2.json",
+  "planned_remaining_timing_order": [
+    "guard-initial",
+    "native2k-confirm",
+    "old-work256-confirm",
+    "native16k-confirm",
+    "guard-confirm"
+  ],
+  "repeats_per_stage": 3,
+  "full_warmup_repeats_per_workload": 1,
+  "source_rule": "Candidate implementation frozen before guard-initial; any subsequent runtime change gets a new explicit role and fresh matched repeats. No slower repeat discarded.",
+  "diagnostics": "guard-diagnostic is separate trace-on process after performance collection; no diagnostic sample enters timing aggregates",
+  "comparison": "Keep per-stage results plus pooled all-six-repeat metrics per role; distinguish within-stage from between-stage variation. No statistical significance claim from three repeats per stage."
+}

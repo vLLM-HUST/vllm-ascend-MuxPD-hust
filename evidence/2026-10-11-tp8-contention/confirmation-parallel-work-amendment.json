@@ -1,0 +1,17 @@
+{
+  "at": "2026-10-11T05:19:48.547608+00:00",
+  "reason": "Run immutable old-plugin confirmation while v2 estimator implementation/review proceeds, to use hardware wait time. Old service imports snapshot7cb5088; candidate files are not on its package path. CPU heavy checks will pause during timing.",
+  "next_stage": "old-work256-confirm",
+  "following_planned": [
+    "guard-v2-initial",
+    "native2k-confirm",
+    "native16k-confirm",
+    "guard-v2-confirm",
+    "guard-v2-diagnostic"
+  ],
+  "preserved_v1": [
+    "guard-initial",
+    "guard-diagnostic"
+  ],
+  "selection": "same benchmarkproducer/workloads/SLO thresholds; retainallv1andv2results, neverpoolimplementationversions"
+}

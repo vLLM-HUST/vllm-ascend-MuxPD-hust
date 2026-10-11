@@ -1,0 +1,753 @@
+[W1011 05:52:08.661123858 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+INFO 10-11 05:52:14 [__init__.py:44] Available plugins for group vllm.platform_plugins:
+INFO 10-11 05:52:14 [__init__.py:46] - ascend -> vllm_ascend:register
+INFO 10-11 05:52:14 [__init__.py:58] Loading plugin ascend
+INFO 10-11 05:52:14 [__init__.py:237] Platform plugin ascend is activated
+INFO 10-11 05:52:14 [platform.py:61] Breakable cudagraph is force disabled on Ascend because DeepSeek V4 PIECEWISE cudagraph is not supported yet.
+INFO 10-11 05:52:25 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.netloader.netloader.ModelNetLoaderElastic'>` with load format `netloader`
+INFO 10-11 05:52:25 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.rfork.rfork_loader.RForkModelLoader'>` with load format `rfork`
+(APIServer pid=325117) INFO 10-11 05:52:25 [api_utils.py:339] 
+(APIServer pid=325117) INFO 10-11 05:52:25 [api_utils.py:339]        █     █     █▄   ▄█
+(APIServer pid=325117) INFO 10-11 05:52:25 [api_utils.py:339]  ▄▄ ▄█ █     █     █ ▀▄▀ █  version 0.1.dev1+gd0f22d2bd
+(APIServer pid=325117) INFO 10-11 05:52:25 [api_utils.py:339]   █▄█▀ █     █     █     █  model   /root/workspace/models/Qwen3.5-35B-A3B
+(APIServer pid=325117) INFO 10-11 05:52:25 [api_utils.py:339]    ▀▀  ▀▀▀▀▀ ▀▀▀▀▀ ▀     ▀
+(APIServer pid=325117) INFO 10-11 05:52:25 [api_utils.py:339] 
+(APIServer pid=325117) INFO 10-11 05:52:25 [api_utils.py:273] non-default args: {'host': '127.0.0.1', 'port': 8002, 'model': '/root/workspace/models/Qwen3.5-35B-A3B', 'dtype': 'bfloat16', 'max_model_len': 16384, 'served_model_name': ['Qwen3.5-35B-A3B'], 'tensor_parallel_size': 8, 'enable_expert_parallel': True, 'worker_cls': 'vllm_muxpd.decoupled_worker.DecoupledMuxPDNPUWorker', 'gpu_memory_utilization': 0.85, 'enable_prefix_caching': False, 'language_model_only': True, 'max_num_batched_tokens': 16384, 'max_num_seqs': 8, 'enable_chunked_prefill': False, 'scheduler_cls': 'vllm_muxpd.decoupled_scheduler.DecoupledMuxPDScheduler', 'batch_admission_policy': 'vllm_muxpd.policy.MuxPDPolicy', 'batch_admission_policy_config': {'execution': 'decoupled', 'stream_mode': 'fenced', 'layers_per_slice': 8, 'adaptive_layers': True, 'prefill_first': True, 'decode_graph': True, 'compile_full_prefill': True, 'prefill_layer_token_budget': 262144, 'decode_budget_guard': True, 'trace_path': '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-contention/guard-v2-diagnostic-trace-{pid}.jsonl'}, 'async_scheduling': False, 'compilation_config': {'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'vllm_ascend.compilation.compiler_interface.AscendCompiler', 'custom_ops': [], 'ir_enable_torch_wrap': None, 'splitting_ops': None, 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': None, 'compile_ranges_endpoints': None, 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'size_asserts': False, 'alignment_asserts': False, 'scalar_asserts': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_DECODE_ONLY: (2, 0)>, 'cudagraph_num_of_warmups': 0, 'cudagraph_capture_sizes': [1, 2, 4, 8], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': None, 'pass_config': {}, 'max_cudagraph_capture_size': 8, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': None, 'static_all_moe_layers': []}}
+(APIServer pid=325117) WARNING 10-11 05:52:25 [envs.py:2041] Unknown vLLM environment variable detected: VLLM_VERSION
+(APIServer pid=325117) INFO 10-11 05:52:26 [model.py:619] Resolved architecture: Qwen3_5MoeForConditionalGeneration
+(APIServer pid=325117) INFO 10-11 05:52:26 [model.py:1776] Using max model len 16384
+(APIServer pid=325117) WARNING 10-11 05:52:26 [arg_utils.py:2527] This model does not officially support disabling chunked prefill. Disabling this manually may cause the engine to crash or produce incorrect outputs.
+(APIServer pid=325117) INFO 10-11 05:52:26 [patch_mamba_config.py:104] Setting attention block size to 512 tokens to ensure that attention page size is >= mamba page size.
+(APIServer pid=325117) INFO 10-11 05:52:26 [patch_mamba_config.py:119] Padding mamba page size by 1.16% to ensure that mamba page size and attention page size are exactly equal.
+(APIServer pid=325117) INFO 10-11 05:52:26 [vllm.py:1042] Asynchronous scheduling is disabled.
+(APIServer pid=325117) INFO 10-11 05:52:26 [kernel.py:292] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'])
+(APIServer pid=325117) INFO 10-11 05:52:26 [utils.py:174] No quantization signature detected from model files for "/root/workspace/models/Qwen3.5-35B-A3B". The model will be loaded as float. To force a quantization method, pass "--quantization <method>" explicitly.
+(APIServer pid=325117) WARNING 10-11 05:52:26 [platform.py:1057] GPU-specific parameter is not supported on Ascend. parameter=disable_cascade_attn, value=True, action: resetting to False.
+(APIServer pid=325117) INFO 10-11 05:52:26 [ascend_config.py:824] Dynamic EPLB is False
+(APIServer pid=325117) INFO 10-11 05:52:26 [ascend_config.py:825] The number of redundant experts is 0
+(APIServer pid=325117) INFO 10-11 05:52:26 [platform.py:785] Set PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+(APIServer pid=325117) INFO 10-11 05:52:26 [compilation.py:312] Enabled custom fusions: norm_quant, act_quant
+(APIServer pid=325117) INFO 10-11 05:52:28 [registry.py:134] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+[W1011 05:52:38.382706961 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+INFO 10-11 05:52:44 [__init__.py:44] Available plugins for group vllm.platform_plugins:
+INFO 10-11 05:52:44 [__init__.py:46] - ascend -> vllm_ascend:register
+INFO 10-11 05:52:44 [__init__.py:58] Loading plugin ascend
+INFO 10-11 05:52:44 [__init__.py:237] Platform plugin ascend is activated
+INFO 10-11 05:52:44 [platform.py:61] Breakable cudagraph is force disabled on Ascend because DeepSeek V4 PIECEWISE cudagraph is not supported yet.
+(EngineCore pid=327118) INFO 10-11 05:52:55 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.netloader.netloader.ModelNetLoaderElastic'>` with load format `netloader`
+(EngineCore pid=327118) INFO 10-11 05:52:55 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.rfork.rfork_loader.RForkModelLoader'>` with load format `rfork`
+(EngineCore pid=327118) INFO 10-11 05:52:55 [core.py:114] Initializing a V1 LLM engine (v0.1.dev1+gd0f22d2bd) with config: model='/root/workspace/models/Qwen3.5-35B-A3B', speculative_config=None, tokenizer='/root/workspace/models/Qwen3.5-35B-A3B', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=16384, download_dir=None, load_format=auto, tensor_parallel_size=8, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=True, quantization=None, quantization_config=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=npu, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False, jit_monitor_mode='warn', jit_monitor_verbose=False), seed=0, served_model_name=Qwen3.5-35B-A3B, enable_prefix_caching=False, enable_chunked_prefill=False, pooler_config=None, compilation_config={'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'vllm_ascend.compilation.compiler_interface.AscendCompiler', 'custom_ops': ['all'], 'ir_enable_torch_wrap': False, 'splitting_ops': [], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': [], 'compile_ranges_endpoints': [16384], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'size_asserts': False, 'alignment_asserts': False, 'scalar_asserts': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_DECODE_ONLY: (2, 0)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': True, 'fuse_act_quant': True, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False, 'fuse_rope_kvcache_cat_mla': False, 'fuse_act_padding': False}, 'max_cudagraph_capture_size': 8, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}, kernel_config=KernelConfig(ir_op_priority=IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native']), enable_flashinfer_autotune=True, enable_cutedsl_warmup=True, moe_backend='auto', linear_backend='auto')
+(EngineCore pid=327118) INFO 10-11 05:52:55 [multiproc_executor.py:140] DP group leader: node_rank=0, node_rank_within_dp=0, master_addr=127.0.0.1, mq_connect_ip=10.244.1.72 (local), world_size=8, local_world_size=8
+[W1011 05:52:58.960496386 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[W1011 05:52:58.960496286 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[W1011 05:52:58.960496346 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[W1011 05:52:58.960496256 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[W1011 05:52:58.054529588 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[W1011 05:52:58.113679574 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[W1011 05:52:58.143978882 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[W1011 05:52:59.204245022 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+INFO 10-11 05:53:05 [__init__.py:44] Available plugins for group vllm.platform_plugins:
+INFO 10-11 05:53:05 [__init__.py:46] - ascend -> vllm_ascend:register
+INFO 10-11 05:53:05 [__init__.py:58] Loading plugin ascend
+INFO 10-11 05:53:05 [__init__.py:237] Platform plugin ascend is activated
+INFO 10-11 05:53:05 [platform.py:61] Breakable cudagraph is force disabled on Ascend because DeepSeek V4 PIECEWISE cudagraph is not supported yet.
+INFO 10-11 05:53:05 [__init__.py:44] Available plugins for group vllm.platform_plugins:
+INFO 10-11 05:53:05 [__init__.py:46] - ascend -> vllm_ascend:register
+INFO 10-11 05:53:05 [__init__.py:58] Loading plugin ascend
+INFO 10-11 05:53:05 [__init__.py:237] Platform plugin ascend is activated
+INFO 10-11 05:53:05 [platform.py:61] Breakable cudagraph is force disabled on Ascend because DeepSeek V4 PIECEWISE cudagraph is not supported yet.
+INFO 10-11 05:53:05 [__init__.py:44] Available plugins for group vllm.platform_plugins:
+INFO 10-11 05:53:05 [__init__.py:46] - ascend -> vllm_ascend:register
+INFO 10-11 05:53:05 [__init__.py:58] Loading plugin ascend
+INFO 10-11 05:53:05 [__init__.py:44] Available plugins for group vllm.platform_plugins:
+INFO 10-11 05:53:05 [__init__.py:46] - ascend -> vllm_ascend:register
+INFO 10-11 05:53:05 [__init__.py:58] Loading plugin ascend
+INFO 10-11 05:53:05 [__init__.py:237] Platform plugin ascend is activated
+INFO 10-11 05:53:05 [__init__.py:237] Platform plugin ascend is activated
+INFO 10-11 05:53:05 [platform.py:61] Breakable cudagraph is force disabled on Ascend because DeepSeek V4 PIECEWISE cudagraph is not supported yet.
+INFO 10-11 05:53:05 [platform.py:61] Breakable cudagraph is force disabled on Ascend because DeepSeek V4 PIECEWISE cudagraph is not supported yet.
+INFO 10-11 05:53:05 [__init__.py:44] Available plugins for group vllm.platform_plugins:
+INFO 10-11 05:53:05 [__init__.py:46] - ascend -> vllm_ascend:register
+INFO 10-11 05:53:05 [__init__.py:58] Loading plugin ascend
+INFO 10-11 05:53:05 [__init__.py:237] Platform plugin ascend is activated
+INFO 10-11 05:53:05 [platform.py:61] Breakable cudagraph is force disabled on Ascend because DeepSeek V4 PIECEWISE cudagraph is not supported yet.
+INFO 10-11 05:53:05 [__init__.py:44] Available plugins for group vllm.platform_plugins:
+INFO 10-11 05:53:05 [__init__.py:46] - ascend -> vllm_ascend:register
+INFO 10-11 05:53:05 [__init__.py:58] Loading plugin ascend
+INFO 10-11 05:53:06 [__init__.py:237] Platform plugin ascend is activated
+INFO 10-11 05:53:06 [platform.py:61] Breakable cudagraph is force disabled on Ascend because DeepSeek V4 PIECEWISE cudagraph is not supported yet.
+INFO 10-11 05:53:06 [__init__.py:44] Available plugins for group vllm.platform_plugins:
+INFO 10-11 05:53:06 [__init__.py:46] - ascend -> vllm_ascend:register
+INFO 10-11 05:53:06 [__init__.py:58] Loading plugin ascend
+INFO 10-11 05:53:06 [__init__.py:237] Platform plugin ascend is activated
+INFO 10-11 05:53:06 [platform.py:61] Breakable cudagraph is force disabled on Ascend because DeepSeek V4 PIECEWISE cudagraph is not supported yet.
+INFO 10-11 05:53:06 [__init__.py:44] Available plugins for group vllm.platform_plugins:
+INFO 10-11 05:53:06 [__init__.py:46] - ascend -> vllm_ascend:register
+INFO 10-11 05:53:06 [__init__.py:58] Loading plugin ascend
+INFO 10-11 05:53:06 [__init__.py:237] Platform plugin ascend is activated
+INFO 10-11 05:53:06 [platform.py:61] Breakable cudagraph is force disabled on Ascend because DeepSeek V4 PIECEWISE cudagraph is not supported yet.
+INFO 10-11 05:53:17 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.netloader.netloader.ModelNetLoaderElastic'>` with load format `netloader`
+INFO 10-11 05:53:17 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.rfork.rfork_loader.RForkModelLoader'>` with load format `rfork`
+INFO 10-11 05:53:17 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.netloader.netloader.ModelNetLoaderElastic'>` with load format `netloader`
+INFO 10-11 05:53:17 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.rfork.rfork_loader.RForkModelLoader'>` with load format `rfork`
+INFO 10-11 05:53:17 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.netloader.netloader.ModelNetLoaderElastic'>` with load format `netloader`
+INFO 10-11 05:53:17 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.rfork.rfork_loader.RForkModelLoader'>` with load format `rfork`
+INFO 10-11 05:53:17 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.netloader.netloader.ModelNetLoaderElastic'>` with load format `netloader`
+INFO 10-11 05:53:17 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.rfork.rfork_loader.RForkModelLoader'>` with load format `rfork`
+INFO 10-11 05:53:18 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.netloader.netloader.ModelNetLoaderElastic'>` with load format `netloader`
+INFO 10-11 05:53:18 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.rfork.rfork_loader.RForkModelLoader'>` with load format `rfork`
+INFO 10-11 05:53:18 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.netloader.netloader.ModelNetLoaderElastic'>` with load format `netloader`
+INFO 10-11 05:53:18 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.rfork.rfork_loader.RForkModelLoader'>` with load format `rfork`
+INFO 10-11 05:53:18 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.netloader.netloader.ModelNetLoaderElastic'>` with load format `netloader`
+INFO 10-11 05:53:18 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.rfork.rfork_loader.RForkModelLoader'>` with load format `rfork`
+INFO 10-11 05:53:19 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.netloader.netloader.ModelNetLoaderElastic'>` with load format `netloader`
+INFO 10-11 05:53:19 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.rfork.rfork_loader.RForkModelLoader'>` with load format `rfork`
+INFO 10-11 05:53:20 [registry.py:134] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+INFO 10-11 05:53:20 [ascend_config.py:824] Dynamic EPLB is False
+INFO 10-11 05:53:20 [ascend_config.py:825] The number of redundant experts is 0
+INFO 10-11 05:53:20 [registry.py:134] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+INFO 10-11 05:53:21 [ascend_config.py:824] Dynamic EPLB is False
+INFO 10-11 05:53:21 [ascend_config.py:825] The number of redundant experts is 0
+INFO 10-11 05:53:21 [registry.py:134] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+INFO 10-11 05:53:21 [ascend_config.py:824] Dynamic EPLB is False
+INFO 10-11 05:53:21 [ascend_config.py:825] The number of redundant experts is 0
+INFO 10-11 05:53:21 [registry.py:134] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+INFO 10-11 05:53:21 [ascend_config.py:824] Dynamic EPLB is False
+INFO 10-11 05:53:21 [ascend_config.py:825] The number of redundant experts is 0
+INFO 10-11 05:53:22 [registry.py:134] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+INFO 10-11 05:53:22 [ascend_config.py:824] Dynamic EPLB is False
+INFO 10-11 05:53:22 [ascend_config.py:825] The number of redundant experts is 0
+INFO 10-11 05:53:22 [registry.py:134] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+INFO 10-11 05:53:22 [ascend_config.py:824] Dynamic EPLB is False
+INFO 10-11 05:53:22 [ascend_config.py:825] The number of redundant experts is 0
+INFO 10-11 05:53:22 [registry.py:134] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+INFO 10-11 05:53:22 [ascend_config.py:824] Dynamic EPLB is False
+INFO 10-11 05:53:22 [ascend_config.py:825] The number of redundant experts is 0
+INFO 10-11 05:53:22 [registry.py:134] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+INFO 10-11 05:53:23 [ascend_config.py:824] Dynamic EPLB is False
+INFO 10-11 05:53:23 [ascend_config.py:825] The number of redundant experts is 0
+(Worker pid=328096) INFO 10-11 05:53:23 [parallel_state.py:1607] world_size=8 rank=3 local_rank=3 distributed_init_method=tcp://127.0.0.1:45521 backend=hccl
+(Worker pid=328093) INFO 10-11 05:53:23 [parallel_state.py:1607] world_size=8 rank=0 local_rank=0 distributed_init_method=tcp://127.0.0.1:45521 backend=hccl
+(Worker pid=328095) INFO 10-11 05:53:23 [parallel_state.py:1607] world_size=8 rank=2 local_rank=2 distributed_init_method=tcp://127.0.0.1:45521 backend=hccl
+(Worker pid=328097) INFO 10-11 05:53:24 [parallel_state.py:1607] world_size=8 rank=4 local_rank=4 distributed_init_method=tcp://127.0.0.1:45521 backend=hccl
+(Worker pid=328098) INFO 10-11 05:53:24 [parallel_state.py:1607] world_size=8 rank=5 local_rank=5 distributed_init_method=tcp://127.0.0.1:45521 backend=hccl
+(Worker pid=328099) INFO 10-11 05:53:25 [parallel_state.py:1607] world_size=8 rank=6 local_rank=6 distributed_init_method=tcp://127.0.0.1:45521 backend=hccl
+(Worker pid=328094) INFO 10-11 05:53:25 [parallel_state.py:1607] world_size=8 rank=1 local_rank=1 distributed_init_method=tcp://127.0.0.1:45521 backend=hccl
+(Worker pid=328100) INFO 10-11 05:53:25 [parallel_state.py:1607] world_size=8 rank=7 local_rank=7 distributed_init_method=tcp://127.0.0.1:45521 backend=hccl
+[Gloo] Rank 4 is connected to 7 peer ranks. Expected number of connected peer ranks is : 7
+[Gloo] Rank 0 is connected to 7 peer ranks. Expected number of connected peer ranks is : 7
+[Gloo] Rank 1 is connected to 7 peer ranks. Expected number of connected peer ranks is : 7
+[Gloo] Rank 2 is connected to 7 peer ranks. Expected number of connected peer ranks is : 7
+[Gloo] Rank 5 is connected to 7 peer ranks. Expected number of connected peer ranks is : 7
+[Gloo] Rank 6 is connected to 7 peer ranks. Expected number of connected peer ranks is : 7
+[Gloo] Rank 3 is connected to 7 peer ranks. Expected number of connected peer ranks is : 7
+[Gloo] Rank 7 is connected to 7 peer ranks. Expected number of connected peer ranks is : 7
+[Gloo] Rank 3 is connected to 7 peer ranks. Expected number of connected peer ranks is : 7
+[Gloo] Rank 0 is connected to 7 peer ranks. Expected number of connected peer ranks is : 7
+[Gloo] Rank 1 is connected to 7 peer ranks. Expected number of connected peer ranks is : 7
+[Gloo] Rank 2 is connected to 7 peer ranks. Expected number of connected peer ranks is : 7
+[Gloo] Rank 4 is connected to 7 peer ranks. Expected number of connected peer ranks is : 7
+[Gloo] Rank 6 is connected to 7 peer ranks. Expected number of connected peer ranks is : 7
+[Gloo] Rank 5 is connected to 7 peer ranks. Expected number of connected peer ranks is : 7
+[Gloo] Rank 7 is connected to 7 peer ranks. Expected number of connected peer ranks is : 7
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 7 peer ranks. Expected number of connected peer ranks is : 7
+[Gloo] Rank 1 is connected to 7 peer ranks. Expected number of connected peer ranks is : 7
+[Gloo] Rank 2 is connected to 7 peer ranks. Expected number of connected peer ranks is : 7
+[Gloo] Rank 3 is connected to 7 peer ranks. Expected number of connected peer ranks is : 7
+[Gloo] Rank 5 is connected to 7 peer ranks. Expected number of connected peer ranks is : 7
+[Gloo] Rank 4 is connected to 7 peer ranks. Expected number of connected peer ranks is : 7
+[Gloo] Rank 6 is connected to 7 peer ranks. Expected number of connected peer ranks is : 7
+[Gloo] Rank 7 is connected to 7 peer ranks. Expected number of connected peer ranks is : 7
+(Worker pid=328093) INFO 10-11 05:53:25 [parallel_state.py:1942] rank 0 in world size 8 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank 0, EPLB rank N/A
+[Gloo] Rank 0 is connected to 7 peer ranks. Expected number of connected peer ranks is : 7
+[Gloo] Rank 2 is connected to 7 peer ranks. Expected number of connected peer ranks is : 7
+[Gloo] Rank 4 is connected to 7 peer ranks. Expected number of connected peer ranks is : 7
+[Gloo] Rank 5 is connected to 7 peer ranks. Expected number of connected peer ranks is : 7
+[Gloo] Rank 3 is connected to 7 peer ranks. Expected number of connected peer ranks is : 7
+[Gloo] Rank 1 is connected to 7 peer ranks. Expected number of connected peer ranks is : 7
+[Gloo] Rank 7 is connected to 7 peer ranks. Expected number of connected peer ranks is : 7
+[Gloo] Rank 6 is connected to 7 peer ranks. Expected number of connected peer ranks is : 7
+[rank3]:[W1011 05:53:25.000172373 NPUCachingAllocator.cpp:202] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())
+[rank2]:[W1011 05:53:25.000628503 NPUCachingAllocator.cpp:202] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())
+[rank0]:[W1011 05:53:25.000837067 NPUCachingAllocator.cpp:202] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())
+[rank6]:[W1011 05:53:25.001286447 NPUCachingAllocator.cpp:202] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())
+[rank1]:[W1011 05:53:25.002045983 NPUCachingAllocator.cpp:202] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())
+[rank4]:[W1011 05:53:25.002314909 NPUCachingAllocator.cpp:202] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())
+[rank7]:[W1011 05:53:25.004265221 NPUCachingAllocator.cpp:202] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())
+[rank5]:[W1011 05:53:25.005733892 NPUCachingAllocator.cpp:202] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())
+(Worker pid=328096) INFO 10-11 05:53:26 [worker.py:313] MuxPD stream rank=3 device=npu:3 lane=caller physical_stream_id=47 torch_stream_id=0 npu_stream_handle=281470325010440
+(Worker pid=328096) INFO 10-11 05:53:26 [worker.py:313] MuxPD stream rank=3 device=npu:3 lane=prefill physical_stream_id=45 torch_stream_id=96 npu_stream_handle=281466815971336
+(Worker pid=328096) INFO 10-11 05:53:26 [worker.py:313] MuxPD stream rank=3 device=npu:3 lane=decode physical_stream_id=44 torch_stream_id=97 npu_stream_handle=281466815976456
+(Worker_TP3_EP3 pid=328096) INFO 10-11 05:53:26 [model_runner_v1.py:3531] Starting to load model /root/workspace/models/Qwen3.5-35B-A3B...
+(Worker pid=328093) INFO 10-11 05:53:26 [worker.py:313] MuxPD stream rank=0 device=npu:0 lane=caller physical_stream_id=47 torch_stream_id=0 npu_stream_handle=281470256918536
+(Worker pid=328093) INFO 10-11 05:53:26 [worker.py:313] MuxPD stream rank=0 device=npu:0 lane=prefill physical_stream_id=45 torch_stream_id=96 npu_stream_handle=281466728087560
+(Worker pid=328093) INFO 10-11 05:53:26 [worker.py:313] MuxPD stream rank=0 device=npu:0 lane=decode physical_stream_id=44 torch_stream_id=97 npu_stream_handle=281466728092680
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:53:26 [model_runner_v1.py:3531] Starting to load model /root/workspace/models/Qwen3.5-35B-A3B...
+(Worker pid=328100) INFO 10-11 05:53:26 [worker.py:313] MuxPD stream rank=7 device=npu:7 lane=caller physical_stream_id=47 torch_stream_id=0 npu_stream_handle=281470534725640
+(Worker pid=328100) INFO 10-11 05:53:26 [worker.py:313] MuxPD stream rank=7 device=npu:7 lane=prefill physical_stream_id=45 torch_stream_id=96 npu_stream_handle=281467023654920
+(Worker pid=328100) INFO 10-11 05:53:26 [worker.py:313] MuxPD stream rank=7 device=npu:7 lane=decode physical_stream_id=44 torch_stream_id=97 npu_stream_handle=281467023660040
+(Worker_TP7_EP7 pid=328100) INFO 10-11 05:53:26 [model_runner_v1.py:3531] Starting to load model /root/workspace/models/Qwen3.5-35B-A3B...
+(Worker pid=328095) INFO 10-11 05:53:26 [worker.py:313] MuxPD stream rank=2 device=npu:2 lane=caller physical_stream_id=47 torch_stream_id=0 npu_stream_handle=281470290145288
+(Worker pid=328095) INFO 10-11 05:53:26 [worker.py:313] MuxPD stream rank=2 device=npu:2 lane=prefill physical_stream_id=45 torch_stream_id=96 npu_stream_handle=281466782416904
+(Worker pid=328095) INFO 10-11 05:53:26 [worker.py:313] MuxPD stream rank=2 device=npu:2 lane=decode physical_stream_id=44 torch_stream_id=97 npu_stream_handle=281466782422024
+(Worker_TP2_EP2 pid=328095) INFO 10-11 05:53:26 [model_runner_v1.py:3531] Starting to load model /root/workspace/models/Qwen3.5-35B-A3B...
+(Worker pid=328097) INFO 10-11 05:53:26 [worker.py:313] MuxPD stream rank=4 device=npu:4 lane=caller physical_stream_id=47 torch_stream_id=0 npu_stream_handle=281470022561800
+(Worker pid=328097) INFO 10-11 05:53:26 [worker.py:313] MuxPD stream rank=4 device=npu:4 lane=prefill physical_stream_id=45 torch_stream_id=96 npu_stream_handle=281466511949832
+(Worker pid=328097) INFO 10-11 05:53:26 [worker.py:313] MuxPD stream rank=4 device=npu:4 lane=decode physical_stream_id=44 torch_stream_id=97 npu_stream_handle=281466511954952
+(Worker pid=328098) INFO 10-11 05:53:26 [worker.py:313] MuxPD stream rank=5 device=npu:5 lane=caller physical_stream_id=47 torch_stream_id=0 npu_stream_handle=281470920142856
+(Worker pid=328098) INFO 10-11 05:53:26 [worker.py:313] MuxPD stream rank=5 device=npu:5 lane=prefill physical_stream_id=45 torch_stream_id=96 npu_stream_handle=281467409661960
+(Worker pid=328098) INFO 10-11 05:53:26 [worker.py:313] MuxPD stream rank=5 device=npu:5 lane=decode physical_stream_id=44 torch_stream_id=97 npu_stream_handle=281467409667080
+(Worker_TP4_EP4 pid=328097) INFO 10-11 05:53:26 [model_runner_v1.py:3531] Starting to load model /root/workspace/models/Qwen3.5-35B-A3B...
+(Worker_TP5_EP5 pid=328098) INFO 10-11 05:53:26 [model_runner_v1.py:3531] Starting to load model /root/workspace/models/Qwen3.5-35B-A3B...
+(Worker pid=328099) INFO 10-11 05:53:26 [worker.py:313] MuxPD stream rank=6 device=npu:6 lane=caller physical_stream_id=47 torch_stream_id=0 npu_stream_handle=281470313017352
+(Worker pid=328099) INFO 10-11 05:53:26 [worker.py:313] MuxPD stream rank=6 device=npu:6 lane=prefill physical_stream_id=45 torch_stream_id=96 npu_stream_handle=281466797293576
+(Worker pid=328099) INFO 10-11 05:53:26 [worker.py:313] MuxPD stream rank=6 device=npu:6 lane=decode physical_stream_id=44 torch_stream_id=97 npu_stream_handle=281466797298696
+(Worker_TP6_EP6 pid=328099) INFO 10-11 05:53:26 [model_runner_v1.py:3531] Starting to load model /root/workspace/models/Qwen3.5-35B-A3B...
+(Worker pid=328094) INFO 10-11 05:53:26 [worker.py:313] MuxPD stream rank=1 device=npu:1 lane=caller physical_stream_id=47 torch_stream_id=0 npu_stream_handle=281470552289288
+(Worker pid=328094) INFO 10-11 05:53:26 [worker.py:313] MuxPD stream rank=1 device=npu:1 lane=prefill physical_stream_id=45 torch_stream_id=96 npu_stream_handle=281467042594824
+(Worker pid=328094) INFO 10-11 05:53:26 [worker.py:313] MuxPD stream rank=1 device=npu:1 lane=decode physical_stream_id=44 torch_stream_id=97 npu_stream_handle=281467042599944
+(Worker_TP1_EP1 pid=328094) INFO 10-11 05:53:26 [model_runner_v1.py:3531] Starting to load model /root/workspace/models/Qwen3.5-35B-A3B...
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:53:26 [interface.py:404] Using default backend AttentionBackendEnum.TORCH_SDPA for vit attention
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:53:26 [mm_encoder_attention.py:373] Using AttentionBackendEnum.TORCH_SDPA for MMEncoderAttention.
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:53:26 [qwen_gdn_linear_attn.py:228] Using Triton/FLA GDN prefill kernel (requested=auto, head_k_dim=128).
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:53:26 [expert_map_manager.py:245] [EP Rank 0/8] Expert parallelism is enabled. Expert placement strategy: linear. Local/global number of experts: 32/256. Experts local to global index map: 0->0, 1->1, 2->2, 3->3, 4->4, 5->5, 6->6, 7->7, 8->8, 9->9, 10->10, 11->11, 12->12, 13->13, 14->14, 15->15, 16->16, 17->17, 18->18, 19->19, 20->20, 21->21, 22->22, 23->23, 24->24, 25->25, 26->26, 27->27, 28->28, 29->29, 30->30, 31->31.
+ninja: no work to do.
+(Worker_TP5_EP5 pid=328098) INFO 10-11 05:53:30 [compilation.py:1067] Using OOT custom backend for compilation.
+(Worker_TP2_EP2 pid=328095) INFO 10-11 05:53:30 [compilation.py:1067] Using OOT custom backend for compilation.
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:53:30 [compilation.py:1067] Using OOT custom backend for compilation.
+(Worker_TP4_EP4 pid=328097) INFO 10-11 05:53:30 [compilation.py:1067] Using OOT custom backend for compilation.
+(Worker_TP3_EP3 pid=328096) INFO 10-11 05:53:30 [compilation.py:1067] Using OOT custom backend for compilation.
+(Worker_TP1_EP1 pid=328094) INFO 10-11 05:53:30 [compilation.py:1067] Using OOT custom backend for compilation.
+(Worker_TP7_EP7 pid=328100) INFO 10-11 05:53:30 [compilation.py:1067] Using OOT custom backend for compilation.
+(Worker_TP5_EP5 pid=328098) INFO 10-11 05:53:30 [weight_utils.py:811] Prefetching checkpoint files into page cache started (in background, num_threads=8, block_size=16777216 bytes)
+(Worker_TP2_EP2 pid=328095) INFO 10-11 05:53:30 [weight_utils.py:811] Prefetching checkpoint files into page cache started (in background, num_threads=8, block_size=16777216 bytes)
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:53:30 [weight_utils.py:849] Filesystem type for checkpoints: NFS4. Checkpoint size: 66.97 GiB. Available RAM: 1905.71 GiB.
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:53:30 [weight_utils.py:811] Prefetching checkpoint files into page cache started (in background, num_threads=8, block_size=16777216 bytes)
+(Worker_TP0_EP0 pid=328093) Loading safetensors checkpoint shards:   0% Completed | 0/14 [00:00<?, ?it/s]
+(Worker_TP4_EP4 pid=328097) INFO 10-11 05:53:30 [weight_utils.py:811] Prefetching checkpoint files into page cache started (in background, num_threads=8, block_size=16777216 bytes)
+(Worker_TP3_EP3 pid=328096) INFO 10-11 05:53:30 [weight_utils.py:811] Prefetching checkpoint files into page cache started (in background, num_threads=8, block_size=16777216 bytes)
+(Worker_TP1_EP1 pid=328094) INFO 10-11 05:53:31 [weight_utils.py:811] Prefetching checkpoint files into page cache started (in background, num_threads=8, block_size=16777216 bytes)
+(Worker_TP7_EP7 pid=328100) INFO 10-11 05:53:31 [weight_utils.py:811] Prefetching checkpoint files into page cache started (in background, num_threads=8, block_size=16777216 bytes)
+(Worker_TP6_EP6 pid=328099) INFO 10-11 05:53:31 [compilation.py:1067] Using OOT custom backend for compilation.
+(Worker_TP6_EP6 pid=328099) INFO 10-11 05:53:31 [weight_utils.py:811] Prefetching checkpoint files into page cache started (in background, num_threads=8, block_size=16777216 bytes)
+(Worker_TP0_EP0 pid=328093) Loading safetensors checkpoint shards:   7% Completed | 1/14 [00:00<00:05,  2.28it/s]
+(Worker_TP0_EP0 pid=328093) Loading safetensors checkpoint shards:  14% Completed | 2/14 [00:00<00:05,  2.13it/s]
+(Worker_TP0_EP0 pid=328093) Loading safetensors checkpoint shards:  21% Completed | 3/14 [00:01<00:05,  1.90it/s]
+(Worker_TP0_EP0 pid=328093) Loading safetensors checkpoint shards:  29% Completed | 4/14 [00:02<00:05,  1.90it/s]
+(Worker_TP0_EP0 pid=328093) Loading safetensors checkpoint shards:  36% Completed | 5/14 [00:02<00:04,  1.96it/s]
+(Worker_TP5_EP5 pid=328098) INFO 10-11 05:53:33 [weight_utils.py:783] Prefetching checkpoint files: 10% (1/2)
+(Worker_TP0_EP0 pid=328093) Loading safetensors checkpoint shards:  43% Completed | 6/14 [00:03<00:04,  1.83it/s]
+(Worker_TP0_EP0 pid=328093) Loading safetensors checkpoint shards:  50% Completed | 7/14 [00:03<00:03,  1.84it/s]
+(Worker_TP7_EP7 pid=328100) INFO 10-11 05:53:35 [weight_utils.py:783] Prefetching checkpoint files: 10% (1/1)
+(Worker_TP7_EP7 pid=328100) INFO 10-11 05:53:35 [weight_utils.py:806] Prefetching checkpoint files into page cache finished in 4.01s
+(Worker_TP0_EP0 pid=328093) Loading safetensors checkpoint shards:  57% Completed | 8/14 [00:04<00:03,  1.89it/s]
+(Worker_TP0_EP0 pid=328093) Loading safetensors checkpoint shards:  64% Completed | 9/14 [00:04<00:02,  2.16it/s]
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:53:35 [weight_utils.py:783] Prefetching checkpoint files: 10% (1/2)
+(Worker_TP6_EP6 pid=328099) INFO 10-11 05:53:35 [weight_utils.py:783] Prefetching checkpoint files: 10% (1/1)
+(Worker_TP6_EP6 pid=328099) INFO 10-11 05:53:35 [weight_utils.py:806] Prefetching checkpoint files into page cache finished in 4.39s
+(Worker_TP4_EP4 pid=328097) INFO 10-11 05:53:35 [weight_utils.py:783] Prefetching checkpoint files: 10% (1/2)
+(Worker_TP0_EP0 pid=328093) Loading safetensors checkpoint shards:  71% Completed | 10/14 [00:04<00:01,  2.22it/s]
+(Worker_TP4_EP4 pid=328097) INFO 10-11 05:53:35 [weight_utils.py:783] Prefetching checkpoint files: 20% (2/2)
+(Worker_TP4_EP4 pid=328097) INFO 10-11 05:53:35 [weight_utils.py:806] Prefetching checkpoint files into page cache finished in 4.93s
+(Worker_TP1_EP1 pid=328094) INFO 10-11 05:53:36 [weight_utils.py:783] Prefetching checkpoint files: 10% (1/2)
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:53:36 [weight_utils.py:783] Prefetching checkpoint files: 20% (2/2)
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:53:36 [weight_utils.py:806] Prefetching checkpoint files into page cache finished in 5.24s
+(Worker_TP0_EP0 pid=328093) Loading safetensors checkpoint shards:  79% Completed | 11/14 [00:05<00:01,  2.20it/s]
+(Worker_TP1_EP1 pid=328094) INFO 10-11 05:53:36 [weight_utils.py:783] Prefetching checkpoint files: 20% (2/2)
+(Worker_TP1_EP1 pid=328094) INFO 10-11 05:53:36 [weight_utils.py:806] Prefetching checkpoint files into page cache finished in 5.48s
+(Worker_TP0_EP0 pid=328093) Loading safetensors checkpoint shards:  86% Completed | 12/14 [00:05<00:00,  2.32it/s]
+(Worker_TP2_EP2 pid=328095) INFO 10-11 05:53:36 [weight_utils.py:783] Prefetching checkpoint files: 10% (1/2)
+(Worker_TP3_EP3 pid=328096) INFO 10-11 05:53:36 [weight_utils.py:783] Prefetching checkpoint files: 10% (1/2)
+(Worker_TP0_EP0 pid=328093) Loading safetensors checkpoint shards:  93% Completed | 13/14 [00:06<00:00,  2.62it/s]
+(Worker_TP3_EP3 pid=328096) INFO 10-11 05:53:37 [weight_utils.py:783] Prefetching checkpoint files: 20% (2/2)
+(Worker_TP3_EP3 pid=328096) INFO 10-11 05:53:37 [weight_utils.py:806] Prefetching checkpoint files into page cache finished in 6.04s
+(Worker_TP5_EP5 pid=328098) INFO 10-11 05:53:37 [weight_utils.py:783] Prefetching checkpoint files: 20% (2/2)
+(Worker_TP5_EP5 pid=328098) INFO 10-11 05:53:37 [weight_utils.py:806] Prefetching checkpoint files into page cache finished in 6.12s
+(Worker_TP2_EP2 pid=328095) INFO 10-11 05:53:37 [weight_utils.py:783] Prefetching checkpoint files: 20% (2/2)
+(Worker_TP2_EP2 pid=328095) INFO 10-11 05:53:37 [weight_utils.py:806] Prefetching checkpoint files into page cache finished in 6.22s
+(Worker_TP0_EP0 pid=328093) Loading safetensors checkpoint shards: 100% Completed | 14/14 [00:06<00:00,  2.74it/s]
+(Worker_TP0_EP0 pid=328093) Loading safetensors checkpoint shards: 100% Completed | 14/14 [00:06<00:00,  2.20it/s]
+(Worker_TP0_EP0 pid=328093) 
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:53:37 [default_loader.py:430] Loading weights took 6.39 seconds
+(Worker_TP7_EP7 pid=328100) INFO 10-11 05:53:37 [model_runner_v1.py:3607] Loading model weights took 8.2447 GB
+(Worker_TP7_EP7 pid=328100) INFO 10-11 05:53:37 [model_runner_v1.py:3633] Model runner load_model total time: 11.36 seconds
+(Worker_TP7_EP7 pid=328100) INFO 10-11 05:53:37 [worker.py:492] MuxPD cooperative worker enabled: shared weights/KV, independent P/D inputs, 8 layers per slice, stream_mode=fenced, overlap_communication=shared
+(Worker_TP6_EP6 pid=328099) INFO 10-11 05:53:38 [model_runner_v1.py:3607] Loading model weights took 8.2447 GB
+(Worker_TP6_EP6 pid=328099) INFO 10-11 05:53:38 [model_runner_v1.py:3633] Model runner load_model total time: 11.76 seconds
+(Worker_TP6_EP6 pid=328099) INFO 10-11 05:53:38 [worker.py:492] MuxPD cooperative worker enabled: shared weights/KV, independent P/D inputs, 8 layers per slice, stream_mode=fenced, overlap_communication=shared
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:53:38 [model_runner_v1.py:3607] Loading model weights took 8.2447 GB
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:53:38 [model_runner_v1.py:3633] Model runner load_model total time: 12.09 seconds
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:53:38 [worker.py:492] MuxPD cooperative worker enabled: shared weights/KV, independent P/D inputs, 8 layers per slice, stream_mode=fenced, overlap_communication=shared
+(Worker_TP5_EP5 pid=328098) INFO 10-11 05:53:38 [model_runner_v1.py:3607] Loading model weights took 8.2447 GB
+(Worker_TP5_EP5 pid=328098) INFO 10-11 05:53:38 [model_runner_v1.py:3633] Model runner load_model total time: 12.09 seconds
+(Worker_TP5_EP5 pid=328098) INFO 10-11 05:53:38 [worker.py:492] MuxPD cooperative worker enabled: shared weights/KV, independent P/D inputs, 8 layers per slice, stream_mode=fenced, overlap_communication=shared
+(Worker_TP2_EP2 pid=328095) INFO 10-11 05:53:38 [model_runner_v1.py:3607] Loading model weights took 8.2447 GB
+(Worker_TP2_EP2 pid=328095) INFO 10-11 05:53:38 [model_runner_v1.py:3633] Model runner load_model total time: 12.14 seconds
+(Worker_TP2_EP2 pid=328095) INFO 10-11 05:53:38 [worker.py:492] MuxPD cooperative worker enabled: shared weights/KV, independent P/D inputs, 8 layers per slice, stream_mode=fenced, overlap_communication=shared
+(Worker_TP3_EP3 pid=328096) INFO 10-11 05:53:38 [model_runner_v1.py:3607] Loading model weights took 8.2447 GB
+(Worker_TP3_EP3 pid=328096) INFO 10-11 05:53:38 [model_runner_v1.py:3633] Model runner load_model total time: 12.27 seconds
+(Worker_TP3_EP3 pid=328096) INFO 10-11 05:53:38 [worker.py:492] MuxPD cooperative worker enabled: shared weights/KV, independent P/D inputs, 8 layers per slice, stream_mode=fenced, overlap_communication=shared
+(Worker_TP4_EP4 pid=328097) INFO 10-11 05:53:38 [model_runner_v1.py:3607] Loading model weights took 8.2447 GB
+(Worker_TP4_EP4 pid=328097) INFO 10-11 05:53:38 [model_runner_v1.py:3633] Model runner load_model total time: 12.35 seconds
+(Worker_TP4_EP4 pid=328097) INFO 10-11 05:53:38 [worker.py:492] MuxPD cooperative worker enabled: shared weights/KV, independent P/D inputs, 8 layers per slice, stream_mode=fenced, overlap_communication=shared
+(Worker_TP1_EP1 pid=328094) INFO 10-11 05:53:39 [model_runner_v1.py:3607] Loading model weights took 8.2447 GB
+(Worker_TP1_EP1 pid=328094) INFO 10-11 05:53:39 [model_runner_v1.py:3633] Model runner load_model total time: 12.66 seconds
+(Worker_TP1_EP1 pid=328094) INFO 10-11 05:53:39 [worker.py:492] MuxPD cooperative worker enabled: shared weights/KV, independent P/D inputs, 8 layers per slice, stream_mode=fenced, overlap_communication=shared
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:53:42 [compiler_interface.py:248] AscendCompiler hash factors: {'torch_npu_version': '2.10.0.post4', 'enable_npugraph_ex': True, 'enable_static_kernel': False}
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:53:42 [backends.py:1089] Using cache directory: /root/.cache/vllm/torch_compile_cache/f632546f2e/rank_0_0/backbone for vLLM's torch.compile
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:53:42 [backends.py:1148] Dynamo bytecode transform time: 2.78 s
+(Worker_TP4_EP4 pid=328097) INFO 10-11 05:53:42 [compiler_interface.py:248] AscendCompiler hash factors: {'torch_npu_version': '2.10.0.post4', 'enable_npugraph_ex': True, 'enable_static_kernel': False}
+(Worker_TP3_EP3 pid=328096) INFO 10-11 05:53:42 [compiler_interface.py:248] AscendCompiler hash factors: {'torch_npu_version': '2.10.0.post4', 'enable_npugraph_ex': True, 'enable_static_kernel': False}
+(Worker_TP5_EP5 pid=328098) INFO 10-11 05:53:42 [compiler_interface.py:248] AscendCompiler hash factors: {'torch_npu_version': '2.10.0.post4', 'enable_npugraph_ex': True, 'enable_static_kernel': False}
+(Worker_TP7_EP7 pid=328100) INFO 10-11 05:53:42 [compiler_interface.py:248] AscendCompiler hash factors: {'torch_npu_version': '2.10.0.post4', 'enable_npugraph_ex': True, 'enable_static_kernel': False}
+(Worker_TP6_EP6 pid=328099) INFO 10-11 05:53:42 [compiler_interface.py:248] AscendCompiler hash factors: {'torch_npu_version': '2.10.0.post4', 'enable_npugraph_ex': True, 'enable_static_kernel': False}
+(Worker_TP1_EP1 pid=328094) INFO 10-11 05:53:42 [compiler_interface.py:248] AscendCompiler hash factors: {'torch_npu_version': '2.10.0.post4', 'enable_npugraph_ex': True, 'enable_static_kernel': False}
+(Worker_TP2_EP2 pid=328095) INFO 10-11 05:53:42 [compiler_interface.py:248] AscendCompiler hash factors: {'torch_npu_version': '2.10.0.post4', 'enable_npugraph_ex': True, 'enable_static_kernel': False}
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:53:43 [compiler_interface.py:310] npugraph_ex cache miss for key artifact_compile_range_1_16384_subgraph_0 (file absent or not saved), recompiling
+(Worker_TP4_EP4 pid=328097) INFO 10-11 05:53:43 [compiler_interface.py:310] npugraph_ex cache miss for key artifact_compile_range_1_16384_subgraph_0 (file absent or not saved), recompiling
+(Worker_TP3_EP3 pid=328096) INFO 10-11 05:53:43 [compiler_interface.py:310] npugraph_ex cache miss for key artifact_compile_range_1_16384_subgraph_0 (file absent or not saved), recompiling
+(Worker_TP7_EP7 pid=328100) INFO 10-11 05:53:44 [compiler_interface.py:310] npugraph_ex cache miss for key artifact_compile_range_1_16384_subgraph_0 (file absent or not saved), recompiling
+(Worker_TP5_EP5 pid=328098) INFO 10-11 05:53:44 [compiler_interface.py:310] npugraph_ex cache miss for key artifact_compile_range_1_16384_subgraph_0 (file absent or not saved), recompiling
+(Worker_TP6_EP6 pid=328099) INFO 10-11 05:53:44 [compiler_interface.py:310] npugraph_ex cache miss for key artifact_compile_range_1_16384_subgraph_0 (file absent or not saved), recompiling
+(Worker_TP1_EP1 pid=328094) INFO 10-11 05:53:44 [compiler_interface.py:310] npugraph_ex cache miss for key artifact_compile_range_1_16384_subgraph_0 (file absent or not saved), recompiling
+(Worker_TP2_EP2 pid=328095) INFO 10-11 05:53:44 [compiler_interface.py:310] npugraph_ex cache miss for key artifact_compile_range_1_16384_subgraph_0 (file absent or not saved), recompiling
+(Worker_TP0_EP0 pid=328093) WARNING 10-11 05:53:44 [decorators.py:321] Compiling model again due to a load failure from /root/.cache/vllm/torch_compile_cache/torch_aot_compile/0ea3dadcad0946cfb0fbbf99af1180c1405f8a1111eddec29821d861bc4c5520/rank_0_0/model, reason: While executing %triton_kernel_wrapper_mutation : [num_users=0] = call_function[target=torch.ops.higher_order.triton_kernel_wrapper_mutation](args = (), kwargs = {kernel_idx: 0, constant_args_idx: 0, grid: [(%floordiv, 1, 1)], tma_descriptor_metadata: {}, kwargs: {X: %reshape_3, Y: %empty_like, W: %contiguous_2, Z: %reshape_4, Rstd: %empty, M: %mul_2}})
+(Worker_TP0_EP0 pid=328093) WARNING 10-11 05:53:44 [decorators.py:321] Original traceback:
+(Worker_TP0_EP0 pid=328093) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-hust/vllm/model_executor/models/qwen3_next.py", line 612, in forward
+(Worker_TP0_EP0 pid=328093) WARNING 10-11 05:53:44 [decorators.py:321]     hidden_states, residual = layer(
+(Worker_TP0_EP0 pid=328093) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/patch/worker/patch_qwen3_5.py", line 133, in forward
+(Worker_TP0_EP0 pid=328093) WARNING 10-11 05:53:44 [decorators.py:321]     hidden_states = self.linear_attn(hidden_states=hidden_states)
+(Worker_TP0_EP0 pid=328093) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/ops/gdn.py", line 146, in forward
+(Worker_TP0_EP0 pid=328093) WARNING 10-11 05:53:44 [decorators.py:321]     core_attn_out = self.norm(core_attn_out, z)
+(Worker_TP0_EP0 pid=328093) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-hust/vllm/model_executor/custom_op.py", line 136, in forward
+(Worker_TP0_EP0 pid=328093) WARNING 10-11 05:53:44 [decorators.py:321]     return self._forward_method(*args, **kwargs)
+(Worker_TP0_EP0 pid=328093) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/ops/layernorm.py", line 199, in forward_oot
+(Worker_TP0_EP0 pid=328093) WARNING 10-11 05:53:44 [decorators.py:321]     return LayerNormFn.apply(x, self.weight, self.bias, z, self.eps, self.group_size, self.norm_before_gate, True)
+(Worker_TP0_EP0 pid=328093) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/ops/layernorm.py", line 141, in forward
+(Worker_TP0_EP0 pid=328093) WARNING 10-11 05:53:44 [decorators.py:321]     y, mean, rstd = layer_norm_fwd_npu(
+(Worker_TP0_EP0 pid=328093) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/ops/triton/layernorm_gated.py", line 148, in layer_norm_fwd_npu
+(Worker_TP0_EP0 pid=328093) WARNING 10-11 05:53:44 [decorators.py:321]     _layer_norm_fwd_1pass_kernel_npu[grid](
+(Worker_TP0_EP0 pid=328093) WARNING 10-11 05:53:44 [decorators.py:321]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/triton/runtime/jit.py", line 333, in <lambda>
+(Worker_TP0_EP0 pid=328093) WARNING 10-11 05:53:44 [decorators.py:321]     return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+(Worker_TP0_EP0 pid=328093) WARNING 10-11 05:53:44 [decorators.py:321]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/triton/runtime/autotuner.py", line 386, in run
+(Worker_TP0_EP0 pid=328093) WARNING 10-11 05:53:44 [decorators.py:321]     return self.fn.run(*args, **kwargs)
+(Worker_TP0_EP0 pid=328093) WARNING 10-11 05:53:44 [decorators.py:321]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/triton/runtime/autotuner.py", line 386, in run
+(Worker_TP0_EP0 pid=328093) WARNING 10-11 05:53:44 [decorators.py:321]     return self.fn.run(*args, **kwargs)
+(Worker_TP0_EP0 pid=328093) WARNING 10-11 05:53:44 [decorators.py:321] 
+(Worker_TP0_EP0 pid=328093) WARNING 10-11 05:53:44 [decorators.py:321] Use tlparse to see full graph. (https://github.com/pytorch/tlparse?tab=readme-ov-file#tlparse-parse-structured-pt2-logs)
+(Worker_TP4_EP4 pid=328097) WARNING 10-11 05:53:44 [decorators.py:321] Compiling model again due to a load failure from /root/.cache/vllm/torch_compile_cache/torch_aot_compile/0ea3dadcad0946cfb0fbbf99af1180c1405f8a1111eddec29821d861bc4c5520/rank_4_0/model, reason: While executing %triton_kernel_wrapper_mutation : [num_users=0] = call_function[target=torch.ops.higher_order.triton_kernel_wrapper_mutation](args = (), kwargs = {kernel_idx: 0, constant_args_idx: 0, grid: [(%floordiv, 1, 1)], tma_descriptor_metadata: {}, kwargs: {X: %reshape_3, Y: %empty_like, W: %contiguous_2, Z: %reshape_4, Rstd: %empty, M: %mul_2}})
+(Worker_TP4_EP4 pid=328097) WARNING 10-11 05:53:44 [decorators.py:321] Original traceback:
+(Worker_TP4_EP4 pid=328097) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-hust/vllm/model_executor/models/qwen3_next.py", line 612, in forward
+(Worker_TP4_EP4 pid=328097) WARNING 10-11 05:53:44 [decorators.py:321]     hidden_states, residual = layer(
+(Worker_TP4_EP4 pid=328097) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/patch/worker/patch_qwen3_5.py", line 133, in forward
+(Worker_TP4_EP4 pid=328097) WARNING 10-11 05:53:44 [decorators.py:321]     hidden_states = self.linear_attn(hidden_states=hidden_states)
+(Worker_TP4_EP4 pid=328097) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/ops/gdn.py", line 146, in forward
+(Worker_TP4_EP4 pid=328097) WARNING 10-11 05:53:44 [decorators.py:321]     core_attn_out = self.norm(core_attn_out, z)
+(Worker_TP4_EP4 pid=328097) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-hust/vllm/model_executor/custom_op.py", line 136, in forward
+(Worker_TP4_EP4 pid=328097) WARNING 10-11 05:53:44 [decorators.py:321]     return self._forward_method(*args, **kwargs)
+(Worker_TP4_EP4 pid=328097) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/ops/layernorm.py", line 199, in forward_oot
+(Worker_TP4_EP4 pid=328097) WARNING 10-11 05:53:44 [decorators.py:321]     return LayerNormFn.apply(x, self.weight, self.bias, z, self.eps, self.group_size, self.norm_before_gate, True)
+(Worker_TP4_EP4 pid=328097) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/ops/layernorm.py", line 141, in forward
+(Worker_TP4_EP4 pid=328097) WARNING 10-11 05:53:44 [decorators.py:321]     y, mean, rstd = layer_norm_fwd_npu(
+(Worker_TP4_EP4 pid=328097) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/ops/triton/layernorm_gated.py", line 148, in layer_norm_fwd_npu
+(Worker_TP4_EP4 pid=328097) WARNING 10-11 05:53:44 [decorators.py:321]     _layer_norm_fwd_1pass_kernel_npu[grid](
+(Worker_TP4_EP4 pid=328097) WARNING 10-11 05:53:44 [decorators.py:321]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/triton/runtime/jit.py", line 333, in <lambda>
+(Worker_TP4_EP4 pid=328097) WARNING 10-11 05:53:44 [decorators.py:321]     return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+(Worker_TP4_EP4 pid=328097) WARNING 10-11 05:53:44 [decorators.py:321]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/triton/runtime/autotuner.py", line 386, in run
+(Worker_TP4_EP4 pid=328097) WARNING 10-11 05:53:44 [decorators.py:321]     return self.fn.run(*args, **kwargs)
+(Worker_TP4_EP4 pid=328097) WARNING 10-11 05:53:44 [decorators.py:321]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/triton/runtime/autotuner.py", line 386, in run
+(Worker_TP4_EP4 pid=328097) WARNING 10-11 05:53:44 [decorators.py:321]     return self.fn.run(*args, **kwargs)
+(Worker_TP4_EP4 pid=328097) WARNING 10-11 05:53:44 [decorators.py:321] 
+(Worker_TP4_EP4 pid=328097) WARNING 10-11 05:53:44 [decorators.py:321] Use tlparse to see full graph. (https://github.com/pytorch/tlparse?tab=readme-ov-file#tlparse-parse-structured-pt2-logs)
+(Worker_TP7_EP7 pid=328100) WARNING 10-11 05:53:44 [decorators.py:321] Compiling model again due to a load failure from /root/.cache/vllm/torch_compile_cache/torch_aot_compile/0ea3dadcad0946cfb0fbbf99af1180c1405f8a1111eddec29821d861bc4c5520/rank_7_0/model, reason: While executing %triton_kernel_wrapper_mutation : [num_users=0] = call_function[target=torch.ops.higher_order.triton_kernel_wrapper_mutation](args = (), kwargs = {kernel_idx: 0, constant_args_idx: 0, grid: [(%floordiv, 1, 1)], tma_descriptor_metadata: {}, kwargs: {X: %reshape_3, Y: %empty_like, W: %contiguous_2, Z: %reshape_4, Rstd: %empty, M: %mul_2}})
+(Worker_TP7_EP7 pid=328100) WARNING 10-11 05:53:44 [decorators.py:321] Original traceback:
+(Worker_TP7_EP7 pid=328100) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-hust/vllm/model_executor/models/qwen3_next.py", line 612, in forward
+(Worker_TP7_EP7 pid=328100) WARNING 10-11 05:53:44 [decorators.py:321]     hidden_states, residual = layer(
+(Worker_TP7_EP7 pid=328100) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/patch/worker/patch_qwen3_5.py", line 133, in forward
+(Worker_TP7_EP7 pid=328100) WARNING 10-11 05:53:44 [decorators.py:321]     hidden_states = self.linear_attn(hidden_states=hidden_states)
+(Worker_TP7_EP7 pid=328100) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/ops/gdn.py", line 146, in forward
+(Worker_TP7_EP7 pid=328100) WARNING 10-11 05:53:44 [decorators.py:321]     core_attn_out = self.norm(core_attn_out, z)
+(Worker_TP7_EP7 pid=328100) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-hust/vllm/model_executor/custom_op.py", line 136, in forward
+(Worker_TP7_EP7 pid=328100) WARNING 10-11 05:53:44 [decorators.py:321]     return self._forward_method(*args, **kwargs)
+(Worker_TP7_EP7 pid=328100) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/ops/layernorm.py", line 199, in forward_oot
+(Worker_TP7_EP7 pid=328100) WARNING 10-11 05:53:44 [decorators.py:321]     return LayerNormFn.apply(x, self.weight, self.bias, z, self.eps, self.group_size, self.norm_before_gate, True)
+(Worker_TP7_EP7 pid=328100) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/ops/layernorm.py", line 141, in forward
+(Worker_TP7_EP7 pid=328100) WARNING 10-11 05:53:44 [decorators.py:321]     y, mean, rstd = layer_norm_fwd_npu(
+(Worker_TP7_EP7 pid=328100) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/ops/triton/layernorm_gated.py", line 148, in layer_norm_fwd_npu
+(Worker_TP7_EP7 pid=328100) WARNING 10-11 05:53:44 [decorators.py:321]     _layer_norm_fwd_1pass_kernel_npu[grid](
+(Worker_TP7_EP7 pid=328100) WARNING 10-11 05:53:44 [decorators.py:321]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/triton/runtime/jit.py", line 333, in <lambda>
+(Worker_TP7_EP7 pid=328100) WARNING 10-11 05:53:44 [decorators.py:321]     return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+(Worker_TP7_EP7 pid=328100) WARNING 10-11 05:53:44 [decorators.py:321]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/triton/runtime/autotuner.py", line 386, in run
+(Worker_TP7_EP7 pid=328100) WARNING 10-11 05:53:44 [decorators.py:321]     return self.fn.run(*args, **kwargs)
+(Worker_TP7_EP7 pid=328100) WARNING 10-11 05:53:44 [decorators.py:321]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/triton/runtime/autotuner.py", line 386, in run
+(Worker_TP7_EP7 pid=328100) WARNING 10-11 05:53:44 [decorators.py:321]     return self.fn.run(*args, **kwargs)
+(Worker_TP7_EP7 pid=328100) WARNING 10-11 05:53:44 [decorators.py:321] 
+(Worker_TP7_EP7 pid=328100) WARNING 10-11 05:53:44 [decorators.py:321] Use tlparse to see full graph. (https://github.com/pytorch/tlparse?tab=readme-ov-file#tlparse-parse-structured-pt2-logs)
+(Worker_TP3_EP3 pid=328096) WARNING 10-11 05:53:44 [decorators.py:321] Compiling model again due to a load failure from /root/.cache/vllm/torch_compile_cache/torch_aot_compile/0ea3dadcad0946cfb0fbbf99af1180c1405f8a1111eddec29821d861bc4c5520/rank_3_0/model, reason: While executing %triton_kernel_wrapper_mutation : [num_users=0] = call_function[target=torch.ops.higher_order.triton_kernel_wrapper_mutation](args = (), kwargs = {kernel_idx: 0, constant_args_idx: 0, grid: [(%floordiv, 1, 1)], tma_descriptor_metadata: {}, kwargs: {X: %reshape_3, Y: %empty_like, W: %contiguous_2, Z: %reshape_4, Rstd: %empty, M: %mul_2}})
+(Worker_TP3_EP3 pid=328096) WARNING 10-11 05:53:44 [decorators.py:321] Original traceback:
+(Worker_TP3_EP3 pid=328096) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-hust/vllm/model_executor/models/qwen3_next.py", line 612, in forward
+(Worker_TP3_EP3 pid=328096) WARNING 10-11 05:53:44 [decorators.py:321]     hidden_states, residual = layer(
+(Worker_TP3_EP3 pid=328096) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/patch/worker/patch_qwen3_5.py", line 133, in forward
+(Worker_TP3_EP3 pid=328096) WARNING 10-11 05:53:44 [decorators.py:321]     hidden_states = self.linear_attn(hidden_states=hidden_states)
+(Worker_TP3_EP3 pid=328096) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/ops/gdn.py", line 146, in forward
+(Worker_TP3_EP3 pid=328096) WARNING 10-11 05:53:44 [decorators.py:321]     core_attn_out = self.norm(core_attn_out, z)
+(Worker_TP3_EP3 pid=328096) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-hust/vllm/model_executor/custom_op.py", line 136, in forward
+(Worker_TP3_EP3 pid=328096) WARNING 10-11 05:53:44 [decorators.py:321]     return self._forward_method(*args, **kwargs)
+(Worker_TP3_EP3 pid=328096) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/ops/layernorm.py", line 199, in forward_oot
+(Worker_TP3_EP3 pid=328096) WARNING 10-11 05:53:44 [decorators.py:321]     return LayerNormFn.apply(x, self.weight, self.bias, z, self.eps, self.group_size, self.norm_before_gate, True)
+(Worker_TP3_EP3 pid=328096) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/ops/layernorm.py", line 141, in forward
+(Worker_TP3_EP3 pid=328096) WARNING 10-11 05:53:44 [decorators.py:321]     y, mean, rstd = layer_norm_fwd_npu(
+(Worker_TP3_EP3 pid=328096) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/ops/triton/layernorm_gated.py", line 148, in layer_norm_fwd_npu
+(Worker_TP3_EP3 pid=328096) WARNING 10-11 05:53:44 [decorators.py:321]     _layer_norm_fwd_1pass_kernel_npu[grid](
+(Worker_TP3_EP3 pid=328096) WARNING 10-11 05:53:44 [decorators.py:321]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/triton/runtime/jit.py", line 333, in <lambda>
+(Worker_TP3_EP3 pid=328096) WARNING 10-11 05:53:44 [decorators.py:321]     return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+(Worker_TP3_EP3 pid=328096) WARNING 10-11 05:53:44 [decorators.py:321]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/triton/runtime/autotuner.py", line 386, in run
+(Worker_TP3_EP3 pid=328096) WARNING 10-11 05:53:44 [decorators.py:321]     return self.fn.run(*args, **kwargs)
+(Worker_TP3_EP3 pid=328096) WARNING 10-11 05:53:44 [decorators.py:321]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/triton/runtime/autotuner.py", line 386, in run
+(Worker_TP3_EP3 pid=328096) WARNING 10-11 05:53:44 [decorators.py:321]     return self.fn.run(*args, **kwargs)
+(Worker_TP3_EP3 pid=328096) WARNING 10-11 05:53:44 [decorators.py:321] 
+(Worker_TP3_EP3 pid=328096) WARNING 10-11 05:53:44 [decorators.py:321] Use tlparse to see full graph. (https://github.com/pytorch/tlparse?tab=readme-ov-file#tlparse-parse-structured-pt2-logs)
+(Worker_TP5_EP5 pid=328098) WARNING 10-11 05:53:44 [decorators.py:321] Compiling model again due to a load failure from /root/.cache/vllm/torch_compile_cache/torch_aot_compile/0ea3dadcad0946cfb0fbbf99af1180c1405f8a1111eddec29821d861bc4c5520/rank_5_0/model, reason: While executing %triton_kernel_wrapper_mutation : [num_users=0] = call_function[target=torch.ops.higher_order.triton_kernel_wrapper_mutation](args = (), kwargs = {kernel_idx: 0, constant_args_idx: 0, grid: [(%floordiv, 1, 1)], tma_descriptor_metadata: {}, kwargs: {X: %reshape_3, Y: %empty_like, W: %contiguous_2, Z: %reshape_4, Rstd: %empty, M: %mul_2}})
+(Worker_TP5_EP5 pid=328098) WARNING 10-11 05:53:44 [decorators.py:321] Original traceback:
+(Worker_TP5_EP5 pid=328098) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-hust/vllm/model_executor/models/qwen3_next.py", line 612, in forward
+(Worker_TP5_EP5 pid=328098) WARNING 10-11 05:53:44 [decorators.py:321]     hidden_states, residual = layer(
+(Worker_TP5_EP5 pid=328098) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/patch/worker/patch_qwen3_5.py", line 133, in forward
+(Worker_TP5_EP5 pid=328098) WARNING 10-11 05:53:44 [decorators.py:321]     hidden_states = self.linear_attn(hidden_states=hidden_states)
+(Worker_TP5_EP5 pid=328098) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/ops/gdn.py", line 146, in forward
+(Worker_TP5_EP5 pid=328098) WARNING 10-11 05:53:44 [decorators.py:321]     core_attn_out = self.norm(core_attn_out, z)
+(Worker_TP5_EP5 pid=328098) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-hust/vllm/model_executor/custom_op.py", line 136, in forward
+(Worker_TP5_EP5 pid=328098) WARNING 10-11 05:53:44 [decorators.py:321]     return self._forward_method(*args, **kwargs)
+(Worker_TP5_EP5 pid=328098) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/ops/layernorm.py", line 199, in forward_oot
+(Worker_TP5_EP5 pid=328098) WARNING 10-11 05:53:44 [decorators.py:321]     return LayerNormFn.apply(x, self.weight, self.bias, z, self.eps, self.group_size, self.norm_before_gate, True)
+(Worker_TP5_EP5 pid=328098) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/ops/layernorm.py", line 141, in forward
+(Worker_TP5_EP5 pid=328098) WARNING 10-11 05:53:44 [decorators.py:321]     y, mean, rstd = layer_norm_fwd_npu(
+(Worker_TP5_EP5 pid=328098) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/ops/triton/layernorm_gated.py", line 148, in layer_norm_fwd_npu
+(Worker_TP5_EP5 pid=328098) WARNING 10-11 05:53:44 [decorators.py:321]     _layer_norm_fwd_1pass_kernel_npu[grid](
+(Worker_TP5_EP5 pid=328098) WARNING 10-11 05:53:44 [decorators.py:321]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/triton/runtime/jit.py", line 333, in <lambda>
+(Worker_TP5_EP5 pid=328098) WARNING 10-11 05:53:44 [decorators.py:321]     return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+(Worker_TP5_EP5 pid=328098) WARNING 10-11 05:53:44 [decorators.py:321]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/triton/runtime/autotuner.py", line 386, in run
+(Worker_TP5_EP5 pid=328098) WARNING 10-11 05:53:44 [decorators.py:321]     return self.fn.run(*args, **kwargs)
+(Worker_TP5_EP5 pid=328098) WARNING 10-11 05:53:44 [decorators.py:321]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/triton/runtime/autotuner.py", line 386, in run
+(Worker_TP5_EP5 pid=328098) WARNING 10-11 05:53:44 [decorators.py:321]     return self.fn.run(*args, **kwargs)
+(Worker_TP5_EP5 pid=328098) WARNING 10-11 05:53:44 [decorators.py:321] 
+(Worker_TP5_EP5 pid=328098) WARNING 10-11 05:53:44 [decorators.py:321] Use tlparse to see full graph. (https://github.com/pytorch/tlparse?tab=readme-ov-file#tlparse-parse-structured-pt2-logs)
+(Worker_TP6_EP6 pid=328099) WARNING 10-11 05:53:44 [decorators.py:321] Compiling model again due to a load failure from /root/.cache/vllm/torch_compile_cache/torch_aot_compile/0ea3dadcad0946cfb0fbbf99af1180c1405f8a1111eddec29821d861bc4c5520/rank_6_0/model, reason: While executing %triton_kernel_wrapper_mutation : [num_users=0] = call_function[target=torch.ops.higher_order.triton_kernel_wrapper_mutation](args = (), kwargs = {kernel_idx: 0, constant_args_idx: 0, grid: [(%floordiv, 1, 1)], tma_descriptor_metadata: {}, kwargs: {X: %reshape_3, Y: %empty_like, W: %contiguous_2, Z: %reshape_4, Rstd: %empty, M: %mul_2}})
+(Worker_TP6_EP6 pid=328099) WARNING 10-11 05:53:44 [decorators.py:321] Original traceback:
+(Worker_TP6_EP6 pid=328099) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-hust/vllm/model_executor/models/qwen3_next.py", line 612, in forward
+(Worker_TP6_EP6 pid=328099) WARNING 10-11 05:53:44 [decorators.py:321]     hidden_states, residual = layer(
+(Worker_TP6_EP6 pid=328099) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/patch/worker/patch_qwen3_5.py", line 133, in forward
+(Worker_TP6_EP6 pid=328099) WARNING 10-11 05:53:44 [decorators.py:321]     hidden_states = self.linear_attn(hidden_states=hidden_states)
+(Worker_TP6_EP6 pid=328099) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/ops/gdn.py", line 146, in forward
+(Worker_TP6_EP6 pid=328099) WARNING 10-11 05:53:44 [decorators.py:321]     core_attn_out = self.norm(core_attn_out, z)
+(Worker_TP6_EP6 pid=328099) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-hust/vllm/model_executor/custom_op.py", line 136, in forward
+(Worker_TP6_EP6 pid=328099) WARNING 10-11 05:53:44 [decorators.py:321]     return self._forward_method(*args, **kwargs)
+(Worker_TP6_EP6 pid=328099) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/ops/layernorm.py", line 199, in forward_oot
+(Worker_TP6_EP6 pid=328099) WARNING 10-11 05:53:44 [decorators.py:321]     return LayerNormFn.apply(x, self.weight, self.bias, z, self.eps, self.group_size, self.norm_before_gate, True)
+(Worker_TP6_EP6 pid=328099) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/ops/layernorm.py", line 141, in forward
+(Worker_TP6_EP6 pid=328099) WARNING 10-11 05:53:44 [decorators.py:321]     y, mean, rstd = layer_norm_fwd_npu(
+(Worker_TP6_EP6 pid=328099) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/ops/triton/layernorm_gated.py", line 148, in layer_norm_fwd_npu
+(Worker_TP6_EP6 pid=328099) WARNING 10-11 05:53:44 [decorators.py:321]     _layer_norm_fwd_1pass_kernel_npu[grid](
+(Worker_TP6_EP6 pid=328099) WARNING 10-11 05:53:44 [decorators.py:321]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/triton/runtime/jit.py", line 333, in <lambda>
+(Worker_TP6_EP6 pid=328099) WARNING 10-11 05:53:44 [decorators.py:321]     return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+(Worker_TP6_EP6 pid=328099) WARNING 10-11 05:53:44 [decorators.py:321]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/triton/runtime/autotuner.py", line 386, in run
+(Worker_TP6_EP6 pid=328099) WARNING 10-11 05:53:44 [decorators.py:321]     return self.fn.run(*args, **kwargs)
+(Worker_TP6_EP6 pid=328099) WARNING 10-11 05:53:44 [decorators.py:321]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/triton/runtime/autotuner.py", line 386, in run
+(Worker_TP6_EP6 pid=328099) WARNING 10-11 05:53:44 [decorators.py:321]     return self.fn.run(*args, **kwargs)
+(Worker_TP6_EP6 pid=328099) WARNING 10-11 05:53:44 [decorators.py:321] 
+(Worker_TP6_EP6 pid=328099) WARNING 10-11 05:53:44 [decorators.py:321] Use tlparse to see full graph. (https://github.com/pytorch/tlparse?tab=readme-ov-file#tlparse-parse-structured-pt2-logs)
+(Worker_TP1_EP1 pid=328094) WARNING 10-11 05:53:44 [decorators.py:321] Compiling model again due to a load failure from /root/.cache/vllm/torch_compile_cache/torch_aot_compile/0ea3dadcad0946cfb0fbbf99af1180c1405f8a1111eddec29821d861bc4c5520/rank_1_0/model, reason: While executing %triton_kernel_wrapper_mutation : [num_users=0] = call_function[target=torch.ops.higher_order.triton_kernel_wrapper_mutation](args = (), kwargs = {kernel_idx: 0, constant_args_idx: 0, grid: [(%floordiv, 1, 1)], tma_descriptor_metadata: {}, kwargs: {X: %reshape_3, Y: %empty_like, W: %contiguous_2, Z: %reshape_4, Rstd: %empty, M: %mul_2}})
+(Worker_TP1_EP1 pid=328094) WARNING 10-11 05:53:44 [decorators.py:321] Original traceback:
+(Worker_TP1_EP1 pid=328094) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-hust/vllm/model_executor/models/qwen3_next.py", line 612, in forward
+(Worker_TP1_EP1 pid=328094) WARNING 10-11 05:53:44 [decorators.py:321]     hidden_states, residual = layer(
+(Worker_TP1_EP1 pid=328094) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/patch/worker/patch_qwen3_5.py", line 133, in forward
+(Worker_TP1_EP1 pid=328094) WARNING 10-11 05:53:44 [decorators.py:321]     hidden_states = self.linear_attn(hidden_states=hidden_states)
+(Worker_TP1_EP1 pid=328094) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/ops/gdn.py", line 146, in forward
+(Worker_TP1_EP1 pid=328094) WARNING 10-11 05:53:44 [decorators.py:321]     core_attn_out = self.norm(core_attn_out, z)
+(Worker_TP1_EP1 pid=328094) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-hust/vllm/model_executor/custom_op.py", line 136, in forward
+(Worker_TP1_EP1 pid=328094) WARNING 10-11 05:53:44 [decorators.py:321]     return self._forward_method(*args, **kwargs)
+(Worker_TP1_EP1 pid=328094) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/ops/layernorm.py", line 199, in forward_oot
+(Worker_TP1_EP1 pid=328094) WARNING 10-11 05:53:44 [decorators.py:321]     return LayerNormFn.apply(x, self.weight, self.bias, z, self.eps, self.group_size, self.norm_before_gate, True)
+(Worker_TP1_EP1 pid=328094) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/ops/layernorm.py", line 141, in forward
+(Worker_TP1_EP1 pid=328094) WARNING 10-11 05:53:44 [decorators.py:321]     y, mean, rstd = layer_norm_fwd_npu(
+(Worker_TP1_EP1 pid=328094) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/ops/triton/layernorm_gated.py", line 148, in layer_norm_fwd_npu
+(Worker_TP1_EP1 pid=328094) WARNING 10-11 05:53:44 [decorators.py:321]     _layer_norm_fwd_1pass_kernel_npu[grid](
+(Worker_TP1_EP1 pid=328094) WARNING 10-11 05:53:44 [decorators.py:321]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/triton/runtime/jit.py", line 333, in <lambda>
+(Worker_TP1_EP1 pid=328094) WARNING 10-11 05:53:44 [decorators.py:321]     return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+(Worker_TP1_EP1 pid=328094) WARNING 10-11 05:53:44 [decorators.py:321]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/triton/runtime/autotuner.py", line 386, in run
+(Worker_TP1_EP1 pid=328094) WARNING 10-11 05:53:44 [decorators.py:321]     return self.fn.run(*args, **kwargs)
+(Worker_TP1_EP1 pid=328094) WARNING 10-11 05:53:44 [decorators.py:321]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/triton/runtime/autotuner.py", line 386, in run
+(Worker_TP1_EP1 pid=328094) WARNING 10-11 05:53:44 [decorators.py:321]     return self.fn.run(*args, **kwargs)
+(Worker_TP1_EP1 pid=328094) WARNING 10-11 05:53:44 [decorators.py:321] 
+(Worker_TP1_EP1 pid=328094) WARNING 10-11 05:53:44 [decorators.py:321] Use tlparse to see full graph. (https://github.com/pytorch/tlparse?tab=readme-ov-file#tlparse-parse-structured-pt2-logs)
+(Worker_TP2_EP2 pid=328095) WARNING 10-11 05:53:44 [decorators.py:321] Compiling model again due to a load failure from /root/.cache/vllm/torch_compile_cache/torch_aot_compile/0ea3dadcad0946cfb0fbbf99af1180c1405f8a1111eddec29821d861bc4c5520/rank_2_0/model, reason: While executing %triton_kernel_wrapper_mutation : [num_users=0] = call_function[target=torch.ops.higher_order.triton_kernel_wrapper_mutation](args = (), kwargs = {kernel_idx: 0, constant_args_idx: 0, grid: [(%floordiv, 1, 1)], tma_descriptor_metadata: {}, kwargs: {X: %reshape_3, Y: %empty_like, W: %contiguous_2, Z: %reshape_4, Rstd: %empty, M: %mul_2}})
+(Worker_TP2_EP2 pid=328095) WARNING 10-11 05:53:44 [decorators.py:321] Original traceback:
+(Worker_TP2_EP2 pid=328095) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-hust/vllm/model_executor/models/qwen3_next.py", line 612, in forward
+(Worker_TP2_EP2 pid=328095) WARNING 10-11 05:53:44 [decorators.py:321]     hidden_states, residual = layer(
+(Worker_TP2_EP2 pid=328095) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/patch/worker/patch_qwen3_5.py", line 133, in forward
+(Worker_TP2_EP2 pid=328095) WARNING 10-11 05:53:44 [decorators.py:321]     hidden_states = self.linear_attn(hidden_states=hidden_states)
+(Worker_TP2_EP2 pid=328095) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/ops/gdn.py", line 146, in forward
+(Worker_TP2_EP2 pid=328095) WARNING 10-11 05:53:44 [decorators.py:321]     core_attn_out = self.norm(core_attn_out, z)
+(Worker_TP2_EP2 pid=328095) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-hust/vllm/model_executor/custom_op.py", line 136, in forward
+(Worker_TP2_EP2 pid=328095) WARNING 10-11 05:53:44 [decorators.py:321]     return self._forward_method(*args, **kwargs)
+(Worker_TP2_EP2 pid=328095) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/ops/layernorm.py", line 199, in forward_oot
+(Worker_TP2_EP2 pid=328095) WARNING 10-11 05:53:44 [decorators.py:321]     return LayerNormFn.apply(x, self.weight, self.bias, z, self.eps, self.group_size, self.norm_before_gate, True)
+(Worker_TP2_EP2 pid=328095) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/ops/layernorm.py", line 141, in forward
+(Worker_TP2_EP2 pid=328095) WARNING 10-11 05:53:44 [decorators.py:321]     y, mean, rstd = layer_norm_fwd_npu(
+(Worker_TP2_EP2 pid=328095) WARNING 10-11 05:53:44 [decorators.py:321]   File "/root/workspace/vllm-ascend-hust/vllm_ascend/ops/triton/layernorm_gated.py", line 148, in layer_norm_fwd_npu
+(Worker_TP2_EP2 pid=328095) WARNING 10-11 05:53:44 [decorators.py:321]     _layer_norm_fwd_1pass_kernel_npu[grid](
+(Worker_TP2_EP2 pid=328095) WARNING 10-11 05:53:44 [decorators.py:321]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/triton/runtime/jit.py", line 333, in <lambda>
+(Worker_TP2_EP2 pid=328095) WARNING 10-11 05:53:44 [decorators.py:321]     return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+(Worker_TP2_EP2 pid=328095) WARNING 10-11 05:53:44 [decorators.py:321]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/triton/runtime/autotuner.py", line 386, in run
+(Worker_TP2_EP2 pid=328095) WARNING 10-11 05:53:44 [decorators.py:321]     return self.fn.run(*args, **kwargs)
+(Worker_TP2_EP2 pid=328095) WARNING 10-11 05:53:44 [decorators.py:321]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/triton/runtime/autotuner.py", line 386, in run
+(Worker_TP2_EP2 pid=328095) WARNING 10-11 05:53:44 [decorators.py:321]     return self.fn.run(*args, **kwargs)
+(Worker_TP2_EP2 pid=328095) WARNING 10-11 05:53:44 [decorators.py:321] 
+(Worker_TP2_EP2 pid=328095) WARNING 10-11 05:53:44 [decorators.py:321] Use tlparse to see full graph. (https://github.com/pytorch/tlparse?tab=readme-ov-file#tlparse-parse-structured-pt2-logs)
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:53:57 [compiler_interface.py:248] AscendCompiler hash factors: {'torch_npu_version': '2.10.0.post4', 'enable_npugraph_ex': True, 'enable_static_kernel': False}
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:53:57 [backends.py:1148] Dynamo bytecode transform time: 12.79 s
+(Worker_TP5_EP5 pid=328098) INFO 10-11 05:53:57 [compiler_interface.py:248] AscendCompiler hash factors: {'torch_npu_version': '2.10.0.post4', 'enable_npugraph_ex': True, 'enable_static_kernel': False}
+(Worker_TP3_EP3 pid=328096) INFO 10-11 05:53:57 [compiler_interface.py:248] AscendCompiler hash factors: {'torch_npu_version': '2.10.0.post4', 'enable_npugraph_ex': True, 'enable_static_kernel': False}
+(Worker_TP6_EP6 pid=328099) INFO 10-11 05:53:57 [compiler_interface.py:248] AscendCompiler hash factors: {'torch_npu_version': '2.10.0.post4', 'enable_npugraph_ex': True, 'enable_static_kernel': False}
+(Worker_TP1_EP1 pid=328094) INFO 10-11 05:53:57 [compiler_interface.py:248] AscendCompiler hash factors: {'torch_npu_version': '2.10.0.post4', 'enable_npugraph_ex': True, 'enable_static_kernel': False}
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:53:57 [compiler_interface.py:310] npugraph_ex cache miss for key artifact_compile_range_1_16384_subgraph_0 (file absent or not saved), recompiling
+(Worker_TP5_EP5 pid=328098) INFO 10-11 05:53:58 [compiler_interface.py:310] npugraph_ex cache miss for key artifact_compile_range_1_16384_subgraph_0 (file absent or not saved), recompiling
+(Worker_TP2_EP2 pid=328095) INFO 10-11 05:53:58 [compiler_interface.py:248] AscendCompiler hash factors: {'torch_npu_version': '2.10.0.post4', 'enable_npugraph_ex': True, 'enable_static_kernel': False}
+(Worker_TP3_EP3 pid=328096) INFO 10-11 05:53:58 [compiler_interface.py:310] npugraph_ex cache miss for key artifact_compile_range_1_16384_subgraph_0 (file absent or not saved), recompiling
+(Worker_TP1_EP1 pid=328094) INFO 10-11 05:53:58 [compiler_interface.py:310] npugraph_ex cache miss for key artifact_compile_range_1_16384_subgraph_0 (file absent or not saved), recompiling
+(Worker_TP6_EP6 pid=328099) INFO 10-11 05:53:58 [compiler_interface.py:310] npugraph_ex cache miss for key artifact_compile_range_1_16384_subgraph_0 (file absent or not saved), recompiling
+(Worker_TP7_EP7 pid=328100) INFO 10-11 05:53:58 [compiler_interface.py:248] AscendCompiler hash factors: {'torch_npu_version': '2.10.0.post4', 'enable_npugraph_ex': True, 'enable_static_kernel': False}
+(Worker_TP4_EP4 pid=328097) INFO 10-11 05:53:58 [compiler_interface.py:248] AscendCompiler hash factors: {'torch_npu_version': '2.10.0.post4', 'enable_npugraph_ex': True, 'enable_static_kernel': False}
+(Worker_TP2_EP2 pid=328095) INFO 10-11 05:53:58 [compiler_interface.py:310] npugraph_ex cache miss for key artifact_compile_range_1_16384_subgraph_0 (file absent or not saved), recompiling
+(Worker_TP7_EP7 pid=328100) INFO 10-11 05:53:58 [compiler_interface.py:310] npugraph_ex cache miss for key artifact_compile_range_1_16384_subgraph_0 (file absent or not saved), recompiling
+(Worker_TP4_EP4 pid=328097) INFO 10-11 05:53:58 [compiler_interface.py:310] npugraph_ex cache miss for key artifact_compile_range_1_16384_subgraph_0 (file absent or not saved), recompiling
+(Worker_TP6_EP6 pid=328099) INFO 10-11 05:54:36 [compiler_interface.py:190] Skipping npugraph_ex cache for graph containing Triton kernels (kernel_side_table indices are process-local): /root/.cache/vllm/torch_compile_cache/f632546f2e/rank_6_0/backbone/artifact_compile_range_1_16384_subgraph_0
+(Worker_TP6_EP6 pid=328099) INFO 10-11 05:54:36 [compiler_interface.py:190] Skipping npugraph_ex cache for graph containing Triton kernels (kernel_side_table indices are process-local): /root/.cache/vllm/torch_compile_cache/f632546f2e/rank_6_0/backbone/artifact_compile_range_1_16384_subgraph_0
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:54:36 [compiler_interface.py:190] Skipping npugraph_ex cache for graph containing Triton kernels (kernel_side_table indices are process-local): /root/.cache/vllm/torch_compile_cache/f632546f2e/rank_0_0/backbone/artifact_compile_range_1_16384_subgraph_0
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:54:36 [compiler_interface.py:190] Skipping npugraph_ex cache for graph containing Triton kernels (kernel_side_table indices are process-local): /root/.cache/vllm/torch_compile_cache/f632546f2e/rank_0_0/backbone/artifact_compile_range_1_16384_subgraph_0
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:54:36 [backends.py:292] Directly load the compiled graph(s) for compile range (1, 16384) from the cache, took 38.705 s
+(Worker_TP1_EP1 pid=328094) INFO 10-11 05:54:36 [compiler_interface.py:190] Skipping npugraph_ex cache for graph containing Triton kernels (kernel_side_table indices are process-local): /root/.cache/vllm/torch_compile_cache/f632546f2e/rank_1_0/backbone/artifact_compile_range_1_16384_subgraph_0
+(Worker_TP1_EP1 pid=328094) INFO 10-11 05:54:36 [compiler_interface.py:190] Skipping npugraph_ex cache for graph containing Triton kernels (kernel_side_table indices are process-local): /root/.cache/vllm/torch_compile_cache/f632546f2e/rank_1_0/backbone/artifact_compile_range_1_16384_subgraph_0
+(Worker_TP3_EP3 pid=328096) INFO 10-11 05:54:36 [compiler_interface.py:190] Skipping npugraph_ex cache for graph containing Triton kernels (kernel_side_table indices are process-local): /root/.cache/vllm/torch_compile_cache/f632546f2e/rank_3_0/backbone/artifact_compile_range_1_16384_subgraph_0
+(Worker_TP3_EP3 pid=328096) INFO 10-11 05:54:36 [compiler_interface.py:190] Skipping npugraph_ex cache for graph containing Triton kernels (kernel_side_table indices are process-local): /root/.cache/vllm/torch_compile_cache/f632546f2e/rank_3_0/backbone/artifact_compile_range_1_16384_subgraph_0
+(Worker_TP5_EP5 pid=328098) INFO 10-11 05:54:36 [compiler_interface.py:190] Skipping npugraph_ex cache for graph containing Triton kernels (kernel_side_table indices are process-local): /root/.cache/vllm/torch_compile_cache/f632546f2e/rank_5_0/backbone/artifact_compile_range_1_16384_subgraph_0
+(Worker_TP5_EP5 pid=328098) INFO 10-11 05:54:36 [compiler_interface.py:190] Skipping npugraph_ex cache for graph containing Triton kernels (kernel_side_table indices are process-local): /root/.cache/vllm/torch_compile_cache/f632546f2e/rank_5_0/backbone/artifact_compile_range_1_16384_subgraph_0
+(Worker_TP2_EP2 pid=328095) INFO 10-11 05:54:37 [compiler_interface.py:190] Skipping npugraph_ex cache for graph containing Triton kernels (kernel_side_table indices are process-local): /root/.cache/vllm/torch_compile_cache/f632546f2e/rank_2_0/backbone/artifact_compile_range_1_16384_subgraph_0
+(Worker_TP2_EP2 pid=328095) INFO 10-11 05:54:37 [compiler_interface.py:190] Skipping npugraph_ex cache for graph containing Triton kernels (kernel_side_table indices are process-local): /root/.cache/vllm/torch_compile_cache/f632546f2e/rank_2_0/backbone/artifact_compile_range_1_16384_subgraph_0
+(Worker_TP4_EP4 pid=328097) INFO 10-11 05:54:38 [compiler_interface.py:190] Skipping npugraph_ex cache for graph containing Triton kernels (kernel_side_table indices are process-local): /root/.cache/vllm/torch_compile_cache/f632546f2e/rank_4_0/backbone/artifact_compile_range_1_16384_subgraph_0
+(Worker_TP4_EP4 pid=328097) INFO 10-11 05:54:38 [compiler_interface.py:190] Skipping npugraph_ex cache for graph containing Triton kernels (kernel_side_table indices are process-local): /root/.cache/vllm/torch_compile_cache/f632546f2e/rank_4_0/backbone/artifact_compile_range_1_16384_subgraph_0
+(Worker_TP7_EP7 pid=328100) INFO 10-11 05:54:39 [compiler_interface.py:190] Skipping npugraph_ex cache for graph containing Triton kernels (kernel_side_table indices are process-local): /root/.cache/vllm/torch_compile_cache/f632546f2e/rank_7_0/backbone/artifact_compile_range_1_16384_subgraph_0
+(Worker_TP7_EP7 pid=328100) INFO 10-11 05:54:39 [compiler_interface.py:190] Skipping npugraph_ex cache for graph containing Triton kernels (kernel_side_table indices are process-local): /root/.cache/vllm/torch_compile_cache/f632546f2e/rank_7_0/backbone/artifact_compile_range_1_16384_subgraph_0
+(EngineCore pid=327118) INFO 10-11 05:54:40 [shm_broadcast.py:705] No available shared memory broadcast block found in 60 seconds. This typically happens when some processes are hanging or doing some time-consuming work (e.g. compilation, weight/kv cache quantization).
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:54:41 [decorators.py:708] saved AOT compiled function to /root/.cache/vllm/torch_compile_cache/torch_aot_compile/0ea3dadcad0946cfb0fbbf99af1180c1405f8a1111eddec29821d861bc4c5520/rank_0_0/model
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:54:41 [monitor.py:53] torch.compile took 56.45 s in total
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:54:45 [monitor.py:81] Initial profiling/warmup run took 3.87 s
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:54:46 [worker.py:584] Available KV cache memory: 41.83 GiB
+(EngineCore pid=327118) INFO 10-11 05:54:46 [kv_cache_utils.py:2146] GPU KV cache size: 3,963,991 tokens
+(EngineCore pid=327118) INFO 10-11 05:54:46 [kv_cache_utils.py:2147] Maximum concurrency for 16,384 tokens per request: 241.94x
+(Worker_TP0_EP0 pid=328093) Capturing CUDA graphs (decode, FULL):   0%|          | 0/4 [00:00<?, ?it/s]Capturing CUDA graphs (decode, FULL):  25%|██▌       | 1/4 [00:00<00:02,  1.47it/s]Capturing CUDA graphs (decode, FULL):  50%|█████     | 2/4 [00:01<00:01,  1.67it/s]Capturing CUDA graphs (decode, FULL):  75%|███████▌  | 3/4 [00:01<00:00,  1.76it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 4/4 [00:02<00:00,  1.78it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 4/4 [00:02<00:00,  1.73it/s]
+(Worker_TP2_EP2 pid=328095) INFO 10-11 05:54:52 [worker.py:751] Free memory on device (60.59/60.96 GiB) on startup. Desired GPU memory utilization is (0.85, 51.81 GiB). Actual usage: 8.24 GiB for weights, 1.29 GiB for peak activation, 0.44 GiB for non-torch memory, 0.28 GiB for NPU graph memory. Replace gpu_memory_utilization with `--kv-cache-memory=44458674688` (41.41 GiB) to fit into requested memory, or `--kv-cache-memory=53884344832` (50.18 GiB) to fully utilize NPU free memory. Current KV cache memory: 41.83 GiB. After warmup: torch reserved memory 50.49 GiB, torch allocated memory 50.21 GiB.
+(Worker_TP7_EP7 pid=328100) INFO 10-11 05:54:52 [worker.py:751] Free memory on device (60.58/60.96 GiB) on startup. Desired GPU memory utilization is (0.85, 51.81 GiB). Actual usage: 8.24 GiB for weights, 1.29 GiB for peak activation, 0.44 GiB for non-torch memory, 0.28 GiB for NPU graph memory. Replace gpu_memory_utilization with `--kv-cache-memory=44459063808` (41.41 GiB) to fit into requested memory, or `--kv-cache-memory=53876443648` (50.18 GiB) to fully utilize NPU free memory. Current KV cache memory: 41.83 GiB. After warmup: torch reserved memory 50.49 GiB, torch allocated memory 50.21 GiB.
+(Worker_TP1_EP1 pid=328094) INFO 10-11 05:54:52 [worker.py:751] Free memory on device (60.57/60.96 GiB) on startup. Desired GPU memory utilization is (0.85, 51.81 GiB). Actual usage: 8.24 GiB for weights, 1.29 GiB for peak activation, 0.44 GiB for non-torch memory, 0.28 GiB for NPU graph memory. Replace gpu_memory_utilization with `--kv-cache-memory=44458576384` (41.41 GiB) to fit into requested memory, or `--kv-cache-memory=53855824384` (50.16 GiB) to fully utilize NPU free memory. Current KV cache memory: 41.84 GiB. After warmup: torch reserved memory 50.49 GiB, torch allocated memory 50.21 GiB.
+(Worker_TP5_EP5 pid=328098) INFO 10-11 05:54:52 [worker.py:751] Free memory on device (60.59/60.96 GiB) on startup. Desired GPU memory utilization is (0.85, 51.81 GiB). Actual usage: 8.24 GiB for weights, 1.29 GiB for peak activation, 0.44 GiB for non-torch memory, 0.28 GiB for NPU graph memory. Replace gpu_memory_utilization with `--kv-cache-memory=44458363392` (41.41 GiB) to fit into requested memory, or `--kv-cache-memory=53879343616` (50.18 GiB) to fully utilize NPU free memory. Current KV cache memory: 41.84 GiB. After warmup: torch reserved memory 50.49 GiB, torch allocated memory 50.21 GiB.
+(Worker_TP6_EP6 pid=328099) INFO 10-11 05:54:52 [worker.py:751] Free memory on device (60.59/60.96 GiB) on startup. Desired GPU memory utilization is (0.85, 51.81 GiB). Actual usage: 8.24 GiB for weights, 1.29 GiB for peak activation, 0.44 GiB for non-torch memory, 0.28 GiB for NPU graph memory. Replace gpu_memory_utilization with `--kv-cache-memory=44458813952` (41.41 GiB) to fit into requested memory, or `--kv-cache-memory=53882604032` (50.18 GiB) to fully utilize NPU free memory. Current KV cache memory: 41.84 GiB. After warmup: torch reserved memory 50.49 GiB, torch allocated memory 50.21 GiB.
+(Worker_TP3_EP3 pid=328096) INFO 10-11 05:54:52 [worker.py:751] Free memory on device (60.59/60.96 GiB) on startup. Desired GPU memory utilization is (0.85, 51.81 GiB). Actual usage: 8.24 GiB for weights, 1.29 GiB for peak activation, 0.44 GiB for non-torch memory, 0.28 GiB for NPU graph memory. Replace gpu_memory_utilization with `--kv-cache-memory=44458396160` (41.41 GiB) to fit into requested memory, or `--kv-cache-memory=53881100800` (50.18 GiB) to fully utilize NPU free memory. Current KV cache memory: 41.83 GiB. After warmup: torch reserved memory 50.49 GiB, torch allocated memory 50.21 GiB.
+(Worker_TP4_EP4 pid=328097) INFO 10-11 05:54:52 [worker.py:751] Free memory on device (60.59/60.96 GiB) on startup. Desired GPU memory utilization is (0.85, 51.81 GiB). Actual usage: 8.24 GiB for weights, 1.29 GiB for peak activation, 0.44 GiB for non-torch memory, 0.28 GiB for NPU graph memory. Replace gpu_memory_utilization with `--kv-cache-memory=44458187264` (41.4 GiB) to fit into requested memory, or `--kv-cache-memory=53877381632` (50.18 GiB) to fully utilize NPU free memory. Current KV cache memory: 41.83 GiB. After warmup: torch reserved memory 50.49 GiB, torch allocated memory 50.21 GiB.
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:54:52 [gpu_model_runner.py:6711] Graph capturing finished in 4 secs, took 0.28 GiB
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:54:52 [worker.py:751] Free memory on device (60.55/60.96 GiB) on startup. Desired GPU memory utilization is (0.85, 51.81 GiB). Actual usage: 8.24 GiB for weights, 1.29 GiB for peak activation, 0.44 GiB for non-torch memory, 0.28 GiB for NPU graph memory. Replace gpu_memory_utilization with `--kv-cache-memory=44458523136` (41.41 GiB) to fit into requested memory, or `--kv-cache-memory=53841508864` (50.14 GiB) to fully utilize NPU free memory. Current KV cache memory: 41.83 GiB. After warmup: torch reserved memory 50.49 GiB, torch allocated memory 50.21 GiB.
+(Worker_TP2_EP2 pid=328095) INFO 10-11 05:54:54 [cpu_binding.py:542] [cpu_bind_mode] mode=topo_affinity rank=2 visible_npus=[0, 1, 2, 3, 4, 5, 6, 7]
+(Worker_TP2_EP2 pid=328095) INFO 10-11 05:54:54 [cpu_binding.py:626] The CPU allocation plan is as follows:
+(Worker_TP2_EP2 pid=328095) INFO 10-11 05:54:54 [cpu_binding.py:641] NPU2: main=[170 171 172 173 174 175 176 177 178 179 180 181 182 183 184 185 186 187 188 189]  acl=[190]  release=[[191]]
+(Worker_TP7_EP7 pid=328100) INFO 10-11 05:54:55 [cpu_binding.py:542] [cpu_bind_mode] mode=topo_affinity rank=7 visible_npus=[0, 1, 2, 3, 4, 5, 6, 7]
+(Worker_TP7_EP7 pid=328100) INFO 10-11 05:54:55 [cpu_binding.py:626] The CPU allocation plan is as follows:
+(Worker_TP7_EP7 pid=328100) INFO 10-11 05:54:55 [cpu_binding.py:641] NPU7: main=[74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93]  acl=[94]  release=[[95]]
+(Worker_TP2_EP2 pid=328095) INFO 10-11 05:54:55 [cpu_binding.py:667] [migrate] NPU:2 -> NUMA [7]
+(Worker_TP1_EP1 pid=328094) INFO 10-11 05:54:55 [cpu_binding.py:542] [cpu_bind_mode] mode=topo_affinity rank=1 visible_npus=[0, 1, 2, 3, 4, 5, 6, 7]
+(Worker_TP1_EP1 pid=328094) INFO 10-11 05:54:55 [cpu_binding.py:626] The CPU allocation plan is as follows:
+(Worker_TP1_EP1 pid=328094) INFO 10-11 05:54:55 [cpu_binding.py:641] NPU1: main=[2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21]  acl=[22]  release=[[23]]
+(Worker_TP6_EP6 pid=328099) INFO 10-11 05:54:55 [cpu_binding.py:542] [cpu_bind_mode] mode=topo_affinity rank=6 visible_npus=[0, 1, 2, 3, 4, 5, 6, 7]
+(Worker_TP6_EP6 pid=328099) INFO 10-11 05:54:55 [cpu_binding.py:626] The CPU allocation plan is as follows:
+(Worker_TP6_EP6 pid=328099) INFO 10-11 05:54:55 [cpu_binding.py:641] NPU6: main=[122 123 124 125 126 127 128 129 130 131 132 133 134 135 136 137 138 139 140 141]  acl=[142]  release=[[143]]
+(Worker_TP5_EP5 pid=328098) INFO 10-11 05:54:55 [cpu_binding.py:542] [cpu_bind_mode] mode=topo_affinity rank=5 visible_npus=[0, 1, 2, 3, 4, 5, 6, 7]
+(Worker_TP5_EP5 pid=328098) INFO 10-11 05:54:55 [cpu_binding.py:626] The CPU allocation plan is as follows:
+(Worker_TP5_EP5 pid=328098) INFO 10-11 05:54:55 [cpu_binding.py:641] NPU5: main=[50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69]  acl=[70]  release=[[71]]
+(Worker_TP7_EP7 pid=328100) INFO 10-11 05:54:55 [cpu_binding.py:667] [migrate] NPU:7 -> NUMA [3]
+(Worker_TP1_EP1 pid=328094) INFO 10-11 05:54:55 [cpu_binding.py:667] [migrate] NPU:1 -> NUMA [0]
+(Worker_TP3_EP3 pid=328096) INFO 10-11 05:54:55 [cpu_binding.py:542] [cpu_bind_mode] mode=topo_affinity rank=3 visible_npus=[0, 1, 2, 3, 4, 5, 6, 7]
+(Worker_TP3_EP3 pid=328096) INFO 10-11 05:54:55 [cpu_binding.py:626] The CPU allocation plan is as follows:
+(Worker_TP3_EP3 pid=328096) INFO 10-11 05:54:55 [cpu_binding.py:641] NPU3: main=[26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45]  acl=[46]  release=[[47]]
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:54:55 [cpu_binding.py:542] [cpu_bind_mode] mode=topo_affinity rank=0 visible_npus=[0, 1, 2, 3, 4, 5, 6, 7]
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:54:55 [cpu_binding.py:626] The CPU allocation plan is as follows:
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:54:55 [cpu_binding.py:641] NPU0: main=[146 147 148 149 150 151 152 153 154 155 156 157 158 159 160 161 162 163 164 165]  acl=[166]  release=[[167]]
+(Worker_TP6_EP6 pid=328099) INFO 10-11 05:54:55 [cpu_binding.py:667] [migrate] NPU:6 -> NUMA [5]
+(Worker_TP4_EP4 pid=328097) INFO 10-11 05:54:55 [cpu_binding.py:542] [cpu_bind_mode] mode=topo_affinity rank=4 visible_npus=[0, 1, 2, 3, 4, 5, 6, 7]
+(Worker_TP4_EP4 pid=328097) INFO 10-11 05:54:55 [cpu_binding.py:626] The CPU allocation plan is as follows:
+(Worker_TP4_EP4 pid=328097) INFO 10-11 05:54:55 [cpu_binding.py:641] NPU4: main=[98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117]  acl=[118]  release=[[119]]
+(Worker_TP5_EP5 pid=328098) INFO 10-11 05:54:55 [cpu_binding.py:667] [migrate] NPU:5 -> NUMA [2]
+(Worker_TP2_EP2 pid=328095) INFO 10-11 05:54:55 [worker.py:532] MuxPD decode graph rank=2 {'enabled': True, 'attached': True, 'capture_started': True, 'captured': True, 'failed': False, 'closed': False, 'compile_full_prefill': True, 'prefill_compile_profiled': True, 'includes_startup_warmups': True, 'captured_graph_entries': 4, 'decode_replay_calls': 0, 'decode_capture_forward_calls': 4, 'decode_eager_fallback_calls': 4, 'decode_uncaptured_full_calls': 0, 'decode_forward_failures': 0, 'prefill_forced_eager_calls': 1, 'prefill_compiled_calls': 1, 'prefill_compile_profile_runs': 1, 'prefill_compile_profile_failures': 0, 'capture_attempts': 1, 'capture_successes': 1, 'capture_failures': 0}
+(Worker_TP3_EP3 pid=328096) INFO 10-11 05:54:55 [cpu_binding.py:667] [migrate] NPU:3 -> NUMA [1]
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:54:55 [cpu_binding.py:667] [migrate] NPU:0 -> NUMA [6]
+(Worker_TP4_EP4 pid=328097) INFO 10-11 05:54:55 [cpu_binding.py:667] [migrate] NPU:4 -> NUMA [4]
+(Worker_TP1_EP1 pid=328094) INFO 10-11 05:55:02 [worker.py:532] MuxPD decode graph rank=1 {'enabled': True, 'attached': True, 'capture_started': True, 'captured': True, 'failed': False, 'closed': False, 'compile_full_prefill': True, 'prefill_compile_profiled': True, 'includes_startup_warmups': True, 'captured_graph_entries': 4, 'decode_replay_calls': 0, 'decode_capture_forward_calls': 4, 'decode_eager_fallback_calls': 4, 'decode_uncaptured_full_calls': 0, 'decode_forward_failures': 0, 'prefill_forced_eager_calls': 1, 'prefill_compiled_calls': 1, 'prefill_compile_profile_runs': 1, 'prefill_compile_profile_failures': 0, 'capture_attempts': 1, 'capture_successes': 1, 'capture_failures': 0}
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:55:03 [worker.py:532] MuxPD decode graph rank=0 {'enabled': True, 'attached': True, 'capture_started': True, 'captured': True, 'failed': False, 'closed': False, 'compile_full_prefill': True, 'prefill_compile_profiled': True, 'includes_startup_warmups': True, 'captured_graph_entries': 4, 'decode_replay_calls': 0, 'decode_capture_forward_calls': 4, 'decode_eager_fallback_calls': 4, 'decode_uncaptured_full_calls': 0, 'decode_forward_failures': 0, 'prefill_forced_eager_calls': 1, 'prefill_compiled_calls': 1, 'prefill_compile_profile_runs': 1, 'prefill_compile_profile_failures': 0, 'capture_attempts': 1, 'capture_successes': 1, 'capture_failures': 0}
+(Worker_TP7_EP7 pid=328100) INFO 10-11 05:55:04 [worker.py:532] MuxPD decode graph rank=7 {'enabled': True, 'attached': True, 'capture_started': True, 'captured': True, 'failed': False, 'closed': False, 'compile_full_prefill': True, 'prefill_compile_profiled': True, 'includes_startup_warmups': True, 'captured_graph_entries': 4, 'decode_replay_calls': 0, 'decode_capture_forward_calls': 4, 'decode_eager_fallback_calls': 4, 'decode_uncaptured_full_calls': 0, 'decode_forward_failures': 0, 'prefill_forced_eager_calls': 1, 'prefill_compiled_calls': 1, 'prefill_compile_profile_runs': 1, 'prefill_compile_profile_failures': 0, 'capture_attempts': 1, 'capture_successes': 1, 'capture_failures': 0}
+(Worker_TP3_EP3 pid=328096) INFO 10-11 05:55:04 [worker.py:532] MuxPD decode graph rank=3 {'enabled': True, 'attached': True, 'capture_started': True, 'captured': True, 'failed': False, 'closed': False, 'compile_full_prefill': True, 'prefill_compile_profiled': True, 'includes_startup_warmups': True, 'captured_graph_entries': 4, 'decode_replay_calls': 0, 'decode_capture_forward_calls': 4, 'decode_eager_fallback_calls': 4, 'decode_uncaptured_full_calls': 0, 'decode_forward_failures': 0, 'prefill_forced_eager_calls': 1, 'prefill_compiled_calls': 1, 'prefill_compile_profile_runs': 1, 'prefill_compile_profile_failures': 0, 'capture_attempts': 1, 'capture_successes': 1, 'capture_failures': 0}
+(Worker_TP6_EP6 pid=328099) INFO 10-11 05:55:04 [worker.py:532] MuxPD decode graph rank=6 {'enabled': True, 'attached': True, 'capture_started': True, 'captured': True, 'failed': False, 'closed': False, 'compile_full_prefill': True, 'prefill_compile_profiled': True, 'includes_startup_warmups': True, 'captured_graph_entries': 4, 'decode_replay_calls': 0, 'decode_capture_forward_calls': 4, 'decode_eager_fallback_calls': 4, 'decode_uncaptured_full_calls': 0, 'decode_forward_failures': 0, 'prefill_forced_eager_calls': 1, 'prefill_compiled_calls': 1, 'prefill_compile_profile_runs': 1, 'prefill_compile_profile_failures': 0, 'capture_attempts': 1, 'capture_successes': 1, 'capture_failures': 0}
+(Worker_TP5_EP5 pid=328098) INFO 10-11 05:55:04 [worker.py:532] MuxPD decode graph rank=5 {'enabled': True, 'attached': True, 'capture_started': True, 'captured': True, 'failed': False, 'closed': False, 'compile_full_prefill': True, 'prefill_compile_profiled': True, 'includes_startup_warmups': True, 'captured_graph_entries': 4, 'decode_replay_calls': 0, 'decode_capture_forward_calls': 4, 'decode_eager_fallback_calls': 4, 'decode_uncaptured_full_calls': 0, 'decode_forward_failures': 0, 'prefill_forced_eager_calls': 1, 'prefill_compiled_calls': 1, 'prefill_compile_profile_runs': 1, 'prefill_compile_profile_failures': 0, 'capture_attempts': 1, 'capture_successes': 1, 'capture_failures': 0}
+(Worker_TP4_EP4 pid=328097) INFO 10-11 05:55:05 [worker.py:532] MuxPD decode graph rank=4 {'enabled': True, 'attached': True, 'capture_started': True, 'captured': True, 'failed': False, 'closed': False, 'compile_full_prefill': True, 'prefill_compile_profiled': True, 'includes_startup_warmups': True, 'captured_graph_entries': 4, 'decode_replay_calls': 0, 'decode_capture_forward_calls': 4, 'decode_eager_fallback_calls': 4, 'decode_uncaptured_full_calls': 0, 'decode_forward_failures': 0, 'prefill_forced_eager_calls': 1, 'prefill_compiled_calls': 1, 'prefill_compile_profile_runs': 1, 'prefill_compile_profile_failures': 0, 'capture_attempts': 1, 'capture_successes': 1, 'capture_failures': 0}
+(EngineCore pid=327118) INFO 10-11 05:55:05 [core.py:345] init engine (profile, create kv cache, warmup model) took 86.09 s (compilation: 59.10 s)
+(EngineCore pid=327118) WARNING 10-11 05:55:06 [scheduler.py:219] Using custom scheduler class vllm_muxpd.decoupled_scheduler.DecoupledMuxPDScheduler. This scheduler interface is not public and compatibility may not be maintained. If you have subclassed Scheduler instead of AsyncScheduler, you will see degraded performance due to async scheduling being disabled.
+(EngineCore pid=327118) INFO 10-11 05:55:06 [preemption.py:123] Preemption policy initialized: policy=builtin enabled=False
+(EngineCore pid=327118) INFO 10-11 05:55:06 [batch_admission.py:144] Batch admission policy initialized: policy=vllm_muxpd.policy.MuxPDPolicy configured=True enabled=True
+(EngineCore pid=327118) INFO 10-11 05:55:07 [registry.py:134] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+(EngineCore pid=327118) INFO 10-11 05:55:07 [ascend_config.py:824] Dynamic EPLB is False
+(EngineCore pid=327118) INFO 10-11 05:55:07 [ascend_config.py:825] The number of redundant experts is 0
+(EngineCore pid=327118) INFO 10-11 05:55:07 [vllm.py:1042] Asynchronous scheduling is disabled.
+(EngineCore pid=327118) INFO 10-11 05:55:07 [kernel.py:292] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'])
+(EngineCore pid=327118) INFO 10-11 05:55:07 [utils.py:174] No quantization signature detected from model files for "/root/workspace/models/Qwen3.5-35B-A3B". The model will be loaded as float. To force a quantization method, pass "--quantization <method>" explicitly.
+(EngineCore pid=327118) INFO 10-11 05:55:07 [platform.py:785] Set PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+(EngineCore pid=327118) INFO 10-11 05:55:07 [compilation.py:312] Enabled custom fusions: norm_quant, act_quant
+(APIServer pid=325117) INFO 10-11 05:55:07 [api_server.py:612] Supported tasks: ['generate']
+(APIServer pid=325117) WARNING 10-11 05:55:07 [model.py:1528] Default vLLM sampling parameters have been overridden by the model's `generation_config.json`: `{'temperature': 1.0, 'top_k': 20, 'top_p': 0.95}`. If this is not intended, please relaunch vLLM instance with `--generation-config vllm`.
+(APIServer pid=325117) INFO 10-11 05:55:09 [hf.py:548] Detected the chat template content format to be 'openai'. You can set `--chat-template-content-format` to override this.
+(APIServer pid=325117) INFO 10-11 05:55:09 [api_server.py:616] Starting vLLM server on http://127.0.0.1:8002
+(APIServer pid=325117) INFO 10-11 05:55:09 [launcher.py:37] Available routes are:
+(APIServer pid=325117) INFO 10-11 05:55:09 [launcher.py:46] Route: /openapi.json, Methods: GET, HEAD
+(APIServer pid=325117) INFO 10-11 05:55:09 [launcher.py:46] Route: /docs, Methods: GET, HEAD
+(APIServer pid=325117) INFO 10-11 05:55:09 [launcher.py:46] Route: /docs/oauth2-redirect, Methods: GET, HEAD
+(APIServer pid=325117) INFO 10-11 05:55:09 [launcher.py:46] Route: /redoc, Methods: GET, HEAD
+(APIServer pid=325117) INFO 10-11 05:55:09 [launcher.py:46] Route: /load, Methods: GET
+(APIServer pid=325117) INFO 10-11 05:55:09 [launcher.py:46] Route: /version, Methods: GET
+(APIServer pid=325117) INFO 10-11 05:55:09 [launcher.py:46] Route: /health, Methods: GET
+(APIServer pid=325117) INFO 10-11 05:55:09 [launcher.py:46] Route: /metrics, Methods: GET
+(APIServer pid=325117) INFO 10-11 05:55:09 [launcher.py:46] Route: /tokenize, Methods: POST
+(APIServer pid=325117) INFO 10-11 05:55:09 [launcher.py:46] Route: /detokenize, Methods: POST
+(APIServer pid=325117) INFO 10-11 05:55:09 [launcher.py:46] Route: /v1/models, Methods: GET
+(APIServer pid=325117) INFO 10-11 05:55:09 [launcher.py:46] Route: /ping, Methods: GET
+(APIServer pid=325117) INFO 10-11 05:55:09 [launcher.py:46] Route: /ping, Methods: POST
+(APIServer pid=325117) INFO 10-11 05:55:09 [launcher.py:46] Route: /invocations, Methods: POST
+(APIServer pid=325117) INFO 10-11 05:55:09 [launcher.py:46] Route: /v1/chat/completions, Methods: POST
+(APIServer pid=325117) INFO 10-11 05:55:09 [launcher.py:46] Route: /v1/chat/completions/batch, Methods: POST
+(APIServer pid=325117) INFO 10-11 05:55:09 [launcher.py:46] Route: /v1/responses, Methods: POST
+(APIServer pid=325117) INFO 10-11 05:55:09 [launcher.py:46] Route: /v1/responses/{response_id}, Methods: GET
+(APIServer pid=325117) INFO 10-11 05:55:09 [launcher.py:46] Route: /v1/responses/{response_id}/cancel, Methods: POST
+(APIServer pid=325117) INFO 10-11 05:55:09 [launcher.py:46] Route: /v1/completions, Methods: POST
+(APIServer pid=325117) INFO 10-11 05:55:09 [launcher.py:46] Route: /v1/messages, Methods: POST
+(APIServer pid=325117) INFO 10-11 05:55:09 [launcher.py:46] Route: /v1/messages/count_tokens, Methods: POST
+(APIServer pid=325117) INFO 10-11 05:55:09 [launcher.py:46] Route: /generative_scoring, Methods: POST
+(APIServer pid=325117) INFO 10-11 05:55:09 [launcher.py:46] Route: /scale_elastic_ep, Methods: POST
+(APIServer pid=325117) INFO 10-11 05:55:09 [launcher.py:46] Route: /is_scaling_elastic_ep, Methods: POST
+(APIServer pid=325117) INFO 10-11 05:55:09 [launcher.py:46] Route: /v1/chat/completions/render, Methods: POST
+(APIServer pid=325117) INFO 10-11 05:55:09 [launcher.py:46] Route: /v1/completions/render, Methods: POST
+(APIServer pid=325117) INFO 10-11 05:55:09 [launcher.py:46] Route: /v1/chat/completions/derender, Methods: POST
+(APIServer pid=325117) INFO 10-11 05:55:09 [launcher.py:46] Route: /v1/completions/derender, Methods: POST
+(APIServer pid=325117) INFO 10-11 05:55:09 [launcher.py:46] Route: /inference/v1/generate, Methods: POST
+(APIServer pid=325117) INFO:     Started server process [325117]
+(APIServer pid=325117) INFO:     Waiting for application startup.
+(APIServer pid=325117) INFO:     Application startup complete.
+(APIServer pid=325117) INFO:     127.0.0.1:51434 - "GET /health HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO:     127.0.0.1:51438 - "POST /v1/completions HTTP/1.1" 200 OK
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:55:11 [acl_graph.py:252] Replaying aclgraph
+(APIServer pid=325117) INFO:     127.0.0.1:51440 - "POST /v1/completions HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO:     127.0.0.1:51442 - "GET /health HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO:     127.0.0.1:51434 - "GET /health HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO:     127.0.0.1:51444 - "POST /v1/completions HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO:     127.0.0.1:51446 - "POST /v1/completions HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO:     127.0.0.1:51448 - "GET /health HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO:     127.0.0.1:51434 - "GET /health HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO:     127.0.0.1:51452 - "POST /v1/completions HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO:     127.0.0.1:51450 - "POST /v1/completions HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO:     127.0.0.1:51456 - "POST /v1/completions HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO:     127.0.0.1:51454 - "POST /v1/completions HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO:     127.0.0.1:51458 - "POST /v1/completions HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO 10-11 05:55:19 [loggers.py:273] Engine 000: Avg prompt throughput: 2393.3 tokens/s, Avg generation throughput: 52.1 tokens/s, Running: 4 reqs, Waiting: 0 reqs, GPU KV cache usage: 0.2%, Prefix cache hit rate: 0.0%
+(APIServer pid=325117) INFO:     127.0.0.1:51450 - "POST /v1/completions HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO:     127.0.0.1:51452 - "POST /v1/completions HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO:     127.0.0.1:51454 - "POST /v1/completions HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO:     127.0.0.1:51456 - "POST /v1/completions HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO:     127.0.0.1:51460 - "POST /v1/completions HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO 10-11 05:55:29 [loggers.py:273] Engine 000: Avg prompt throughput: 1689.4 tokens/s, Avg generation throughput: 155.2 tokens/s, Running: 0 reqs, Waiting: 0 reqs, GPU KV cache usage: 0.0%, Prefix cache hit rate: 0.0%
+(APIServer pid=325117) INFO:     127.0.0.1:51466 - "GET /health HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO:     127.0.0.1:51470 - "GET /health HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO:     127.0.0.1:51470 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO:     127.0.0.1:51472 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO:     127.0.0.1:51474 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO:     127.0.0.1:51476 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO:     127.0.0.1:51478 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO:     127.0.0.1:51480 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO:     127.0.0.1:51482 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO:     127.0.0.1:51484 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO:     127.0.0.1:51488 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO:     127.0.0.1:51490 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO:     127.0.0.1:51492 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO:     127.0.0.1:51494 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO:     127.0.0.1:51496 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO:     127.0.0.1:51498 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO 10-11 05:55:39 [loggers.py:273] Engine 000: Avg prompt throughput: 1127.4 tokens/s, Avg generation throughput: 29.2 tokens/s, Running: 1 reqs, Waiting: 0 reqs, GPU KV cache usage: 0.0%, Prefix cache hit rate: 0.0%
+(APIServer pid=325117) INFO:     127.0.0.1:51500 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO:     127.0.0.1:51502 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO:     127.0.0.1:51504 - "GET /health HTTP/1.1" 200 OK
+(APIServer pid=325117) INFO 10-11 05:55:49 [loggers.py:273] Engine 000: Avg prompt throughput: 6.5 tokens/s, Avg generation throughput: 3.2 tokens/s, Running: 0 reqs, Waiting: 0 reqs, GPU KV cache usage: 0.0%, Prefix cache hit rate: 0.0%
+(APIServer pid=325117) INFO 10-11 05:55:52 [launcher.py:100] [shutdown] API server: shutdown triggered
+(APIServer pid=325117) INFO 10-11 05:55:52 [launcher.py:116] [shutdown] API server: stopping engine client mode=abort timeout=0s
+(APIServer pid=325117) INFO 10-11 05:55:52 [core_client.py:655] [shutdown] MPClient: start timeout=0s
+(APIServer pid=325117) INFO 10-11 05:55:52 [core_client.py:657] [shutdown] MPClient: stopping engine manager
+(APIServer pid=325117) WARNING 10-11 05:55:52 [utils.py:626] [shutdown] Process manager: force killing remaining processes count=1
+(EngineCore pid=327118) INFO 10-11 05:55:52 [core.py:1266] [shutdown] EngineCore: trigger received signal=SIGTERM
+(EngineCore pid=327118) INFO 10-11 05:55:52 [core.py:1385] [shutdown] EngineCore: start mode=abort timeout=0s
+(EngineCore pid=327118) INFO 10-11 05:55:52 [core.py:1416] [shutdown] EngineCore: request processing complete; starting resource teardown
+(EngineCore pid=327118) INFO 10-11 05:55:52 [core.py:1279] [shutdown] EngineCore: exiting busy loop
+(EngineCore pid=327118) INFO 10-11 05:55:52 [multiproc_executor.py:426] [shutdown] Executor: waiting for worker exit count=8
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:55:52 [multiproc_executor.py:790] Parent process exited, terminating worker queues
+(Worker_TP2_EP2 pid=328095) INFO 10-11 05:55:52 [worker.py:695] MuxPD decode graph final rank=2 {'enabled': True, 'attached': True, 'capture_started': True, 'captured': True, 'failed': False, 'closed': False, 'compile_full_prefill': True, 'prefill_compile_profiled': True, 'includes_startup_warmups': True, 'captured_graph_entries': 4, 'decode_replay_calls': 947, 'decode_capture_forward_calls': 4, 'decode_eager_fallback_calls': 4, 'decode_uncaptured_full_calls': 0, 'decode_forward_failures': 0, 'prefill_forced_eager_calls': 27, 'prefill_compiled_calls': 17, 'prefill_compile_profile_runs': 1, 'prefill_compile_profile_failures': 0, 'capture_attempts': 1, 'capture_successes': 1, 'capture_failures': 0}
+(Worker_TP4_EP4 pid=328097) INFO 10-11 05:55:52 [worker.py:695] MuxPD decode graph final rank=4 {'enabled': True, 'attached': True, 'capture_started': True, 'captured': True, 'failed': False, 'closed': False, 'compile_full_prefill': True, 'prefill_compile_profiled': True, 'includes_startup_warmups': True, 'captured_graph_entries': 4, 'decode_replay_calls': 947, 'decode_capture_forward_calls': 4, 'decode_eager_fallback_calls': 4, 'decode_uncaptured_full_calls': 0, 'decode_forward_failures': 0, 'prefill_forced_eager_calls': 27, 'prefill_compiled_calls': 17, 'prefill_compile_profile_runs': 1, 'prefill_compile_profile_failures': 0, 'capture_attempts': 1, 'capture_successes': 1, 'capture_failures': 0}
+(Worker_TP6_EP6 pid=328099) INFO 10-11 05:55:52 [worker.py:695] MuxPD decode graph final rank=6 {'enabled': True, 'attached': True, 'capture_started': True, 'captured': True, 'failed': False, 'closed': False, 'compile_full_prefill': True, 'prefill_compile_profiled': True, 'includes_startup_warmups': True, 'captured_graph_entries': 4, 'decode_replay_calls': 947, 'decode_capture_forward_calls': 4, 'decode_eager_fallback_calls': 4, 'decode_uncaptured_full_calls': 0, 'decode_forward_failures': 0, 'prefill_forced_eager_calls': 27, 'prefill_compiled_calls': 17, 'prefill_compile_profile_runs': 1, 'prefill_compile_profile_failures': 0, 'capture_attempts': 1, 'capture_successes': 1, 'capture_failures': 0}
+(Worker_TP1_EP1 pid=328094) INFO 10-11 05:55:52 [worker.py:695] MuxPD decode graph final rank=1 {'enabled': True, 'attached': True, 'capture_started': True, 'captured': True, 'failed': False, 'closed': False, 'compile_full_prefill': True, 'prefill_compile_profiled': True, 'includes_startup_warmups': True, 'captured_graph_entries': 4, 'decode_replay_calls': 947, 'decode_capture_forward_calls': 4, 'decode_eager_fallback_calls': 4, 'decode_uncaptured_full_calls': 0, 'decode_forward_failures': 0, 'prefill_forced_eager_calls': 27, 'prefill_compiled_calls': 17, 'prefill_compile_profile_runs': 1, 'prefill_compile_profile_failures': 0, 'capture_attempts': 1, 'capture_successes': 1, 'capture_failures': 0}
+(Worker_TP5_EP5 pid=328098) INFO 10-11 05:55:52 [worker.py:695] MuxPD decode graph final rank=5 {'enabled': True, 'attached': True, 'capture_started': True, 'captured': True, 'failed': False, 'closed': False, 'compile_full_prefill': True, 'prefill_compile_profiled': True, 'includes_startup_warmups': True, 'captured_graph_entries': 4, 'decode_replay_calls': 947, 'decode_capture_forward_calls': 4, 'decode_eager_fallback_calls': 4, 'decode_uncaptured_full_calls': 0, 'decode_forward_failures': 0, 'prefill_forced_eager_calls': 27, 'prefill_compiled_calls': 17, 'prefill_compile_profile_runs': 1, 'prefill_compile_profile_failures': 0, 'capture_attempts': 1, 'capture_successes': 1, 'capture_failures': 0}
+(Worker_TP3_EP3 pid=328096) INFO 10-11 05:55:52 [worker.py:695] MuxPD decode graph final rank=3 {'enabled': True, 'attached': True, 'capture_started': True, 'captured': True, 'failed': False, 'closed': False, 'compile_full_prefill': True, 'prefill_compile_profiled': True, 'includes_startup_warmups': True, 'captured_graph_entries': 4, 'decode_replay_calls': 947, 'decode_capture_forward_calls': 4, 'decode_eager_fallback_calls': 4, 'decode_uncaptured_full_calls': 0, 'decode_forward_failures': 0, 'prefill_forced_eager_calls': 27, 'prefill_compiled_calls': 17, 'prefill_compile_profile_runs': 1, 'prefill_compile_profile_failures': 0, 'capture_attempts': 1, 'capture_successes': 1, 'capture_failures': 0}
+(Worker_TP7_EP7 pid=328100) INFO 10-11 05:55:52 [worker.py:695] MuxPD decode graph final rank=7 {'enabled': True, 'attached': True, 'capture_started': True, 'captured': True, 'failed': False, 'closed': False, 'compile_full_prefill': True, 'prefill_compile_profiled': True, 'includes_startup_warmups': True, 'captured_graph_entries': 4, 'decode_replay_calls': 947, 'decode_capture_forward_calls': 4, 'decode_eager_fallback_calls': 4, 'decode_uncaptured_full_calls': 0, 'decode_forward_failures': 0, 'prefill_forced_eager_calls': 27, 'prefill_compiled_calls': 17, 'prefill_compile_profile_runs': 1, 'prefill_compile_profile_failures': 0, 'capture_attempts': 1, 'capture_successes': 1, 'capture_failures': 0}
+(Worker_TP0_EP0 pid=328093) INFO 10-11 05:55:52 [worker.py:695] MuxPD decode graph final rank=0 {'enabled': True, 'attached': True, 'capture_started': True, 'captured': True, 'failed': False, 'closed': False, 'compile_full_prefill': True, 'prefill_compile_profiled': True, 'includes_startup_warmups': True, 'captured_graph_entries': 4, 'decode_replay_calls': 947, 'decode_capture_forward_calls': 4, 'decode_eager_fallback_calls': 4, 'decode_uncaptured_full_calls': 0, 'decode_forward_failures': 0, 'prefill_forced_eager_calls': 27, 'prefill_compiled_calls': 17, 'prefill_compile_profile_runs': 1, 'prefill_compile_profile_failures': 0, 'capture_attempts': 1, 'capture_successes': 1, 'capture_failures': 0}
+(APIServer pid=325117) INFO 10-11 05:55:52 [core_client.py:659] [shutdown] MPClient: engine manager stopped
+(APIServer pid=325117) INFO 10-11 05:55:52 [core_client.py:660] [shutdown] MPClient: cleaning up background resources
+(APIServer pid=325117) INFO 10-11 05:55:52 [core_client.py:662] [shutdown] MPClient: complete
+(APIServer pid=325117) INFO 10-11 05:55:52 [launcher.py:125] [shutdown] API server: engine client stopped
+(APIServer pid=325117) INFO 10-11 05:55:52 [launcher.py:128] [shutdown] API server: signalling HTTP server shutdown
+(APIServer pid=325117) INFO 10-11 05:55:52 [launcher.py:149] [shutdown] API server: shutting down FastAPI HTTP server
+(APIServer pid=325117) INFO:     Shutting down
+(APIServer pid=325117) INFO:     Waiting for application shutdown.
+(APIServer pid=325117) INFO:     Application shutdown complete.
+/usr/local/python3.12.13/lib/python3.12/multiprocessing/resource_tracker.py:279: UserWarning: resource_tracker: There appear to be 8 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+/usr/local/python3.12.13/lib/python3.12/multiprocessing/resource_tracker.py:279: UserWarning: resource_tracker: There appear to be 10 leaked shared_memory objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '

@@ -1,0 +1,783 @@
+{
+  "schema": "tp8-contention-replay-validation-v1",
+  "passed": true,
+  "finished_utc": "2026-10-11T06:11:58.416075+00:00",
+  "archive": "evidence/2026-10-11-tp8-contention",
+  "archive_index_sha256": "07275b5a94bdcbb152305a4e83fd347efa44779694e4e2f84c49487c125173c5",
+  "sealed_artifacts": 271,
+  "sealed_files_including_index_and_guide": 273,
+  "source_bytes": 1584277567,
+  "stored_artifact_bytes": 132525866,
+  "restored_directory": "local-results/tp8-contention-replay",
+  "scope": "Offline publication verification only; no hardware/API workload. This receipt is outside the immutable archive. Source hashes were checked during pack; independent verify/unpack checks stored and decompressed hashes without requiring private original environment data.",
+  "archive_operations": {
+    "pack": {
+      "exit_code": 0,
+      "result": {
+        "artifacts": 271,
+        "passed": true,
+        "profiles": {
+          "native-profile-profile": {
+            "files": 16,
+            "ranks": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ]
+          },
+          "old-profile": {
+            "files": 16,
+            "ranks": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ]
+          }
+        },
+        "source_hashes_verified": true
+      },
+      "log_sha256": "7c1a43b9c7a37b0b80d2a4c701b5f9f886dc0ee3f8421c77143097791419e4a6"
+    },
+    "verify": {
+      "exit_code": 0,
+      "result": {
+        "artifacts": 271,
+        "passed": true,
+        "profiles": {
+          "native-profile-profile": {
+            "files": 16,
+            "ranks": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ]
+          },
+          "old-profile": {
+            "files": 16,
+            "ranks": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ]
+          }
+        },
+        "source_hashes_verified": false
+      },
+      "log_sha256": "e529e65ec51fb5787aa8767397f27899217e6e3509c9a017f6bef4919a07da64"
+    },
+    "unpack": {
+      "exit_code": 0,
+      "result": {
+        "artifacts": 271,
+        "passed": true,
+        "profiles": {
+          "native-profile-profile": {
+            "files": 16,
+            "ranks": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ]
+          },
+          "old-profile": {
+            "files": 16,
+            "ranks": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ]
+          }
+        },
+        "source_hashes_verified": false
+      },
+      "log_sha256": "e529e65ec51fb5787aa8767397f27899217e6e3509c9a017f6bef4919a07da64"
+    }
+  },
+  "replay_checks": {
+    "raw_sse": {
+      "receipt_source": "/tmp/muxpd-contention-replay-receipt.json",
+      "receipt_sha256": "a9e6a40d0d3385fb4b60c2099f1a95214273896eea3bb6561da459355e353745",
+      "result": {
+        "started_at_utc": "2026-10-11T06:10:03.764037+00:00",
+        "working_directory": "/root/workspace/vllm-ascend-MuxPD-hust",
+        "command": [
+          "/usr/local/python3.12.13/bin/python",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/audit_contention.py",
+          "--directory",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention",
+          "--producer",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/guard-v2-diagnostic-producers/benchmark_contention.py",
+          "--output",
+          "/tmp/muxpd-contention-replay/contention-audit.json",
+          "--require-final"
+        ],
+        "archive_script_sha256": "438398e832941668682ce27e6ad69ad4a29e298d417d2fc08ec98d559f3f4722",
+        "archive_index_sha256": "07275b5a94bdcbb152305a4e83fd347efa44779694e4e2f84c49487c125173c5",
+        "sealed_audit_stored_sha256": "6c14a497ea33127f79f4f68666951d2bff74654b154768b61e76e91b810c4e44",
+        "sealed_audit_uncompressed_sha256": "e8cf8a168981e1b041f25b4bdb922fca1a4b96addada5e88874f54dcb1732c2c",
+        "archived_producer_sha256": "6f373ff7383ccc61579d4e9406ee0c9b9523ee8a4ef0d5330d76471e421f6712",
+        "output_directory": "/tmp/muxpd-contention-replay",
+        "preflight_archived_raw_reports": 40,
+        "archive_unmodified": true,
+        "exit_code": 0,
+        "elapsed_s": 47.46124958246946,
+        "checks": {
+          "final_status_passed": true,
+          "all_40_raw_reports_passed": true,
+          "all_32_selected_reports_present": true,
+          "same_role_stage_selection": true,
+          "same_plan_and_producer_comparisons": true,
+          "all_final_numbers_and_slo_identical": true,
+          "same_40_per_stage_summaries_and_measured_requests": true,
+          "same_raw_payload_and_manifest_hashes": true,
+          "all_raw_read_from_archive_gzip_without_original_fallback": true,
+          "all_manifests_read_from_archive": true,
+          "archived_producer_validated_for_every_report": true,
+          "replayed_raw_hashes_match_sealed_archive_index": true,
+          "all_synthetic_output_comparisons_identical": true,
+          "same_corruption_self_checks": true,
+          "same_aggregation_self_checks": true,
+          "same_token_comparison_self_checks": true,
+          "all_self_checks_passed": true,
+          "same_eight_unselected_reports_and_reasons": true
+        },
+        "passed": true,
+        "raw_reports": 40,
+        "selected_reports": 32,
+        "reconstructed_token_arrays": 840,
+        "self_check_counts": {
+          "raw_corruption": 8,
+          "aggregation": 17,
+          "token_comparison": 9
+        },
+        "replayed_audit_sha256": "5c1c4e44027b4791ed836a2e86fd656492ee90cf3e1a31f2677056cc6cf6de62",
+        "raw_input_paths": [
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/guard-initial-decode-control.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/guard-initial-p8k.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/guard-initial-p12k.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/guard-initial-p12k-burst.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/guard-v2-confirm-decode-control.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/guard-v2-confirm-p8k.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/guard-v2-confirm-p12k.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/guard-v2-confirm-p12k-burst.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/guard-v2-initial-decode-control.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/guard-v2-initial-p8k.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/guard-v2-initial-p12k.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/guard-v2-initial-p12k-burst.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/native16k-confirm-decode-control.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/native16k-confirm-p8k.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/native16k-confirm-p12k.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/native16k-confirm-p12k-burst.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/native16k-initial-decode-control.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/native16k-initial-p8k.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/native16k-initial-p12k.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/native16k-initial-p12k-burst.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/native2k-confirm-decode-control.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/native2k-confirm-p8k.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/native2k-confirm-p12k.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/native2k-confirm-p12k-burst.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/native2k-initial-decode-control.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/native2k-initial-p8k.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/native2k-initial-p12k.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/native2k-initial-p12k-burst.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/old-work256-confirm-clean-decode-control.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/old-work256-confirm-clean-p8k.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/old-work256-confirm-clean-p12k.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/old-work256-confirm-clean-p12k-burst.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/old-work256-confirm-decode-control.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/old-work256-confirm-p8k.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/old-work256-confirm-p12k.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/old-work256-confirm-p12k-burst.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/old-work256-initial-decode-control.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/old-work256-initial-p8k.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/old-work256-initial-p12k.json.gz",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/old-work256-initial-p12k-burst.json.gz"
+        ],
+        "normalization": "Metric objects and synthetic comparisons are compared exactly. Only retained-report path basenames strip .gz; file/manifest roots and gzip stored hashes are deliberately not compared to original uncompressed path fields.",
+        "finished_at_utc": "2026-10-11T06:10:51.333564+00:00",
+        "archive_unmodified_check_scope": "Checks the script, index and sealed audit sentinels before/after plus all 40 compressed raw report hashes against the index; this is not a repeated full 271-artifact archive verification. Auditor output JSON, Markdown and log were written only under /tmp."
+      }
+    },
+    "estimator_lifecycle": {
+      "receipt_source": "/tmp/muxpd-estimator-replay-receipt.json",
+      "receipt_sha256": "badd35c857c594a05b02d0ac8a13e2a7219828e0fb6481910a614e9971183e05",
+      "result": {
+        "all_json_fields_equal": true,
+        "archive": "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention",
+        "archive_index_sha256": "07275b5a94bdcbb152305a4e83fd347efa44779694e4e2f84c49487c125173c5",
+        "archive_selected_files_and_index_unchanged": true,
+        "byte_identical_output": true,
+        "command": [
+          "/root/workspace/.venv/bin/python",
+          "-B",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/guard-v2-estimator-audit.py",
+          "--trace",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-estimator-replay-ggs24_7s/guard-v2-diagnostic-trace-327118.jsonl",
+          "--checker",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/guard-v2-diagnostic-producers/check_decoupled_trace.py",
+          "--v1-audit",
+          "/root/workspace/vllm-ascend-MuxPD-hust/evidence/2026-10-11-tp8-contention/guard-v1-estimator-audit.json",
+          "--output",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-estimator-replay-ggs24_7s/guard-v2-estimator-audit.json",
+          "--safety-factor",
+          "1.2",
+          "--require-quota-increase"
+        ],
+        "comparisons": {
+          "actual_multilayer_steps_exceeding_same_step_solo_fallback": {
+            "equal": true,
+            "value": 39
+          },
+          "decode_estimate_source_counts": {
+            "equal": true,
+            "value": {
+              "None": 18,
+              "fenced_continuation_residual": 55,
+              "solo_decode_round_trip": 14
+            }
+          },
+          "paired_steps": {
+            "equal": true,
+            "value": 983
+          },
+          "protocol_check": {
+            "equal": true,
+            "value": {
+              "cohorts": 26,
+              "max_complete_prompt_tokens": 16383,
+              "max_decode_steps_before_prefill_completion": 8,
+              "model_layers_by_pid": {
+                "327118": 40
+              },
+              "passed": true,
+              "prefill_retirements": {
+                "cancelled": 1,
+                "completed": 29
+              },
+              "progress_sources": {
+                "full_forward_return": 16,
+                "layer_hooks": 71,
+                "none": 896
+              },
+              "quota_reasons": {
+                "decode_budget_quota": 87,
+                "uncalibrated": 896
+              },
+              "receipt_checks": {
+                "layer_progress_steps": 983
+              },
+              "scope": "host lifecycle/progress receipts; kernel overlap needs profiling",
+              "work_quota_sources": {
+                "prefill_layer_token_budget": 87
+              }
+            }
+          },
+          "residual_history_verified_without_evictions": {
+            "equal": true,
+            "value": true
+          },
+          "residual_sample_distribution_ms": {
+            "equal": true,
+            "value": {
+              "count": 50,
+              "max": 24.26864966005087,
+              "median": 19.042256701737642,
+              "min": 18.096405528485775,
+              "nearest_rank_p95": 22.294200211763382
+            }
+          },
+          "residual_samples": {
+            "equal": true,
+            "value": 50
+          },
+          "residual_selected_steps": {
+            "equal": true,
+            "value": 55
+          }
+        },
+        "differing_json_keys": [],
+        "finished_utc": "2026-10-11T06:08:47.383531+00:00",
+        "log": {
+          "bytes": 288,
+          "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-estimator-replay-ggs24_7s/guard-v2-estimator-audit.log",
+          "sha256": "c381ffa9c4550c7129632a49539d15d1eaba932433f49c1a21725a603e1d1cdc"
+        },
+        "output": {
+          "bytes": 474031,
+          "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-estimator-replay-ggs24_7s/guard-v2-estimator-audit.json",
+          "sha256": "45eb1db086adcc81eb8b39596f381cbbb644d74ccdf5847b287c60908f10e5c1"
+        },
+        "passed": true,
+        "replay_directory": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp8-estimator-replay-ggs24_7s",
+        "returncode": 0,
+        "schema_version": 1,
+        "scope": "Only the 3 MB v2 trace was unpacked. Archived auditor, frozen checker and v1 audit were read directly. No profiler unpacking, runtime changes, API calls or archive writes; Python bytecode disabled.",
+        "started_utc": "2026-10-11T06:08:47.009537+00:00",
+        "verified_inputs": [
+          {
+            "all_hashes_match": true,
+            "source_path": "guard-v2-diagnostic-trace-327118.jsonl",
+            "source_sha256": "7a51145e6614c46bdfbd78e63a0cc9c17b8eaec5bd38dfcd9b95e6a4c78a3a1e",
+            "stored_bytes": 105192,
+            "stored_path": "guard-v2-diagnostic-trace-327118.jsonl.gz",
+            "stored_sha256": "e0dd74b23cf446753f074269a410e060e6225cbb3fa3ac83b375693ce3483934",
+            "uncompressed_bytes": 3076516,
+            "uncompressed_sha256": "7a51145e6614c46bdfbd78e63a0cc9c17b8eaec5bd38dfcd9b95e6a4c78a3a1e"
+          },
+          {
+            "all_hashes_match": true,
+            "source_path": "guard-v2-estimator-audit.py",
+            "source_sha256": "7f453d560f4ba12094fc66a048b1a52b681191b7ed31746a5af3a50240f217df",
+            "stored_bytes": 17671,
+            "stored_path": "guard-v2-estimator-audit.py",
+            "stored_sha256": "7f453d560f4ba12094fc66a048b1a52b681191b7ed31746a5af3a50240f217df",
+            "uncompressed_bytes": 17671,
+            "uncompressed_sha256": "7f453d560f4ba12094fc66a048b1a52b681191b7ed31746a5af3a50240f217df"
+          },
+          {
+            "all_hashes_match": true,
+            "source_path": "guard-v2-diagnostic-producers/check_decoupled_trace.py",
+            "source_sha256": "57deeb39a5697a0015c46465f81e88209c6c54e39202871d62622be3dc5d7498",
+            "stored_bytes": 28962,
+            "stored_path": "guard-v2-diagnostic-producers/check_decoupled_trace.py",
+            "stored_sha256": "57deeb39a5697a0015c46465f81e88209c6c54e39202871d62622be3dc5d7498",
+            "uncompressed_bytes": 28962,
+            "uncompressed_sha256": "57deeb39a5697a0015c46465f81e88209c6c54e39202871d62622be3dc5d7498"
+          },
+          {
+            "all_hashes_match": true,
+            "source_path": "guard-v1-estimator-audit.json",
+            "source_sha256": "2647b3e73210fe611d90598d37e8f65212e84eb53f907a16dbb98bd5a2ea77e8",
+            "stored_bytes": 775101,
+            "stored_path": "guard-v1-estimator-audit.json",
+            "stored_sha256": "2647b3e73210fe611d90598d37e8f65212e84eb53f907a16dbb98bd5a2ea77e8",
+            "uncompressed_bytes": 775101,
+            "uncompressed_sha256": "2647b3e73210fe611d90598d37e8f65212e84eb53f907a16dbb98bd5a2ea77e8"
+          },
+          {
+            "all_hashes_match": true,
+            "source_path": "guard-v2-estimator-audit.json",
+            "source_sha256": "45eb1db086adcc81eb8b39596f381cbbb644d74ccdf5847b287c60908f10e5c1",
+            "stored_bytes": 474031,
+            "stored_path": "guard-v2-estimator-audit.json",
+            "stored_sha256": "45eb1db086adcc81eb8b39596f381cbbb644d74ccdf5847b287c60908f10e5c1",
+            "uncompressed_bytes": 474031,
+            "uncompressed_sha256": "45eb1db086adcc81eb8b39596f381cbbb644d74ccdf5847b287c60908f10e5c1"
+          }
+        ]
+      }
+    },
+    "device_profiles": {
+      "receipt_source": "/tmp/muxpd-profile-replay-receipt.json",
+      "receipt_sha256": "84cc6d731dd7907ee3e24a371cb7f0c17e00d0fd1349203b39ae6f18db85901b",
+      "result": {
+        "schema_version": 1,
+        "passed": true,
+        "finished_utc": "2026-10-11T06:11:04.850989+00:00",
+        "returncode": 0,
+        "command": [
+          "python3",
+          "local-results/tp8-contention-replay/profile-hotspots-audit.py",
+          "--output",
+          "/tmp/tp8-contention-replayed-profile-hotspots.json"
+        ],
+        "archive_index_sha256": "07275b5a94bdcbb152305a4e83fd347efa44779694e4e2f84c49487c125173c5",
+        "scope": "Offline replay of all 16 restored rank traces; all fields exactly equal after only per-rank source path normalization. No NPU/API calls or sealed archive writes. CSV payloads were verified/unpacked but the classifier consumes trace_view.json.",
+        "all_non_path_json_fields_equal": true,
+        "rank_count": 16,
+        "source_paths_normalized": [
+          {
+            "stage": "old-profile",
+            "rank": 0,
+            "original": "local-results/tp8-contention/old-profile/dp0_pp0_tp0_dcp0_ep0_rank0_27446_20261011042840035_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+            "replayed": "local-results/tp8-contention-replay/old-profile/dp0_pp0_tp0_dcp0_ep0_rank0_27446_20261011042840035_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json"
+          },
+          {
+            "stage": "old-profile",
+            "rank": 1,
+            "original": "local-results/tp8-contention/old-profile/dp0_pp0_tp1_dcp0_ep1_rank1_27447_20261011042840035_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+            "replayed": "local-results/tp8-contention-replay/old-profile/dp0_pp0_tp1_dcp0_ep1_rank1_27447_20261011042840035_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json"
+          },
+          {
+            "stage": "old-profile",
+            "rank": 2,
+            "original": "local-results/tp8-contention/old-profile/dp0_pp0_tp2_dcp0_ep2_rank2_27448_20261011042840034_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+            "replayed": "local-results/tp8-contention-replay/old-profile/dp0_pp0_tp2_dcp0_ep2_rank2_27448_20261011042840034_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json"
+          },
+          {
+            "stage": "old-profile",
+            "rank": 3,
+            "original": "local-results/tp8-contention/old-profile/dp0_pp0_tp3_dcp0_ep3_rank3_27449_20261011042840035_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+            "replayed": "local-results/tp8-contention-replay/old-profile/dp0_pp0_tp3_dcp0_ep3_rank3_27449_20261011042840035_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json"
+          },
+          {
+            "stage": "old-profile",
+            "rank": 4,
+            "original": "local-results/tp8-contention/old-profile/dp0_pp0_tp4_dcp0_ep4_rank4_27450_20261011042840034_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+            "replayed": "local-results/tp8-contention-replay/old-profile/dp0_pp0_tp4_dcp0_ep4_rank4_27450_20261011042840034_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json"
+          },
+          {
+            "stage": "old-profile",
+            "rank": 5,
+            "original": "local-results/tp8-contention/old-profile/dp0_pp0_tp5_dcp0_ep5_rank5_27451_20261011042840035_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+            "replayed": "local-results/tp8-contention-replay/old-profile/dp0_pp0_tp5_dcp0_ep5_rank5_27451_20261011042840035_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json"
+          },
+          {
+            "stage": "old-profile",
+            "rank": 6,
+            "original": "local-results/tp8-contention/old-profile/dp0_pp0_tp6_dcp0_ep6_rank6_27452_20261011042840035_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+            "replayed": "local-results/tp8-contention-replay/old-profile/dp0_pp0_tp6_dcp0_ep6_rank6_27452_20261011042840035_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json"
+          },
+          {
+            "stage": "old-profile",
+            "rank": 7,
+            "original": "local-results/tp8-contention/old-profile/dp0_pp0_tp7_dcp0_ep7_rank7_27453_20261011042840035_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+            "replayed": "local-results/tp8-contention-replay/old-profile/dp0_pp0_tp7_dcp0_ep7_rank7_27453_20261011042840035_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json"
+          },
+          {
+            "stage": "native-profile-profile",
+            "rank": 0,
+            "original": "local-results/tp8-contention/native-profile-profile/dp0_pp0_tp0_dcp0_ep0_rank0_50304_20261011043427116_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+            "replayed": "local-results/tp8-contention-replay/native-profile-profile/dp0_pp0_tp0_dcp0_ep0_rank0_50304_20261011043427116_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json"
+          },
+          {
+            "stage": "native-profile-profile",
+            "rank": 1,
+            "original": "local-results/tp8-contention/native-profile-profile/dp0_pp0_tp1_dcp0_ep1_rank1_50305_20261011043427116_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+            "replayed": "local-results/tp8-contention-replay/native-profile-profile/dp0_pp0_tp1_dcp0_ep1_rank1_50305_20261011043427116_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json"
+          },
+          {
+            "stage": "native-profile-profile",
+            "rank": 2,
+            "original": "local-results/tp8-contention/native-profile-profile/dp0_pp0_tp2_dcp0_ep2_rank2_50306_20261011043427116_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+            "replayed": "local-results/tp8-contention-replay/native-profile-profile/dp0_pp0_tp2_dcp0_ep2_rank2_50306_20261011043427116_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json"
+          },
+          {
+            "stage": "native-profile-profile",
+            "rank": 3,
+            "original": "local-results/tp8-contention/native-profile-profile/dp0_pp0_tp3_dcp0_ep3_rank3_50307_20261011043427116_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+            "replayed": "local-results/tp8-contention-replay/native-profile-profile/dp0_pp0_tp3_dcp0_ep3_rank3_50307_20261011043427116_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json"
+          },
+          {
+            "stage": "native-profile-profile",
+            "rank": 4,
+            "original": "local-results/tp8-contention/native-profile-profile/dp0_pp0_tp4_dcp0_ep4_rank4_50308_20261011043427116_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+            "replayed": "local-results/tp8-contention-replay/native-profile-profile/dp0_pp0_tp4_dcp0_ep4_rank4_50308_20261011043427116_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json"
+          },
+          {
+            "stage": "native-profile-profile",
+            "rank": 5,
+            "original": "local-results/tp8-contention/native-profile-profile/dp0_pp0_tp5_dcp0_ep5_rank5_50309_20261011043427116_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+            "replayed": "local-results/tp8-contention-replay/native-profile-profile/dp0_pp0_tp5_dcp0_ep5_rank5_50309_20261011043427116_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json"
+          },
+          {
+            "stage": "native-profile-profile",
+            "rank": 6,
+            "original": "local-results/tp8-contention/native-profile-profile/dp0_pp0_tp6_dcp0_ep6_rank6_50310_20261011043427116_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+            "replayed": "local-results/tp8-contention-replay/native-profile-profile/dp0_pp0_tp6_dcp0_ep6_rank6_50310_20261011043427116_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json"
+          },
+          {
+            "stage": "native-profile-profile",
+            "rank": 7,
+            "original": "local-results/tp8-contention/native-profile-profile/dp0_pp0_tp7_dcp0_ep7_rank7_50311_20261011043427117_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+            "replayed": "local-results/tp8-contention-replay/native-profile-profile/dp0_pp0_tp7_dcp0_ep7_rank7_50311_20261011043427117_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json"
+          }
+        ],
+        "rank_metrics": [
+          {
+            "stage": "old-profile",
+            "rank": 0,
+            "sha256": "13b1caf261134f946d2b7e02859618e7cc92e7933b2b55d0238cd63403207678",
+            "trace_event_count": 289270,
+            "compute": {
+              "count": 16750,
+              "active_union_us": 294586.68,
+              "cross_stream_overlap_us": 0.0,
+              "overlap_fraction_of_active_union": 0.0,
+              "max_simultaneously_active_streams": 1,
+              "first_last_kernel_span_us": 1033811.26,
+              "active_fraction_of_kernel_span": 0.2849520907713851
+            }
+          },
+          {
+            "stage": "old-profile",
+            "rank": 1,
+            "sha256": "89a1d7a70c1a9cf9978014ff1f3f6c5a2985b18769c9bbd174902ee4d7c58fff",
+            "trace_event_count": 275662,
+            "compute": {
+              "count": 16750,
+              "active_union_us": 299891.672,
+              "cross_stream_overlap_us": 0.0,
+              "overlap_fraction_of_active_union": 0.0,
+              "max_simultaneously_active_streams": 1,
+              "first_last_kernel_span_us": 1033342.374,
+              "active_fraction_of_kernel_span": 0.2902152079945577
+            }
+          },
+          {
+            "stage": "old-profile",
+            "rank": 2,
+            "sha256": "152b1a4e93dc1df1c70b7776c6b024f82bc89d77c8093a858a239a6360d9fe78",
+            "trace_event_count": 275662,
+            "compute": {
+              "count": 16750,
+              "active_union_us": 298360.04,
+              "cross_stream_overlap_us": 0.0,
+              "overlap_fraction_of_active_union": 0.0,
+              "max_simultaneously_active_streams": 1,
+              "first_last_kernel_span_us": 1033108.26,
+              "active_fraction_of_kernel_span": 0.28879842660439087
+            }
+          },
+          {
+            "stage": "old-profile",
+            "rank": 3,
+            "sha256": "544928d24ed84ba2b22fc431393e32f7af6f07daffdf1e9688fb2d50007fc7f5",
+            "trace_event_count": 275662,
+            "compute": {
+              "count": 16750,
+              "active_union_us": 297130.3,
+              "cross_stream_overlap_us": 0.0,
+              "overlap_fraction_of_active_union": 0.0,
+              "max_simultaneously_active_streams": 1,
+              "first_last_kernel_span_us": 1032656.46,
+              "active_fraction_of_kernel_span": 0.28773392847414136
+            }
+          },
+          {
+            "stage": "old-profile",
+            "rank": 4,
+            "sha256": "358b3d7f992af369c2c1069d7b676e9b0c5e3781b17ea823a6fd4e7f794ac802",
+            "trace_event_count": 275663,
+            "compute": {
+              "count": 16750,
+              "active_union_us": 297873.44,
+              "cross_stream_overlap_us": 0.0,
+              "overlap_fraction_of_active_union": 0.0,
+              "max_simultaneously_active_streams": 1,
+              "first_last_kernel_span_us": 1033173.82,
+              "active_fraction_of_kernel_span": 0.2883091249834418
+            }
+          },
+          {
+            "stage": "old-profile",
+            "rank": 5,
+            "sha256": "614d4941c041b24bd0b932cb8bd55a27b326f09a5e62b827144e7fbd4b1a4d0d",
+            "trace_event_count": 275662,
+            "compute": {
+              "count": 16750,
+              "active_union_us": 298056.72,
+              "cross_stream_overlap_us": 0.0,
+              "overlap_fraction_of_active_union": 0.0,
+              "max_simultaneously_active_streams": 1,
+              "first_last_kernel_span_us": 1033283.88,
+              "active_fraction_of_kernel_span": 0.2884557920326793
+            }
+          },
+          {
+            "stage": "old-profile",
+            "rank": 6,
+            "sha256": "e3877ae0032fea0837686d908ca9daaba712d8b5fb1f6508d986dcdad5383a8d",
+            "trace_event_count": 275662,
+            "compute": {
+              "count": 16750,
+              "active_union_us": 298075.86,
+              "cross_stream_overlap_us": 0.0,
+              "overlap_fraction_of_active_union": 0.0,
+              "max_simultaneously_active_streams": 1,
+              "first_last_kernel_span_us": 1033430.88,
+              "active_fraction_of_kernel_span": 0.2884332815756386
+            }
+          },
+          {
+            "stage": "old-profile",
+            "rank": 7,
+            "sha256": "9d1d0fa64d25b0b20e5d1375d8e77cac3259619abbc8f8a1b6ad36a0aa8635a3",
+            "trace_event_count": 275662,
+            "compute": {
+              "count": 16750,
+              "active_union_us": 298981.44,
+              "cross_stream_overlap_us": 0.0,
+              "overlap_fraction_of_active_union": 0.0,
+              "max_simultaneously_active_streams": 1,
+              "first_last_kernel_span_us": 1033259.88,
+              "active_fraction_of_kernel_span": 0.2893574460667146
+            }
+          },
+          {
+            "stage": "native-profile-profile",
+            "rank": 0,
+            "sha256": "d3a1ec0621ebace84ddc860883d197ed8ce18a7a2728713df63f4828516af9bc",
+            "trace_event_count": 281297,
+            "compute": {
+              "count": 15655,
+              "active_union_us": 295212.4,
+              "cross_stream_overlap_us": 0.0,
+              "overlap_fraction_of_active_union": 0.0,
+              "max_simultaneously_active_streams": 1,
+              "first_last_kernel_span_us": 1099389.42,
+              "active_fraction_of_kernel_span": 0.26852395941740104
+            }
+          },
+          {
+            "stage": "native-profile-profile",
+            "rank": 1,
+            "sha256": "68987cb84ab9f79dba8478356f1cc87bdb425f9fa744091435e305737fd2bb36",
+            "trace_event_count": 269633,
+            "compute": {
+              "count": 15655,
+              "active_union_us": 295585.475,
+              "cross_stream_overlap_us": 0.0,
+              "overlap_fraction_of_active_union": 0.0,
+              "max_simultaneously_active_streams": 1,
+              "first_last_kernel_span_us": 1099737.487,
+              "active_fraction_of_kernel_span": 0.26877821161333204
+            }
+          },
+          {
+            "stage": "native-profile-profile",
+            "rank": 2,
+            "sha256": "271d065fa4229dacd57555599b29db2eefe0a5e94188f2af8ef6b5344571f21d",
+            "trace_event_count": 269632,
+            "compute": {
+              "count": 15655,
+              "active_union_us": 295107.82,
+              "cross_stream_overlap_us": 0.0,
+              "overlap_fraction_of_active_union": 0.0,
+              "max_simultaneously_active_streams": 1,
+              "first_last_kernel_span_us": 1099698.92,
+              "active_fraction_of_kernel_span": 0.2683532870978904
+            }
+          },
+          {
+            "stage": "native-profile-profile",
+            "rank": 3,
+            "sha256": "6d84fc5646eecb5c347d8b78b1ccb93bb879c8a974b8455946f81dc48161cb56",
+            "trace_event_count": 269632,
+            "compute": {
+              "count": 15655,
+              "active_union_us": 295877.86,
+              "cross_stream_overlap_us": 0.0,
+              "overlap_fraction_of_active_union": 0.0,
+              "max_simultaneously_active_streams": 1,
+              "first_last_kernel_span_us": 1099720.24,
+              "active_fraction_of_kernel_span": 0.26904829904740135
+            }
+          },
+          {
+            "stage": "native-profile-profile",
+            "rank": 4,
+            "sha256": "943faf2ff6d95cc98634dcf9fd949128fb28c9b1028bd9402091eec2bee164e5",
+            "trace_event_count": 269632,
+            "compute": {
+              "count": 15655,
+              "active_union_us": 296347.46,
+              "cross_stream_overlap_us": 0.0,
+              "overlap_fraction_of_active_union": 0.0,
+              "max_simultaneously_active_streams": 1,
+              "first_last_kernel_span_us": 1100057.66,
+              "active_fraction_of_kernel_span": 0.26939266074471047
+            }
+          },
+          {
+            "stage": "native-profile-profile",
+            "rank": 5,
+            "sha256": "7e54c1b39cc7f003835918cf3a6411f9b3568e508c66494c521a893bc04b7536",
+            "trace_event_count": 269632,
+            "compute": {
+              "count": 15655,
+              "active_union_us": 294274.62,
+              "cross_stream_overlap_us": 0.0,
+              "overlap_fraction_of_active_union": 0.0,
+              "max_simultaneously_active_streams": 1,
+              "first_last_kernel_span_us": 1099220.8,
+              "active_fraction_of_kernel_span": 0.2677120192776556
+            }
+          },
+          {
+            "stage": "native-profile-profile",
+            "rank": 6,
+            "sha256": "be1ee1b00d1957e224bf14ee9ac8ea5d2de58c6f61116372295431ca9d7daa47",
+            "trace_event_count": 269632,
+            "compute": {
+              "count": 15655,
+              "active_union_us": 294139.52,
+              "cross_stream_overlap_us": 0.0,
+              "overlap_fraction_of_active_union": 0.0,
+              "max_simultaneously_active_streams": 1,
+              "first_last_kernel_span_us": 1100087.82,
+              "active_fraction_of_kernel_span": 0.2673782171317923
+            }
+          },
+          {
+            "stage": "native-profile-profile",
+            "rank": 7,
+            "sha256": "378cb46e4c7466af674f58aa4c7de393c02e9528375e7874d4183288bc2b00bd",
+            "trace_event_count": 269632,
+            "compute": {
+              "count": 15655,
+              "active_union_us": 293959.54,
+              "cross_stream_overlap_us": 0.0,
+              "overlap_fraction_of_active_union": 0.0,
+              "max_simultaneously_active_streams": 1,
+              "first_last_kernel_span_us": 1099220.2,
+              "active_fraction_of_kernel_span": 0.26742552584095525
+            }
+          }
+        ],
+        "artifact_hashes": {
+          "original_report_sha256": "55660e0b02aeed8c7f0cb696f58d4a879d0454193f42fc751ef2a372454b3310",
+          "replayed_report_sha256": "e4337dafd618aaf27a82c744221b2b84e3096ac1ac1a81f3a1293dd8da61a5c8",
+          "audit_script_sha256": "3fd07bd7419d1c5b8461ee2f5e74d68687d0d0ace45629c17475ce4761e0ec97",
+          "classifier_script_sha256": "f9cb2fcef2af0e425b77d5de803524ee0eeff46ffba36aa43ce003cd2c68e6d2",
+          "replay_log_sha256": "3091765e40383fbfe8db94d3ec13a7a082ff289bb81919188db9cebd1d0363ab"
+        },
+        "replay_log": "old-profile 0 complete\nold-profile 1 complete\nold-profile 2 complete\nold-profile 3 complete\nold-profile 4 complete\nold-profile 5 complete\nold-profile 6 complete\nold-profile 7 complete\nnative-profile-profile 0 complete\nnative-profile-profile 1 complete\nnative-profile-profile 2 complete\nnative-profile-profile 3 complete\nnative-profile-profile 4 complete\nnative-profile-profile 5 complete\nnative-profile-profile 6 complete\nnative-profile-profile 7 complete\n"
+      }
+    }
+  },
+  "publication_checkpoint": {
+    "receipt_source": "/tmp/muxpd-publication-check.json",
+    "receipt_sha256": "abd4e50751e768fec83600f5d2203b382e1c01889cefa8e1ae1306c2762c565f",
+    "result": {
+      "artifact_files": 273,
+      "tracked_file_set_exact": true,
+      "staged_blob_bytes_match_sealed_files": true,
+      "author_markdown_links_passed": true,
+      "ruff_passed": true,
+      "authored_whitespace_passed": true,
+      "scope": "Immutable raw logs retain their original whitespace; no normalization of evidence."
+    },
+    "scope_note": "Root publication checkpoint before adding this sibling replay receipt and its report link; final git staging is performed by root."
+  }
+}

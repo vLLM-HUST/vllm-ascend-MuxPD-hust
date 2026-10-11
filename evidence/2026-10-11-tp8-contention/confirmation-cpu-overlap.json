@@ -1,0 +1,10 @@
+{
+  "recorded_at": "2026-10-11T05:24:43.156305+00:00",
+  "affected_stage": "old-work256-confirm",
+  "reason": "CPU regression ended after serving health; avoid mixing its control measurements into selected final confirmation. Decision made from overlap timestamps without inspecting performance metrics.",
+  "server_ready_at": "2026-10-11T05:22:57.419935+00:00",
+  "cpu_test_log_last_write_at": "2026-10-11T05:23:14.510878+00:00",
+  "cpu_test_log": "../decode-budget-v2-regression-tests.log",
+  "affected_client_started_at": "2026-10-11T05:22:57.422457+00:00",
+  "action": "Retain complete original4-workload stage; repeat all4 workloads in same immutable old service after existing controller completes, no CPU tests, namedold-work256-confirm-clean. Select clean stage with explicit exclusionreason for affectedstage."
+}

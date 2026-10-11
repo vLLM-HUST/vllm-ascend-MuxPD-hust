@@ -34,6 +34,15 @@ TP4 调优加入独立 decode 图、完整 P 编译、按 cohort token 工作量
 0.87%。自然语言 16/16 对照一致，合成用例文本 33/56 一致。
 方法、原始回执及输出稳定性限制见 [TP8 实验报告](docs/performance-tp8.md)。
 
+持续 D 加长 P 的 TP8 争用实验取得明确的延迟取舍：启用可选
+`decode_budget_guard` v2 后，三种长 P 负载各六轮的 D 最大事件间隔 P95
+从原生 16K 的 385–398 ms 降到 66–68 ms，所有请求满足本轮 D 100 ms /
+P TTFT 1 s 观察目标；吞吐低 1.96%–3.54%，P TTFT P95 增加 22.62%–28.49%。
+原生 2K chunk、旧插件、无注入 P 控制及所有重复轮次均保留。
+自然语言为 16/16 文本精确一致，合成 token IDs 仍有重复及跨配置差异。
+这不是硬 SLO 保证或设备空间分区；guard 默认关闭，完整启用示例、图表与
+全部证据见 [TP8 争用实验报告](docs/performance-tp8-contention.md)。
+
 早期 [TP2 验证](evidence/2026-10-10/README.md) 和
 [TP4 eager 验证](evidence/2026-10-10-tp4/README.md) 保留原始回执与未取得收益的结果。
 不同 TP、eager/graph、缓存设置的测量不能直接混用。

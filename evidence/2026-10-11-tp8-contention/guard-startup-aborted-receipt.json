@@ -1,0 +1,41 @@
+{
+  "at": "2026-10-11T05:02:41.249525+00:00",
+  "stage": "guard-startup-aborted",
+  "reason": "Plot dependency install temporarily shadowed original global numpy1.26.4 with local2.5.4. Detected before service readiness or any benchmark request; controller terminated and owned service processes stopped. Runtime installation rolled back, plotting moved to isolated venv. Restart guard-initial from fresh processes.",
+  "client_requests_started": false,
+  "timed_reports_produced": false,
+  "artifacts": [
+    {
+      "original_name": "guard-initial-force-stop.json",
+      "preserved_as": "guard-startup-aborted-force-stop.json",
+      "sha256": "4c44f75de2646e7f03084f05f744a99d154b83b31ee3e6fa64cf291986150fe5"
+    },
+    {
+      "original_name": "guard-initial-launch.sh",
+      "preserved_as": "guard-startup-aborted-launch.sh",
+      "sha256": "76e4775e1fd03fe8ed03a20eb2fa589ca92af693c9c48be030eadb391d4a5708"
+    },
+    {
+      "original_name": "guard-initial-manifest.json",
+      "preserved_as": "guard-startup-aborted-manifest.json",
+      "sha256": "95046f75f1d5209e7349d3e6415fc65ac30eddd3ab88afb428ed2a6254191669"
+    },
+    {
+      "original_name": "guard-initial-server.log",
+      "preserved_as": "guard-startup-aborted-server.log",
+      "sha256": "067a1fadad742dbb746cd551e7c56d29766d7277cb03840dcd25ce20116d9195"
+    },
+    {
+      "original_name": "guard-initial-stop.json",
+      "preserved_as": "guard-startup-aborted-stop.json",
+      "sha256": "94e71da762c40c3218e75e3cc72d71ab33ac5cb165b8b07b20516fe48ec1ded2"
+    },
+    {
+      "original_name": "guard-initial.pid",
+      "preserved_as": "guard-startup-aborted.pid",
+      "sha256": "158673788019246baef7b16f80c1c1ac9f7b83794bd1fe9ce72ccf941b00abab"
+    }
+  ],
+  "rollback_log": "plot-dependency-rollback.log",
+  "runtime_verification": "runtime-after-rollback.json"
+}
