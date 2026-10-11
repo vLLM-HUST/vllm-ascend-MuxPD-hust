@@ -1,16 +1,20 @@
 # Experimental whole-short-prefill PIECEWISE graphs
 
-This independent candidate is **disabled by default** and has CPU contract tests
-only. It has not been run on an NPU and has no demonstrated correctness or
-performance result. It is based on plugin `9e740ba`; it does not include the
-separate short-FX or early decode sampling experiments.
+This independent candidate remains **disabled by default**. The TP8 finite
+126-request diagnosis of runtime `b95372ee9c5f5f568c6d0899724ecd66a48a527b`
+passed its host graph/path and lifecycle contract, and natural-language text
+matched the reference in 16/16 cases. A repeated synthetic P128 request diverged
+at generated-token index 4; matched-input numerical diagnosis is still needed.
+There is no candidate device profile or performance result. It is based on
+plugin `9e740ba` and excludes the separate short-FX and early sampling experiments.
 
 The proposed setting is `piecewise_short_prefill_tokens: 512` with
 `execution: decoupled`, `decode_graph: true`, `stream_mode: overlap`, and
 `overlap_communication: isolated`. `compile_full_prefill` must remain false.
 Use the native V1 `VLLM_COMPILE` / `FULL_AND_PIECEWISE` configuration with an
 explicit sorted gear list ending at 512 and containing `max_num_seqs`, for
-example `[1,2,4,8,128,256,512]` for eight request slots. At most 16 gears are
+example `[1,2,4,8,128,136,256,512]` for eight request slots. These eight gears were
+used in the finite diagnosis; P129 pads to 136. At most 16 gears are
 accepted. These are experimental preparation parameters, not recommendations.
 The native fusion-pass backend must be selected; `enable_npugraph_ex`, static
 kernels, shared `cudagraph_copy_inputs`, and Inductor graph partitioning are
@@ -88,7 +92,7 @@ raw continuation/cancellation, and strict trace receipts.
   in 27.10 seconds. This covers the helper, controller, decode graph, worker
   graph, decoupled worker, scheduler, trace checker, and policy test files.
 - Ruff on every changed Python file and `git diff --check`: passed.
-  All checks terminated; no device result exists.
+  All CPU checks terminated. The separate device diagnosis is summarized below.
 
 The final native command sourced `/root/workspace/runtime/env.sh`, prepended
 this worktree's `src` directory to `PYTHONPATH`, and invoked the pinned venv's
@@ -102,13 +106,47 @@ FULL, D129 and P513 fall back to NONE, and each lane captures only its own
 bounded descriptor list. Fake controller tests do not prove real ACL capture,
 static addresses, HCCL behavior, or concurrent model correctness.
 
-## Required device validation before timing
+## Finite TP8 diagnosis and remaining numerical gate
+
+The stage `short-piecewise-fixed4-omp1-diagnostic` completed its registered
+126 requests: 80 core requests, natural16, and state-reuse30. The independent
+`short-piecewise-fixed4-omp1-diagnostic-independent-proof.json` reports a passed
+host graph/path and lifecycle contract on all eight ranks. Its
+`physical_device_profile_complete` is false: successful replay calls and host
+observations do not prove kernel completion, physical overlap or performance.
+The core includes 78 complete responses and two planned client cancellations;
+cancelled streams are not counted as complete generation.
+
+Natural-language text matched the existing baseline in 16/16 cases and passed
+16/16 oracles. This is a text comparison, not a token-ID equivalence proof.
+The independent numerical review then identified a separate unresolved result:
+two sequential P128-only requests with identical prompt IDs and sampling fields
+(apart from request ID) produced different eight-token outputs beginning at
+zero-based index 4. Both had complete prompt-ID echoes, usage, finish and DONE.
+All eight ranks observed the intended gear128 replay with stable entry/address
+metadata, but those checks do not inspect KV/GDN state or tensor contents.
+
+The older native P128 repeats were stable, but used a **different prompt token
+array** and generated 16 rather than eight tokens. They are not a matched
+reference and cannot establish a candidate regression or explain it away.
+This P128 result must not be folded into the already known native one-/two-token
+instability. A separately registered matched-payload numerical comparison is
+required before advancing the candidate. No cause—numerical variation, graph
+replay, or cache/state aliasing—has been established.
+
+The retained numerical records are
+`short-piecewise-fixed4-omp1-diagnostic-numeric-review.{json,md}` and
+`short-piecewise-fixed4-omp1-diagnostic-p128-supplement.{json,md}` under
+`local-results/tp8-goodput`. Their source reports and raw streams remain intact.
+Host/path proof PASS does not close this numerical gate or justify timing.
+
+## Device evidence requirements before timing
 
 Use a separate immutable source snapshot and fresh worker processes. First
 verify all ranks' startup captures, private P pool/gear manifests, D FULL replay,
 and P PIECEWISE replay on the intended physical streams. The trace-only marker
 `MuxPD short PIECEWISE diagnostic` records rank, cohort, ordered request IDs,
-aggregate P tokens, and before/after per-wrapper capture/replay counts. The
+aggregate P tokens, and before/after aggregate capture/replay counts. The
 snapshot also records P and D pool identifiers, an actual pool equality check,
 and each P wrapper's mode and entry gears. TorchNPU's two-integer native handle
 is recorded by value; a nonstandard pool type is explicitly labelled as Python
@@ -116,9 +154,11 @@ object identity only, which cannot independently establish different device
 pools. Manifests are bounded to 256 wrappers and 16 entries each; truncation is
 explicit and invalidates a claim that every wrapper/gear was checked. These
 host-only snapshots read no tensor contents and enqueue no device operations.
-A successful host return must add one whole forward and one replay per owned
-wrapper while capture count stays fixed. These counts do not establish device
-completion, exclude all baked communicator handles, or demonstrate overlap;
+A successful host return must add one whole forward and aggregate replays equal
+to the wrapper count while capture count stays fixed. Exactly one replay per
+wrapper is enforced by the pinned serving guard; the aggregate marker alone
+does not independently establish that distribution. These counts do not establish
+device completion, exclude all baked communicator handles, or demonstrate overlap;
 correlate them with source and device traces.
 
 Then compare natural text and raw generated token IDs against matched native
@@ -149,14 +189,20 @@ limiting PIECEWISE capture to short gears ending at 512. In the pinned
 `num_tokens > max_cudagraph_capture_size` (around lines 270–281), independently
 of the scheduler's token admission budget. Thus a native 16K-budget,
 FULL_AND_PIECEWISE configuration can in principle replay short P and D while
-executing larger P in NONE mode. This is a source feasibility observation only:
-it has not been registered as an experiment or executed by this candidate.
+executing larger P in NONE mode. The separate native 16K/cap512 stage now
+provides a reference, but its original
+P128 synthetic inputs differ from this candidate's inputs as described above.
 A slower native 512-token-budget service is not sufficient as the sole
 performance baseline. Native admission/chunking, asynchronous scheduling, and
 all other launch settings must be declared and kept distinct in comparisons.
 
 
-## Prospective finite launch and diagnosis (not executed)
+## Finite launch settings and original planning outline
+
+The registered 126-request controller expanded this original outline. Its
+retained plan/report, rather than the table below, defines the exact executed
+case inventory. No additional requests or profile run are authorized by this
+document.
 
 Start from a new immutable snapshot of this branch, not the early-sampling or
 short-FX source. Relative to the existing isolated-overlap graph launcher:
@@ -171,7 +217,7 @@ short-FX source. Relative to the existing isolated-overlap graph launcher:
   `compile_short_prefill_tokens`: those separate branch fields are unsupported.
 - Replace FULL_DECODE_ONLY with `--no-enforce-eager --compilation-config
   '{"mode":3,"cudagraph_mode":"FULL_AND_PIECEWISE",
-  "cudagraph_capture_sizes":[1,2,4,8,128,256,512],
+  "cudagraph_capture_sizes":[1,2,4,8,128,136,256,512],
   "max_cudagraph_capture_size":512,"cudagraph_copy_inputs":false,
   "use_inductor_graph_partition":false,
   "pass_config":{"enable_sp":false,"fuse_gemm_comms":false}}'`.
@@ -187,10 +233,10 @@ A small initial matrix can stop at the first transport/lifecycle failure:
 
 | Finite case | Required observation |
 | --- | --- |
-| Startup once, all eight ranks | P pool handle differs from D; complete manifests; all P wrappers PIECEWISE with seven gears, D FULL with 1/2/4/8 only; global params unchanged during P capture. |
-| D-only batches 1, 4, 7, four generated tokens each | D existing FULL entries replay; P replay/capture counters remain unchanged. |
+| Startup once, all eight ranks | P pool handle differs from D; complete manifests; all P wrappers PIECEWISE with eight gears, D FULL with 1/2/4/8 only; global params unchanged during P capture. |
+| D-only batches 1, 4, 7, four generated tokens each | After their initialization prefills finish, pure-D intervals replay existing FULL entries; P counters remain unchanged during those intervals. |
 | P128-only twice | Existing P entries replay without additional capture; no D graph entry is used for P. |
-| P128, P129, P512, each with D1 and D4 | Six fixed cases; P129 pads to P256; each P whole return adds one replay per wrapper, no captures; D completion/ACK remains native. |
+| P128, P129, P512, each with D1 and D4 | Six fixed cases; P129 pads to P136; each P whole return adds one replay per wrapper, no captures; D completion/ACK remains native. |
 | P512 with D7 | One near-capacity slot case; no D8+P claim under eight request slots. |
 | P513 with D4; P12K with D4 | Two raw controls; no P graph replay, layer-hook progress and full eventual ACK; 12K uses q4 when D is selected. |
 | Two P256 with D4; two P257 with D4 | Two bounded admission attempts. Actual trace must establish a single aggregate 512/514-token cohort; otherwise report the co-admission coverage as missing, without unregistered retries. |
