@@ -112,6 +112,28 @@ Ascend 版本上不支持，保留启动错误与原因，不称其已完成性�
 maxseq=16/32 和匹配 capture sizes 是双方共同验证的后续矩阵，不单方面
 为候选或原生放宽并发。
 
+原生 prefill 分段图也必须纳入候选。固定 Ascend 源码
+[`03766ac` 的 platform.py](https://github.com/vLLM-HUST/vllm-ascend-hust/blob/03766ac696fde5ab1980d80ca0b8543d3580c989/vllm_ascend/platform.py#L555)
+支持 `FULL_AND_PIECEWISE`，而固定 vLLM 源码的
+[默认 attention 切分点](https://github.com/vLLM-HUST/vllm-hust/blob/d0f22d2bda562156e4dbf433ce645e1769b4f804/vllm/config/compilation.py#L755)
+包含 GDN。GDN 不支持任意 prefill 的整网 FULL 捕获，不等于其外侧不能
+使用分段图。上述 `FULL_DECODE_ONLY` 启动命令只是一项对照，不能称为
+最佳原生配置。
+
+本机后续事前登记的分段图候选为 token budget 512/1024、maxseq=8、
+async、OMP=1，保留各自的 D-only 对照。512 的捕获尺寸为
+`[1,2,4,8,128,136,256,512]`，1024 另加 `1024`，上限设为对应 budget；
+136 覆盖 P128 加 1–7 个 D 的总 token 数。这是有限的初始候选，尚未验证
+实机可用性或确定最优尺寸。配置 `mode=3`、`FULL_AND_PIECEWISE`、
+`use_inductor_graph_partition=false`，关闭 `enable_sp`、`fuse_gemm_comms`，
+保留默认 `splitting_ops`；平台会关闭 `npugraph_ex` 和 static kernel。
+因此该比较包含编译路径变化，不能描述为只改一个 graph 开关。
+
+先在独立诊断进程确认最终模式、八个 rank 的真实 P/混合批分段 replay、
+长请求连续状态及取消后恢复，再移除 observer 并重启进行干净计时。
+捕获内存不足、模式降级、正确性失败都须保留，不能换回 D-only 后仍标为
+分段图。编译后的 FX 调用本身不能证明 ACL graph replay。
+
 ## 生成与复用到达计划
 
 [benchmark_goodput.py](../scripts/benchmark_goodput.py) 支持独立 plan 文件。
