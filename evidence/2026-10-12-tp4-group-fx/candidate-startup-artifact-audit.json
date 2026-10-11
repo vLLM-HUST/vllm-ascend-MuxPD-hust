@@ -1,0 +1,2345 @@
+{
+  "schema": "muxpd-groupfx-startup-artifact-audit-v1",
+  "created_utc": "2026-10-11T16:30:18.801827+00:00",
+  "stage": "tp4-groupfx-candidate-b-diagnostic-v1",
+  "runtime_commit": "f09a100ade651936b3efeaf045ec5ce63d0b38fe",
+  "command": "python3 /root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/audit_groupfx_artifacts.py",
+  "script_sha256": "a8fab363ed688fcc795215918011b3f50d6587f2f794e12a23a3e93cb1572b75",
+  "manifest": {
+    "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-manifest.json",
+    "sha256": "8d451321fdc93949bd97403975e68761d03e909bc9a912d603e79f839be7c1b2"
+  },
+  "source_files": [
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-source/vllm_muxpd/prefill_groups.py",
+      "bytes": 12105,
+      "sha256": "03e31685dabcb31499a59fa9931702eda289aa907157a34e420a690ab2ee8af1"
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-source/vllm_muxpd/prefill_group_models.py",
+      "bytes": 3165,
+      "sha256": "11de725e723bb7176beab03cdf8cd0231da6bcc735adf9f9c3f2c687148066f8"
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-source/vllm_muxpd/worker.py",
+      "bytes": 37510,
+      "sha256": "3d6923bd1681024eed025353638c0480f7c45eadaa249eda6d20a7f4dae841f9"
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-source/vllm_muxpd/communicators.py",
+      "bytes": 6673,
+      "sha256": "78b8847dafaaf4995788a3a41552629bc67ff352f85dd589afa4cb311758eaa4"
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-source/vllm_muxpd/overlap.py",
+      "bytes": 12915,
+      "sha256": "e6e50ea06355bbcec670ae8074085313d33c9a1f5bcb7a04f3d7e5d09be39935"
+    }
+  ],
+  "checks": {
+    "graph_files_40_prefill_plus_4_decode": true,
+    "all_absolute_layer_ranges_match": true,
+    "all_graph_op_counts_match": true,
+    "four_rank_group_snapshots": true,
+    "four_rank_decode_snapshots": true,
+    "all_ten_group_startup_returns": true,
+    "decode_four_warmups_and_captures": true,
+    "eleven_distinct_logged_aot_paths": true
+  },
+  "passed": true,
+  "graphs": [
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-00/rank_0_0/backbone/computation_graph.py",
+      "bytes": 67188,
+      "sha256": "09deec547be2bf8a7097cca5921d5b4239d3b9a97f1d2e3068cc4d4b2e4da327",
+      "group": 0,
+      "rank": 0,
+      "absolute_layers": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "expected_layers": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "f739470ec2085cc0d026de6828d78319f073ff5cb512ff8540e9c8ecf058b2f3",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-00/rank_1_0/backbone/computation_graph.py",
+      "bytes": 67188,
+      "sha256": "0459e94e5d91bb7f14d3e02ee8430b8d02a7dcb8154580f2c45f0c776e82e93f",
+      "group": 0,
+      "rank": 1,
+      "absolute_layers": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "expected_layers": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "f739470ec2085cc0d026de6828d78319f073ff5cb512ff8540e9c8ecf058b2f3",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-00/rank_2_0/backbone/computation_graph.py",
+      "bytes": 67188,
+      "sha256": "b6dd446e0a0c02d5cd1edf8324483b6f02eeccdc7a51f43bebc52e851544ac39",
+      "group": 0,
+      "rank": 2,
+      "absolute_layers": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "expected_layers": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "f739470ec2085cc0d026de6828d78319f073ff5cb512ff8540e9c8ecf058b2f3",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-00/rank_3_0/backbone/computation_graph.py",
+      "bytes": 67188,
+      "sha256": "88ee294314b2c25345d1893c113f3c627703b5cc2b0794f89ede43659096d685",
+      "group": 0,
+      "rank": 3,
+      "absolute_layers": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "expected_layers": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "f739470ec2085cc0d026de6828d78319f073ff5cb512ff8540e9c8ecf058b2f3",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-01/rank_0_0/backbone/computation_graph.py",
+      "bytes": 68053,
+      "sha256": "0a2b965da5cc07c5cbf7ef420ac2609293758fb94a454edda3e62e014ebe9221",
+      "group": 1,
+      "rank": 0,
+      "absolute_layers": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "expected_layers": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-01/rank_1_0/backbone/computation_graph.py",
+      "bytes": 68053,
+      "sha256": "4c9229b83657c73a62e3e5857b005f6ffaf299b1d3da0064932cc1c57b7c2e55",
+      "group": 1,
+      "rank": 1,
+      "absolute_layers": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "expected_layers": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-01/rank_2_0/backbone/computation_graph.py",
+      "bytes": 68053,
+      "sha256": "e8a551914d6b1f7411c88dbd498e114414039627568455d5fdb186d08aa44b25",
+      "group": 1,
+      "rank": 2,
+      "absolute_layers": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "expected_layers": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-01/rank_3_0/backbone/computation_graph.py",
+      "bytes": 68053,
+      "sha256": "a1a3c86ef54588c314cbb42c51dbd7cb631390afa8fa6dc521abcb708bc71550",
+      "group": 1,
+      "rank": 3,
+      "absolute_layers": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "expected_layers": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-02/rank_0_0/backbone/computation_graph.py",
+      "bytes": 68055,
+      "sha256": "20156b5ace0b235e8e265f77cfb4c60aab4acdf6a2fa6584a3ce532d7e5ca95a",
+      "group": 2,
+      "rank": 0,
+      "absolute_layers": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "expected_layers": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-02/rank_1_0/backbone/computation_graph.py",
+      "bytes": 68055,
+      "sha256": "92079ceb023dc1053aca2dd7fd1b75599bbcc5fc17f4fd84921e857f6bdeea28",
+      "group": 2,
+      "rank": 1,
+      "absolute_layers": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "expected_layers": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-02/rank_2_0/backbone/computation_graph.py",
+      "bytes": 68055,
+      "sha256": "de67332deca20eec68b76086a59281d19a2c3ba5d6e9bd69765558a4f0135930",
+      "group": 2,
+      "rank": 2,
+      "absolute_layers": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "expected_layers": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-02/rank_3_0/backbone/computation_graph.py",
+      "bytes": 68055,
+      "sha256": "047c60ebf44eab65d76d2613a7a6830ebdffaddc220d6bfcee0f23fbe07c53da",
+      "group": 2,
+      "rank": 3,
+      "absolute_layers": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "expected_layers": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-03/rank_0_0/backbone/computation_graph.py",
+      "bytes": 68059,
+      "sha256": "4cd052211e80ebcee1a341b56893c8b99c08c4d7d6670ff0d6b5609562a92078",
+      "group": 3,
+      "rank": 0,
+      "absolute_layers": [
+        12,
+        13,
+        14,
+        15
+      ],
+      "expected_layers": [
+        12,
+        13,
+        14,
+        15
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-03/rank_1_0/backbone/computation_graph.py",
+      "bytes": 68059,
+      "sha256": "d2a093c2e2e11815db3856d3f8a14f9f4d2f7d4f051266f5a1750e9edcb5aafd",
+      "group": 3,
+      "rank": 1,
+      "absolute_layers": [
+        12,
+        13,
+        14,
+        15
+      ],
+      "expected_layers": [
+        12,
+        13,
+        14,
+        15
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-03/rank_2_0/backbone/computation_graph.py",
+      "bytes": 68059,
+      "sha256": "0705834af43234c003f3098f4f38e06f89ba71febbd09be246b36100df9ccedf",
+      "group": 3,
+      "rank": 2,
+      "absolute_layers": [
+        12,
+        13,
+        14,
+        15
+      ],
+      "expected_layers": [
+        12,
+        13,
+        14,
+        15
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-03/rank_3_0/backbone/computation_graph.py",
+      "bytes": 68059,
+      "sha256": "011b97c55bc0ce3333e98c5749960b6a8c6ac87244e1c036f4ba5ab44bc045e2",
+      "group": 3,
+      "rank": 3,
+      "absolute_layers": [
+        12,
+        13,
+        14,
+        15
+      ],
+      "expected_layers": [
+        12,
+        13,
+        14,
+        15
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-04/rank_0_0/backbone/computation_graph.py",
+      "bytes": 68060,
+      "sha256": "0a3e3b6b961d3cfebc9b94d14c7ece8f47f809c74d891a62fa55f318135584e4",
+      "group": 4,
+      "rank": 0,
+      "absolute_layers": [
+        16,
+        17,
+        18,
+        19
+      ],
+      "expected_layers": [
+        16,
+        17,
+        18,
+        19
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-04/rank_1_0/backbone/computation_graph.py",
+      "bytes": 68060,
+      "sha256": "fba93c2bfc4dec64559f3c7c291cadcbbe0ce9905325124f415eea9f40d0a80d",
+      "group": 4,
+      "rank": 1,
+      "absolute_layers": [
+        16,
+        17,
+        18,
+        19
+      ],
+      "expected_layers": [
+        16,
+        17,
+        18,
+        19
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-04/rank_2_0/backbone/computation_graph.py",
+      "bytes": 68060,
+      "sha256": "8e814341fda5ce35852ec563257defa4fdcd87109ec2cf4c3046d806a5528876",
+      "group": 4,
+      "rank": 2,
+      "absolute_layers": [
+        16,
+        17,
+        18,
+        19
+      ],
+      "expected_layers": [
+        16,
+        17,
+        18,
+        19
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-04/rank_3_0/backbone/computation_graph.py",
+      "bytes": 68060,
+      "sha256": "24127d8b7ebd47d299423eacaa8edd1d047724a84b523506dacefeabe4020a08",
+      "group": 4,
+      "rank": 3,
+      "absolute_layers": [
+        16,
+        17,
+        18,
+        19
+      ],
+      "expected_layers": [
+        16,
+        17,
+        18,
+        19
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-05/rank_0_0/backbone/computation_graph.py",
+      "bytes": 68060,
+      "sha256": "81980742498862da10363103061d5f35afb35fa63346e6ef9119e18452ec5c1d",
+      "group": 5,
+      "rank": 0,
+      "absolute_layers": [
+        20,
+        21,
+        22,
+        23
+      ],
+      "expected_layers": [
+        20,
+        21,
+        22,
+        23
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-05/rank_1_0/backbone/computation_graph.py",
+      "bytes": 68060,
+      "sha256": "508e5f764d05f88333ede837afebd7b640d39e66769e53a4a930975a52a66d42",
+      "group": 5,
+      "rank": 1,
+      "absolute_layers": [
+        20,
+        21,
+        22,
+        23
+      ],
+      "expected_layers": [
+        20,
+        21,
+        22,
+        23
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-05/rank_2_0/backbone/computation_graph.py",
+      "bytes": 68060,
+      "sha256": "fe2de60f07a59681499d2a783f9ecb8f1e45757e75b11f096e5052b0cf22a919",
+      "group": 5,
+      "rank": 2,
+      "absolute_layers": [
+        20,
+        21,
+        22,
+        23
+      ],
+      "expected_layers": [
+        20,
+        21,
+        22,
+        23
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-05/rank_3_0/backbone/computation_graph.py",
+      "bytes": 68060,
+      "sha256": "72f5f241cc62c8e463d7de6a084edb7c86c8bb1228fa8caaccd1b8c31c235d9c",
+      "group": 5,
+      "rank": 3,
+      "absolute_layers": [
+        20,
+        21,
+        22,
+        23
+      ],
+      "expected_layers": [
+        20,
+        21,
+        22,
+        23
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-06/rank_0_0/backbone/computation_graph.py",
+      "bytes": 68060,
+      "sha256": "35b91add340c01b3ee7c590c218deda00c3c6dda115e5c0cee816ecbfd3494d3",
+      "group": 6,
+      "rank": 0,
+      "absolute_layers": [
+        24,
+        25,
+        26,
+        27
+      ],
+      "expected_layers": [
+        24,
+        25,
+        26,
+        27
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-06/rank_1_0/backbone/computation_graph.py",
+      "bytes": 68060,
+      "sha256": "2d7f66e9c98572b81932570dd3f378a88de488d3ddb92efdf015baa216c07def",
+      "group": 6,
+      "rank": 1,
+      "absolute_layers": [
+        24,
+        25,
+        26,
+        27
+      ],
+      "expected_layers": [
+        24,
+        25,
+        26,
+        27
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-06/rank_2_0/backbone/computation_graph.py",
+      "bytes": 68060,
+      "sha256": "9d60c0840675b59289c325911c826a0ac95bd1f9a08b8b62a35b2d38ae2bd5fb",
+      "group": 6,
+      "rank": 2,
+      "absolute_layers": [
+        24,
+        25,
+        26,
+        27
+      ],
+      "expected_layers": [
+        24,
+        25,
+        26,
+        27
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-06/rank_3_0/backbone/computation_graph.py",
+      "bytes": 68060,
+      "sha256": "32ea02849f3a0b0d8640ae9b7b22a3289f79f455df2a4bf6860c33e8bab16750",
+      "group": 6,
+      "rank": 3,
+      "absolute_layers": [
+        24,
+        25,
+        26,
+        27
+      ],
+      "expected_layers": [
+        24,
+        25,
+        26,
+        27
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-07/rank_0_0/backbone/computation_graph.py",
+      "bytes": 68060,
+      "sha256": "dacf6c6386ee72c0c14c9024c934acc4aa205bfc84a007c8320ee1c421c11581",
+      "group": 7,
+      "rank": 0,
+      "absolute_layers": [
+        28,
+        29,
+        30,
+        31
+      ],
+      "expected_layers": [
+        28,
+        29,
+        30,
+        31
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-07/rank_1_0/backbone/computation_graph.py",
+      "bytes": 68060,
+      "sha256": "5e3ac705c99621d50271b1794748e9f7c5a71e02d0731746021a77b4a4213fad",
+      "group": 7,
+      "rank": 1,
+      "absolute_layers": [
+        28,
+        29,
+        30,
+        31
+      ],
+      "expected_layers": [
+        28,
+        29,
+        30,
+        31
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-07/rank_2_0/backbone/computation_graph.py",
+      "bytes": 68060,
+      "sha256": "954eeb2f52b7e9a0db37d1ec58e03bbb2acd893174bbb468a172f5226dbd4e54",
+      "group": 7,
+      "rank": 2,
+      "absolute_layers": [
+        28,
+        29,
+        30,
+        31
+      ],
+      "expected_layers": [
+        28,
+        29,
+        30,
+        31
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-07/rank_3_0/backbone/computation_graph.py",
+      "bytes": 68060,
+      "sha256": "2b41e7039a37cdaec0cc550f70bf8bf3538175f10ec1ced669ba7771d1b469f2",
+      "group": 7,
+      "rank": 3,
+      "absolute_layers": [
+        28,
+        29,
+        30,
+        31
+      ],
+      "expected_layers": [
+        28,
+        29,
+        30,
+        31
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-08/rank_0_0/backbone/computation_graph.py",
+      "bytes": 68060,
+      "sha256": "ed12bd0a3094e9160a04cfdfac9cf1937dc0f3786b1922287e85feb677924a03",
+      "group": 8,
+      "rank": 0,
+      "absolute_layers": [
+        32,
+        33,
+        34,
+        35
+      ],
+      "expected_layers": [
+        32,
+        33,
+        34,
+        35
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-08/rank_1_0/backbone/computation_graph.py",
+      "bytes": 68060,
+      "sha256": "1b5f332d515b0cab29994a8fbefd0307edb96c49142f54586b82f32f7dfacd7d",
+      "group": 8,
+      "rank": 1,
+      "absolute_layers": [
+        32,
+        33,
+        34,
+        35
+      ],
+      "expected_layers": [
+        32,
+        33,
+        34,
+        35
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-08/rank_2_0/backbone/computation_graph.py",
+      "bytes": 68060,
+      "sha256": "c8a0af8d35fc82c9a0604baf1a9c4da6a177e9f62dcf37f77b343dbd8a6e2eb8",
+      "group": 8,
+      "rank": 2,
+      "absolute_layers": [
+        32,
+        33,
+        34,
+        35
+      ],
+      "expected_layers": [
+        32,
+        33,
+        34,
+        35
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-08/rank_3_0/backbone/computation_graph.py",
+      "bytes": 68060,
+      "sha256": "953f026593bbfa581cb817ed84c67a0a558e5256eab37ce48a779a1613b54b69",
+      "group": 8,
+      "rank": 3,
+      "absolute_layers": [
+        32,
+        33,
+        34,
+        35
+      ],
+      "expected_layers": [
+        32,
+        33,
+        34,
+        35
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-09/rank_0_0/backbone/computation_graph.py",
+      "bytes": 68060,
+      "sha256": "b82c9d810c8f4dafadc18bcc805197d5a738be3c1d566cc7538a188e4e1ef53b",
+      "group": 9,
+      "rank": 0,
+      "absolute_layers": [
+        36,
+        37,
+        38,
+        39
+      ],
+      "expected_layers": [
+        36,
+        37,
+        38,
+        39
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-09/rank_1_0/backbone/computation_graph.py",
+      "bytes": 68060,
+      "sha256": "2324c954cf84f2e40adc96160a2190efbd6f8aaf8c5b0fef5c0672b0319720c0",
+      "group": 9,
+      "rank": 1,
+      "absolute_layers": [
+        36,
+        37,
+        38,
+        39
+      ],
+      "expected_layers": [
+        36,
+        37,
+        38,
+        39
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-09/rank_2_0/backbone/computation_graph.py",
+      "bytes": 68060,
+      "sha256": "a4eb90dc4ac877fed954032654a1b7364b063297fafa6a6829951ef6e1859483",
+      "group": 9,
+      "rank": 2,
+      "absolute_layers": [
+        36,
+        37,
+        38,
+        39
+      ],
+      "expected_layers": [
+        36,
+        37,
+        38,
+        39
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-09/rank_3_0/backbone/computation_graph.py",
+      "bytes": 68060,
+      "sha256": "0ccbc9f32822f0c0077a2d2f1e1ffef3654245dd21de656192cbadf6abbb2b04",
+      "group": 9,
+      "rank": 3,
+      "absolute_layers": [
+        36,
+        37,
+        38,
+        39
+      ],
+      "expected_layers": [
+        36,
+        37,
+        38,
+        39
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 3,
+        "full_attention": 1,
+        "moe": 4,
+        "explicit_tp_all_reduce": 4,
+        "conditional_moe_tp_all_reduce": 4
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "736081ccb38e37c326d7227b810caae4e817dc04ad42cc6b1fa1e320a364806f",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "be9a41ca34"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/compile/rank_0_0/backbone/computation_graph.py",
+      "bytes": 671648,
+      "sha256": "4255afb3784d403f49437c419e677e45158a8286c5d6f64c2c92ecda00c6b7c3",
+      "group": null,
+      "rank": 0,
+      "absolute_layers": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39
+      ],
+      "expected_layers": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 30,
+        "full_attention": 10,
+        "moe": 40,
+        "explicit_tp_all_reduce": 40,
+        "conditional_moe_tp_all_reduce": 40
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "f472c275918e65d2fed90b96ae71f5223caab38248b255194e356f8c6f4edea6",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "e4c34ae9d3"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/compile/rank_1_0/backbone/computation_graph.py",
+      "bytes": 671657,
+      "sha256": "0e5ebae64ea1eba6d1c10ff980f4a95c82ad96891cf20bcecb709ee37143264d",
+      "group": null,
+      "rank": 1,
+      "absolute_layers": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39
+      ],
+      "expected_layers": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 30,
+        "full_attention": 10,
+        "moe": 40,
+        "explicit_tp_all_reduce": 40,
+        "conditional_moe_tp_all_reduce": 40
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "f472c275918e65d2fed90b96ae71f5223caab38248b255194e356f8c6f4edea6",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "e4c34ae9d3"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/compile/rank_2_0/backbone/computation_graph.py",
+      "bytes": 671659,
+      "sha256": "bf485951d2c183954d8bff3a151e24d696f16c3a2ce4198423ee0b27a02d09d2",
+      "group": null,
+      "rank": 2,
+      "absolute_layers": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39
+      ],
+      "expected_layers": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 30,
+        "full_attention": 10,
+        "moe": 40,
+        "explicit_tp_all_reduce": 40,
+        "conditional_moe_tp_all_reduce": 40
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "f472c275918e65d2fed90b96ae71f5223caab38248b255194e356f8c6f4edea6",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "e4c34ae9d3"
+      }
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/compile/rank_3_0/backbone/computation_graph.py",
+      "bytes": 671659,
+      "sha256": "9beff3a6bf4bc22f7984fa03e5d18e97a2deac5cebed83bc9fc06738e852b9e7",
+      "group": null,
+      "rank": 3,
+      "absolute_layers": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39
+      ],
+      "expected_layers": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39
+      ],
+      "layers_match": true,
+      "op_counts": {
+        "gdn": 30,
+        "full_attention": 10,
+        "moe": 40,
+        "explicit_tp_all_reduce": 40,
+        "conditional_moe_tp_all_reduce": 40
+      },
+      "explicit_group_names": [
+        "tp:0"
+      ],
+      "cache_key_factors": {
+        "code_hash": "f472c275918e65d2fed90b96ae71f5223caab38248b255194e356f8c6f4edea6",
+        "compiler_hash": "cbcd160638",
+        "config_hash": "e4c34ae9d3"
+      }
+    }
+  ],
+  "startup_snapshots": [
+    {
+      "kind": "prefill group FX",
+      "rank": 0,
+      "snapshot": {
+        "ready": true,
+        "failed": false,
+        "closed": false,
+        "group_size": 4,
+        "groups": 10,
+        "calls": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "entry_qualnames": [
+          "PrefillGroup00.forward",
+          "PrefillGroup01.forward",
+          "PrefillGroup02.forward",
+          "PrefillGroup03.forward",
+          "PrefillGroup04.forward",
+          "PrefillGroup05.forward",
+          "PrefillGroup06.forward",
+          "PrefillGroup07.forward",
+          "PrefillGroup08.forward",
+          "PrefillGroup09.forward"
+        ],
+        "cache_directories": [
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-00",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-01",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-02",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-03",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-04",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-05",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-06",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-07",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-08",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-09"
+        ],
+        "evidence": "successful AOT group returns; not device completion"
+      },
+      "source": {
+        "line": 400,
+        "start_byte": 61065,
+        "end_byte": 63271,
+        "line_sha256": "92338101fdcbeb47d375bb9f35c5a8aab9575707da838a2d9347f76b3ff15e0c",
+        "text": "(Worker_TP0_EP0 pid=86605) INFO 10-11 16:25:47 [worker.py:644] MuxPD prefill group FX rank=0 {'ready': True, 'failed': False, 'closed': False, 'group_size': 4, 'groups': 10, 'calls': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 'entry_qualnames': ['PrefillGroup00.forward', 'PrefillGroup01.forward', 'PrefillGroup02.forward', 'PrefillGroup03.forward', 'PrefillGroup04.forward', 'PrefillGroup05.forward', 'PrefillGroup06.forward', 'PrefillGroup07.forward', 'PrefillGroup08.forward', 'PrefillGroup09.forward'], 'cache_directories': ['/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-00', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-01', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-02', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-03', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-04', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-05', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-06', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-07', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-08', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-09'], 'evidence': 'successful AOT group returns; not device completion'}"
+      }
+    },
+    {
+      "kind": "decode graph",
+      "rank": 0,
+      "snapshot": {
+        "enabled": true,
+        "attached": true,
+        "capture_started": true,
+        "captured": true,
+        "failed": false,
+        "closed": false,
+        "compile_full_prefill": false,
+        "prefill_compile_profiled": false,
+        "includes_startup_warmups": true,
+        "captured_graph_entries": 4,
+        "decode_replay_calls": 0,
+        "decode_capture_forward_calls": 4,
+        "decode_eager_fallback_calls": 4,
+        "decode_uncaptured_full_calls": 0,
+        "decode_forward_failures": 0,
+        "prefill_forced_eager_calls": 1,
+        "prefill_compiled_calls": 0,
+        "prefill_compile_profile_runs": 0,
+        "prefill_compile_profile_failures": 0,
+        "capture_attempts": 1,
+        "capture_successes": 1,
+        "capture_failures": 0
+      },
+      "source": {
+        "line": 401,
+        "start_byte": 63271,
+        "end_byte": 63968,
+        "line_sha256": "49c777bd2f092e0e969173fe5b8235dc206483b1bb494bfda6f09c88643e0259",
+        "text": "(Worker_TP0_EP0 pid=86605) INFO 10-11 16:25:47 [worker.py:647] MuxPD decode graph rank=0 {'enabled': True, 'attached': True, 'capture_started': True, 'captured': True, 'failed': False, 'closed': False, 'compile_full_prefill': False, 'prefill_compile_profiled': False, 'includes_startup_warmups': True, 'captured_graph_entries': 4, 'decode_replay_calls': 0, 'decode_capture_forward_calls': 4, 'decode_eager_fallback_calls': 4, 'decode_uncaptured_full_calls': 0, 'decode_forward_failures': 0, 'prefill_forced_eager_calls': 1, 'prefill_compiled_calls': 0, 'prefill_compile_profile_runs': 0, 'prefill_compile_profile_failures': 0, 'capture_attempts': 1, 'capture_successes': 1, 'capture_failures': 0}"
+      }
+    },
+    {
+      "kind": "prefill group FX",
+      "rank": 3,
+      "snapshot": {
+        "ready": true,
+        "failed": false,
+        "closed": false,
+        "group_size": 4,
+        "groups": 10,
+        "calls": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "entry_qualnames": [
+          "PrefillGroup00.forward",
+          "PrefillGroup01.forward",
+          "PrefillGroup02.forward",
+          "PrefillGroup03.forward",
+          "PrefillGroup04.forward",
+          "PrefillGroup05.forward",
+          "PrefillGroup06.forward",
+          "PrefillGroup07.forward",
+          "PrefillGroup08.forward",
+          "PrefillGroup09.forward"
+        ],
+        "cache_directories": [
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-00",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-01",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-02",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-03",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-04",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-05",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-06",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-07",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-08",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-09"
+        ],
+        "evidence": "successful AOT group returns; not device completion"
+      },
+      "source": {
+        "line": 402,
+        "start_byte": 63968,
+        "end_byte": 66174,
+        "line_sha256": "853eaf72772e371d86b4c8ede74257e59a1e438e430486a6596f85701b77bc73",
+        "text": "(Worker_TP3_EP3 pid=86608) INFO 10-11 16:25:47 [worker.py:644] MuxPD prefill group FX rank=3 {'ready': True, 'failed': False, 'closed': False, 'group_size': 4, 'groups': 10, 'calls': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 'entry_qualnames': ['PrefillGroup00.forward', 'PrefillGroup01.forward', 'PrefillGroup02.forward', 'PrefillGroup03.forward', 'PrefillGroup04.forward', 'PrefillGroup05.forward', 'PrefillGroup06.forward', 'PrefillGroup07.forward', 'PrefillGroup08.forward', 'PrefillGroup09.forward'], 'cache_directories': ['/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-00', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-01', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-02', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-03', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-04', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-05', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-06', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-07', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-08', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-09'], 'evidence': 'successful AOT group returns; not device completion'}"
+      }
+    },
+    {
+      "kind": "decode graph",
+      "rank": 3,
+      "snapshot": {
+        "enabled": true,
+        "attached": true,
+        "capture_started": true,
+        "captured": true,
+        "failed": false,
+        "closed": false,
+        "compile_full_prefill": false,
+        "prefill_compile_profiled": false,
+        "includes_startup_warmups": true,
+        "captured_graph_entries": 4,
+        "decode_replay_calls": 0,
+        "decode_capture_forward_calls": 4,
+        "decode_eager_fallback_calls": 4,
+        "decode_uncaptured_full_calls": 0,
+        "decode_forward_failures": 0,
+        "prefill_forced_eager_calls": 1,
+        "prefill_compiled_calls": 0,
+        "prefill_compile_profile_runs": 0,
+        "prefill_compile_profile_failures": 0,
+        "capture_attempts": 1,
+        "capture_successes": 1,
+        "capture_failures": 0
+      },
+      "source": {
+        "line": 403,
+        "start_byte": 66174,
+        "end_byte": 66871,
+        "line_sha256": "d65f1aa4b8cb272289230d9a3caa52a492008db568252db46ab956f9350e4d26",
+        "text": "(Worker_TP3_EP3 pid=86608) INFO 10-11 16:25:47 [worker.py:647] MuxPD decode graph rank=3 {'enabled': True, 'attached': True, 'capture_started': True, 'captured': True, 'failed': False, 'closed': False, 'compile_full_prefill': False, 'prefill_compile_profiled': False, 'includes_startup_warmups': True, 'captured_graph_entries': 4, 'decode_replay_calls': 0, 'decode_capture_forward_calls': 4, 'decode_eager_fallback_calls': 4, 'decode_uncaptured_full_calls': 0, 'decode_forward_failures': 0, 'prefill_forced_eager_calls': 1, 'prefill_compiled_calls': 0, 'prefill_compile_profile_runs': 0, 'prefill_compile_profile_failures': 0, 'capture_attempts': 1, 'capture_successes': 1, 'capture_failures': 0}"
+      }
+    },
+    {
+      "kind": "prefill group FX",
+      "rank": 1,
+      "snapshot": {
+        "ready": true,
+        "failed": false,
+        "closed": false,
+        "group_size": 4,
+        "groups": 10,
+        "calls": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "entry_qualnames": [
+          "PrefillGroup00.forward",
+          "PrefillGroup01.forward",
+          "PrefillGroup02.forward",
+          "PrefillGroup03.forward",
+          "PrefillGroup04.forward",
+          "PrefillGroup05.forward",
+          "PrefillGroup06.forward",
+          "PrefillGroup07.forward",
+          "PrefillGroup08.forward",
+          "PrefillGroup09.forward"
+        ],
+        "cache_directories": [
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-00",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-01",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-02",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-03",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-04",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-05",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-06",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-07",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-08",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-09"
+        ],
+        "evidence": "successful AOT group returns; not device completion"
+      },
+      "source": {
+        "line": 404,
+        "start_byte": 66871,
+        "end_byte": 69077,
+        "line_sha256": "5dd34c3a41594def681ec954fe70a1997b281fa35a3054edef24dda603b55cdf",
+        "text": "(Worker_TP1_EP1 pid=86606) INFO 10-11 16:25:47 [worker.py:644] MuxPD prefill group FX rank=1 {'ready': True, 'failed': False, 'closed': False, 'group_size': 4, 'groups': 10, 'calls': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 'entry_qualnames': ['PrefillGroup00.forward', 'PrefillGroup01.forward', 'PrefillGroup02.forward', 'PrefillGroup03.forward', 'PrefillGroup04.forward', 'PrefillGroup05.forward', 'PrefillGroup06.forward', 'PrefillGroup07.forward', 'PrefillGroup08.forward', 'PrefillGroup09.forward'], 'cache_directories': ['/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-00', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-01', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-02', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-03', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-04', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-05', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-06', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-07', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-08', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-09'], 'evidence': 'successful AOT group returns; not device completion'}"
+      }
+    },
+    {
+      "kind": "decode graph",
+      "rank": 1,
+      "snapshot": {
+        "enabled": true,
+        "attached": true,
+        "capture_started": true,
+        "captured": true,
+        "failed": false,
+        "closed": false,
+        "compile_full_prefill": false,
+        "prefill_compile_profiled": false,
+        "includes_startup_warmups": true,
+        "captured_graph_entries": 4,
+        "decode_replay_calls": 0,
+        "decode_capture_forward_calls": 4,
+        "decode_eager_fallback_calls": 4,
+        "decode_uncaptured_full_calls": 0,
+        "decode_forward_failures": 0,
+        "prefill_forced_eager_calls": 1,
+        "prefill_compiled_calls": 0,
+        "prefill_compile_profile_runs": 0,
+        "prefill_compile_profile_failures": 0,
+        "capture_attempts": 1,
+        "capture_successes": 1,
+        "capture_failures": 0
+      },
+      "source": {
+        "line": 405,
+        "start_byte": 69077,
+        "end_byte": 69774,
+        "line_sha256": "cced5d4e60e835a383029036613c34e22027517af14081a1960778e6d3a59eaa",
+        "text": "(Worker_TP1_EP1 pid=86606) INFO 10-11 16:25:47 [worker.py:647] MuxPD decode graph rank=1 {'enabled': True, 'attached': True, 'capture_started': True, 'captured': True, 'failed': False, 'closed': False, 'compile_full_prefill': False, 'prefill_compile_profiled': False, 'includes_startup_warmups': True, 'captured_graph_entries': 4, 'decode_replay_calls': 0, 'decode_capture_forward_calls': 4, 'decode_eager_fallback_calls': 4, 'decode_uncaptured_full_calls': 0, 'decode_forward_failures': 0, 'prefill_forced_eager_calls': 1, 'prefill_compiled_calls': 0, 'prefill_compile_profile_runs': 0, 'prefill_compile_profile_failures': 0, 'capture_attempts': 1, 'capture_successes': 1, 'capture_failures': 0}"
+      }
+    },
+    {
+      "kind": "prefill group FX",
+      "rank": 2,
+      "snapshot": {
+        "ready": true,
+        "failed": false,
+        "closed": false,
+        "group_size": 4,
+        "groups": 10,
+        "calls": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "entry_qualnames": [
+          "PrefillGroup00.forward",
+          "PrefillGroup01.forward",
+          "PrefillGroup02.forward",
+          "PrefillGroup03.forward",
+          "PrefillGroup04.forward",
+          "PrefillGroup05.forward",
+          "PrefillGroup06.forward",
+          "PrefillGroup07.forward",
+          "PrefillGroup08.forward",
+          "PrefillGroup09.forward"
+        ],
+        "cache_directories": [
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-00",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-01",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-02",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-03",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-04",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-05",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-06",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-07",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-08",
+          "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-09"
+        ],
+        "evidence": "successful AOT group returns; not device completion"
+      },
+      "source": {
+        "line": 407,
+        "start_byte": 70377,
+        "end_byte": 72583,
+        "line_sha256": "2bd1047c6cbf6f497c00029d260d8b05ae4a7bcbb6dad625e6f07e8eb9eee5a3",
+        "text": "(Worker_TP2_EP2 pid=86607) INFO 10-11 16:25:47 [worker.py:644] MuxPD prefill group FX rank=2 {'ready': True, 'failed': False, 'closed': False, 'group_size': 4, 'groups': 10, 'calls': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 'entry_qualnames': ['PrefillGroup00.forward', 'PrefillGroup01.forward', 'PrefillGroup02.forward', 'PrefillGroup03.forward', 'PrefillGroup04.forward', 'PrefillGroup05.forward', 'PrefillGroup06.forward', 'PrefillGroup07.forward', 'PrefillGroup08.forward', 'PrefillGroup09.forward'], 'cache_directories': ['/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-00', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-01', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-02', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-03', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-04', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-05', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-06', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-07', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-08', '/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/muxpd-prefill-groups-v1/prefill-group-09'], 'evidence': 'successful AOT group returns; not device completion'}"
+      }
+    },
+    {
+      "kind": "decode graph",
+      "rank": 2,
+      "snapshot": {
+        "enabled": true,
+        "attached": true,
+        "capture_started": true,
+        "captured": true,
+        "failed": false,
+        "closed": false,
+        "compile_full_prefill": false,
+        "prefill_compile_profiled": false,
+        "includes_startup_warmups": true,
+        "captured_graph_entries": 4,
+        "decode_replay_calls": 0,
+        "decode_capture_forward_calls": 4,
+        "decode_eager_fallback_calls": 4,
+        "decode_uncaptured_full_calls": 0,
+        "decode_forward_failures": 0,
+        "prefill_forced_eager_calls": 1,
+        "prefill_compiled_calls": 0,
+        "prefill_compile_profile_runs": 0,
+        "prefill_compile_profile_failures": 0,
+        "capture_attempts": 1,
+        "capture_successes": 1,
+        "capture_failures": 0
+      },
+      "source": {
+        "line": 408,
+        "start_byte": 72583,
+        "end_byte": 73280,
+        "line_sha256": "e67702fda8539251bb6c6f50ae41592a8cadee939f4e8f283e2584e20c1ca19c",
+        "text": "(Worker_TP2_EP2 pid=86607) INFO 10-11 16:25:47 [worker.py:647] MuxPD decode graph rank=2 {'enabled': True, 'attached': True, 'capture_started': True, 'captured': True, 'failed': False, 'closed': False, 'compile_full_prefill': False, 'prefill_compile_profiled': False, 'includes_startup_warmups': True, 'captured_graph_entries': 4, 'decode_replay_calls': 0, 'decode_capture_forward_calls': 4, 'decode_eager_fallback_calls': 4, 'decode_uncaptured_full_calls': 0, 'decode_forward_failures': 0, 'prefill_forced_eager_calls': 1, 'prefill_compiled_calls': 0, 'prefill_compile_profile_runs': 0, 'prefill_compile_profile_failures': 0, 'capture_attempts': 1, 'capture_successes': 1, 'capture_failures': 0}"
+      }
+    }
+  ],
+  "logged_aot_paths": [
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/torch_compile_cache/torch_aot_compile/1cb53ee81fcaacbab792b3dc28d4ad9782c98010b313697ef86446697570992e/rank_0_0/model",
+      "line": 283,
+      "start_byte": 39048,
+      "end_byte": 39382,
+      "line_sha256": "893b8b0e9ecc0a00809b1edeb6052c42c4813f59cfd64bf2e2cd75a17e9e0c8a",
+      "text": "(Worker_TP0_EP0 pid=86605) INFO 10-11 16:24:14 [decorators.py:708] saved AOT compiled function to /root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/torch_compile_cache/torch_aot_compile/1cb53ee81fcaacbab792b3dc28d4ad9782c98010b313697ef86446697570992e/rank_0_0/model"
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/torch_compile_cache/torch_aot_compile/83e1ef03578c1eba408aaa549779170474f7f513acbaa13a9bc13d62340a515f/rank_0_0/model",
+      "line": 293,
+      "start_byte": 40913,
+      "end_byte": 41247,
+      "line_sha256": "031c2be827630203837949598503b6555129c35c9cd305aa2e3d5ead12677afa",
+      "text": "(Worker_TP0_EP0 pid=86605) INFO 10-11 16:24:20 [decorators.py:708] saved AOT compiled function to /root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/torch_compile_cache/torch_aot_compile/83e1ef03578c1eba408aaa549779170474f7f513acbaa13a9bc13d62340a515f/rank_0_0/model"
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/torch_compile_cache/torch_aot_compile/0b6cb757c9e9a15ff3673ea7c0058c36c6533f7c48e0fcbe9cdba6a23bee4c48/rank_0_0/model",
+      "line": 303,
+      "start_byte": 42778,
+      "end_byte": 43112,
+      "line_sha256": "1ade8bab38a355c2a15dc40cc4136e836e446f377779892509e7e662e41bc9cf",
+      "text": "(Worker_TP0_EP0 pid=86605) INFO 10-11 16:24:25 [decorators.py:708] saved AOT compiled function to /root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/torch_compile_cache/torch_aot_compile/0b6cb757c9e9a15ff3673ea7c0058c36c6533f7c48e0fcbe9cdba6a23bee4c48/rank_0_0/model"
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/torch_compile_cache/torch_aot_compile/475592179220dba7387e1677c25fc7a309b16ab345140f50817de0a1482da0c6/rank_0_0/model",
+      "line": 313,
+      "start_byte": 44643,
+      "end_byte": 44977,
+      "line_sha256": "f9e6a06bd45b9d58b3e217a90d9485803ead1e92c78621a13b08a8619b08d5bd",
+      "text": "(Worker_TP0_EP0 pid=86605) INFO 10-11 16:24:29 [decorators.py:708] saved AOT compiled function to /root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/torch_compile_cache/torch_aot_compile/475592179220dba7387e1677c25fc7a309b16ab345140f50817de0a1482da0c6/rank_0_0/model"
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/torch_compile_cache/torch_aot_compile/6e1ff5c188abed0d88e4c3390d3a28302cd4d625e0b9a92b6d8a7a118a621ab6/rank_0_0/model",
+      "line": 323,
+      "start_byte": 46508,
+      "end_byte": 46842,
+      "line_sha256": "bcd42cf0d92d41fe6496796399f36b300f0af7435c993fdeb97ab92ba80b06b3",
+      "text": "(Worker_TP0_EP0 pid=86605) INFO 10-11 16:24:34 [decorators.py:708] saved AOT compiled function to /root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/torch_compile_cache/torch_aot_compile/6e1ff5c188abed0d88e4c3390d3a28302cd4d625e0b9a92b6d8a7a118a621ab6/rank_0_0/model"
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/torch_compile_cache/torch_aot_compile/263072a33b4225ef8b3868cdb26ce4e73ebe7220aa6e280e557e612d4f977e4a/rank_0_0/model",
+      "line": 333,
+      "start_byte": 48373,
+      "end_byte": 48707,
+      "line_sha256": "dbaf13a3fc725ee8864184fbffde37952ee9c6d4a45a95645437cef33894da85",
+      "text": "(Worker_TP0_EP0 pid=86605) INFO 10-11 16:24:38 [decorators.py:708] saved AOT compiled function to /root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/torch_compile_cache/torch_aot_compile/263072a33b4225ef8b3868cdb26ce4e73ebe7220aa6e280e557e612d4f977e4a/rank_0_0/model"
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/torch_compile_cache/torch_aot_compile/5afd2f838a838405e7d5eee71fc5a9d41dc2a643968b2d671752d86d5b2fd54d/rank_0_0/model",
+      "line": 343,
+      "start_byte": 50238,
+      "end_byte": 50572,
+      "line_sha256": "aff0c4da8f414969f801faae4d93931e28b45c13a94174aeed44ff1fcb98bf6a",
+      "text": "(Worker_TP0_EP0 pid=86605) INFO 10-11 16:24:43 [decorators.py:708] saved AOT compiled function to /root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/torch_compile_cache/torch_aot_compile/5afd2f838a838405e7d5eee71fc5a9d41dc2a643968b2d671752d86d5b2fd54d/rank_0_0/model"
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/torch_compile_cache/torch_aot_compile/a2df5b8cb9792b156d8f6578d94ccaeba875e94b939ea862e016a42db6d2245e/rank_0_0/model",
+      "line": 353,
+      "start_byte": 52103,
+      "end_byte": 52437,
+      "line_sha256": "dd0a52239ee93703fd1c067d059ab3baa630f8957160e42abf8012932f6fb10c",
+      "text": "(Worker_TP0_EP0 pid=86605) INFO 10-11 16:24:48 [decorators.py:708] saved AOT compiled function to /root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/torch_compile_cache/torch_aot_compile/a2df5b8cb9792b156d8f6578d94ccaeba875e94b939ea862e016a42db6d2245e/rank_0_0/model"
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/torch_compile_cache/torch_aot_compile/219788107e7175f424822d2b0d523ff6f3ee1bb518fc1cac839abec61b6903bb/rank_0_0/model",
+      "line": 363,
+      "start_byte": 53968,
+      "end_byte": 54302,
+      "line_sha256": "1891fcaeee62dbb5705d0a7c00815047feb4f3e4835ec833889001ae946c4aa5",
+      "text": "(Worker_TP0_EP0 pid=86605) INFO 10-11 16:24:53 [decorators.py:708] saved AOT compiled function to /root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/torch_compile_cache/torch_aot_compile/219788107e7175f424822d2b0d523ff6f3ee1bb518fc1cac839abec61b6903bb/rank_0_0/model"
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/torch_compile_cache/torch_aot_compile/6c95198d5175df9ebaeb32029f594532378370c1163598e973e4c8f7ca44acac/rank_0_0/model",
+      "line": 373,
+      "start_byte": 55833,
+      "end_byte": 56167,
+      "line_sha256": "5c8c285b2c20768a52cce94b4568192f9ca636c9bac41b9afda9a1635305bfac",
+      "text": "(Worker_TP0_EP0 pid=86605) INFO 10-11 16:24:57 [decorators.py:708] saved AOT compiled function to /root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/torch_compile_cache/torch_aot_compile/6c95198d5175df9ebaeb32029f594532378370c1163598e973e4c8f7ca44acac/rank_0_0/model"
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/torch_compile_cache/torch_aot_compile/9b9d1644aef672961e49d13702ea9941fd5ece5be925ad481a0295f9dffba51f/rank_0_0/model",
+      "line": 387,
+      "start_byte": 58101,
+      "end_byte": 58435,
+      "line_sha256": "e4f2507a6917267571ac5793d80d4541a1faa898ddb2138d7bc9fe8a50c5b6ed",
+      "text": "(Worker_TP0_EP0 pid=86605) INFO 10-11 16:25:43 [decorators.py:708] saved AOT compiled function to /root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-cache/torch_compile_cache/torch_aot_compile/9b9d1644aef672961e49d13702ea9941fd5ece5be925ad481a0295f9dffba51f/rank_0_0/model"
+    }
+  ],
+  "startup_log_prefix": {
+    "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-server.log",
+    "bytes": 73280,
+    "sha256": "3b5b5eecc35d04ae5b801c28147b73ca48095f628cfdc0cc3c3cc0ae69961f8b",
+    "selection": "through the last of the first four-rank P/D startup snapshots; later serving lines excluded"
+  },
+  "limits": [
+    "computation_graph.py is native split GraphModule readable text, not a device kernel or serialized callable inspection.",
+    "Groups 1..9 share code_hash in cache_key_factors. Separate cache directories, entry code identities, AOT paths and absolute layer prefixes provide isolation evidence; code_hash uniqueness is not claimed.",
+    "The configured backend uses fusion_pass_compile FX/AOT with npugraph_ex=false; P group execution is not ACL graph replay.",
+    "Explicit tp:0 custom ops resolve the coordinator and its routed communicator at runtime. Opaque MoE/GDN/internal HCCL routing is source-supported, not fully proved by this text scan.",
+    "Successful startup AOT returns do not prove all serving shapes/kernels are warm, output equivalence, device overlap, cancellation coverage or performance."
+  ]
+}

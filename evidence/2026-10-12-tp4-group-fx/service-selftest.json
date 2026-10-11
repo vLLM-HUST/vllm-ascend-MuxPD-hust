@@ -1,0 +1,94 @@
+{
+  "schema": "tp4-group-fx-service-cpu-validation-v1",
+  "passed": true,
+  "created_utc": "2026-10-11T16:20:28.419737+00:00",
+  "commit": "f09a100ade651936b3efeaf045ec5ce63d0b38fe",
+  "sources": [
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4_group_service.py",
+      "bytes": 39343,
+      "sha256": "401aadd3dedc5a364d1d28557c41ac9a10bcb2f4bf413d4895787bb0e29e5b66"
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/start_tp4_group_stage.py",
+      "bytes": 1573,
+      "sha256": "bd2858c170fa3026290ffac3ac65b6a91d658414138313938cee50521ec4c294"
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/wait_tp4_group_ready.py",
+      "bytes": 966,
+      "sha256": "152dec1a6a0eb2540a9c73507b520e96a1e098c9c54d7bb2c6c340968849c603"
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/stop_tp4_group_stage.py",
+      "bytes": 1005,
+      "sha256": "db77ba0608463eed297fd43e269f8a5a249a9c902b81aecf8710cbebfc454398"
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/test_tp4_group_service.py",
+      "bytes": 8367,
+      "sha256": "0b43f87b321c177b995053322eb81eda27275f221160d09e3e11a76a45105e3d"
+    }
+  ],
+  "plan_only": [
+    {
+      "manifest": {
+        "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-raw-a-diagnostic-v1-manifest.json",
+        "bytes": 8892,
+        "sha256": "c8bb600cb6be0b8fdacac2d45b2640bd4932b1976315683b75fb16430394aeb5"
+      },
+      "module_count": 15,
+      "source_bytes_equal_git_object": true,
+      "unexecuted": true
+    },
+    {
+      "manifest": {
+        "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/tp4-groupfx-candidate-b-diagnostic-v1-manifest.json",
+        "bytes": 8982,
+        "sha256": "8d451321fdc93949bd97403975e68761d03e909bc9a912d603e79f839be7c1b2"
+      },
+      "module_count": 15,
+      "source_bytes_equal_git_object": true,
+      "unexecuted": true
+    }
+  ],
+  "matched_source_and_execution_policy": true,
+  "pytest": {
+    "passed": 17,
+    "skipped": 0,
+    "log": {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/service-pytest-initial.log",
+      "bytes": 99,
+      "sha256": "9cd8ed5985521bdaab22bee5053bc7e634bde6fb78526f59384bb6640281a033"
+    }
+  },
+  "ast": "all5 final sources parsed",
+  "ruff": {
+    "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/service-ruff-final-scoped.log",
+    "bytes": 19,
+    "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+  },
+  "format": {
+    "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/service-format-final-scoped.log",
+    "bytes": 26,
+    "sha256": "f114d83b30c5c657ee43a847a45bafccaea255d82673feb87c26d252c61e29c1"
+  },
+  "initial_style_failures_retained": [
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/service-ruff-initial.log",
+      "bytes": 10939,
+      "sha256": "9f09e11eed96d868c5c0e6448c2099a3d5455676f68952f39a4d10c21051618d"
+    },
+    {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/service-ruff-final.log",
+      "bytes": 1396,
+      "sha256": "f2b58340174e5ed5c1bc3632a256ee2f91c81ad4c0e58e6de157943ac63056a5"
+    }
+  ],
+  "scope": "No torch import, NPU query/allocation, HTTP, real process launch/stop or generation; pure mocks plus real Git/file plan-only validation",
+  "old_helper_after": {
+    "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-goodput/tp4_service.py",
+    "bytes": 34876,
+    "sha256": "56cdb8445d35a8d90e6253a169dd58dc1f5494aeed675ab7cd081e1999883ff5"
+  }
+}
