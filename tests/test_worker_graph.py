@@ -8,6 +8,7 @@ import pytest
 from test_decode_graph import Stream, controller
 
 from vllm_muxpd.decode_graph import GraphFencedExecutionBackend, GraphLaneState
+from vllm_muxpd.overlap import NPUOverlapBackend
 
 
 @pytest.fixture
@@ -56,6 +57,121 @@ def worker_factory():
         )
 
     return create
+
+
+@pytest.fixture
+def overlap_graph_factory(worker_factory, monkeypatch):
+    def create(*, communication_fails=False):
+        state = worker_factory(graph=False, attached=False)
+        state.controller.close()
+        worker, runtime = state.worker, state.runtime
+        workspace = importlib.import_module("vllm.v1.worker.workspace")
+        profiled = object()
+        monkeypatch.setattr(workspace, "_manager", profiled)
+        monkeypatch.setattr(
+            workspace, "WorkspaceManager",
+            lambda device, num_ubatches: NS(device=device, num_ubatches=num_ubatches),
+        )
+        runtime.workspace = workspace
+        worker.device = "fake-npu"
+        worker._decode_graph_enabled = True
+        worker._stream_mode = "overlap"
+        worker._overlap_communication = "isolated"
+        policy = state.owner.vllm_config.scheduler_config.batch_admission_policy_config
+        policy.update(stream_mode="overlap", overlap_communication="isolated")
+        original_controller = state.module.DecodeGraphController
+        monkeypatch.setattr(
+            state.module, "DecodeGraphController",
+            lambda *args: original_controller(*args, runtime=runtime),
+        )
+        monkeypatch.setattr(
+            state.module, "NPUOverlapBackend",
+            lambda: NPUOverlapBackend(
+                runtime=runtime.npu,
+                forward_context_module=runtime.forward,
+                workspace_module=workspace,
+                ascend_utils_module=runtime.ascend,
+            ),
+        )
+        configured = []
+
+        def communication(backend):
+            configured.append(backend)
+            assert worker._decode_graph_controller is not None
+            if communication_fails:
+                raise RuntimeError("communication setup failed")
+
+        worker._configure_overlap_communication = communication
+        state.profiled_workspace = profiled
+        state.configured_communication = configured
+        return state
+
+    return create
+
+
+@pytest.mark.integration
+def test_overlap_graph_composes_controller_with_profiled_owner_workspace(
+    overlap_graph_factory,
+):
+    state = overlap_graph_factory()
+    worker = state.worker
+    worker._configure_execution_backend()
+    backend, ctrl = worker._execution_backend, worker._decode_graph_controller
+    assert isinstance(backend, NPUOverlapBackend)
+    assert state.configured_communication == [backend]
+    assert worker._lane_states["prefill"].workspace_manager is state.profiled_workspace
+    assert worker._lane_states["decode"].workspace_manager is ctrl.workspace
+    assert ctrl.workspace is not state.profiled_workspace
+    assert ctrl.stream is worker._streams["decode"]
+    assert state.owner._dummy_run(4)[2:] == ("NONE", True, False)
+    assert not ctrl.compile_full_prefill
+
+
+@pytest.mark.integration
+def test_overlap_communication_failure_restores_graph_guards(overlap_graph_factory):
+    state = overlap_graph_factory(communication_fails=True)
+    with pytest.raises(RuntimeError, match="communication setup failed"):
+        state.worker._configure_execution_backend()
+    assert state.worker._decode_graph_controller is None
+    assert "_muxpd_decode_graph_controller" not in vars(state.owner)
+    assert state.owner.use_aclgraph
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("decode_fails", [False, True])
+def test_overlap_graph_kv_initialization_joins_startup_and_restores_caller(
+    overlap_graph_factory, monkeypatch, decode_fails,
+):
+    state = overlap_graph_factory()
+    worker = state.worker
+    worker._configure_execution_backend()
+    backend, runtime = worker._execution_backend, state.runtime
+    caller = backend.capture()
+    events = []
+
+    def owner_init(worker, cfg):
+        assert backend.capture() == caller
+        events.append("owner")
+
+    def decode_init(cfg):
+        assert backend.capture() == worker._lane_states["decode"]
+        events.append("decode")
+        if decode_fails:
+            raise RuntimeError("decode metadata failed")
+
+    monkeypatch.setattr(state.module.NPUWorker, "initialize_from_config", owner_init)
+    state.decode.initialize_kv_cache = decode_init
+    if decode_fails:
+        with pytest.raises(RuntimeError, match="decode metadata failed"):
+            worker.initialize_from_config(object())
+    else:
+        worker.initialize_from_config(object())
+    assert events == ["owner", "decode"]
+    assert backend.capture() == caller
+    assert runtime.npu.waits == [
+        (worker._streams["decode"], runtime.npu.records[0]),
+        (caller.stream, runtime.npu.records[-1]),
+    ]
 
 
 @pytest.mark.integration

@@ -38,8 +38,17 @@ def validate_decode_graph_config(config: Any, policy: Any) -> None:
         errors.append("decode_graph must be explicitly true")
     if _value(policy, "execution") != "decoupled":
         errors.append("execution must be decoupled")
-    if _value(policy, "stream_mode") != "fenced":
-        errors.append("stream_mode must be fenced; overlap graphs are unsupported")
+    stream_mode = _value(policy, "stream_mode", "fenced")
+    if stream_mode not in ("fenced", "overlap"):
+        errors.append("stream_mode must be fenced or overlap")
+    if stream_mode == "overlap" and (
+        _value(policy, "overlap_communication", "shared") != "isolated"
+        or _value(policy, "compile_full_prefill", False)
+    ):
+        errors.append(
+            "experimental graph overlap requires isolated communication "
+            "and raw prefill (compile_full_prefill=False)"
+        )
     if type(_value(policy, "compile_full_prefill", False)) is not bool:
         errors.append("compile_full_prefill must be a boolean")
     model = config.model_config

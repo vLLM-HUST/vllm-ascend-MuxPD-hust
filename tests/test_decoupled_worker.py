@@ -8,7 +8,7 @@ from types import SimpleNamespace
 import pytest
 
 
-@pytest.fixture(params=["fenced", "graph", "overlap", "isolated"])
+@pytest.fixture(params=["fenced", "graph", "overlap", "isolated", "graph_isolated"])
 def simulation(request):
     if os.environ.get("VLLM_VERSION") != "0.25.1":
         pytest.skip("source runtime/env.sh for pinned HUST worker contracts")
@@ -25,7 +25,7 @@ def simulation(request):
     worker._prefill_cancelled = set()
     worker._awaiting_sample = False
     worker._decode_only_fast_path = False
-    worker._decode_graph_enabled = request.param == "graph"
+    worker._decode_graph_enabled = request.param in ("graph", "graph_isolated")
     worker._iteration_cohort_id = None
     worker._iteration_prefill_layers_completed = 0
     worker._iteration_prefill_layers_total = 0
@@ -39,7 +39,7 @@ def simulation(request):
         "fenced" if request.param in ("fenced", "graph") else "overlap"
     )
     worker._overlap_communication = (
-        "isolated" if request.param == "isolated" else "shared"
+        "isolated" if request.param in ("isolated", "graph_isolated") else "shared"
     )
     worker._collective_gates = None
     worker._collective_router = None
@@ -148,7 +148,11 @@ def simulation(request):
             try:
                 for layer in range(self.layers):
                     events.append((self.phase, ids, layer))
-                    if worker._interleaver is not None:
+                    if worker._interleaver is not None and not (
+                        self.phase == "decode" and request.param == "graph_isolated"
+                    ):
+                        # A captured decode graph returns as one forward and
+                        # does not execute Python decoder-layer hooks on replay.
                         worker._interleaver.checkpoint(final=layer == self.layers - 1)
                 self.execute_model_state = output
             finally:

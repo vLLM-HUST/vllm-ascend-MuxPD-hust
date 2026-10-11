@@ -222,10 +222,21 @@ def test_isolated_communication_is_explicit_for_decoupled_overlap():
     assert config.overlap_communication == "isolated"
 
 
-def test_decode_graph_is_explicit_and_requires_decoupled_fenced():
+def test_decode_graph_is_explicit_and_requires_decoupled_safe_communication():
     assert not MuxPDConfig().decode_graph
     config = MuxPDConfig(execution="decoupled", decode_graph=True)
     assert config.decode_graph and config.stream_mode == "fenced"
+    overlap = MuxPDConfig(
+        execution="decoupled", decode_graph=True,
+        stream_mode="overlap", overlap_communication="isolated",
+    )
+    assert overlap.decode_graph and not overlap.compile_full_prefill
+    with pytest.raises(ValueError, match="compile_full_prefill"):
+        MuxPDConfig(
+            execution="decoupled", decode_graph=True,
+            stream_mode="overlap", overlap_communication="isolated",
+            compile_full_prefill=True,
+        )
 
 
 def test_full_prefill_compile_requires_explicit_decode_graph_fenced():

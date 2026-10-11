@@ -578,6 +578,25 @@ def test_invalid_graph_configuration(target, name, value, match):
         validate_decode_graph_config(cfg, policy)
 
 
+def test_graph_overlap_requires_isolated_raw_prefill():
+    cfg = config()
+    policy = cfg.scheduler_config.batch_admission_policy_config
+    policy.update(stream_mode="overlap", overlap_communication="isolated")
+    validate_decode_graph_config(cfg, policy)
+    runtime = Runtime()
+    owner, decode = Runner(cfg, runtime), Runner(cfg, runtime)
+    ctrl = DecodeGraphController(
+        owner, decode, Stream("decode"), object(), runtime=runtime
+    )
+    ctrl.install_prefill_guards()
+    # The new composition must not allow P to touch D's graph parameters,
+    # compiled forward or capture, even when its incoming context says FULL.
+    assert owner._dummy_run(4)[2:] == ("NONE", True, False)
+    policy["compile_full_prefill"] = True
+    with pytest.raises(ValueError, match="raw prefill"):
+        validate_decode_graph_config(cfg, policy)
+
+
 def test_fenced_backend_retains_order_and_each_lanes_workspace():
     r = Runtime()
     backend = GraphFencedExecutionBackend(

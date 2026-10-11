@@ -320,43 +320,63 @@ class MuxPDNPUWorker(NPUWorker):
                 getattr(stream, "stream_id", None),
                 getattr(stream, "npu_stream", None),
             )
-        if self._stream_mode == "overlap":
-            backend = NPUOverlapBackend()
-            self._execution_backend = backend
-            self._lane_states = {
-                phase: backend.lane_state(phase, stream)
-                for phase, stream in self._streams.items()
-            }
-            self._configure_overlap_communication(backend)
-        elif self._decode_graph_enabled:
+        self._configure_execution_backend()
+
+    def _configure_execution_backend(self) -> None:
+        """Compose graph ownership with stream ordering before loading weights."""
+        graph_workspaces = None
+        if self._decode_graph_enabled:
             import vllm.v1.worker.workspace as workspace
 
             if workspace._manager is None:
                 raise RuntimeError("MuxPD requires the native prefill workspace")
-            prefill_workspace = workspace._manager
-            decode_workspace = workspace.WorkspaceManager(self.device, num_ubatches=1)
+            graph_workspaces = {
+                "prefill": workspace._manager,
+                "decode": workspace.WorkspaceManager(self.device, num_ubatches=1),
+            }
+        if self._stream_mode == "overlap":
+            backend = NPUOverlapBackend()
+            self._execution_backend = backend
+            self._lane_states = {
+                phase: backend.lane_state(
+                    phase,
+                    stream,
+                    workspace_manager=(
+                        graph_workspaces[phase] if graph_workspaces else None
+                    ),
+                )
+                for phase, stream in self._streams.items()
+            }
+        elif graph_workspaces is not None:
             self._execution_backend = GraphFencedExecutionBackend()
             self._lane_states = {
-                "prefill": GraphLaneState(
-                    None, self._streams["prefill"], prefill_workspace
-                ),
-                "decode": GraphLaneState(
-                    None, self._streams["decode"], decode_workspace
-                ),
+                phase: GraphLaneState(None, stream, graph_workspaces[phase])
+                for phase, stream in self._streams.items()
             }
-            self._decode_graph_controller = DecodeGraphController(
-                self.model_runner,
-                self.decode_runner,
-                self._streams["decode"],
-                decode_workspace,
-            )
-            self._decode_graph_controller.install_prefill_guards()
         else:
             self._execution_backend = _NPUExecutionBackend()
             self._lane_states = {
                 phase: _NPUState(None, stream)
                 for phase, stream in self._streams.items()
             }
+        try:
+            if graph_workspaces is not None:
+                self._decode_graph_controller = DecodeGraphController(
+                    self.model_runner,
+                    self.decode_runner,
+                    self._streams["decode"],
+                    graph_workspaces["decode"],
+                )
+                self._decode_graph_controller.install_prefill_guards()
+            if self._stream_mode == "overlap":
+                self._configure_overlap_communication(self._execution_backend)
+        except BaseException:
+            # Communication setup cleans up its own partial groups. No model
+            # or graph exists yet; restore any installed owner guards too.
+            if self._decode_graph_controller is not None:
+                self._decode_graph_controller.close()
+                self._decode_graph_controller = None
+            raise
 
     def _configure_overlap_communication(self, backend: NPUOverlapBackend) -> None:
         groups = [("tp", get_tp_group())]
@@ -506,13 +526,20 @@ class MuxPDNPUWorker(NPUWorker):
         caller = backend.capture()
         # Owner allocations precede D metadata construction. Keep any future
         # builder workspace allocations with the same manager used by capture.
-        backend.fence()
+        if self._stream_mode == "overlap":
+            backend.begin_batch(preparation_lane=None)
+        else:
+            backend.fence()
         try:
             backend.restore(self._lane_states["decode"])
             self.decode_runner.initialize_kv_cache(kv_cache_config)
         finally:
             backend.fence()
             backend.restore(caller)
+            if self._stream_mode == "overlap":
+                # Startup caller work must see D's initialized metadata. This
+                # joins only startup work, not P/D serving iterations.
+                backend.join(["decode"])
 
     def compile_or_warm_up_model(self) -> Any:
         controller = self._decode_graph_controller

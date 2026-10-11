@@ -204,14 +204,27 @@ class NPUOverlapBackend:
         self._check_thread()
         return self._active_lane
 
-    def lane_state(self, name: str, stream: Any) -> LaneState:
-        """Register an existing stream, allocating no device workspace yet."""
+    def lane_state(
+        self, name: str, stream: Any, *, workspace_manager: Any = None
+    ) -> LaneState:
+        """Register a lane, optionally retaining its profiled/captured manager.
+
+        Graph P retains the owner's native profiled workspace; graph D uses
+        its independent manager during KV initialization, capture and replay.
+        Ordinary eager lanes allocate their own managers as before.
+        """
         self._check_thread()
         if not name or name in self._states:
             raise ValueError(f"MuxPD lane must have a unique nonempty name: {name!r}")
         if any(stream == state.stream for state in self._states.values()):
             raise ValueError("MuxPD overlap lanes require independent streams")
-        manager = self._workspace.WorkspaceManager(stream.device, num_ubatches=1)
+        manager = workspace_manager
+        if manager is None:
+            manager = self._workspace.WorkspaceManager(stream.device, num_ubatches=1)
+        if any(manager is state.workspace_manager for state in self._states.values()):
+            raise ValueError(
+                "MuxPD overlap lanes require independent workspace managers"
+            )
         state = LaneState(None, stream, manager, name)
         self._states[name] = state
         return state
