@@ -81,7 +81,12 @@ def request_plan(args):
 
 
 class SSEReceipt:
-    """Retain exact decoded-HTTP body bytes and validate each complete SSE frame."""
+    """Retain decoded-HTTP bytes and validate LF/CRLF-delimited SSE frames.
+
+    Frame assembly supports the server's LF/CRLF subset, not bare-CR or BOM
+    streams. Within a frame only ASCII CR/LF separate fields; Unicode line
+    separators in JSON strings are payload, not SSE line boundaries.
+    """
 
     def __init__(self, row, first_token):
         self.row = row
@@ -116,7 +121,7 @@ class SSEReceipt:
 
     def _event(self, frame, received):
         data = []
-        for line in frame.splitlines():
+        for line in frame.replace("\r\n", "\n").replace("\r", "\n").split("\n"):
             if not line or line.startswith(":"):
                 continue
             field, _, value = line.partition(":")
