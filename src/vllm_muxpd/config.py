@@ -32,6 +32,7 @@ class MuxPDConfig:
     overlap_communication: str = "shared"
     decode_graph: bool = False
     compile_full_prefill: bool = False
+    piecewise_short_prefill_tokens: int = 0
     prefill_layer_token_budget: int = 0
     decode_budget_guard: bool = False
 
@@ -62,11 +63,17 @@ class MuxPDConfig:
             "max_prefill_batch_tokens",
             "layers_per_slice",
             "prefill_layer_token_budget",
+            "piecewise_short_prefill_tokens",
         ):
             value = getattr(self, name)
             minimum = (
                 0
-                if name in ("max_prefill_batch_tokens", "prefill_layer_token_budget")
+                if name
+                in (
+                    "max_prefill_batch_tokens",
+                    "prefill_layer_token_budget",
+                    "piecewise_short_prefill_tokens",
+                )
                 else 1
             )
             if type(value) is not int or value < minimum:
@@ -125,8 +132,7 @@ class MuxPDConfig:
         if self.decode_graph and not (
             self.execution == "decoupled"
             and (
-                self.stream_mode == "fenced"
-                or self.overlap_communication == "isolated"
+                self.stream_mode == "fenced" or self.overlap_communication == "isolated"
             )
         ):
             raise ValueError(
@@ -143,6 +149,17 @@ class MuxPDConfig:
             raise ValueError(
                 "MuxPD compile_full_prefill requires decode_graph with "
                 "decoupled fenced execution"
+            )
+        if self.piecewise_short_prefill_tokens and not (
+            self.decode_graph
+            and self.execution == "decoupled"
+            and self.stream_mode == "overlap"
+            and self.overlap_communication == "isolated"
+            and not self.compile_full_prefill
+        ):
+            raise ValueError(
+                "MuxPD piecewise_short_prefill_tokens requires isolated decode-graph "
+                "overlap and compile_full_prefill=False"
             )
         if self.trace_path is not None:
             if not isinstance(self.trace_path, str) or not self.trace_path.strip():

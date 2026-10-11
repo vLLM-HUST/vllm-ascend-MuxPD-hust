@@ -1080,3 +1080,150 @@ def test_compiled_prefill_failure_never_fabricates_progress_receipt(
     assert worker._iteration_prefill_layers_completed == 0
     with pytest.raises(RuntimeError, match="executed iteration"):
         worker.sample_tokens(None)
+
+@pytest.mark.integration
+@pytest.mark.parametrize("simulation", ["graph_isolated"], indirect=True)
+@pytest.mark.parametrize("decodes", [(), ("d",)])
+def test_short_piecewise_prefill_runs_after_graph_and_preserves_complete_ack(
+    simulation, monkeypatch, decodes
+):
+    worker, events = simulation
+    worker.vllm_config = SimpleNamespace(scheduler_config=SimpleNamespace(
+        batch_admission_policy_config={}
+    ))
+    controller = enable_fake_prefill_compile(worker, events)
+    controller.compile_full_prefill = False
+    controller.piecewise_short_prefill_tokens = 32
+
+    def execute(output):
+        assert controller.active
+        assert worker._execution_backend.active_lane == "prefill"
+        assert output.total_num_scheduled_tokens == 32
+        if decodes:
+            assert worker.decode_runner.execute_model_state is not None
+        worker.model_runner.execute_model_state = output
+        return None
+
+    monkeypatch.setattr(worker.model_runner, "execute_model", execute)
+    output = schedule(new_p=("p",), pending=("p",), decode=decodes, finish=True)
+    output.muxpd_layers_per_slice = 3
+    worker.execute_model(output)
+    assert worker.model_runner.sample_count == worker.decode_runner.sample_count == 0
+    receipt = worker.sample_tokens(None)
+    assert receipt.req_ids == [*decodes, "p"]
+    assert receipt.muxpd_prefill_progress_source == "full_forward_return"
+    assert receipt.muxpd_completed_prefill_ids == {"p"}
+    assert receipt.muxpd_prefill_layers_completed == 3
+    assert worker._prefill_task is None
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("simulation", ["graph_isolated"], indirect=True)
+@pytest.mark.parametrize("case", ["partial", "aggregate", "cancel", "pause"])
+def test_short_piecewise_ineligible_transactions_keep_raw_hooks_and_cancel_protocol(
+    simulation, case
+):
+    worker, events = simulation
+    worker.vllm_config = SimpleNamespace(scheduler_config=SimpleNamespace(
+        batch_admission_policy_config={}
+    ))
+    controller = enable_fake_prefill_compile(worker, events)
+    controller.compile_full_prefill = False
+    controller.piecewise_short_prefill_tokens = 32
+    pending = ("p", "p2") if case == "aggregate" else ("p",)
+    output = schedule(
+        new_p=pending,
+        pending=pending,
+        decode=("d",),
+        cancel=pending if case == "cancel" else (),
+        pause=case == "pause",
+        finish=case == "cancel",
+    )
+    worker.execute_model(output)
+    receipt = worker.sample_tokens(None)
+    assert ("compile_enter",) not in events
+    assert receipt.muxpd_prefill_progress_source == "layer_hooks"
+    if case == "cancel":
+        assert receipt.muxpd_cancelled_prefill_ids == set(pending)
+        assert worker._prefill_task is None
+    else:
+        assert worker._prefill_task is not None
+        worker.execute_model(schedule(pending=pending, decode=("d",), finish=True))
+        receipt = worker.sample_tokens(None)
+        assert receipt.muxpd_completed_prefill_ids == set(pending)
+        assert receipt.muxpd_prefill_progress_source == "layer_hooks"
+        assert ("compile_enter",) not in events
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("simulation", ["graph_isolated"], indirect=True)
+@pytest.mark.parametrize("enabled", [False, True])
+@pytest.mark.parametrize("fails", [False, True])
+def test_short_piecewise_trace_has_native_pool_manifest_without_early_ack(
+    simulation, monkeypatch, enabled, fails
+):
+    import json
+
+    from vllm_muxpd import decoupled_worker as module
+
+    worker, events = simulation
+    worker.rank = 3
+    worker.vllm_config = SimpleNamespace(scheduler_config=SimpleNamespace(
+        batch_admission_policy_config={"trace_path": "trace.jsonl" if enabled else None}
+    ))
+    controller = enable_fake_prefill_compile(worker, events)
+    controller.compile_full_prefill = False
+    controller.piecewise_short_prefill_tokens = 32
+    stats = {"captures": 41, "replays": 0, "whole_forwards": 0}
+    manifest = {"runtime_mode": "FULL", "pool": {
+        "kind": "native_handle_pair", "values": [1, 2]
+    }}
+
+    def snapshot():
+        assert enabled, "trace-off must not collect diagnostic state"
+        return {"prefill_piecewise": dict(stats), "decode_graph_metadata": manifest,
+                "prefill_decode_pool_equal": False}
+
+    controller.snapshot = snapshot
+    records = []
+
+    def log(fmt, payload):
+        assert fmt == "MuxPD short PIECEWISE diagnostic %s"
+        records.append(json.loads(payload))
+
+    monkeypatch.setattr(module.logger, "info", log)
+
+    def execute(output):
+        assert controller.active
+        assert worker._execution_backend.active_lane == "prefill"
+        assert worker.model_runner.sample_count == 0
+        if fails:
+            raise ValueError("P replay failed")
+        stats.update(replays=41, whole_forwards=1)
+        worker.model_runner.execute_model_state = output
+
+    monkeypatch.setattr(worker.model_runner, "execute_model", execute)
+    output = schedule(new_p=("p",), pending=("p",), decode=("d",), finish=True)
+    if fails:
+        with pytest.raises(ValueError, match="P replay failed"):
+            worker.execute_model(output)
+    else:
+        worker.execute_model(output)
+        assert worker.model_runner.sample_count == 0
+        worker.sample_tokens(None)
+    if not enabled:
+        assert records == []
+        return
+    assert [r["event"] for r in records] == (["begin"] if fails else ["begin", "end"])
+    assert records[0]["rank"] == 3
+    assert records[0]["cohort_id"] == 1
+    assert records[0]["request_ids"] == ["p"]
+    assert records[0]["prefill_tokens"] == 32
+    assert records[0]["decode_graph_metadata"] == manifest
+    assert records[0]["prefill_decode_pool_equal"] is False
+    assert records[0]["before"]["replays"] == 0
+    if not fails:
+        assert records[1]["host_forward_returned"] is True
+        assert records[1]["after"]["captures"] == records[0]["before"]["captures"]
+        assert records[1]["after"]["replays"] == 41
+        assert records[1]["after"]["whole_forwards"] == 1

@@ -100,8 +100,20 @@ def _check_progress_source(row, scheduled, pending, completed, cancelled):
         raise AssertionError("Prefill progress source does not match cohort ownership")
     if type(scheduled.get("compile_full_prefill")) is not bool:
         raise AssertionError("Missing compiled-prefill scheduling configuration")
+    short_limit = _integer(
+        scheduled.get("piecewise_short_prefill_tokens", 0), "short-P graph threshold"
+    )
+    work = (scheduled.get("quota") or {}).get("work_quota") or {}
+    short_eligible = bool(
+        short_limit
+        and 0
+        < _integer(work.get("cohort_full_prefill_tokens", 0), "P tokens")
+        <= short_limit
+        and scheduled.get("quota", {}).get("reason")
+        == "piecewise_short_prefill_full_quota"
+    )
     if source == "full_forward_return" and not (
-        scheduled["compile_full_prefill"]
+        (scheduled["compile_full_prefill"] or short_eligible)
         and set(scheduled["new_prefill_ids"]) == pending
         and scheduled["layers_completed_before"] == 0
         and not scheduled["pause_prefill"]
@@ -166,6 +178,22 @@ def _check_work_quota(
             raise AssertionError("Guard used an uncalibrated deadline quota")
         rounds = _integer(info["allowed_decode_rounds"], "allowed rounds", 1)
         expected = min(remaining, max(base, math.ceil(remaining / rounds)))
+    if reason == "piecewise_short_prefill_full_quota":
+        short_limit = _integer(
+            row.get("piecewise_short_prefill_tokens"), "short-P graph threshold", 1
+        )
+        if not (
+            0 < tokens <= short_limit
+            and new == set(row["pending_prefill_ids"])
+            and row["layers_completed_before"] == 0
+            and not row["pause_prefill"]
+            and not row["cancelled_prefill_ids"]
+            and row["finish_prefill"]
+            and not row["compile_full_prefill"]
+            and guard is None
+        ):
+            raise AssertionError("Short P full quota requires a fresh eligible cohort")
+        expected = total
     if guard is not None:
         expected = _check_decode_budget(
             row, guard, expected, cohort, guard_shapes, scheduled_prefills

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ctypes
 import sys
+from contextlib import contextmanager
 from dataclasses import dataclass, replace
 from typing import Any
 
@@ -361,11 +362,21 @@ class MuxPDNPUWorker(NPUWorker):
             }
         try:
             if graph_workspaces is not None:
+                policy = (
+                    self.vllm_config.scheduler_config.batch_admission_policy_config
+                    or {}
+                )
+                piecewise_options = (
+                    {"prefill_startup_scope": self._prefill_startup_scope,
+                     "assert_prefill_lane": self._assert_prefill_lane}
+                    if policy.get("piecewise_short_prefill_tokens", 0) else {}
+                )
                 self._decode_graph_controller = DecodeGraphController(
                     self.model_runner,
                     self.decode_runner,
                     self._streams["decode"],
                     graph_workspaces["decode"],
+                    **piecewise_options,
                 )
                 self._decode_graph_controller.install_prefill_guards()
             if self._stream_mode == "overlap":
@@ -377,6 +388,37 @@ class MuxPDNPUWorker(NPUWorker):
                 self._decode_graph_controller.close()
                 self._decode_graph_controller = None
             raise
+
+    def _assert_prefill_lane(self):
+        backend = self._execution_backend
+        current = backend.capture()
+        expected = self._lane_states["prefill"]
+        if (
+            backend.active_lane != "prefill"
+            or current.stream != expected.stream
+            or current.workspace_manager is not expected.workspace_manager
+        ):
+            raise RuntimeError("Short P graphs require P stream/workspace/PG scope")
+
+    @contextmanager
+    def _prefill_startup_scope(self):
+        if (self._interleaver is not None or self._pending_lanes
+                or getattr(self, "_prefill_task", None) is not None
+                or getattr(self, "_awaiting_sample", False)):
+            raise RuntimeError("P graph preparation is startup-only")
+        backend = self._execution_backend
+        caller = backend.capture()
+        backend.begin_batch(preparation_lane=None)
+        try:
+            backend.restore(self._lane_states["prefill"])
+            yield
+        finally:
+            try:
+                backend.fence()
+                self._streams["prefill"].synchronize()
+            finally:
+                backend.restore(caller)
+                backend.join(["prefill"])
 
     def _configure_overlap_communication(self, backend: NPUOverlapBackend) -> None:
         groups = [("tp", get_tp_group())]

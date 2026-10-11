@@ -21,6 +21,7 @@ def worker_factory():
         ctrl, owner, decode, runtime = controller(attached=attached)
         worker = module.MuxPDNPUWorker.__new__(module.MuxPDNPUWorker)
         worker.model_runner = owner
+        worker.vllm_config = owner.vllm_config
         worker.decode_runner = decode
         worker._decode_graph_controller = ctrl if graph else None
         worker._decode_graph_enabled = graph
@@ -514,3 +515,34 @@ def test_shutdown_preserves_resources_and_can_retry_failed_safety_joins(
     assert native_calls == [state.worker]
     assert state.worker.decode_runner is None
     assert state.worker._muxpd_shutdown_complete
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("fails", [False, True])
+def test_short_piecewise_startup_scope_syncs_p_and_restores_caller(
+    overlap_graph_factory, monkeypatch, fails
+):
+    state = overlap_graph_factory()
+    worker, runtime = state.worker, state.runtime
+    worker._configure_execution_backend()
+    backend = worker._execution_backend
+    caller = backend.capture()
+    synchronized = []
+    worker._streams["prefill"].synchronize = lambda: synchronized.append("prefill")
+    monkeypatch.setattr(state.module.torch.npu, "current_stream",
+                        runtime.npu.current_stream)
+    try:
+        with worker._prefill_startup_scope():
+            worker._assert_prefill_lane()
+            assert backend.active_lane == "prefill"
+            if fails:
+                raise ValueError("startup failure")
+    except ValueError:
+        assert fails
+    assert synchronized == ["prefill"]
+    assert backend.capture() == caller
+    assert backend.active_lane is None
+    worker._prefill_task = object()
+    with pytest.raises(RuntimeError, match="startup-only"):
+        with worker._prefill_startup_scope():
+            raise AssertionError("must not enter with persistent P")

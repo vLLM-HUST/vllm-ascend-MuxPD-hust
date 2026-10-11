@@ -9,13 +9,18 @@ during startup. This module intentionally does not enable the worker path.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from dataclasses import dataclass
 from functools import wraps
 from inspect import signature
 from threading import get_ident
 from types import SimpleNamespace
 from typing import Any
+
+from vllm_muxpd.piecewise_prefill import (
+    ShortPrefillGraphs,
+    graph_wrapper_snapshot,
+)
 
 _MISSING = object()
 _CAPTURE_OWNER: object | None = None
@@ -51,13 +56,24 @@ def validate_decode_graph_config(config: Any, policy: Any) -> None:
         )
     if type(_value(policy, "compile_full_prefill", False)) is not bool:
         errors.append("compile_full_prefill must be a boolean")
+    short_limit = _value(policy, "piecewise_short_prefill_tokens", 0)
+    if type(short_limit) is not int or short_limit < 0:
+        errors.append("piecewise_short_prefill_tokens must be a nonnegative integer")
+        short_limit = 0  # Continue collecting errors without invalid arithmetic.
+    if short_limit and not (
+        stream_mode == "overlap"
+        and _value(policy, "overlap_communication") == "isolated"
+        and not _value(policy, "compile_full_prefill", False)
+    ):
+        errors.append("short P graphs require isolated overlap without full P FX")
     model = config.model_config
     compilation = config.compilation_config
     scheduler = config.scheduler_config
     if model.enforce_eager:
         errors.append("enforce_eager must be false for the decode graph opt-in")
-    if _mode_name(compilation.cudagraph_mode) != "FULL_DECODE_ONLY":
-        errors.append("cudagraph_mode must be FULL_DECODE_ONLY")
+    expected_mode = "FULL_AND_PIECEWISE" if short_limit else "FULL_DECODE_ONLY"
+    if _mode_name(compilation.cudagraph_mode) != expected_mode:
+        errors.append("cudagraph_mode must be " + expected_mode)
     if _mode_name(compilation.mode) != "VLLM_COMPILE":
         errors.append("compilation mode must be VLLM_COMPILE")
     sizes = compilation.cudagraph_capture_sizes
@@ -65,7 +81,8 @@ def validate_decode_graph_config(config: Any, policy: Any) -> None:
         not isinstance(sizes, (list, tuple))
         or not sizes
         or any(
-            type(n) is not int or not 1 <= n <= scheduler.max_num_seqs for n in sizes
+            type(n) is not int or not 1 <= n <= (short_limit or scheduler.max_num_seqs)
+            for n in sizes
         )
         or list(sizes) != sorted(set(sizes))
     ):
@@ -74,6 +91,23 @@ def validate_decode_graph_config(config: Any, policy: Any) -> None:
         )
     elif compilation.max_cudagraph_capture_size != max(sizes):
         errors.append("max_cudagraph_capture_size must match the largest capture size")
+    if short_limit:
+        if short_limit > scheduler.max_num_batched_tokens:
+            errors.append("short P threshold exceeds complete token admission")
+        if (
+            not sizes
+            or max(sizes) != short_limit
+            or scheduler.max_num_seqs not in sizes
+            or len(sizes) > 16
+        ):
+            errors.append(
+                "short P requires <=16 gears ending at its threshold and "
+                "including max_num_seqs for independent D capture"
+            )
+        if getattr(compilation, "cudagraph_copy_inputs", False):
+            errors.append("shared compiler input-copy buffers are forbidden")
+        if getattr(compilation, "use_inductor_graph_partition", False):
+            errors.append("short P requires native explicit FX attention splitting")
     if getattr(config, "use_v2_model_runner", False):
         errors.append("only the V1 model runner is supported")
     if scheduler.async_scheduling is not False:
@@ -82,9 +116,8 @@ def validate_decode_graph_config(config: Any, policy: Any) -> None:
         if getattr(config, name, None) is not None:
             errors.append(f"{name} is unsupported by decode graphs")
     offload = getattr(config, "offload_config", None)
-    if (
-        _value(_value(offload, "uva"), "cpu_offload_gb", 0)
-        or _value(_value(offload, "prefetch"), "offload_group_size", 0)
+    if _value(_value(offload, "uva"), "cpu_offload_gb", 0) or _value(
+        _value(offload, "prefetch"), "offload_group_size", 0
     ):
         errors.append("model offloading is unsupported by decode graphs")
     if errors:
@@ -233,6 +266,7 @@ class _NativeGraphRuntime:
         from vllm.config import CUDAGraphMode
 
         self.npu = torch.npu
+        self._tensor_type = torch.Tensor
         self.forward = forward
         self.workspace = workspace
         self.ascend = ascend
@@ -240,6 +274,55 @@ class _NativeGraphRuntime:
         self.runner = runner
         self.none_mode = CUDAGraphMode.NONE
         self.full_mode = CUDAGraphMode.FULL
+        self.piecewise_mode = CUDAGraphMode.PIECEWISE
+        self.full_decode_mode = CUDAGraphMode.FULL_DECODE_ONLY
+        self.wrapper_cls = graphs.ACLGraphWrapper
+
+    def context(self):
+        return self.forward.get_forward_context()
+
+    def wrappers(self):
+        return tuple(self.graphs._acl_graph_wrappers)
+
+    def new_pool(self):
+        return self.npu.graph_pool_handle()
+
+    def input_addresses(self, args):
+        return [x.data_ptr() for x in args if isinstance(x, self._tensor_type)]
+
+    def graph_params_snapshot(self):
+        params = self.graph_params()
+        if params is None:
+            return None
+        return (
+            id(params),
+            tuple(
+                (
+                    name,
+                    tuple(
+                        (key, tuple(id(x) for x in values))
+                        for key, values in sorted(getattr(params, name).items())
+                    ),
+                )
+                for name in ("events", "handles", "attn_params")
+            ),
+            tuple(
+                (key, None if value is None else value.data_ptr())
+                for key, value in sorted(params.workspaces.items())
+            ),
+        )
+
+    def validate_piecewise_backend(self, owner):
+        compilation = owner.ascend_config.ascend_compilation_config
+        if compilation.enable_npugraph_ex or compilation.enable_static_kernel:
+            raise ValueError("P PIECEWISE requires the native fusion-pass backend")
+        if not owner.compilation_config.is_attention_compiled_piecewise():
+            raise ValueError("P PIECEWISE must split every native attention/GDN op")
+
+    def guard_capture_disabled(self):
+        from vllm.compilation.monitor import set_cudagraph_capturing_enabled
+
+        set_cudagraph_capturing_enabled(False)
 
     def graph_params(self) -> Any:
         return self.graphs.get_graph_params()
@@ -293,6 +376,8 @@ class DecodeGraphController:
         *,
         runtime: Any = None,
         policy: Any = None,
+        prefill_startup_scope: Any = None,
+        assert_prefill_lane: Any = None,
     ) -> None:
         config = owner.vllm_config
         if policy is None:
@@ -312,6 +397,22 @@ class DecodeGraphController:
         self.workspace = decode_workspace
         self.runtime = runtime or _NativeGraphRuntime()
         self._compile_full_prefill = _value(policy, "compile_full_prefill", False)
+        self.piecewise_short_prefill_tokens = _value(
+            policy, "piecewise_short_prefill_tokens", 0
+        )
+        self._prefill_startup_scope = prefill_startup_scope
+        self._piecewise = None
+        self._prefill_capture_active = False
+        self._prefill_capture_model = owner.capture_model
+        if self.piecewise_short_prefill_tokens:
+            if prefill_startup_scope is None or assert_prefill_lane is None:
+                raise ValueError("P graphs require explicit P startup/lane ownership")
+            self.runtime.validate_piecewise_backend(owner)
+            self._piecewise = ShortPrefillGraphs(
+                self.runtime,
+                assert_lane=assert_prefill_lane,
+                limit=self.piecewise_short_prefill_tokens,
+            )
         self._compile_prefill_active = False
         self._prefill_profiled = False
         self._thread = get_ident()
@@ -360,6 +461,22 @@ class DecodeGraphController:
             "failed": self._failed,
             "closed": self._closed,
             "compile_full_prefill": self.compile_full_prefill,
+            "piecewise_short_prefill_tokens": self.piecewise_short_prefill_tokens,
+            "prefill_piecewise": (
+                self._piecewise.snapshot() if self._piecewise else None
+            ),
+            "decode_graph_metadata": (
+                graph_wrapper_snapshot(self._decode_graph_model)
+                if self._piecewise
+                else None
+            ),
+            "prefill_decode_pool_equal": (
+                self._piecewise.pool_matches(
+                    getattr(self._decode_graph_model, "graph_pool", None)
+                )
+                if self._piecewise
+                else None
+            ),
             "prefill_compile_profiled": self._prefill_profiled,
             "includes_startup_warmups": True,
             "captured_graph_entries": sum(
@@ -373,10 +490,14 @@ class DecodeGraphController:
     def compile_full_prefill(self) -> bool:
         return self._compile_full_prefill
 
+    @property
+    def _compile_prefill_enabled(self):
+        return bool(self.compile_full_prefill or self._piecewise)
+
     @contextmanager
     def _prefill_compile_context(self, *, startup: bool):
         self._check()
-        if not self.compile_full_prefill or not self._attached:
+        if not self._compile_prefill_enabled or not self._attached:
             raise RuntimeError("Full prefill compilation is not enabled and attached")
         if self._compile_prefill_active:
             raise RuntimeError("Full prefill compilation contexts cannot be nested")
@@ -397,12 +518,19 @@ class DecodeGraphController:
     def full_prefill_compile_context(self):
         """Allow FX for one fresh, complete, non-yielding prefill forward.
 
-        The worker must validate the full layer quota and successful native
-        return. This changes only ``skip_compiled``; the P dispatch and forward
-        guards still force NONE, so P cannot capture or replay D's ACL graph.
+        The worker validates the full layer quota and successful native return.
+        Legacy FX keeps NONE; short PIECEWISE uses only its private prepared
+        entries. Neither path may capture or replay the decode ACL graph.
         """
-        with self._prefill_compile_context(startup=False):
-            yield
+        try:
+            with self._prefill_compile_context(startup=False):
+                scope = self._piecewise.serving() if self._piecewise else nullcontext()
+                with scope:
+                    yield
+        except BaseException:
+            if self._piecewise:
+                self._failed = True
+            raise
 
     def _check(self) -> None:
         if get_ident() != self._thread:
@@ -436,6 +564,8 @@ class DecodeGraphController:
             raise RuntimeError("Cannot close during full prefill compilation")
         self._closed = True
         try:
+            if self._piecewise is not None:
+                self._piecewise.close()
             wrapper = self._decode_graph_model
             if wrapper is not None:
                 # Drop graph objects before the native owner frees captured KV.
@@ -455,6 +585,8 @@ class DecodeGraphController:
             finally:
                 self._patches.clear()
                 self._decode_graph_model = None
+                self._prefill_capture_model = None
+                self._prefill_startup_scope = None
                 self._attached = False
                 self.owner = None
                 self.decode = None
@@ -473,7 +605,7 @@ class DecodeGraphController:
         dispatch_signature = signature(dispatch)
         model_forward = self.owner._model_forward
         profile_run = None
-        if self.compile_full_prefill:
+        if self._compile_prefill_enabled:
             profile_run = getattr(self.owner, "profile_run", None)
             if not callable(profile_run):
                 raise RuntimeError(
@@ -484,7 +616,16 @@ class DecodeGraphController:
         def eager_dispatch(*args, **kwargs):
             self._check()
             bound = dispatch_signature.bind(*args, **kwargs)
-            bound.arguments["force_eager"] = True
+            if (
+                self._piecewise
+                and self._compile_prefill_active
+                and (self._prefill_capture_active or self._piecewise.captured)
+            ):
+                # Preserve native NONE warmup requests; actual short P and
+                # capture calls may select only P's filtered PIECEWISE keys.
+                bound.arguments["force_uniform_decode"] = False
+            else:
+                bound.arguments["force_eager"] = True
             return dispatch(*bound.args, **bound.kwargs)
 
         @wraps(model_forward)
@@ -494,7 +635,13 @@ class DecodeGraphController:
             if ctx is None:
                 raise RuntimeError("Prefill forward requires a native forward context")
             values = {
-                "cudagraph_runtime_mode": self.runtime.none_mode,
+                "cudagraph_runtime_mode": (
+                    ctx.cudagraph_runtime_mode
+                    if self._piecewise
+                    and self._compile_prefill_active
+                    and (self._prefill_capture_active or self._piecewise.captured)
+                    else self.runtime.none_mode
+                ),
                 "skip_compiled": not self._compile_prefill_active,
                 "capturing": False,
             }
@@ -520,6 +667,7 @@ class DecodeGraphController:
         self._patch_instance(self.owner, "use_aclgraph", False)
         self._patch_instance(self.owner, "_muxpd_decode_graph_controller", self)
         if profile_run is not None:
+
             @wraps(profile_run)
             def compiled_profile_run(*args, **kwargs):
                 # Native startup profiles max_num_tokens before KV sizing and
@@ -527,8 +675,20 @@ class DecodeGraphController:
                 self._check()
                 before = self._statistics["prefill_compiled_calls"]
                 try:
-                    with self._prefill_compile_context(startup=True):
-                        result = profile_run(*args, **kwargs)
+                    startup = (
+                        self._prefill_startup_scope()
+                        if self._piecewise
+                        else nullcontext()
+                    )
+                    with startup:
+                        with self._prefill_compile_context(startup=True):
+                            prepare = (
+                                self._piecewise.profile()
+                                if self._piecewise
+                                else nullcontext()
+                            )
+                            with prepare:
+                                result = profile_run(*args, **kwargs)
                     if self._statistics["prefill_compiled_calls"] == before:
                         raise RuntimeError(
                             "Native profile_run did not compile a prefill forward"
@@ -542,7 +702,36 @@ class DecodeGraphController:
                 return result
 
             self._patch_instance(self.owner, "profile_run", compiled_profile_run)
+        if self._piecewise:
+            self._isolate_dispatcher(self.owner, prefill=True)
+            self._isolate_dispatcher(self.decode, prefill=False)
         self._installed = True
+
+    def _isolate_dispatcher(self, runner, *, prefill):
+        dispatcher = runner.cudagraph_dispatcher
+        initialize = dispatcher.initialize_cudagraph_keys
+
+        @wraps(initialize)
+        def isolated_keys(*args, **kwargs):
+            result = initialize(*args, **kwargs)
+            keep = self.runtime.piecewise_mode if prefill else self.runtime.full_mode
+            maximum = (
+                self.piecewise_short_prefill_tokens
+                if prefill
+                else runner.vllm_config.scheduler_config.max_num_seqs
+            )
+            for mode, keys in dispatcher.cudagraph_keys.items():
+                dispatcher.cudagraph_keys[mode] = {
+                    desc for desc in keys if mode == keep and desc.num_tokens <= maximum
+                }
+            dispatcher.cudagraph_mode = (
+                self.runtime.piecewise_mode
+                if prefill
+                else self.runtime.full_decode_mode
+            )
+            return result
+
+        self._patch_instance(dispatcher, "initialize_cudagraph_keys", isolated_keys)
 
     def attach_shared_model(self) -> None:
         self._check()
@@ -591,8 +780,10 @@ class DecodeGraphController:
             # ACLGraphWrapper sets capturing inside its first FULL call, after
             # this observer starts. A new concrete entry also proves capture if
             # a native implementation restores that flag before returning.
-            if capturing or getattr(ctx, "capturing", False) or (
-                full and not captured_before and has_captured_entry(descriptor)
+            if (
+                capturing
+                or getattr(ctx, "capturing", False)
+                or (full and not captured_before and has_captured_entry(descriptor))
             ):
                 key = "decode_capture_forward_calls"
             elif full and captured_before:
@@ -610,7 +801,13 @@ class DecodeGraphController:
     def _validate_capture(self) -> None:
         if not self._attached:
             raise RuntimeError("Decode graph model has not been attached")
-        if self.compile_full_prefill and not self._prefill_profiled:
+        if self._piecewise:
+            validate_decode_graph_config(
+                self.owner.vllm_config,
+                self.owner.vllm_config.scheduler_config.batch_admission_policy_config,
+            )
+            self.runtime.validate_piecewise_backend(self.owner)
+        if self._compile_prefill_enabled and not self._prefill_profiled:
             raise RuntimeError(
                 "Full prefill compilation requires native startup profiling"
             )
@@ -647,6 +844,9 @@ class DecodeGraphController:
         self._capture_started = True
         self._statistics["capture_attempts"] += 1
         try:
+            prefill_memory = 0
+            if self._piecewise:
+                prefill_memory = self._capture_short_prefill()
             with self.runtime.capture_context(self.decode, self.stream, self.workspace):
                 memory = self.decode.capture_model()
             if type(memory) is not int or memory < 0:
@@ -658,9 +858,37 @@ class DecodeGraphController:
             self._statistics["capture_failures"] += 1
             self._failed = True
             raise
+        finally:
+            if self._piecewise:
+                self.runtime.guard_capture_disabled()
         self._captured = True
         self._statistics["capture_successes"] += 1
-        return memory
+        return memory + prefill_memory
+
+    def _capture_short_prefill(self):
+        capture_descs = self.owner.cudagraph_dispatcher.get_capture_descs()
+        if (
+            len(capture_descs) != 1
+            or capture_descs[0][0] != self.runtime.piecewise_mode
+        ):
+            raise RuntimeError("P capture must have only PIECEWISE descriptors")
+        self._prefill_capture_active = True
+        self._compile_prefill_active = True
+        try:
+            with self._prefill_startup_scope():
+                p_stream = self.runtime.npu.current_stream()
+                p_workspace = self.runtime.workspace._manager
+                with self.runtime.capture_context(self.owner, p_stream, p_workspace):
+                    with self._piecewise.capture(capture_descs[0][1]):
+                        memory = self._prefill_capture_model()
+            if type(memory) is not int or memory < 0:
+                raise RuntimeError("Native P capture returned invalid memory usage")
+            return memory
+        finally:
+            # Native capture's global flag is not protected by finally on error.
+            self.runtime.guard_capture_disabled()
+            self._prefill_capture_active = False
+            self._compile_prefill_active = False
 
     @contextmanager
     def redirect_owner_capture(self):

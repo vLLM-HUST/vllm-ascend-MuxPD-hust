@@ -69,6 +69,7 @@ def make_scheduler(tmp_path):
         adaptive_layers=False,
         prefill_first=False,
         compile_full_prefill=False,
+        piecewise_short_prefill_tokens=0,
         prefill_layer_token_budget=0,
         decode_budget_guard=False,
         tpot_slo_ms=0.001,
@@ -99,8 +100,17 @@ def make_scheduler(tmp_path):
                     "layers_per_slice": layers_per_slice,
                     "adaptive_layers": adaptive_layers,
                     "prefill_first": prefill_first,
-                    "decode_graph": compile_full_prefill,
+                    "decode_graph": bool(
+                        compile_full_prefill or piecewise_short_prefill_tokens
+                    ),
                     "compile_full_prefill": compile_full_prefill,
+                    "piecewise_short_prefill_tokens": piecewise_short_prefill_tokens,
+                    "stream_mode": "overlap"
+                    if piecewise_short_prefill_tokens
+                    else "fenced",
+                    "overlap_communication": (
+                        "isolated" if piecewise_short_prefill_tokens else "shared"
+                    ),
                     "prefill_layer_token_budget": prefill_layer_token_budget,
                     "decode_budget_guard": decode_budget_guard,
                     "max_decode_steps": 1,
@@ -1028,6 +1038,61 @@ def test_full_forward_progress_requires_explicit_opt_in(make_scheduler):
         retire(scheduler, output, completed={"p"}, source="full_forward_return")
     assert scheduler.requests["p"].num_output_tokens == 0
     retire(scheduler, output, completed={"p"})
+
+
+@pytest.mark.parametrize("tokens,expected", [(32, 4), (64, 4), (65, 1)])
+def test_short_prefill_threshold_controls_explicit_whole_cohort_quota(
+    make_scheduler, tokens, expected
+):
+    scheduler = make_scheduler(piecewise_short_prefill_tokens=64)
+    start_decode(scheduler)
+    scheduler.add_request(request("p", tokens))
+    output = scheduler.schedule()
+    assert output.num_scheduled_tokens == {"d": 1, "p": tokens}
+    assert output.muxpd_layers_per_slice == expected
+    assert output.muxpd_finish_prefill == (expected == 4)
+    if expected == 4:
+        retire(scheduler, output, completed={"p"}, source="full_forward_return")
+        assert scheduler._prefill_cohort is None
+    else:
+        with pytest.raises(RuntimeError):
+            retire(scheduler, output, completed={"p"}, source="full_forward_return")
+        retire(scheduler, output)
+        assert scheduler._prefill_cohort.completed_layers == 1
+
+
+def test_short_limit_applies_to_sum_of_selected_prefills_and_excludes_decode(
+    make_scheduler,
+):
+    scheduler = make_scheduler(piecewise_short_prefill_tokens=64)
+    start_decode(scheduler)
+    for rid in ("p", "p2"):
+        scheduler.add_request(request(rid, 40))
+    output = scheduler.schedule()
+    assert output.muxpd_prefill_request_ids == {"p", "p2"}
+    assert output.muxpd_layers_per_slice == 1
+    retire(scheduler, output)
+    # A later finish is still a resumed raw transaction, never a fresh FX call.
+    scheduler.finish_requests("d", RequestStatus.FINISHED_ABORTED)
+    output = scheduler.schedule()
+    assert output.muxpd_finish_prefill
+    with pytest.raises(RuntimeError, match="fresh, complete"):
+        retire(scheduler, output, completed={"p", "p2"}, source="full_forward_return")
+    retire(scheduler, output, completed={"p", "p2"})
+
+
+def test_short_full_return_late_abort_keeps_kv_pinned_until_ack(make_scheduler):
+    scheduler = make_scheduler(piecewise_short_prefill_tokens=64)
+    start_decode(scheduler)
+    scheduler.add_request(request("p", 32))
+    output = scheduler.schedule()
+    result = receipt(output, completed={"p"}, source="full_forward_return")
+    scheduler.finish_requests("p", RequestStatus.FINISHED_ABORTED)
+    held = scheduler._held_prefill_blocks["p"]
+    assert all(block.ref_cnt > 0 for block in held)
+    updated = scheduler.update_from_output(output, result)
+    assert output_ids(updated) == {"d"}
+    assert all(block.ref_cnt == 0 for block in held)
 
 
 def test_partial_and_resumed_prefill_cannot_claim_full_forward_return(make_scheduler):

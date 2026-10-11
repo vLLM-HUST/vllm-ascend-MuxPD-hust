@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sys
 from dataclasses import replace
 from functools import partial
@@ -17,6 +18,7 @@ from vllm_muxpd.worker import (
     MuxPDNPUWorker,
     _merge_outputs,
     _select_requests,
+    logger,
 )
 
 
@@ -60,8 +62,8 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
     def _snapshot_prefill_progress(self) -> None:
         if self._prefill_task is not None:
             task = self._prefill_task.tasks["prefill"]
-            complete_return = (
-                task.done and getattr(self, "_prefill_full_forward_return", False)
+            complete_return = task.done and getattr(
+                self, "_prefill_full_forward_return", False
             )
             self._iteration_prefill_layers_completed = (
                 self._decoder_layer_count if complete_return else task.completed_layers
@@ -74,8 +76,38 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
     def _execute_compiled_prefill(self, output: SchedulerOutput, controller: Any):
         """A fresh full forward may use FX, but never D's ACL graph."""
         task = self._prefill_task.tasks["prefill"]
-        if task.completed_layers != 0 or self._stream_mode != "fenced":
-            raise RuntimeError("Compiled prefill requires a fresh fenced forward")
+        short_limit = getattr(controller, "piecewise_short_prefill_tokens", 0)
+        valid_stream = self._stream_mode == "fenced" or (
+            self._stream_mode == "overlap"
+            and self._overlap_communication == "isolated"
+            and 0 < output.total_num_scheduled_tokens <= short_limit
+        )
+        if task.completed_layers != 0 or not valid_stream:
+            raise RuntimeError(
+                "Compiled prefill requires a fresh supported full forward"
+            )
+        policy = (
+            (self.vllm_config.scheduler_config.batch_admission_policy_config or {})
+            if short_limit
+            else {}
+        )
+        diagnostic = None
+        if short_limit and policy.get("trace_path"):
+            snapshot = controller.snapshot()
+            diagnostic = {
+                "rank": self.rank,
+                "cohort_id": self._prefill_cohort_id,
+                "request_ids": list(output.num_scheduled_tokens),
+                "prefill_tokens": output.total_num_scheduled_tokens,
+                "before": snapshot["prefill_piecewise"],
+                "decode_graph_metadata": snapshot["decode_graph_metadata"],
+                "prefill_decode_pool_equal": snapshot["prefill_decode_pool_equal"],
+                "claim": "host replay returns; native sampling/ACK still pending",
+            }
+            logger.info(
+                "MuxPD short PIECEWISE diagnostic %s",
+                json.dumps({**diagnostic, "event": "begin"}, sort_keys=True),
+            )
         with controller.full_prefill_compile_context():
             result = self.model_runner.execute_model(output)
         # A compiled FX call normally elides Python post-hooks. If native falls
@@ -88,6 +120,19 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
                 "Compiled prefill requires a complete deferred native sampler"
             )
         self._prefill_full_forward_return = True
+        if diagnostic is not None:
+            logger.info(
+                "MuxPD short PIECEWISE diagnostic %s",
+                json.dumps(
+                    {
+                        **diagnostic,
+                        "event": "end",
+                        "host_forward_returned": True,
+                        "after": controller.snapshot()["prefill_piecewise"],
+                    },
+                    sort_keys=True,
+                ),
+            )
         return result
 
     def _run_lane(
@@ -320,8 +365,10 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
             return None
 
         budget = None
-        if pending and not scheduler_output.muxpd_pause_prefill and not (
-            pending <= (cancelled | self._prefill_cancelled)
+        if (
+            pending
+            and not scheduler_output.muxpd_pause_prefill
+            and not (pending <= (cancelled | self._prefill_cancelled))
         ):
             budget = scheduler_output.muxpd_layers_per_slice
             if type(budget) is not int or budget < 1:
@@ -337,7 +384,12 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
             controller = getattr(self, "_decode_graph_controller", None)
             self._prefill_compiled = bool(
                 controller is not None
-                and controller.compile_full_prefill
+                and (
+                    controller.compile_full_prefill
+                    or 0
+                    < output.total_num_scheduled_tokens
+                    <= getattr(controller, "piecewise_short_prefill_tokens", 0)
+                )
                 and not scheduler_output.muxpd_pause_prefill
                 and not cancelled
                 and (budget is None or budget >= self._decoder_layer_count)
