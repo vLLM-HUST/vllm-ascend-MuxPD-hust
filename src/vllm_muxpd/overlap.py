@@ -1,8 +1,9 @@
 """Experimental building blocks for independent Ascend compute streams.
 
-Nothing is installed on import. Callers must retain the eager, A2, no-MC2,
-no-FlashComm constraints of the cooperative worker. Collective call order must
-be identical on every rank. This module does not set core quotas or claim
+Nothing is installed on import. Callers must retain the worker's A2, no-MC2,
+no-FlashComm constraints. Prefill remains raw eager; opt-in decode graphs require
+the graph controller and isolated communication groups. Collective call order
+must be identical on every rank. This module does not set core quotas or claim
 hardware overlap without a device profile.
 """
 

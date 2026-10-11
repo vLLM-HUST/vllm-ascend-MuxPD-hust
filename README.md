@@ -43,6 +43,12 @@ P TTFT 1 s 观察目标；吞吐低 1.96%–3.54%，P TTFT P95 增加 22.62%–2
 这不是硬 SLO 保证或设备空间分区；guard 默认关闭，完整启用示例、图表与
 全部证据见 [TP8 争用实验报告](docs/performance-tp8-contention.md)。
 
+持续到达的容量验证使用独立 Poisson plan 和严格原始 SSE 回执，区分 pooled
+TBT P99 与每请求双 SLO goodput，并调优原生 chunk budget / async 基线。
+实验性 **isolated graph overlap** 的固定 8 层入口与运行方法见
+[Goodput 实验说明](docs/goodput-experiments.md)。默认 graph 脚本仍为 fenced；
+新路径尚无持续容量收益结论。
+
 早期 [TP2 验证](evidence/2026-10-10/README.md) 和
 [TP4 eager 验证](evidence/2026-10-10-tp4/README.md) 保留原始回执与未取得收益的结果。
 不同 TP、eager/graph、缓存设置的测量不能直接混用。
@@ -160,7 +166,7 @@ CPU 测试覆盖策略与协程；原生 Scheduler 测试覆盖 KV 容量、抢�
 | `adaptive_layers` | false | decoupled 按本机耗时和 TTFT 预算放大层配额 |
 | `decode_budget_guard` | false | adaptive fenced 按观测的 D 和 P 片段耗时限制层配额；仅是延迟预算启发式 |
 | `prefill_first` | false | adaptive fenced 判断 P 可在本轮完成时先执行 P，下一轮偿还 D 执行机会 |
-| `decode_graph` | false | decoupled fenced 的独立 FULL_DECODE_ONLY 图，须使用匹配 compilation 配置 |
+| `decode_graph` | false | decoupled 的独立 FULL_DECODE_ONLY 图；默认 fenced，实验 overlap 须 isolated 通信与 raw P |
 | `compile_full_prefill` | false | decode graph 模式中，新 P 可一次完成时复用原生编译路径；需启动预热 |
 | `overlap_communication` | shared | 实验 `isolated` 为 overlap 的 P 创建独立 TP/EP 通信组 |
 | `trace_path` | null | 可选 JSONL 文件；支持 `{pid}`，不记录 prompt 内容 |
@@ -206,7 +212,9 @@ PP/DP/CP、speculative decoding、KV/EC transfer、streaming-input continuation
 
 默认 worker 仍要求 eager。`decode_graph=true` 必须配合 `--no-enforce-eager`、
 `FULL_DECODE_ONLY`、编译 mode 3 和明确的捕获大小（当前脚本为 1/2/4/8）；
-不支持 overlap 图、ENPU、offload 或运行中重新捕获。图只覆盖 D，首次单 token
+实验 overlap 图只允许 isolated 通信与 raw P，完整配置见
+[Goodput 实验说明](docs/goodput-experiments.md)；不支持 shared overlap 图、
+ENPU、offload 或运行中重新捕获。图只覆盖 D，首次单 token
 P 也强制 `NONE`。`trace_path=null` 不构造逐轮诊断记录；需要生命周期证据时
 显式开启 trace，并在计时报告中说明。
 Ascend 原生 GraphParams 包含进程级状态；当前不支持在同一 worker 进程内销毁后
