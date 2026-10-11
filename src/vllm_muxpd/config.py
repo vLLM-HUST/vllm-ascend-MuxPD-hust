@@ -33,6 +33,7 @@ class MuxPDConfig:
     decode_graph: bool = False
     compile_full_prefill: bool = False
     prefill_layer_token_budget: int = 0
+    decode_budget_guard: bool = False
 
     def __post_init__(self) -> None:
         for name in (
@@ -86,6 +87,17 @@ class MuxPDConfig:
             raise ValueError("MuxPD adaptive_layers must be a boolean")
         if self.adaptive_layers and self.execution != "decoupled":
             raise ValueError("MuxPD adaptive_layers requires execution='decoupled'")
+        if type(self.decode_budget_guard) is not bool:
+            raise ValueError("MuxPD decode_budget_guard must be a boolean")
+        if self.decode_budget_guard and not (
+            self.execution == "decoupled"
+            and self.adaptive_layers
+            and self.stream_mode == "fenced"
+        ):
+            raise ValueError(
+                "MuxPD decode_budget_guard requires decoupled adaptive_layers "
+                "with stream_mode='fenced'"
+            )
         if type(self.prefill_first) is not bool:
             raise ValueError("MuxPD prefill_first must be a boolean")
         if self.prefill_first and not (

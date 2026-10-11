@@ -20,6 +20,14 @@ class ExecutionBackend(Protocol):
     def fence(self) -> None: ...
 
 
+class SliceObserver(Protocol):
+    """Optional observations made inside the lane and its existing fences."""
+
+    def start(self) -> None: ...
+
+    def stop(self) -> None: ...
+
+
 @dataclass(frozen=True)
 class LayerBoundary:
     lane: str
@@ -56,6 +64,7 @@ class LayerInterleaver:
         self.active: CooperativeTask | None = None
         self._target_layer = 0
         self._owner_thread = get_ident()
+        self._slice_observer: SliceObserver | None = None
 
     def _check_thread(self) -> None:
         if get_ident() != self._owner_thread:
@@ -76,13 +85,21 @@ class LayerInterleaver:
             raise RuntimeError("Decoder hook called outside its cooperative task")
         task.completed_layers += 1
         if not final and task.completed_layers >= self._target_layer:
+            if self._slice_observer is not None:
+                self._slice_observer.stop()
             self.backend.fence()
             task.state = self.backend.capture()
             task.coroutine.parent.switch(
                 LayerBoundary(task.name, task.completed_layers)
             )
 
-    def step(self, name: str, layer_budget: int = 1) -> LayerBoundary | None:
+    def step(
+        self,
+        name: str,
+        layer_budget: int = 1,
+        *,
+        observer: SliceObserver | None = None,
+    ) -> LayerBoundary | None:
         self._check_thread()
         if type(layer_budget) is not int or layer_budget < 1:
             raise ValueError("layer_budget must be a positive integer")
@@ -93,12 +110,17 @@ class LayerInterleaver:
             return None
         caller_state = self.backend.capture()
         self.active = task
+        self._slice_observer = observer
         self._target_layer = task.completed_layers + layer_budget
         try:
             self.backend.restore(task.state)
+            if observer is not None:
+                observer.start()
             value = task.coroutine.switch()
             if task.done:
                 task.result = value
+                if observer is not None:
+                    observer.stop()
                 self.backend.fence()
                 task.state = self.backend.capture()
                 return None
@@ -107,6 +129,7 @@ class LayerInterleaver:
             return value
         finally:
             self.active = None
+            self._slice_observer = None
             self.backend.restore(caller_state)
 
     def run(self, order: Iterable[str], layer_budget: int = 1) -> dict[str, Any]:

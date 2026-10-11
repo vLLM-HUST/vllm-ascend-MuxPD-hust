@@ -1,9 +1,11 @@
 """Exercise cross-iteration prefill ownership with the native vLLM allocator."""
 
 import json
+import runpy
 import time
 from concurrent.futures import Future
 from contextlib import nullcontext
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -67,6 +69,8 @@ def make_scheduler(tmp_path):
         prefill_first=False,
         compile_full_prefill=False,
         prefill_layer_token_budget=0,
+        decode_budget_guard=False,
+        tpot_slo_ms=0.001,
         trace=True,
     ):
         config = VllmConfig(
@@ -97,8 +101,9 @@ def make_scheduler(tmp_path):
                     "decode_graph": compile_full_prefill,
                     "compile_full_prefill": compile_full_prefill,
                     "prefill_layer_token_budget": prefill_layer_token_budget,
+                    "decode_budget_guard": decode_budget_guard,
                     "max_decode_steps": 1,
-                    "tpot_slo_ms": 0.001,
+                    "tpot_slo_ms": tpot_slo_ms,
                     "trace_path": str(tmp_path / "trace.jsonl") if trace else None,
                 },
             ),
@@ -1249,4 +1254,434 @@ def test_work_quota_recomputes_actual_tokens_after_partial_kv_admission(make_sch
     assert work["cohort_full_prefill_tokens"] == 32
     assert work["base_layers_per_slice"] == 4
     retire(scheduler, output, completed={"fits"})
+    assert not scheduler._prefill_first_decode_debt
+
+
+def guard_scheduler(make_scheduler, **kwargs):
+    return make_scheduler(
+        adaptive_layers=True,
+        decode_budget_guard=True,
+        tpot_slo_ms=kwargs.pop("tpot_slo_ms", 100),
+        layers_per_slice=kwargs.pop("layers_per_slice", 4),
+        **kwargs,
+    )
+
+
+def calibrate_guard_decode(scheduler, clock, tokens=64):
+    scheduler.add_request(request("d", tokens))
+    output = scheduler.schedule()
+    clock.now += 0.005
+    retire(scheduler, output, completed={"d"})
+    output = scheduler.schedule()
+    clock.now += 0.010
+    retire(scheduler, output)
+
+
+def last_quota(scheduler):
+    rows = [json.loads(line) for line in open(scheduler.muxpd_policy.config.trace_path)]
+    return [row["quota"] for row in rows if row["event"] == "decoupled_schedule"][-1]
+
+
+def seed_raw_slice(scheduler, shape=(64,), cost=1):
+    for first in (False, True):
+        scheduler._guard_prefill_cost[(shape, first, 1 if first else 0)] = {
+            "completed_lane_span": (cost, 1)
+        }
+
+
+def timed_receipt(output, *, host_ms, device_ms, completed=()):
+    result = receipt(output, completed=completed)
+    delta = (
+        result.muxpd_prefill_layers_completed
+        - output.muxpd_prefill_layers_completed_before
+    )
+    result.muxpd_prefill_slice_timing = {
+        "version": 1,
+        "layer_delta": delta,
+        "first_slice": output.muxpd_prefill_layers_completed_before == 0,
+        "prefill_tokens": 64,
+        "mode": "raw_layers",
+        "host_submit_ms": host_ms,
+        "device_elapsed_ms": device_ms,
+        "device_complete": device_ms is not None,
+    }
+    return result
+
+
+def test_decode_guard_cold_start_caps_below_layer_floor_and_blocks_prefill_first(
+    make_scheduler, clock
+):
+    scheduler = guard_scheduler(
+        make_scheduler, prefill_first=True, prefill_layer_token_budget=256
+    )
+    calibrate_guard_decode(scheduler, clock)
+    assert not scheduler._guard_prefill_cost  # Whole-P observations are separate.
+    scheduler.add_request(urgent_request("p"))
+    output = scheduler.schedule()
+    assert output.num_scheduled_tokens == {"d": 1, "p": 64}
+    assert output.muxpd_layers_per_slice == 1 and not output.muxpd_finish_prefill
+    guard = last_quota(scheduler)["decode_budget"]
+    assert guard["mode"] == "cold_start"
+    assert guard["desired_layers_per_slice"] == 4
+    assert guard["cap_layers"] == 1
+    assert guard["ttft_feasible"] is False
+    assert (
+        scheduler._prefill_first_admission["reason"] == "decode_budget_retain_slicing"
+    )
+    clock.now += 0.020
+    retire(scheduler, output)
+    assert scheduler._raw_slice_estimate((64,), True)[0][0] == pytest.approx(20)
+    output = scheduler.schedule()
+    assert output.muxpd_layers_per_slice == 1
+    assert last_quota(scheduler)["decode_budget"]["mode"] == "cold_start"
+    clock.now += 0.020
+    retire(scheduler, output)
+    output = scheduler.schedule()
+    guard = last_quota(scheduler)["decode_budget"]
+    assert output.muxpd_layers_per_slice == 2 and output.muxpd_finish_prefill
+    assert guard["mode"] == "measured_slice_budget"
+    assert guard["estimated_raw_layer_ms"] == pytest.approx(24)
+    assert guard["estimated_solo_decode_ms"] == pytest.approx(12)
+    assert guard["ttft_feasible"] is False  # Expired TTFT cannot override D cap.
+    clock.now += 0.030
+    retire(scheduler, output, completed={"p"})
+
+
+def test_decode_guard_measured_slack_and_retirement_age_cap_actual_layers(
+    make_scheduler, clock
+):
+    scheduler = guard_scheduler(make_scheduler, tpot_slo_ms=80)
+    calibrate_guard_decode(scheduler, clock)
+    scheduler.add_request(request("p", 64))
+    output = scheduler.schedule()
+    clock.now += 0.020
+    retire(scheduler, output)
+    clock.now += 0.030  # Server-side waiting after the last D result costs slack.
+    output = scheduler.schedule()
+    guard = last_quota(scheduler)["decode_budget"]
+    assert guard["decode_age_ms"]["d"] == pytest.approx(30)
+    assert guard["decode_slack_ms"] == pytest.approx(38)
+    assert output.muxpd_layers_per_slice == 1
+    clock.now += 0.200
+    retire(scheduler, output)
+    output = scheduler.schedule()
+    assert output.muxpd_layers_per_slice == 1
+    assert last_quota(scheduler)["decode_budget"]["minimum_progress_exceeds_budget"]
+    clock.now += 0.020
+    retire(scheduler, output)
+    output = scheduler.schedule()
+    clock.now += 0.020
+    retire(scheduler, output, completed={"p"})
+
+
+@pytest.mark.parametrize("contexts", [[65, 65], [4096]])
+def test_decode_guard_does_not_reuse_unmatched_decode_batch_or_context(
+    make_scheduler, clock, contexts
+):
+    scheduler = guard_scheduler(make_scheduler)
+    calibrate_guard_decode(scheduler, clock)
+    seed_raw_slice(scheduler)
+    scheduler._guard_live_decodes = {f"d{i}": n for i, n in enumerate(contexts)}
+    scheduler._decode_completed_at.update(
+        {rid: clock.now for rid in scheduler._guard_live_decodes}
+    )
+    quota, guard = scheduler._decode_budget_quota((64,), 4, 4, clock.now, clock.now)
+    assert quota == 1 and guard["mode"] == "cold_start"
+    assert "unmeasured_decode_batch_context_bucket" in guard["cold_reasons"]
+
+
+def test_decode_guard_unmatched_prefill_shape_stays_cold(make_scheduler, clock):
+    scheduler = guard_scheduler(make_scheduler)
+    calibrate_guard_decode(scheduler, clock)
+    seed_raw_slice(scheduler)
+    scheduler.add_request(request("a", 32))
+    scheduler.add_request(request("b", 32))
+    output = scheduler.schedule()
+    assert output.muxpd_layers_per_slice == 1
+    assert last_quota(scheduler)["decode_budget"]["prefill_shape_tokens"] == [32, 32]
+    retire(scheduler, output)
+
+
+def test_decode_guard_compiled_whole_prefill_never_trains_raw_slice(
+    make_scheduler, clock
+):
+    scheduler = guard_scheduler(make_scheduler, compile_full_prefill=True)
+    scheduler.add_request(request("p", 64))
+    output = scheduler.schedule()
+    assert output.muxpd_finish_prefill and output.muxpd_layers_per_slice == 4
+    assert last_quota(scheduler)["decode_budget"]["mode"] == "no_live_decode"
+    clock.now += 0.005
+    retire(scheduler, output, completed={"p"}, source="full_forward_return")
+    assert scheduler._latency_samples["prefill"] == 1
+    assert not scheduler._guard_prefill_cost
+
+
+@pytest.mark.parametrize("abort_after_dispatch", [False, True])
+def test_decode_guard_cancelled_or_partial_cancelled_cohort_never_trains(
+    make_scheduler, clock, abort_after_dispatch
+):
+    scheduler = guard_scheduler(make_scheduler)
+    calibrate_guard_decode(scheduler, clock)
+    scheduler.add_request(request("p", 32))
+    scheduler.add_request(request("q", 32))
+    output = scheduler.schedule()
+    clock.now += 0.020
+    scheduler.finish_requests("p", RequestStatus.FINISHED_ABORTED)
+    retire(scheduler, output, cancelled={"p"} if abort_after_dispatch else ())
+    assert not scheduler._guard_prefill_cost
+    output = scheduler.schedule()
+    guard = last_quota(scheduler)["decode_budget"]
+    assert guard["prefill_shape_tokens"] == [32, 32]
+    clock.now += 0.020
+    retire(scheduler, output, cancelled={"p"} if not abort_after_dispatch else ())
+    assert not scheduler._guard_prefill_cost
+
+
+def test_decode_guard_full_budget_prefill_keeps_tokens_but_slices_and_repays_decode(
+    make_scheduler, clock
+):
+    scheduler = guard_scheduler(make_scheduler, prefill_first=False)
+    for rid in ("d", "e"):
+        scheduler.add_request(request(rid, 8))
+    output = scheduler.schedule()
+    clock.now += 0.005
+    retire(scheduler, output, completed={"d", "e"})
+    output = scheduler.schedule()
+    clock.now += 0.010
+    retire(scheduler, output)
+    before = {rid: scheduler.requests[rid].num_computed_tokens for rid in ("d", "e")}
+    scheduler.add_request(request("p", 255, max_tokens=1))
+    output = scheduler.schedule()
+    assert output.num_scheduled_tokens == {"p": 255}  # No token chunking.
+    assert output.muxpd_layers_per_slice == 1 and not output.muxpd_finish_prefill
+    guard = last_quota(scheduler)["decode_budget"]
+    assert guard["active_decode_ids"] == ["d", "e"]
+    assert guard["selected_decode_ids"] == []
+    assert all(
+        scheduler.requests[r].num_computed_tokens == n for r, n in before.items()
+    )
+    clock.now += 0.020
+    assert not output_ids(retire(scheduler, output))
+    assert scheduler._prefill_first_decode_debt == {"d", "e"}
+    assert not scheduler._guard_prefill_cost  # No sampler completed this P slice.
+    assert scheduler._latency_samples["prefill"] == 1  # Partial P is not full P.
+    output = scheduler.schedule()
+    assert output.num_scheduled_tokens == {"d": 1, "e": 1}
+    assert all(
+        scheduler.requests[r].num_computed_tokens == n + 1 for r, n in before.items()
+    )
+    clock.now += 0.020
+    retire(scheduler, output)
+    assert not scheduler._prefill_first_decode_debt
+    scheduler.finish_requests("d", RequestStatus.FINISHED_ABORTED)
+    scheduler.finish_requests("e", RequestStatus.FINISHED_ABORTED)
+    output = scheduler.schedule()
+    assert output.muxpd_finish_prefill and output.muxpd_layers_per_slice == 2
+    assert last_quota(scheduler)["decode_budget"]["mode"] == "no_live_decode"
+    clock.now += 0.020
+    retire(scheduler, output, completed={"p"})
+
+
+def test_decode_guard_whole_full_budget_prefill_still_owes_decode_without_prefill_first(
+    make_scheduler, clock
+):
+    scheduler = guard_scheduler(make_scheduler, prefill_first=False)
+    for rid in ("d", "e"):
+        scheduler.add_request(request(rid, 8))
+    output = scheduler.schedule()
+    clock.now += 0.005
+    retire(scheduler, output, completed={"d", "e"})
+    output = scheduler.schedule()
+    clock.now += 0.010
+    retire(scheduler, output)
+    seed_raw_slice(scheduler, shape=(255,))
+    for rid in ("p", "q"):
+        scheduler.add_request(request(rid, 255, max_tokens=1))
+    output = scheduler.schedule()
+    assert output.num_scheduled_tokens == {"p": 255}
+    assert output.muxpd_finish_prefill
+    clock.now += 0.005
+    retire(scheduler, output, completed={"p"})
+    assert scheduler._prefill_first_decode_debt == {"d", "e"}
+    output = scheduler.schedule()
+    assert output.num_scheduled_tokens == {"d": 1, "e": 1}
+    assert scheduler.requests["q"].num_computed_tokens == 0
+    assert scheduler._prefill_first_admission["reason"] == "repay_decode"
+    clock.now += 0.010
+    retire(scheduler, output)
+    assert not scheduler._prefill_first_decode_debt
+
+
+def test_decode_guard_first_setup_does_not_poison_continuation_layers(
+    make_scheduler, clock
+):
+    scheduler = guard_scheduler(make_scheduler)
+    calibrate_guard_decode(scheduler, clock)
+    scheduler.add_request(request("p", 64))
+    output = scheduler.schedule()
+    first = timed_receipt(output, host_ms=100, device_ms=120)
+    clock.now += 0.140
+    scheduler.update_from_output(output, first)
+    output = scheduler.schedule()
+    assert output.muxpd_layers_per_slice == 1  # Independently calibrate continuation.
+    continuation = timed_receipt(output, host_ms=4, device_ms=3)
+    clock.now += 0.020
+    scheduler.update_from_output(output, continuation)
+    output = scheduler.schedule()
+    guard = last_quota(scheduler)["decode_budget"]
+    assert output.muxpd_layers_per_slice == 2 and output.muxpd_finish_prefill
+    assert guard["estimated_first_layer_ms"] == pytest.approx(144)
+    assert guard["estimated_raw_layer_ms"] == pytest.approx(4.8)
+    assert guard["prefill_estimate_source"] == "completed_lane_span"
+    assert guard["ttft_feasible"] is True
+    clock.now += 0.020
+    scheduler.update_from_output(
+        output, timed_receipt(output, host_ms=7, device_ms=8, completed={"p"})
+    )
+    scheduler.finish_requests("p", RequestStatus.FINISHED_ABORTED)
+    # The next first layer must still pay its measured setup cost.
+    scheduler.add_request(request("next", 64))
+    output = scheduler.schedule()
+    assert output.muxpd_layers_per_slice == 1 and not output.muxpd_finish_prefill
+    assert last_quota(scheduler)["decode_budget"]["minimum_progress_exceeds_budget"]
+    retire(scheduler, output)
+
+
+def test_decode_guard_multilayer_first_span_is_kept_separate_from_first_layer(
+    make_scheduler, clock
+):
+    scheduler = guard_scheduler(make_scheduler, layers_per_slice=3)
+    calibrate_guard_decode(scheduler, clock)
+    seed_raw_slice(scheduler)
+    scheduler.add_request(request("p", 64))
+    output = scheduler.schedule()
+    assert output.muxpd_layers_per_slice == 3
+    clock.now += 0.050
+    scheduler.update_from_output(
+        output, timed_receipt(output, host_ms=35, device_ms=30)
+    )
+    assert scheduler._raw_slice_estimate((64,), True)[0][0] == 1
+    assert scheduler._guard_prefill_cost[((64,), True, 3)] == {
+        "completed_lane_span": (35, 1)
+    }
+
+
+def test_decode_guard_completed_lane_span_supersedes_but_keeps_host_proxy(
+    make_scheduler, clock
+):
+    scheduler = guard_scheduler(make_scheduler, tpot_slo_ms=30)
+    calibrate_guard_decode(scheduler, clock)
+    scheduler.add_request(request("p", 64))
+    output = scheduler.schedule()
+    clock.now += 0.050
+    retire(scheduler, output)
+    output = scheduler.schedule()
+    clock.now += 0.050
+    retire(scheduler, output)
+    output = scheduler.schedule()
+    assert output.muxpd_layers_per_slice == 1
+    clock.now += 0.050
+    scheduler.update_from_output(output, timed_receipt(output, host_ms=2, device_ms=3))
+    sample, source = scheduler._raw_slice_estimate((64,), False)
+    assert sample == (3, 1) and source == "completed_lane_span"
+    history = scheduler._guard_prefill_cost[((64,), False, 0)]
+    assert history["completed_host_step_proxy"][0] == pytest.approx(50)
+    assert history["completed_lane_span"][0] == 3
+
+
+@pytest.mark.parametrize(
+    "bad_field", ["layer_delta", "prefill_tokens", "device_complete"]
+)
+def test_decode_guard_invalid_timing_receipt_cannot_mutate_estimates_or_progress(
+    make_scheduler, clock, bad_field
+):
+    scheduler = guard_scheduler(make_scheduler)
+    calibrate_guard_decode(scheduler, clock)
+    scheduler.add_request(request("p", 64))
+    output = scheduler.schedule()
+    result = timed_receipt(output, host_ms=2, device_ms=3)
+    result.muxpd_prefill_slice_timing[bad_field] = (
+        False if bad_field == "device_complete" else 99
+    )
+    clock.now += 0.020
+    with pytest.raises(RuntimeError, match="slice"):
+        scheduler.update_from_output(output, result)
+    assert scheduler._prefill_cohort.completed_layers == 0
+    assert not scheduler._guard_prefill_cost
+    assert scheduler._decoupled_step.output is output
+
+
+def test_decode_guard_native_trace_passes_offline_quota_and_receipt_checker(
+    make_scheduler, clock
+):
+    scheduler = guard_scheduler(make_scheduler)
+    calibrate_guard_decode(scheduler, clock)
+    scheduler.add_request(request("p", 64))
+    for _ in range(4):
+        output = scheduler.schedule()
+        clock.now += 0.020
+        done = output.muxpd_finish_prefill
+        result = timed_receipt(
+            output, host_ms=4, device_ms=3, completed={"p"} if done else ()
+        )
+        scheduler.update_from_output(output, result)
+        if done:
+            break
+    assert scheduler._prefill_cohort is None
+    checker = runpy.run_path(
+        str(Path(__file__).parents[1] / "scripts" / "check_decoupled_trace.py")
+    )["check"]
+    report = checker([scheduler.muxpd_policy.config.trace_path], expected_layers=4)
+    assert report["passed"] and report["quota_reasons"]["decode_budget_quota"] == 4
+
+
+def test_decode_guard_pause_never_trains_or_advances_even_with_no_selected_decode(
+    make_scheduler, clock
+):
+    scheduler = guard_scheduler(make_scheduler)
+    calibrate_guard_decode(scheduler, clock)
+    scheduler.add_request(request("p", 64))
+    output = scheduler.schedule()
+    clock.now += 0.020
+    retire(scheduler, output)
+    observed = dict(scheduler._guard_prefill_cost)
+    scheduler._pause_state = PauseState.PAUSED_ALL  # Defensive native field bypass.
+    output = scheduler.schedule()
+    assert output.muxpd_pause_prefill and not output.muxpd_finish_prefill
+    clock.now += 0.050
+    retire(scheduler, output)
+    assert scheduler._guard_prefill_cost == observed
+    assert scheduler._prefill_cohort.completed_layers == 1
+    scheduler._pause_state = PauseState.UNPAUSED
+
+
+def test_decode_guard_recomputes_actual_shape_after_partial_kv_admission(
+    make_scheduler, clock
+):
+    scheduler = guard_scheduler(
+        make_scheduler,
+        num_blocks=6,
+        prefill_first=True,
+        prefill_layer_token_budget=512,
+    )
+    calibrate_guard_decode(scheduler, clock, tokens=8)
+    seed_raw_slice(scheduler, shape=(32, 64))
+    scheduler.add_request(request("fits", 32))
+    scheduler.add_request(request("no_kv", 64))
+    output = scheduler.schedule()
+    assert scheduler._prefill_first_admission["reason"] == "token_budget_prefill_first"
+    assert output.num_scheduled_tokens == {"fits": 32}
+    assert scheduler.requests["no_kv"].num_computed_tokens == 0
+    # Only a larger predicted cohort was measured. Its smaller allocated shape
+    # must re-enter the cold path even though P-first already excluded D.
+    assert output.muxpd_layers_per_slice == 1 and not output.muxpd_finish_prefill
+    guard = last_quota(scheduler)["decode_budget"]
+    assert guard["prefill_shape_tokens"] == [32]
+    assert guard["active_decode_ids"] == ["d"] and not guard["selected_decode_ids"]
+    clock.now += 0.020
+    retire(scheduler, output)
+    assert scheduler._prefill_first_decode_debt == {"d"}
+    output = scheduler.schedule()
+    assert output.num_scheduled_tokens == {"d": 1}
+    retire(scheduler, output)
     assert not scheduler._prefill_first_decode_debt

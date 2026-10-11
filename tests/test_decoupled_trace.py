@@ -341,3 +341,120 @@ def test_deadline_can_raise_work_quota_and_current_receipt_stays_exact(tmp_path)
     report = check(tmp_path, rows, min_decode_steps=0)
     assert report["work_quota_sources"] == {"prefill_layer_token_budget": 1}
     assert report["progress_sources"] == {"full_forward_return": 1}
+
+
+def guard_trace(*, measured=False, selected=True):
+    rows = work_trace()
+    if not selected:
+        rows[0]["scheduled_tokens"].pop("d")
+        rows[0]["expected_tokens"].pop("d")
+        rows[0]["request_phases"].pop("d")
+    for row in rows:
+        if row["event"] == "decoupled_complete":
+            if row["step"] == 1 and not selected:
+                row["decode_ids"] = []
+            continue
+        if row["event"] != "decoupled_schedule":
+            continue
+        before = row["layers_completed_before"]
+        remaining = row["layers_total"] - before
+        row["quota"]["enabled"] = True
+        row["quota"]["work_quota"].update(
+            prefill_layer_token_budget=256,
+            configured_layers_per_slice=4,
+            base_layers_per_slice=4,
+        )
+        row["quota"]["reason"] = "decode_budget_quota"
+        if row["step"] == 1 and not selected:
+            row["decode_ids"] = []
+        row["quota"]["decode_budget"] = {
+            "version": 1,
+            "desired_reason": "token_budget_quota",
+            "desired_layers_per_slice": remaining,
+            "active_decode_ids": ["d"],
+            "active_decode_context_tokens": {"d": 65},
+            "selected_decode_ids": row["decode_ids"],
+            "decode_shape": [1, 7, 7],
+            "decode_age_ms": {"d": 0},
+            "prefill_shape_tokens": [64],
+            "first_slice": before == 0,
+            "first_layer_samples": 1 if measured else 0,
+            "prefill_samples": 1 if measured else 0,
+            "decode_samples": 1 if measured else 0,
+            "estimated_first_layer_ms": 40 if measured else None,
+            "estimated_raw_layer_ms": 40 if measured else None,
+            "estimated_solo_decode_ms": 60 if measured else None,
+            "calibrated": measured,
+            "decode_budget_ms": 100,
+            "decode_slack_ms": 40 if measured else None,
+            "mode": "measured_slice_budget" if measured else "cold_start",
+            "cap_layers": 1,
+            "selected_layers_per_slice": 1,
+            "control_step": False,
+            "minimum_progress_exceeds_budget": False,
+            "cohort_age_ms": 0,
+            "ttft_budget_ms": 1000,
+            "estimated_remaining_ttft_ms": remaining * 100 if measured else None,
+            "ttft_feasible": True if measured else None,
+        }
+    return rows
+
+
+@pytest.mark.parametrize("measured", [False, True])
+@pytest.mark.parametrize("selected", [False, True])
+def test_guard_trace_accepts_downward_cap_with_live_but_unselected_decode(
+    tmp_path, measured, selected
+):
+    report = check(tmp_path, guard_trace(measured=measured, selected=selected))
+    assert report["quota_reasons"] == {"decode_budget_quota": 4}
+
+
+@pytest.mark.parametrize(
+    "fault",
+    [
+        "upward_cap",
+        "fake_drain",
+        "missing_active",
+        "shape_change",
+        "ttft",
+        "unearned_estimate",
+        "desired_floor",
+        "protocol_downgrade",
+        "first_slice",
+        "sample_count",
+        "minimum_progress",
+        "first_layer_cost",
+        "slack",
+    ],
+)
+def test_guard_trace_rejects_quota_and_evidence_corruption(tmp_path, fault):
+    rows = guard_trace(measured=True)
+    guard = rows[1]["quota"]["decode_budget"]
+    if fault == "upward_cap":
+        guard["cap_layers"] = 2
+    elif fault == "fake_drain":
+        rows[1]["finish_prefill"] = True
+    elif fault == "missing_active":
+        guard["active_decode_ids"] = []
+    elif fault == "shape_change":
+        rows[3]["quota"]["decode_budget"]["prefill_shape_tokens"] = [32, 32]
+    elif fault == "ttft":
+        guard["ttft_feasible"] = False
+    elif fault == "unearned_estimate":
+        guard["prefill_samples"] = 0
+    elif fault == "desired_floor":
+        guard["desired_layers_per_slice"] = 1
+    elif fault == "protocol_downgrade":
+        del rows[3]["quota"]["decode_budget"]
+    elif fault == "first_slice":
+        guard["first_slice"] = False
+    elif fault == "sample_count":
+        guard["decode_samples"] = True
+    elif fault == "minimum_progress":
+        guard["minimum_progress_exceeds_budget"] = True
+    elif fault == "first_layer_cost":
+        guard["estimated_first_layer_ms"] = 10
+    else:
+        guard["decode_slack_ms"] = 100
+    with pytest.raises(AssertionError):
+        check(tmp_path, rows)

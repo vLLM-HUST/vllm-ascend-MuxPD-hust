@@ -250,6 +250,7 @@ class MuxPDNPUWorker(NPUWorker):
         self._decode_graph_controller: DecodeGraphController | None = None
         self._layers_per_slice = raw.get("layers_per_slice", 1)
         self._stream_mode = raw.get("stream_mode", "fenced")
+        self._prefill_slice_timing_enabled = raw.get("decode_budget_guard", False)
         if self._stream_mode not in ("fenced", "overlap"):
             raise ValueError("MuxPD stream_mode must be fenced or overlap")
         self._overlap_communication = raw.get("overlap_communication", "shared")
