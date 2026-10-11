@@ -1,0 +1,31 @@
+{
+  "schema": "muxpd-final-validation-v1",
+  "utc": "2026-10-11T14:28:17.091878+00:00",
+  "runtime_head": "5342e8cd9f7407f4b7d43ea34517b59eff2b3253",
+  "repository_head_before_documentation_commit": "b98acb63a2010782ececb8b92e1021ca50a8a200",
+  "runtime_source_diff_since_measured_commit": "",
+  "pytest": {
+    "command": "source /root/workspace/runtime/env.sh && /root/workspace/.venv/bin/python -m pytest tests -q",
+    "exit_code": 0,
+    "passed": 657,
+    "skipped": 2,
+    "duration_s": 47.83,
+    "log": "local-results/tp4-goodput/final-pytest.log",
+    "log_sha256": "e6144719960fa79a4567074056e2ce864c2a7223332ce0c5f18f2cee8b0ec628"
+  },
+  "checks": [
+    {
+      "command": "/root/workspace/.venv/bin/python -m ruff check .",
+      "exit_code": 0
+    },
+    {
+      "command": "bash -n scripts/serve-qwen35-streaming.sh",
+      "exit_code": 0
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0
+    }
+  ],
+  "timing": "All hardware measurements and FIRST CPU-after snapshots completed before these checks."
+}

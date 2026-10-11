@@ -1,0 +1,131 @@
+{
+  "schema": "tp4-crossover-small-metadata-review-v1",
+  "utc": "2026-10-11T14:12:21.204530+00:00",
+  "source": {
+    "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-goodput/tp4-confirm-cross-result.json",
+    "bytes": 45654,
+    "sha256": "370e3bc7ca45ff8c4c9a8f3fa4b4db43b497065df07fd126dedaf7bcca1c17b8"
+  },
+  "passed": true,
+  "generation_requests_per_role": 306,
+  "seeds": [
+    {
+      "seed": 1001,
+      "common_origin_monotonic_s": 6928089.000618846,
+      "both_clients_terminal_before_cpu_after": true,
+      "last_cpu_after_finished_monotonic_s": 6928282.029896954,
+      "first_audit_started_monotonic_s": 6928282.201021152,
+      "cpu": {
+        "native": {
+          "delta": {
+            "usage_usec": 2046056430,
+            "user_usec": 1698983114,
+            "system_usec": 347073316,
+            "nr_periods": 1992,
+            "nr_throttled": 0,
+            "throttled_usec": 0
+          },
+          "snapshot_wall_s": 199.16862803,
+          "birth_affinity_omp1_verified": true
+        },
+        "plugin": {
+          "delta": {
+            "usage_usec": 2045588414,
+            "user_usec": 1698659660,
+            "system_usec": 346928753,
+            "nr_periods": 1991,
+            "nr_throttled": 0,
+            "throttled_usec": 0
+          },
+          "snapshot_wall_s": 199.169508055,
+          "birth_affinity_omp1_verified": true
+        }
+      }
+    },
+    {
+      "seed": 1002,
+      "common_origin_monotonic_s": 6928302.354690875,
+      "both_clients_terminal_before_cpu_after": true,
+      "last_cpu_after_finished_monotonic_s": 6928492.206669711,
+      "first_audit_started_monotonic_s": 6928492.354249884,
+      "cpu": {
+        "native": {
+          "delta": {
+            "usage_usec": 1931668703,
+            "user_usec": 1594821691,
+            "system_usec": 336847012,
+            "nr_periods": 1959,
+            "nr_throttled": 0,
+            "throttled_usec": 0
+          },
+          "snapshot_wall_s": 195.88912536,
+          "birth_affinity_omp1_verified": true
+        },
+        "plugin": {
+          "delta": {
+            "usage_usec": 1931666936,
+            "user_usec": 1594791457,
+            "system_usec": 336875478,
+            "nr_periods": 1959,
+            "nr_throttled": 0,
+            "throttled_usec": 0
+          },
+          "snapshot_wall_s": 195.889080992,
+          "birth_affinity_omp1_verified": true
+        }
+      }
+    },
+    {
+      "seed": 1003,
+      "common_origin_monotonic_s": 6928509.730486296,
+      "both_clients_terminal_before_cpu_after": true,
+      "last_cpu_after_finished_monotonic_s": 6928699.933998011,
+      "first_audit_started_monotonic_s": 6928700.092557248,
+      "cpu": {
+        "native": {
+          "delta": {
+            "usage_usec": 1995241358,
+            "user_usec": 1656895820,
+            "system_usec": 338345537,
+            "nr_periods": 1962,
+            "nr_throttled": 0,
+            "throttled_usec": 0
+          },
+          "snapshot_wall_s": 196.141733482,
+          "birth_affinity_omp1_verified": true
+        },
+        "plugin": {
+          "delta": {
+            "usage_usec": 1995273817,
+            "user_usec": 1656899861,
+            "system_usec": 338373956,
+            "nr_periods": 1962,
+            "nr_throttled": 0,
+            "throttled_usec": 0
+          },
+          "snapshot_wall_s": 196.193497425,
+          "birth_affinity_omp1_verified": true
+        }
+      }
+    }
+  ],
+  "roles": {
+    "native": {
+      "natural_new_requests": 16,
+      "priming_requests": 3,
+      "group": "B",
+      "natural_text_exact_vs_baseline": null
+    },
+    "plugin": {
+      "natural_new_requests": 16,
+      "priming_requests": 3,
+      "group": "A",
+      "natural_text_exact_vs_baseline": 16
+    }
+  },
+  "limits": [
+    "No raw replay or complete raw rehash; existing audit receipts bound to stored raw references.",
+    "CPU counters shared globally, not attributable per role; no per-process CPU-time fields.",
+    "Three seeds share startup per role/orientation; serial still pending."
+  ]
+}

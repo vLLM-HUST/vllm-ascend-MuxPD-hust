@@ -90,6 +90,29 @@ def test_collectives_share_gate_by_group_identity_and_restore_descriptors():
     assert gates.calls == 3
 
 
+def test_graph_overlap_retains_profiled_manager_and_rejects_lane_alias():
+    instance, runtime, workspace, _, _ = backend()
+    profiled = workspace._manager
+    prefill = instance.lane_state(
+        "prefill", Stream("prefill"), workspace_manager=profiled
+    )
+    with pytest.raises(ValueError, match="independent workspace"):
+        instance.lane_state("decode", Stream("decode"), workspace_manager=profiled)
+    decode = instance.lane_state("decode", Stream("decode"))
+    caller = instance.capture()
+    instance.begin_batch(None)
+    instance.restore(prefill)
+    assert workspace._manager is profiled
+    instance.fence()
+    prefill_tail = runtime.records[-1]
+    instance.restore(decode)
+    assert workspace._manager is decode.workspace_manager
+    assert decode.workspace_manager is not profiled
+    # Graph D retains its own workspace without waiting for P's kernel tail.
+    assert all(event != prefill_tail for _, event in runtime.waits)
+    instance.restore(caller)
+
+
 def test_collective_failure_poisoning_and_install_rollback():
     runtime = Runtime()
     comm = Communicator(object())

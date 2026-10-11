@@ -123,9 +123,16 @@ class MuxPDConfig:
         if type(self.decode_graph) is not bool:
             raise ValueError("MuxPD decode_graph must be a boolean")
         if self.decode_graph and not (
-            self.execution == "decoupled" and self.stream_mode == "fenced"
+            self.execution == "decoupled"
+            and (
+                self.stream_mode == "fenced"
+                or self.overlap_communication == "isolated"
+            )
         ):
-            raise ValueError("MuxPD decode_graph requires decoupled fenced execution")
+            raise ValueError(
+                "MuxPD decode_graph requires decoupled fenced execution or "
+                "experimental overlap with isolated communication"
+            )
         if type(self.compile_full_prefill) is not bool:
             raise ValueError("MuxPD compile_full_prefill must be a boolean")
         if self.compile_full_prefill and not (
