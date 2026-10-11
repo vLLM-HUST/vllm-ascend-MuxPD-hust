@@ -1,0 +1,59 @@
+{
+  "schema": "groupfx-relocated-replay-verification-v1",
+  "passed": true,
+  "archive_sha256": "a931a7329ad534f03fb7d05e7845b43125c19637b7daf33b146dd9aeebcfe951",
+  "all_348_members_verified": true,
+  "distinct_archive_artifacts_read": 7,
+  "original_path_fallback_allowed": false,
+  "requests_per_role": [
+    19,
+    19
+  ],
+  "exact_cross_sequences": 9,
+  "derived_numerical_summaries_equal_original": true,
+  "replay_report_sha256": "dfd78984fba08b6fb4946af0868aaa73e294782aa92cb8510401f595b8519dcc",
+  "artifact_reads": {
+    "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/numeric19-plan.json": {
+      "captured_path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/numeric19-plan.json",
+      "mapped_path": "/root/workspace/artifacts/groupfx-relocated-validation/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/numeric19-plan.json",
+      "bytes": 942213,
+      "sha256": "dcbd7be3f2b391efd673df59458c69b503a7b68542033e0b2e50aa03d93313dc"
+    },
+    "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/raw-a-numeric19.json": {
+      "captured_path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/raw-a-numeric19.json",
+      "mapped_path": "/root/workspace/artifacts/groupfx-relocated-validation/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/raw-a-numeric19.json",
+      "bytes": 5733874,
+      "sha256": "908fe52428d8f12640a1dda5918fe606c922dcf56f0607ccdac3723a89438b9d"
+    },
+    "/root/workspace/muxpd-prefill-group-fx/scripts/probe_prefill_group_outputs.py": {
+      "captured_path": "/root/workspace/muxpd-prefill-group-fx/scripts/probe_prefill_group_outputs.py",
+      "mapped_path": "/root/workspace/artifacts/groupfx-relocated-validation/workspace/muxpd-prefill-group-fx/scripts/probe_prefill_group_outputs.py",
+      "bytes": 25345,
+      "sha256": "94c62c43c30efb6dbdd0a437ea8aa70b4ce111fc623350f7af0f4f345fe17883"
+    },
+    "/root/workspace/muxpd-prefill-group-fx/scripts/benchmark_contention.py": {
+      "captured_path": "/root/workspace/muxpd-prefill-group-fx/scripts/benchmark_contention.py",
+      "mapped_path": "/root/workspace/artifacts/groupfx-relocated-validation/workspace/muxpd-prefill-group-fx/scripts/benchmark_contention.py",
+      "bytes": 30284,
+      "sha256": "571eb1ce9b8a2218bb00f4c64d2b82d56c889d8922f4cfb5ab21f47fa6d49a9f"
+    },
+    "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/raw-a-numeric19.events.jsonl": {
+      "captured_path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/raw-a-numeric19.events.jsonl",
+      "mapped_path": "/root/workspace/artifacts/groupfx-relocated-validation/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/raw-a-numeric19.events.jsonl",
+      "bytes": 1229310,
+      "sha256": "e9cc97b01214247d674dda3a490ac9c3d6a7f9661e38cdb3e8e8b39eef7fedc8"
+    },
+    "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/candidate-b-numeric19.json": {
+      "captured_path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/candidate-b-numeric19.json",
+      "mapped_path": "/root/workspace/artifacts/groupfx-relocated-validation/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/candidate-b-numeric19.json",
+      "bytes": 5738272,
+      "sha256": "843128e09a0b6fea6d1f1223cda1b2c01a3789e72c3b6d21960d341d1233193c"
+    },
+    "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/candidate-b-numeric19.events.jsonl": {
+      "captured_path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/candidate-b-numeric19.events.jsonl",
+      "mapped_path": "/root/workspace/artifacts/groupfx-relocated-validation/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/candidate-b-numeric19.events.jsonl",
+      "bytes": 1229004,
+      "sha256": "0792556302e09552164fefa9d7043a0db9ba948a9ca394dd2c890dbc2b112d8d"
+    }
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "schema": "groupfx-numeric-auditor-selftest-v1",
+  "created_utc": "2026-10-11T16:30:33.969444+00:00",
+  "source": {
+    "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/audit_groupfx_numeric.py",
+    "bytes": 25110,
+    "sha256": "e9beb0536e7178b753adf7e3618188488d05739eebb6706916aefbbe20cb8a50"
+  },
+  "tests": {
+    "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/test_audit_groupfx_numeric.py",
+    "bytes": 7335,
+    "sha256": "388f1d453e1caf7e73fbd3835e78029e6bc0cc013d324651f4878b2f7b7f7c28"
+  },
+  "test_command": "/root/workspace/.venv/bin/python -m pytest -q local-results/tp4-prefill-group-fx/test_audit_groupfx_numeric.py",
+  "test_result": {
+    "passed": 9,
+    "elapsed_seconds": 9.59,
+    "exit_code": 0,
+    "log": {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/numeric-auditor-tests-fixture-import-fix.log",
+      "bytes": 98,
+      "sha256": "869f86e252c19e447fdec0b4e940c63cdc43db2c216eeefd5e1040804731c8bc"
+    }
+  },
+  "initial_failure": {
+    "log": {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/numeric-auditor-tests-initial.log",
+      "bytes": 16309,
+      "sha256": "b0df65d47ffb094bbb4e3e015262ae7b41ce55e4c800c6d36d6425e4557aa6d5"
+    },
+    "reason": "Fixture imported scripts from the main repo namespace rather than the isolated worktree; nine setup errors. Fixed fixture module binding; no production parser or input change."
+  },
+  "static_checks": {
+    "ast": "passed",
+    "ruff_check": "passed",
+    "ruff_format_check": "passed"
+  },
+  "scope": "stdlib auditor; synthetic HTTP fixture uses MockTransport, no network/NPU; final source adds only a limitations sentence after tests",
+  "actual_replay": {
+    "command": "/root/workspace/.venv/bin/python local-results/tp4-prefill-group-fx/audit_groupfx_numeric.py --plan local-results/tp4-prefill-group-fx/numeric19-plan.json --report local-results/tp4-prefill-group-fx/raw-a-numeric19.json --report local-results/tp4-prefill-group-fx/candidate-b-numeric19.json --output local-results/tp4-prefill-group-fx/numeric19-independent-audit.json",
+    "exit_code": 0,
+    "output": {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/numeric19-independent-audit.json",
+      "bytes": 95194,
+      "sha256": "0eb97183288e3255f015005dc4ae45e56d0b44cdb526d677dd41814f5cfdaa37"
+    },
+    "log": {
+      "path": "/root/workspace/vllm-ascend-MuxPD-hust/local-results/tp4-prefill-group-fx/numeric19-independent-audit.log",
+      "bytes": 255,
+      "sha256": "48fce9128e1c9df42e65d15bd44bf229212f3f9bea5c8fd5b20240473a1efd71"
+    }
+  }
+}
