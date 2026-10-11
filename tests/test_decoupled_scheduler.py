@@ -5,6 +5,7 @@ import runpy
 import time
 from concurrent.futures import Future
 from contextlib import nullcontext
+from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
@@ -1687,14 +1688,14 @@ def test_decode_guard_recomputes_actual_shape_after_partial_kv_admission(
     assert not scheduler._prefill_first_decode_debt
 
 
-@pytest.mark.parametrize("phase", ["prefill", "decode"])
+@pytest.mark.parametrize("phase", ["prefill", "decode", "decode_residual"])
 def test_decode_guard_estimate_cache_has_deterministic_lru_bound(make_scheduler, phase):
     scheduler = guard_scheduler(make_scheduler)
-    cache = (
-        scheduler._guard_prefill_cost
-        if phase == "prefill"
-        else scheduler._guard_decode_cost
-    )
+    cache = {
+        "prefill": scheduler._guard_prefill_cost,
+        "decode": scheduler._guard_decode_cost,
+        "decode_residual": scheduler._guard_decode_residual,
+    }[phase]
     keys = (
         [((i + 1,), False, 0) for i in range(257)]
         if phase == "prefill"
@@ -1710,6 +1711,7 @@ def test_decode_guard_estimate_cache_has_deterministic_lru_bound(make_scheduler,
     scheduler._guard_cache_store(cache, keys[0], value, phase)
     assert len(cache) == 256 and scheduler._guard_cache_evictions[phase] == 1
     assert scheduler._guard_cache_stats()["entry_limit_per_mapping"] == 256
+    assert scheduler._guard_cache_stats()["entries"][phase] == 256
 
 
 def test_decode_guard_evicted_shape_returns_cold_without_changing_request_state(
@@ -1740,3 +1742,153 @@ def test_decode_guard_evicted_shape_returns_cold_without_changing_request_state(
     assert guard["estimate_cache"]["evictions"]["prefill"] == 2
     clock.now += 0.020
     retire(scheduler, output)
+
+
+@pytest.mark.parametrize("clear_solo", [False, True])
+def test_decode_guard_residual_calibrates_pending_without_erasing_solo_max(
+    make_scheduler, clock, clear_solo
+):
+    scheduler = guard_scheduler(make_scheduler)
+    calibrate_guard_decode(scheduler, clock)
+    output = scheduler.schedule()
+    clock.now += 0.06746
+    retire(scheduler, output)
+    shape = scheduler._decode_shape([scheduler.requests["d"].num_tokens])
+    solo_history = scheduler._guard_decode_cost[shape]
+    if clear_solo:
+        scheduler._guard_decode_cost.clear()
+    scheduler.add_request(request("p", 64))
+    output = scheduler.schedule()
+    clock.now += 0.020
+    scheduler.update_from_output(output, timed_receipt(output, host_ms=8, device_ms=5))
+    assert not scheduler._guard_decode_residual  # First slice excluded.
+    output = scheduler.schedule()
+    assert output.muxpd_layers_per_slice == 1
+    clock.now += 0.035
+    scheduler.update_from_output(
+        output, timed_receipt(output, host_ms=20, device_ms=10)
+    )
+    # Subtract device span, never max(host_submit, device_elapsed).
+    assert scheduler._guard_decode_residual[shape] == pytest.approx((25, 1))
+    assert scheduler._guard_decode_cost.get(shape) == (
+        None if clear_solo else solo_history
+    )
+    output = scheduler.schedule()
+    guard = last_quota(scheduler)["decode_budget"]
+    assert output.muxpd_layers_per_slice == 2 and output.muxpd_finish_prefill
+    assert guard["decode_estimate_source"] == "fenced_continuation_residual"
+    assert guard["estimated_decode_cost_ms"] == pytest.approx(30)
+    assert guard["estimated_solo_decode_ms"] == (
+        None if clear_solo else pytest.approx(80.952)
+    )
+    clock.now += 0.050
+    scheduler.update_from_output(
+        output, timed_receipt(output, host_ms=30, device_ms=20, completed={"p"})
+    )
+    assert scheduler._guard_decode_residual[shape] == pytest.approx((25, 1))
+    # A fresh P/P-first preview must not use a continuation residual.
+    scheduler._guard_live_decodes = {"d": 70}
+    _, guard = scheduler._decode_budget_quota((64,), 4, 4, clock.now, clock.now)
+    assert guard["decode_estimate_source"] == (
+        None if clear_solo else "solo_decode_round_trip"
+    )
+
+
+@pytest.mark.parametrize(
+    "fault",
+    [
+        "first",
+        "final",
+        "compiled",
+        "no_decode",
+        "incomplete",
+        "cancelled",
+        "pause",
+        "late_abort",
+        "negative",
+        "zero",
+        "disabled",
+    ],
+)
+def test_decode_guard_residual_rejects_ineligible_observations(
+    make_scheduler, clock, fault
+):
+    scheduler = guard_scheduler(make_scheduler)
+    calibrate_guard_decode(scheduler, clock)
+    scheduler.add_request(request("p", 64))
+    output = scheduler.schedule()
+    clock.now += 0.020
+    retire(scheduler, output)
+    output = scheduler.schedule()
+    step, cohort = scheduler._decoupled_step, scheduler._prefill_cohort
+    timing = timed_receipt(output, host_ms=20, device_ms=10).muxpd_prefill_slice_timing
+    progress, source, cancelled = 2, "layer_hooks", set()
+    if fault == "first":
+        cohort = replace(cohort, completed_layers=0)
+        progress = 1
+        timing["first_slice"] = True
+    elif fault == "final":
+        progress = 4
+        timing["layer_delta"] = 3
+    elif fault == "compiled":
+        source = "full_forward_return"
+    elif fault == "no_decode":
+        step = replace(
+            step,
+            decode_output=replace(
+                step.decode_output,
+                num_scheduled_tokens={},
+                total_num_scheduled_tokens=0,
+            ),
+            guard_decode_shape=None,
+        )
+    elif fault == "incomplete":
+        timing.update(device_complete=False, device_elapsed_ms=None)
+    elif fault == "cancelled":
+        cancelled = {"p"}
+    elif fault == "pause":
+        step.output.muxpd_pause_prefill = True
+    elif fault == "late_abort":
+        scheduler.finish_requests("p", RequestStatus.FINISHED_ABORTED)
+    elif fault in ("negative", "zero"):
+        timing["device_elapsed_ms"] = 40 if fault == "negative" else 35
+    elif fault == "disabled":
+        scheduler.muxpd_policy.config = replace(
+            scheduler.muxpd_policy.config, decode_budget_guard=False
+        )
+    sample = scheduler._observe_guard_latency(
+        step, cohort, progress, source, 35, cancelled, timing
+    )
+    assert not scheduler._guard_decode_residual
+    if fault in ("negative", "zero"):
+        rejected = sample["decode_residual_sample"]
+        assert rejected["accepted"] is False
+        assert rejected["residual_ms"] == (-5 if fault == "negative" else 0)
+        assert rejected["reason"] == "nonpositive_or_nonfinite_residual"
+
+
+def test_decode_guard_residual_max_and_shape_matching(make_scheduler, clock):
+    scheduler = guard_scheduler(make_scheduler)
+    calibrate_guard_decode(scheduler, clock)
+    scheduler.add_request(request("p", 64))
+    output = scheduler.schedule()
+    clock.now += 0.020
+    retire(scheduler, output)
+    output = scheduler.schedule()
+    step, cohort = scheduler._decoupled_step, scheduler._prefill_cohort
+    timing = timed_receipt(output, host_ms=20, device_ms=10).muxpd_prefill_slice_timing
+    for duration in (35, 30, 40):
+        scheduler._observe_guard_latency(
+            step, cohort, 2, "layer_hooks", duration, set(), timing
+        )
+    assert scheduler._guard_decode_residual[step.guard_decode_shape] == (30, 3)
+    _, guard = scheduler._decode_budget_quota((64,), 3, 3, clock.now, clock.now)
+    assert guard["decode_estimate_source"] == "fenced_continuation_residual"
+    for contexts in ({"d": 4096}, {"d": 70, "e": 70}):
+        scheduler._guard_live_decodes = contexts
+        scheduler._decode_completed_at.update({rid: clock.now for rid in contexts})
+        shape = scheduler._decode_shape(list(contexts.values()))
+        scheduler._guard_decode_cost[shape] = (10, 1)
+        _, guard = scheduler._decode_budget_quota((64,), 3, 3, clock.now, clock.now)
+        assert guard["decode_estimate_source"] == "solo_decode_round_trip"
+        assert guard["residual_decode_samples"] == 0

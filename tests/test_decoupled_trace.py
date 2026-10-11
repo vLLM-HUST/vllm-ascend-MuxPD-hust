@@ -458,3 +458,118 @@ def test_guard_trace_rejects_quota_and_evidence_corruption(tmp_path, fault):
         guard["decode_slack_ms"] = 100
     with pytest.raises(AssertionError):
         check(tmp_path, rows)
+
+
+def residual_trace():
+    rows = guard_trace(measured=True)
+    for row in rows:
+        if row["event"] != "decoupled_schedule":
+            continue
+        guard = row["quota"]["decode_budget"]
+        guard.update(
+            version=2,
+            solo_decode_samples=1,
+            residual_decode_samples=1,
+            estimated_decode_cost_ms=60,
+            estimated_decode_residual_ms=60,
+            decode_estimate_source=(
+                "solo_decode_round_trip"
+                if row["layers_completed_before"] == 0
+                else "fenced_continuation_residual"
+            ),
+        )
+    complete = next(
+        row for row in rows if row["event"] == "decoupled_complete" and row["step"] == 2
+    )
+    complete.update(
+        duration_ms=70,
+        prefill_slice_timing={
+            "device_complete": True,
+            "first_slice": False,
+            "mode": "raw_layers",
+            "device_elapsed_ms": 10,
+            "host_submit_ms": 20,
+        },
+        decode_budget_sample={
+            "phase": "raw_prefill_layer",
+            "decode_residual_sample": {
+                "accepted": True,
+                "reason": "completed_fenced_continuation",
+                "decode_shape": [1, 7, 7],
+                "host_step_ms": 70,
+                "prefill_device_elapsed_ms": 10,
+                "prefill_host_submit_ms": 20,
+                "residual_ms": 60,
+            },
+        },
+    )
+    return rows
+
+
+def test_guard_v2_checks_residual_source_and_observation(tmp_path):
+    assert check(tmp_path, residual_trace())["passed"]
+
+
+@pytest.mark.parametrize(
+    "fault",
+    [
+        "fresh_residual",
+        "source",
+        "count",
+        "cost",
+        "host_subtraction",
+        "shape",
+        "accept_negative",
+        "first",
+        "final",
+        "incomplete",
+    ],
+)
+def test_guard_v2_rejects_residual_corruption(tmp_path, fault):
+    rows = residual_trace()
+    scheduled = rows[3]
+    complete = rows[4]
+    guard = scheduled["quota"]["decode_budget"]
+    sample = complete["decode_budget_sample"]["decode_residual_sample"]
+    if fault == "fresh_residual":
+        rows[1]["quota"]["decode_budget"]["decode_estimate_source"] = (
+            "fenced_continuation_residual"
+        )
+    elif fault == "source":
+        guard["decode_estimate_source"] = "solo_decode_round_trip"
+    elif fault == "count":
+        guard["residual_decode_samples"] = 0
+    elif fault == "cost":
+        guard["estimated_decode_cost_ms"] = 30
+    elif fault == "host_subtraction":
+        sample["residual_ms"] = 50
+    elif fault == "shape":
+        sample["decode_shape"] = [2, 8, 7]
+    elif fault == "accept_negative":
+        complete["duration_ms"] = sample["host_step_ms"] = 5
+        sample["residual_ms"] = -5
+    elif fault in ("first", "final"):
+        # Test sample eligibility independently of unrelated layer arithmetic.
+        scheduled["layers_completed_before"] = 0 if fault == "first" else 3
+        complete["layers_completed"] = 1 if fault == "first" else 4
+        with pytest.raises(AssertionError, match="continuation"):
+            checker._check_decode_residual_sample(complete, scheduled)
+        return
+    else:
+        complete["prefill_slice_timing"]["device_complete"] = False
+    with pytest.raises(AssertionError):
+        check(tmp_path, rows)
+
+
+@pytest.mark.parametrize("host_ms", [5, 10])
+def test_guard_v2_preserves_rejected_nonpositive_residual(tmp_path, host_ms):
+    rows = residual_trace()
+    complete = rows[4]
+    sample = complete["decode_budget_sample"]["decode_residual_sample"]
+    complete["duration_ms"] = sample["host_step_ms"] = host_ms
+    sample.update(
+        accepted=False,
+        reason="nonpositive_or_nonfinite_residual",
+        residual_ms=host_ms - 10,
+    )
+    assert check(tmp_path, rows)["passed"]

@@ -102,7 +102,10 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         self._guard_decode_cost: OrderedDict[
             tuple[int, int, int], tuple[float, int]
         ] = OrderedDict()
-        self._guard_cache_evictions = {"prefill": 0, "decode": 0}
+        self._guard_decode_residual: OrderedDict[
+            tuple[int, int, int], tuple[float, int]
+        ] = OrderedDict()
+        self._guard_cache_evictions = {"prefill": 0, "decode": 0, "decode_residual": 0}
         self._guard_live_decodes: dict[str, int] = {}
         self._decode_completed_at: dict[str, float] = {}
         # Reuse the common validated allocator setup, without the layered-only
@@ -563,7 +566,16 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         first_slice = remaining == self._decoder_layer_count
         first_sample, first_source = self._raw_slice_estimate(p_shape, True)
         p_sample, p_source = self._raw_slice_estimate(p_shape, False)
-        d_sample = self._guard_cache_read(self._guard_decode_cost, d_shape)
+        solo_sample = self._guard_cache_read(self._guard_decode_cost, d_shape)
+        residual_sample = self._guard_cache_read(self._guard_decode_residual, d_shape)
+        # A continuation's fenced non-P residual is a different estimand from
+        # solo D, whose first graph/shape transition can dominate its lifetime
+        # maximum. Never use this residual to license a fresh P/P-first turn.
+        if not first_slice and residual_sample:
+            d_sample, d_source = residual_sample, "fenced_continuation_residual"
+        else:
+            d_sample = solo_sample
+            d_source = "solo_decode_round_trip" if solo_sample else None
         ages = {
             rid: max(0.0, (now - self._decode_completed_at[rid]) * 1000)
             for rid in contexts
@@ -614,13 +626,14 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
             else None
         )
         return quota, {
-            "version": 1,
+            "version": 2,
             "mode": mode,
             "calibrated": calibrated,
             "cold_reasons": cold,
-            "estimate_source": "observed_max_raw_slice_spans_plus_solo_D",
+            "estimate_source": "observed_max_raw_slice_spans_plus_nonprefill_cost",
             "estimate_scope": (
-                "lane spans exclude cross-rank residual; "
+                "continuation residual includes D/RPC/cross-rank tail; "
+                "driver lane span is not an all-rank maximum; "
                 "host fallback includes D twice; not a hard SLO bound"
             ),
             "active_decode_ids": sorted(contexts),
@@ -634,9 +647,20 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
             "prefill_samples": p_sample[1] if p_sample else 0,
             "prefill_estimate_source": p_source,
             "decode_samples": d_sample[1] if d_sample else 0,
+            "decode_estimate_source": d_source,
+            "solo_decode_samples": solo_sample[1] if solo_sample else 0,
+            "residual_decode_samples": residual_sample[1] if residual_sample else 0,
             "estimated_raw_layer_ms": p_ms,
             "estimated_first_layer_ms": first_ms,
-            "estimated_solo_decode_ms": d_ms,
+            "estimated_decode_cost_ms": d_ms,
+            "estimated_solo_decode_ms": (
+                config.estimate_safety_factor * solo_sample[0] if solo_sample else None
+            ),
+            "estimated_decode_residual_ms": (
+                config.estimate_safety_factor * residual_sample[0]
+                if residual_sample
+                else None
+            ),
             "decode_budget_ms": config.tpot_slo_ms,
             "decode_slack_ms": slack,
             "desired_layers_per_slice": desired,
@@ -672,6 +696,7 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
             "entries": {
                 "prefill": len(self._guard_prefill_cost),
                 "decode": len(self._guard_decode_cost),
+                "decode_residual": len(self._guard_decode_residual),
             },
             "evictions": self._guard_cache_evictions.copy(),
         }
@@ -1172,6 +1197,42 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
                 self._guard_cache_store(
                     self._guard_prefill_cost, key, observations, "prefill"
                 )
+                residual_sample = None
+                if (
+                    not first
+                    and progress < self._decoder_layer_count
+                    and step.guard_decode_shape
+                    and step.decode_output.num_scheduled_tokens
+                    and sample_source == "completed_lane_span"
+                ):
+                    # Fenced P starts after D's incoming dependency and ends
+                    # before its existing sampler completes the whole step.
+                    # Subtract the DEVICE span, not max(host, device): host
+                    # submit can overlap device work and is not this interval.
+                    # This is non-P wall residual, never pure D or a hard bound.
+                    residual = duration - timing["device_elapsed_ms"]
+                    accepted = math.isfinite(residual) and residual > 0
+                    residual_sample = {
+                        "accepted": accepted,
+                        "reason": "completed_fenced_continuation"
+                        if accepted
+                        else "nonpositive_or_nonfinite_residual",
+                        "decode_shape": list(step.guard_decode_shape),
+                        "host_step_ms": duration,
+                        "prefill_device_elapsed_ms": timing["device_elapsed_ms"],
+                        "prefill_host_submit_ms": timing["host_submit_ms"],
+                        "residual_ms": residual,
+                    }
+                    if accepted:
+                        old, count = self._guard_cache_read(
+                            self._guard_decode_residual, step.guard_decode_shape
+                        ) or (0.0, 0)
+                        self._guard_cache_store(
+                            self._guard_decode_residual,
+                            step.guard_decode_shape,
+                            (max(old, residual), count + 1),
+                            "decode_residual",
+                        )
                 return {
                     "phase": "raw_prefill_layer",
                     "shape": list(shape),
@@ -1186,6 +1247,7 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
                         if sample_source == "completed_lane_span"
                         else None
                     ),
+                    "decode_residual_sample": residual_sample,
                 }
         return {"phase": None, "reason": "no_completed_raw_slice_or_solo_decode"}
 

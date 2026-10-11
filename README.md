@@ -174,13 +174,17 @@ TPOT 达标，也不进行硬件资源分区。详细算法见 [设计](docs/des
 估计区分 P 首层准备成本与续层成本，按原 cohort 的完整 token 长度组合匹配；
 D 按 batch 大小及上下文长度分桶。有效的已完成 lane 计时优先，缺少该计时时
 使用已完成整步 host 耗时的保守后备估计，整网编译 P 不训练逐层成本。
+P 续片优先使用已完成 fenced 续片的“整步 host 耗时减 P 设备跨度”估计非 P
+成本；它包含 D、通信及其他开销，不是纯 D 耗时。没有匹配样本时使用独立 D
+观测；新 P 和 `prefill_first` 始终使用独立 D 观测，不复用续片残差。
 取消、暂停和晚到 abort 不用于学习。它不增加同步来获取设备时间，也不保证
 TTFT、逐 token TBT 或平均 TPOT 达标：未知形状、单层已经超预算、跨 rank
 等待等仍会影响实际延迟。trace 会记录预算冲突和 TTFT 可行性；回执/配额校验
 不能代替实际服务测量。配置示例及估计范围见
 [decode budget guard 设计](docs/design.md#可选-decode-budget-guard)。
-P、D 估计缓存各限 256 个条目，按最近使用顺序逐出；样本被逐出后重新冷启动，
-不改变请求、KV 或取消状态。trace 记录条目数和累计逐出次数。
+P、独立 D、续片非 P 残差三个估计缓存各限 256 个条目，按最近使用顺序逐出；
+逐出后使用可用的后备观测或重新冷启动，不改变请求、KV 或取消状态。
+trace 记录估计来源、条目数和累计逐出次数。
 
 初始延迟系数是可配置启动值，不能作为 MuxWise 论文 contention predictor 的复现。
 PP/DP/CP、speculative decoding、KV/EC transfer、streaming-input continuation
