@@ -363,7 +363,10 @@ def test_decode_samples_each_iteration_while_prefill_is_suspended(simulation):
     for layer in range(3):
         pair = [("decode", 0), ("prefill", layer)]
         expected.extend(
-            reversed(pair) if worker._overlap_communication == "isolated" else pair
+            reversed(pair)
+            if worker._overlap_communication == "isolated"
+            and not worker._decode_graph_enabled
+            else pair
         )
     assert [
         (event[0], event[-1]) for event in events if event[0] in ("decode", "prefill")
@@ -583,14 +586,23 @@ def test_overlap_zeroes_once_before_lanes_and_joins_only_sampled_decode(simulati
 
 @pytest.mark.integration
 def test_prefill_layer_quota_and_final_layer_retirement_with_complete_decode(
-    simulation,
+    simulation, monkeypatch,
 ):
     worker, events = simulation
     worker.decode_runner.layers = 4
     worker.model_runner.layers = 5
     worker._decoder_layer_count = 5
+    lane_calls = []
+    run_lane = worker._run_lane
+
+    def observe_run_lane(task, lane, budget):
+        lane_calls.append((lane, budget))
+        return run_lane(task, lane, budget)
+
+    monkeypatch.setattr(worker, "_run_lane", observe_run_lane)
     for iteration in range(3):
         start = len(events)
+        lane_calls.clear()
         output = schedule(
             new_p=("p",) if iteration == 0 else (),
             pending=("p",),
@@ -608,9 +620,14 @@ def test_prefill_layer_quota_and_final_layer_retirement_with_complete_decode(
         assert [layer for lane, layer in observed if lane == "decode"] == list(range(4))
         assert [layer for lane, layer in observed if lane == "prefill"] == p_layers
         if worker._overlap_communication == "isolated":
-            assert observed == [("prefill", i) for i in p_layers] + [
-                ("decode", i) for i in range(4)
-            ]
+            p_events = [("prefill", i) for i in p_layers]
+            d_events = [("decode", i) for i in range(4)]
+            if worker._decode_graph_enabled:
+                assert observed == d_events + p_events
+                assert lane_calls == [("decode", None), ("prefill", 2)]
+            else:
+                assert observed == p_events + d_events
+                assert lane_calls == [("prefill", 2), ("decode", None)]
         elif worker._stream_mode == "overlap":
             prefix = [
                 pair
@@ -622,6 +639,10 @@ def test_prefill_layer_quota_and_final_layer_retirement_with_complete_decode(
             assert observed == [("decode", i) for i in range(4)] + [
                 ("prefill", i) for i in p_layers
             ]
+        # Forward ordering does not move sampling into execute_model or sample
+        # a persistent P until its final native forward has returned.
+        assert worker.decode_runner.sample_count == iteration
+        assert worker.model_runner.sample_count == 0
         result = worker.sample_tokens(None)
         assert result.req_ids == (["d"] if iteration < 2 else ["d", "p"])
         assert result.muxpd_completed_prefill_ids == (set() if iteration < 2 else {"p"})

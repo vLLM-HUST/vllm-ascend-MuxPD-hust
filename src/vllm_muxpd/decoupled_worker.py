@@ -189,10 +189,17 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
 
         if self._overlap_communication == "isolated":
             # Independent HCCL groups remove the cross-lane collective chain.
-            # Submit the complete P quota once, then D; device work can overlap
+            # Launch captured D first so its device work can overlap raw P's
+            # host submission. Native D replay/update synchronization remains
+            # inside execute_model; sampling still follows both submissions.
+            # Eager D retains P-first ordering. Both paths use two lane steps,
             # without a host greenlet round trip at every decoder layer.
-            self._run_lane(prefill, "prefill", prefill_budget)
-            self._run_lane(decode, "decode", None)
+            if self._decode_graph_enabled:
+                self._run_lane(decode, "decode", None)
+                self._run_lane(prefill, "prefill", prefill_budget)
+            else:
+                self._run_lane(prefill, "prefill", prefill_budget)
+                self._run_lane(decode, "decode", None)
             return
 
         # Putting an entire decode network ahead of P would make P's first
