@@ -150,7 +150,7 @@ Pilot 入口为 `tp4-budget256-pilot-result.json`、
 parser=`571eb1ce`、审计器=`da12eb1f`，完整 SHA 在回执。协议文字遗留
 seed42，实际执行按冻结计划及 payload。归档入口为
 [证据 README](../evidence/2026-10-11-tp4-goodput/README.md)，发布标签
-`evidence-tp4-goodput-20261011`；原始数据下载及逐文件校验以该入口为准。
+[`evidence-tp4-goodput-20261011`](https://github.com/vLLM-HUST/vllm-hust-benchmark/releases/tag/evidence-tp4-goodput-20261011)；原始数据下载及逐文件校验以 benchmark 入口为准。
 归档随后对全部 763 个文件重新计算 SHA256，并逐一验证解压后的原始字节；
 约 94 MB 压缩包保留约 1.09 GB 证据。本地测试为 657 passed、2 skipped，
 Ruff、启动脚本语法和 diff 检查通过。

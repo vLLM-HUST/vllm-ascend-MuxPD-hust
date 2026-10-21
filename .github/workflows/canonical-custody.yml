@@ -1,0 +1,23 @@
+name: Canonical benchmark custody
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  verify-archive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Download canonical bytes and verify every member
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir /tmp/muxpd-canonical
+          gh release download evidence-tp4-goodput-20261011 --repo vLLM-HUST/vllm-hust-benchmark --pattern tp4-goodput-evidence.tar.gz --dir /tmp/muxpd-canonical
+          cp evidence/2026-10-11-tp4-goodput/archive-index.json /tmp/muxpd-canonical/
+          python evidence/2026-10-11-tp4-goodput/archive_tp4_evidence.py --verify-only /tmp/muxpd-canonical
