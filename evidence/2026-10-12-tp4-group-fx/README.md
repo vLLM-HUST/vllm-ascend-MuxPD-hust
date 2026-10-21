@@ -19,7 +19,7 @@ compiler policy, apart from isolated service/card/cache assignments.
   sequences and the 8-layer cancellation prefix, bounded to the ten lifecycle requests.
 
 The complete raw package is attached to
-[the evidence release](https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/releases/tag/evidence-tp4-groupfx-20261012).
+[the evidence release](https://github.com/vLLM-HUST/vllm-hust-benchmark/releases/tag/evidence-tp4-groupfx-20261012).
 `archive-index.json` records its checksum and every retained member. It includes
 all 80 admitted requests (79 complete, one planned cancellation), raw SSE and
 journals, immutable plans and registrations, service logs and traces, source

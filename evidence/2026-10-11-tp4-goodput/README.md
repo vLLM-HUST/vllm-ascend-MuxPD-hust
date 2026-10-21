@@ -18,7 +18,7 @@ startup replicates. Fixed-load output throughput is not sustainable capacity.
 ## Assets and verification
 
 Large raw evidence is distributed as a
-[GitHub release asset](https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/releases/tag/evidence-tp4-goodput-20261011).
+[GitHub release asset](https://github.com/vLLM-HUST/vllm-hust-benchmark/releases/tag/evidence-tp4-goodput-20261011).
 `archive-index.json` binds every original relative path, size and SHA256, as well
 as the compressed asset. The archive includes raw SSE/chunk journals, producer
 reports, independent audits, plans, protocols, exact measurement/controller
@@ -33,7 +33,7 @@ All 763 decompressed members passed exact byte verification.
 
 ```bash
 gh release download evidence-tp4-goodput-20261011 \
-  --repo vLLM-HUST/vllm-ascend-MuxPD-hust \
+  --repo vLLM-HUST/vllm-hust-benchmark \
   --pattern 'tp4-goodput-evidence.tar.gz' --dir /tmp/tp4-release
 cp evidence/2026-10-11-tp4-goodput/archive-index.json /tmp/tp4-release/
 python evidence/2026-10-11-tp4-goodput/archive_tp4_evidence.py \
