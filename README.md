@@ -63,7 +63,7 @@ Goodput 为原生 16K 对照的 **3.15×**；固定窗口吞吐约 **+0.48%**，
 这是特定到达率下的交互 SLO 收益，不是最大吞吐或任意负载加速保证。
 
 早期 [TP2 验证](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/2144d58de108cddaff3800fdcbf12dc9d3ab1d18/archive/mod-consumers-20261023/muxpd/manifest.json) 和
-[TP4 eager 验证 (archive member: `evidence/2026-10-10-tp4/README.md`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json) 保留原始回执与未取得收益的结果。
+[TP4 eager 验证 (archive member: `evidence/2026-10-10-tp4/README.md`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/812ef01ae992475d4ce6a3bb6a6ce4bda43b5f12/archive/mod-collections-20261023/muxpd/manifest.json) 保留原始回执与未取得收益的结果。
 不同 TP、eager/graph、缓存设置的测量不能直接混用。
 
 ## 固定运行基线
@@ -103,7 +103,7 @@ async scheduling 和 prefix caching，并将 token budget 设置为完整 16K �
 启动脚本默认 TP=2；四卡使用 `ASCEND_RT_VISIBLE_DEVICES=0,1,2,3 MUXPD_TP_SIZE=4`。
 TP4 占用所选四张 NPU，TP8 占用八张，不能与占用相同设备的服务同时运行。
 早期四卡环境的完整启动与复测命令见
-[TP4 记录 (archive member: `evidence/2026-10-10-tp4/README.md`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)。
+[TP4 记录 (archive member: `evidence/2026-10-10-tp4/README.md`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/812ef01ae992475d4ce6a3bb6a6ce4bda43b5f12/archive/mod-collections-20261023/muxpd/manifest.json)。
 
 独立 decode 图使用以下入口。P 保持完整 prompt，不进入设备图；D 使用自己
 的静态输入、workspace 和捕获流；两者共享模型权重与 KV。该入口关闭详细 trace，

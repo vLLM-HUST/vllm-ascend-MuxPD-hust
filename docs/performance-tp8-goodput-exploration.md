@@ -249,8 +249,8 @@ trace 或 profiler。独立审计重建了原始 SSE，并核对请求体、完�
 配置中的异步调度、图模式、通信与执行路径仍不同，且内部 model batch
 未证明一致；这些数字不是模型精度评分，也不能定位浮点、图或缓存原因。
 
-[独立审计说明 (archive member: `evidence/2026-10-11-matched-numeric/review.md`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json) 与
-[派生结果 (archive member: `evidence/2026-10-11-matched-numeric/review.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json) 保留分历史组、
+[独立审计说明 (archive member: `evidence/2026-10-11-matched-numeric/review.md`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/812ef01ae992475d4ce6a3bb6a6ce4bda43b5f12/archive/mod-collections-20261023/muxpd/manifest.json) 与
+[派生结果 (archive member: `evidence/2026-10-11-matched-numeric/review.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/812ef01ae992475d4ce6a3bb6a6ce4bda43b5f12/archive/mod-collections-20261023/muxpd/manifest.json) 保留分历史组、
 逐请求对齐及源证据散列。第一次候选启动在创建进程前遇到端口 bind
 冲突，没有发送请求；失败记录保留，实际候选使用单独登记的新 v2 stage。
 

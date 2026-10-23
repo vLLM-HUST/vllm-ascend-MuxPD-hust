@@ -39,7 +39,7 @@ Frozen reports retain original labels and local paths; these do not assert that 
 
 ## Remaining collections (formal / handoff / TP4-TP8 / profiler)
 
-[Member manifest](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json) preserves the source commit and every original hash.
+[Member manifest](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/812ef01ae992475d4ce6a3bb6a6ce4bda43b5f12/archive/mod-collections-20261023/muxpd/manifest.json) preserves the source commit and every original hash.
 
 ```sh
 python scripts/fetch_mod_consumer_evidence.py --config BENCHMARK_COLLECTION.json \
