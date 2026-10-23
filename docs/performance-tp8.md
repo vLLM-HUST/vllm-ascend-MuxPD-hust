@@ -317,7 +317,7 @@ SHA-256 `935052d0ab64e8a53b9021706c6d2abbc53534f0846f2e5109ccd11636967740`。
 ## 证据复算与结束状态
 
 原始性能、输出对照、状态探针、启动日志及 source/producer SHA 均保留于
-[本轮证据目录](../evidence/2026-10-10-tp8/README.md)。三个离线入口分别为
+[本轮证据目录 (archive member: `evidence/2026-10-10-tp8/README.md`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)。三个离线入口分别为
 [性能汇总 (archive member: `evidence/2026-10-10-tp8/summarize_tp8.py`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)、
 [正确性审计 (archive member: `evidence/2026-10-10-tp8/correctness-summary-audit.py`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json) 和
 [生命周期审计 (archive member: `evidence/2026-10-10-tp8/audit_lifecycle.py`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)。这些脚本读取已有

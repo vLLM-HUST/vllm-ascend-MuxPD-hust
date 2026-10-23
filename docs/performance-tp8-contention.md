@@ -430,7 +430,7 @@ v2 优先使用合格续片的非 P 残差，减轻早期独立 D 最大值长�
 Ascend 的 npugraph_ex `force_eager=True` 仍调用 FX eager 算子路径，
 并非完整 P 的设备 graph replay；profile 每个 P forward 有 40 层 MoE /
 30 层 GDN 的 host custom-op 调用。
-[紧凑 profile 审计](../evidence/2026-10-11-tp8-contention/profile-hotspots.md)
+[紧凑 profile 审计 (archive member: `evidence/2026-10-11-tp8-contention/profile-hotspots.md`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)
 提供次数与 inclusive 时长，但没有逐算子输入形状，不能由它认定 kernel
 内部 padding 或精确分摊全部固定成本。guard 同时改变部分 P 的 FX/raw
 执行形态和切层配额；本轮未做这两个因素的完整析因实验。
@@ -503,7 +503,7 @@ v2 硬件并行证据。完整 profile trace/CSV 与独立分类脚本供离线�
 数据选择规则、版本调整、CPU 重叠重跑和依赖回滚全部保留。
 
 从仓库根目录可按以下命令复算；输出目录必须尚不存在，详细规则见
-[归档说明](../evidence/2026-10-11-tp8-contention/ARCHIVE.md)。
+[归档说明 (archive member: `evidence/2026-10-11-tp8-contention/ARCHIVE.md`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)。
 
 ```bash
 python3 scripts/archive_tp8_evidence.py verify \

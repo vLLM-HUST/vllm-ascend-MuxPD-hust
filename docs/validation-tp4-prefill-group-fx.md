@@ -128,7 +128,7 @@ python scripts/probe_prefill_group_outputs.py --execute \
   --baseline-report raw.json --output candidate.json
 ```
 
-[Evidence index](../evidence/2026-10-12-tp4-group-fx/README.md) includes the
+[Evidence index (archive member: `evidence/2026-10-12-tp4-group-fx/README.md`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json) includes the
 independent audits and the complete release archive. Reports retain captured
 absolute paths; replay instructions describe how to map them without rewriting
 or weakening the original SHA checks. Numeric replay does not import the
