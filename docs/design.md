@@ -368,7 +368,7 @@ isolated8 已完成 Qwen3.5-35B-A3B BF16、TP4+EP、eager 的自然语言对照�
 同见 [TP4 性能报告](performance-tp4.md)。这些是不同执行组合，不应把
 isolated 通信组与 decode graph 的验证结果合并成未测试的 graph overlap 配置。
 
-shared overlap 的早期设备证据见 [2026-10-10 回执](../evidence/2026-10-10/README.md#device-profile-independent-pd-compute-intervals)。
+shared overlap 的早期设备证据见 [2026-10-10 回执](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/2144d58de108cddaff3800fdcbf12dc9d3ab1d18/archive/mod-consumers-20261023/muxpd/manifest.json)。
 在指定 Qwen3.5-35B-A3B BF16 / Ascend 910B2 / TP2+EP / 固定 8 层配额的
 capture 中，两 rank 的 P/D compute 区间交集分别约占活跃并集的 10.78% 和
 9.16%。计算使用已映射到 P/D 的 CANN physical stream，排除 CPU、拷贝、

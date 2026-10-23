@@ -130,7 +130,7 @@ vLLM 的调度发射即递增 computed token 数，与分层执行完成不是�
 pending P 时拒绝 keep / `PAUSED_ALL`，禁止原生暂停或 cache reset 提前回收
 悬挂状态。具体协议及测试边界见 [design.md](design.md#跨迭代-prefill-协议)。
 本节的实现映射本身不证明设备并发、性能优于 baseline 或达到 SLO。
-shared TP2 compute 区间重叠有 [指定 capture 的独立证据](../evidence/2026-10-10/README.md#device-profile-independent-pd-compute-intervals)；
+shared TP2 compute 区间重叠有 [指定 capture 的独立证据](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/2144d58de108cddaff3800fdcbf12dc9d3ab1d18/archive/mod-consumers-20261023/muxpd/manifest.json)；
 TP4 的 shared/isolated 通信、独立 D graph、完整 P FX 执行和优化组合另有
 [本轮原始回执及源码清单](../evidence/2026-10-10-tp4-optimization/README.md)。
 isolated8 已通过指定 TP4+EP eager 正确性与生命周期检查，profile 中事件数

@@ -1,5 +1,8 @@
 # MuxPD for HUST vLLM Ascend
 
+Historical data for the migrated batch is in [benchmark custody](EVIDENCE.md),
+with pinned hashes and an external-directory downloader. Source/runtime behavior is unchanged.
+
 将 MuxWise 的 P/D 解耦机制适配到现有 HUST vLLM，使用原生 KV 分配、抢占、
 取消、采样与 OpenAI API。安装包本身不修改 vLLM；通过显式 scheduler/worker
 类启用，无需改动基线源码。
@@ -59,7 +62,7 @@ Goodput 为原生 16K 对照的 **3.15×**；固定窗口吞吐约 **+0.48%**，
 适用负载、全部对照和复现证据见 [TP4 Goodput 报告](docs/performance-tp4-goodput.md)。
 这是特定到达率下的交互 SLO 收益，不是最大吞吐或任意负载加速保证。
 
-早期 [TP2 验证](evidence/2026-10-10/README.md) 和
+早期 [TP2 验证](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/2144d58de108cddaff3800fdcbf12dc9d3ab1d18/archive/mod-consumers-20261023/muxpd/manifest.json) 和
 [TP4 eager 验证](evidence/2026-10-10-tp4/README.md) 保留原始回执与未取得收益的结果。
 不同 TP、eager/graph、缓存设置的测量不能直接混用。
 
