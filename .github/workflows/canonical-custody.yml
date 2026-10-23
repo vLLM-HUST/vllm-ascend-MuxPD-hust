@@ -16,10 +16,12 @@ jobs:
       - name: Download canonical bytes and verify every member
         env:
           GH_TOKEN: ${{ github.token }}
+          BENCHMARK_COLLECTION_ROOT: ${{ runner.temp }}/benchmark-collection
         run: |
+          python scripts/fetch_mod_consumer_evidence.py --config BENCHMARK_COLLECTION.json --destination "$BENCHMARK_COLLECTION_ROOT"
           mkdir /tmp/muxpd-canonical
           gh release download evidence-tp4-goodput-20261011 --repo vLLM-HUST/vllm-hust-benchmark --pattern tp4-goodput-evidence.tar.gz --dir /tmp/muxpd-canonical
-          cp evidence/2026-10-11-tp4-goodput/archive-index.json /tmp/muxpd-canonical/
-          python evidence/2026-10-11-tp4-goodput/archive_tp4_evidence.py --verify-only /tmp/muxpd-canonical
+          cp "$BENCHMARK_COLLECTION_ROOT/evidence/2026-10-11-tp4-goodput/archive-index.json" /tmp/muxpd-canonical/
+          python scripts/archive_tp4_evidence.py --verify-only /tmp/muxpd-canonical
           gh release download evidence-tp4-groupfx-20261012 --repo vLLM-HUST/vllm-hust-benchmark --pattern tp4-groupfx-20261012.tar.gz --dir /tmp/muxpd-canonical
           python scripts/verify_groupfx_custody.py /tmp/muxpd-canonical

@@ -1,7 +1,0 @@
-{
-  "at": "2026-10-11T05:09:24.196864+00:00",
-  "original_plan": "confirmation-plan.json",
-  "reason": "First guard stage improves D gaps but raises Prefill TTFT and lowers even D-control throughput; inspect actual slice estimates/cold shapes with independent trace before selecting final configuration. No measurements discarded.",
-  "next_stage": "guard-diagnostic",
-  "timing_aggregation": "guard-initial remains measuredf673277; any runtime optimization will get newexplicitrole and rerun matched confirmation. Remaining confirmation pipeline not started."
-}
