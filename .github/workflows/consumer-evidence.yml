@@ -20,3 +20,5 @@ jobs:
       - run: python -m pytest -q -c /dev/null tests/test_mod_consumer_capsule.py tests/test_migrated_evidence_boundary.py
       - name: Verify canonical archive and every original member
         run: python scripts/fetch_mod_consumer_evidence.py --destination "$RUNNER_TEMP/consumer-evidence"
+      - name: Verify historical capsule and every original member
+        run: python scripts/fetch_mod_consumer_evidence.py --config BENCHMARK_HISTORY.json --destination "$RUNNER_TEMP/history-evidence"

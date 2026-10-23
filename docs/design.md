@@ -331,7 +331,7 @@ P 进入编译上下文；已悬挂的 P 始终继续逐层 raw 执行。编译�
 controller 的 `snapshot()` 按实际 descriptor 对应的已捕获 graph entry 区分
 D capture、replay 与 eager fallback，仅看到 `FULL` 不计作 replay。
 `prefill_compiled_calls` 表示允许编译执行的调用数，不能单独证明实际 FX 命中；
-本轮另外保存了 [四 rank 的编译执行 profile 证据](../evidence/2026-10-10-tp4-optimization/graph-compiled-profile-proof.md)。
+本轮另外保存了 [四 rank 的编译执行 profile 证据](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/aadff9107d2514ab8a319a5f6385a99671c98cfd/archive/mod-history-20261023/muxpd/manifest.json)（归档成员 `evidence/2026-10-10-tp4-optimization/graph-compiled-profile-proof.md`）。
 
 纯 D 步骤直接复用原生 runner/sampler，省去逐层 greenlet 编排。仅在 graph
 fenced、连续两轮纯 D、前轮已成功采样且未配置 profiler 时，省去本轮冗余的
@@ -413,7 +413,7 @@ SSE、usage、功能 oracle、重复稳定性及文本哈希；`--require-exact`
 只说明这些用例通过，不能替代长期随机、取消与内存压力测试。
 
 图模式还使用 token-ID 状态复用探针，覆盖单 token P、双 token 对照和长 P
-前后历史。当前 [三路调查](../evidence/2026-10-10-tp4-optimization/one-token-prefill-investigation.md)
+前后历史。当前 [三路调查](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/aadff9107d2514ab8a319a5f6385a99671c98cfd/archive/mod-history-20261023/muxpd/manifest.json)（归档成员 `evidence/2026-10-10-tp4-optimization/one-token-prefill-investigation.md`）
 记录了原生 graph 的单 token P 首输出不稳定，而原生 eager 与插件 graph 在
 同一探针中稳定；双 token P 的后续差异在三路均存在。证据支持继续检查原生
 GDN graph 路由与状态更新，尚未证明缓存泄漏，也不能据此归因所有生成差异。
@@ -433,3 +433,6 @@ trace 的 `decoupled_schedule` / `decoupled_complete` 记录 cohort、pending P�
 本轮 D、配额来源、prefill-first 债务、层进度来源和 ACK；后续 P 层执行不会
 再次记入 prompt token admission。trace 可关闭以测量常规执行性能；关闭 trace
 的运行不能作为逐轮层进度证据，需保留独立协议验证回执。
+
+
+TP4 optimization links open the benchmark member manifest. Retrieve the named original through EVIDENCE.md; omitted full captures are not recovered.

@@ -13,6 +13,7 @@ def test_migrated_directory_has_no_tracked_copies():
             str(root),
             "ls-files",
             "--",
+            "evidence/2026-10-10-tp4-optimization/",
             "evidence/2026-10-10/",
         ]
     )
