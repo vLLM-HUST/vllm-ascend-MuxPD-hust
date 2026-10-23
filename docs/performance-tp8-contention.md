@@ -511,11 +511,12 @@ python3 scripts/archive_tp8_evidence.py verify \
 python3 scripts/archive_tp8_evidence.py unpack \
   --archive "$BENCHMARK_COLLECTION_ROOT/evidence/2026-10-11-tp8-contention" \
   --output local-results/tp8-contention-replay
-python3 local-results/tp8-contention-replay/audit_contention.py --require-final \
-  --output local-results/tp8-contention-replay/replayed-contention-audit.json
-python3 local-results/tp8-contention-replay/profile-hotspots-audit.py \
-  --output local-results/tp8-contention-replay/replayed-profile-hotspots.json
 ```
+
+上述命令只验证/解包历史输入，不执行归档内源码。历史重放使用的
+`audit_contention.py` 和 `profile-hotspots-audit.py` 按原字节保留在归档中；
+如需再次执行，须先按当前代码审查流程迁入受维护的工具目录并显式指定外部输入。
+下述重放通过记录是历史结果，不是本次数据迁移重新运行了这些脚本。
 
 归档后的 pack、独立 verify 与完整 unpack 均通过；随后直接从封存的 gzip
 重放 40 份原始 SSE 审计，32 份入选结果、所有指标/SLO、840 组 token 数组
