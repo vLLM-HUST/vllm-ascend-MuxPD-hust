@@ -132,16 +132,19 @@ pending P 时拒绝 keep / `PAUSED_ALL`，禁止原生暂停或 cache reset 提�
 本节的实现映射本身不证明设备并发、性能优于 baseline 或达到 SLO。
 shared TP2 compute 区间重叠有 [指定 capture 的独立证据](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/2144d58de108cddaff3800fdcbf12dc9d3ab1d18/archive/mod-consumers-20261023/muxpd/manifest.json)；
 TP4 的 shared/isolated 通信、独立 D graph、完整 P FX 执行和优化组合另有
-[本轮原始回执及源码清单](../evidence/2026-10-10-tp4-optimization/README.md)。
+[本轮原始回执及源码清单](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/afd47a8e9964b71844dec75a8e908f279ae98202/archive/mod-history-20261023/muxpd/manifest.json)（归档成员 `evidence/2026-10-10-tp4-optimization/README.md`）。
 isolated8 已通过指定 TP4+EP eager 正确性与生命周期检查，profile 中事件数
 减少，但计算交叠没有增加，性能也未超过原生；不能将它与 graph fenced 的
 结果拼成未验证的 graph overlap 支持。上述证据范围均不扩展到每核资源隔离、
 任意负载利用率或论文性能结果。
 
 论文和 artifact 的逐项差异详见
-[固定源码对照](../evidence/2026-10-10-tp4-optimization/original-comparison.md)。
+[固定源码对照](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/afd47a8e9964b71844dec75a8e908f279ae98202/archive/mod-history-20261023/muxpd/manifest.json)（归档成员 `evidence/2026-10-10-tp4-optimization/original-comparison.md`）。
 原生 eager、原生 graph 与插件 graph 的单 token P 状态复用诊断见
-[三路调查](../evidence/2026-10-10-tp4-optimization/one-token-prefill-investigation.md)：
+[三路调查](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/afd47a8e9964b71844dec75a8e908f279ae98202/archive/mod-history-20261023/muxpd/manifest.json)（归档成员 `evidence/2026-10-10-tp4-optimization/one-token-prefill-investigation.md`）：
 原生 graph 在该探针中出现单 token P 的首输出不稳定；双 token P 的后续差异
 在三路均存在。它是固定版本的兼容性线索，尚不足以确认缓存泄漏或将所有文本
 差异归因为同一个问题。
+
+
+TP4 optimization links open the benchmark member manifest. Retrieve the named original through EVIDENCE.md; omitted full captures are not recovered.

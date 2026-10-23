@@ -16,3 +16,22 @@ Existing generation commands may still write new local outputs; do not commit th
 
 Other historical directories are not declared migrated by this batch. Original failures and
 diagnostic/NO_GO scopes remain unchanged. No hardware experiment is required to read this archive.
+
+
+## Additional historical directories
+
+[Canonical history manifest](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/afd47a8e9964b71844dec75a8e908f279ae98202/archive/mod-history-20261023/muxpd/manifest.json) lists original paths, sizes and SHA256.
+This is a separate capsule from BENCHMARK_EVIDENCE.json; do not reuse its destination.
+No hardware experiment or new performance acceptance is implied.
+
+```sh
+python scripts/fetch_mod_consumer_evidence.py --config BENCHMARK_HISTORY.json \
+  --destination /absolute/new/external/history
+```
+
+The restored root preserves these original paths:
+
+- `evidence/2026-10-10-tp4-optimization/`
+- `docs/performance-tp4.md`
+
+Frozen reports retain original labels and local paths; these do not assert that omitted captures were recovered.

@@ -12,3 +12,6 @@ local-results/
 
 # Historical TP2 evidence now lives in the pinned benchmark capsule.
 /evidence/2026-10-10/
+
+# Historical originals live in benchmark (issue 326).
+/evidence/2026-10-10-tp4-optimization/
