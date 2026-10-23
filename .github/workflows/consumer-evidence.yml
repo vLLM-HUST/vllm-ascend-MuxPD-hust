@@ -17,8 +17,10 @@ jobs:
         with:
           python-version: '3.11'
       - run: python -m pip install pytest
-      - run: python -m pytest -q -c /dev/null tests/test_mod_consumer_capsule.py tests/test_migrated_evidence_boundary.py
+      - run: python -m pytest -q -c /dev/null tests/test_mod_consumer_capsule.py tests/test_migrated_evidence_boundary.py tests/test_collection_evidence_boundary.py
       - name: Verify canonical archive and every original member
         run: python scripts/fetch_mod_consumer_evidence.py --destination "$RUNNER_TEMP/consumer-evidence"
       - name: Verify historical capsule and every original member
         run: python scripts/fetch_mod_consumer_evidence.py --config BENCHMARK_HISTORY.json --destination "$RUNNER_TEMP/history-evidence"
+      - name: Verify remaining collection and every original member
+        run: python scripts/fetch_mod_consumer_evidence.py --config BENCHMARK_COLLECTION.json --destination "$RUNNER_TEMP/collection-evidence"

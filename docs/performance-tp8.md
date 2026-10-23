@@ -19,7 +19,7 @@ tokens/s（+0.349%）。原生自身前后两阶段分别变化 +1.91% / +4.33%�
 
 容器于 2026-10-10 05:24:16 UTC 启动。初始记录未发现 vLLM API/engine/worker
 进程，八张 NPU 无运行任务；这是启动服务之前的观察，不是后续采集时的状态。
-完整动态记录位于 [environment.json](../evidence/2026-10-10-tp8/environment.json)，
+完整动态记录位于 [environment.json (archive member: `evidence/2026-10-10-tp8/environment.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)，
 保留了同轮初始快照、`npu-smi`、模型修复记录的路径和散列。该快照只记录
 启动配置；后续服务可用性由独立请求回执记录。完整证据目录包含环境、
 启动日志、运行清单、原始结果及离线审计脚本。
@@ -47,7 +47,7 @@ Ascend checkout 的既有 `csrc/build_aclnn.sh` 本地修改及 SHA 已单列于
 模型入口仍为 `/root/workspace/models/Qwen3.5-35B-A3B`。原软链指向已经不可用
 的 `/data/home/vllm-hust-mhy-21rc/workspace/models/Qwen3.5-35B-A3B`，本轮修复
 为 `/data/shared_upload/models/vspec/Qwen3.5-35B-A3B`；只修改本地软链，没有
-改写共享模型文件。[model-resolution.json](../evidence/2026-10-10-tp8/model-resolution.json)
+改写共享模型文件。[model-resolution.json (archive member: `evidence/2026-10-10-tp8/model-resolution.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)
 保存修复前后路径和逐文件比较。
 
 新位置的 10 项现有模型/tokenizer metadata SHA-256 与 TP4 库存匹配，14 个
@@ -84,9 +84,9 @@ dump 或 kernel 正确性测试结果。
 关闭、`mamba_cache_mode=none`、无 speculative decoding。两者均使用
 `VLLM_COMPILE` + `FULL_DECODE_ONLY`，capture sizes 为 `[1,2,4,8]`，关闭
 `enforce_eager`。有效参数见
-[native initial](../evidence/2026-10-10-tp8/native-initial-manifest.json)、
-[work256](../evidence/2026-10-10-tp8/work256-manifest.json) 和
-[native bracket](../evidence/2026-10-10-tp8/native-bracket-manifest.json) 的进程清单。
+[native initial (archive member: `evidence/2026-10-10-tp8/native-initial-manifest.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)、
+[work256 (archive member: `evidence/2026-10-10-tp8/work256-manifest.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json) 和
+[native bracket (archive member: `evidence/2026-10-10-tp8/native-bracket-manifest.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json) 的进程清单。
 
 | 项目 | 原生 graph | MuxPD work256 graph |
 | --- | --- | --- |
@@ -98,7 +98,7 @@ dump 或 kernel 正确性测试结果。
 | Stream mode | 原生 | `fenced`；不以此证明 P/D kernel 并发 |
 
 候选沿用 [TP4 性能报告](performance-tp4.md) 的 work256 联合配置，实际由
-归档的 [work256-launch.sh](../evidence/2026-10-10-tp8/work256-launch.sh) 直接
+归档的 [work256-launch.sh (archive member: `evidence/2026-10-10-tp8/work256-launch.sh`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json) 直接
 调用 Python API server，显式设置 TP 为 8。其 policy/graph 参数等价于
 [`serve-qwen35-decode-graph.sh`](../scripts/serve-qwen35-decode-graph.sh) 的配置：
 
@@ -148,7 +148,7 @@ token-ID 请求。两类负载均为每轮 8 个请求、每请求输出 64 toke
 temperature 0、seed 42、`ignore_eos=true`，先对每个输入长度预热 8 个输出
 tokens。原生 initial/bracket、候选 stage1/confirm 各为每负载三轮，合计每种
 配置每负载六轮、48 个请求。逐文件参数和复算结果见
-[benchmark-summary.json](../evidence/2026-10-10-tp8/benchmark-summary.json)。
+[benchmark-summary.json (archive member: `evidence/2026-10-10-tp8/benchmark-summary.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)。
 
 | 负载 | 输入长度 | 请求间隔 |
 | --- | --- | --- |
@@ -177,7 +177,7 @@ TPOT 的 P95，不是逐 token 延迟分位数。SSE 内容事件可能携带多
 以下均合并各自全部六轮；百分比为 `100 × (插件 / 原生 - 1)`，延迟列负值
 表示降低。八份原始性能 JSON 均通过 usage、内容事件时间顺序、时间范围及
 存储指标复算，输入散列和逐轮数据保留在
-[完整汇总](../evidence/2026-10-10-tp8/benchmark-summary.json)。
+[完整汇总 (archive member: `evidence/2026-10-10-tp8/benchmark-summary.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)。
 
 | 负载 | 原生 → 插件 tokens/s | 吞吐变化 | 原生 → 插件 TTFT P95 / s | 原生 → 插件平均 TPOT P95 / s |
 | --- | --- | --- | --- | --- |
@@ -205,18 +205,18 @@ decode-heavy 为 **−1.779%**。阶段顺序、预热、缓存或其他运行�
 随机交错及更多独立启动隔离；当前证据不支持稳定吞吐增益。候选 stage1 与
 confirm 属于同一服务生命周期，不能当成两个独立冷启动。
 
-Native bracket 的 [启动日志](../evidence/2026-10-10-tp8/native-bracket-server.log)
+Native bracket 的 [启动日志 (archive member: `evidence/2026-10-10-tp8/native-bracket-server.log`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)
 记录 AOT cache 加载 Triton 失败后自动重编译的 warning。
 计时在服务健康就绪、脚本 shape warmup 完成之后开始，没有将启动重编译耗时
 计入吞吐。计时结束后的
-[initial/bracket 自然语言复验](../evidence/2026-10-10-tp8/native-initial-vs-bracket-correctness.json)
+[initial/bracket 自然语言复验 (archive member: `evidence/2026-10-10-tp8/native-initial-vs-bracket-correctness.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)
 为 **16/16 文本一致**，两侧 oracle、重复稳定性及 isolated/paired 对照通过。
 它支持保留 bracket 作为已完成的本轮对照，但不能证明两次启动的所有内部
 执行路径完全相同，也不能把启动 warning 本身归因为推理退化。
 
 ## 已完成的输出对照
 
-本节依据 [correctness-summary.json](../evidence/2026-10-10-tp8/correctness-summary.json)
+本节依据 [correctness-summary.json (archive member: `evidence/2026-10-10-tp8/correctness-summary.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)
 及其原始回执。自然语言和合成 SSE 比较的是解码文本，状态复用探针比较的
 是服务返回的 token IDs；这两种“精确一致”不能混用。汇总已复核服务 manifest
 中的成功客户端回执及输入 SHA，复用的 baseline 也与最初报告逐条核对。
@@ -229,10 +229,10 @@ Native bracket 的 [启动日志](../evidence/2026-10-10-tp8/native-bracket-serv
 | 合成重复不稳定组数 | 10/28 | 11/28 |
 | 严格串行状态探针 transport | 30/30 | 30/30 |
 
-自然语言原始报告为 [native-correctness.json](../evidence/2026-10-10-tp8/native-correctness.json)
-和 [native-vs-work256.json](../evidence/2026-10-10-tp8/native-vs-work256.json)；合成报告为
-[native-serving.json](../evidence/2026-10-10-tp8/native-serving.json) 和
-[native-vs-work256-serving.json](../evidence/2026-10-10-tp8/native-vs-work256-serving.json)。
+自然语言原始报告为 [native-correctness.json (archive member: `evidence/2026-10-10-tp8/native-correctness.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)
+和 [native-vs-work256.json (archive member: `evidence/2026-10-10-tp8/native-vs-work256.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)；合成报告为
+[native-serving.json (archive member: `evidence/2026-10-10-tp8/native-serving.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json) 和
+[native-vs-work256-serving.json (archive member: `evidence/2026-10-10-tp8/native-vs-work256-serving.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)。
 合成 transport 审计逐条重放保存的 SSE body，核对 HTTP 200、响应标识、
 `[DONE]`、finish reason、usage 和 body SHA；自然语言报告保存事件与完成
 标志，没有原始 HTTP body/status 字段，证据范围较窄。客户端并发也不单独
@@ -246,12 +246,12 @@ hash 变化；其 synthetic token IDs 不构成自然语言质量测试。
 1/16 tokens。每组为两次 before、一次 4096-token P + 8-token D 背景请求、
 两次 after；六组共 30 请求，时间戳核对为严格串行。`before` 不是新进程或
 清空缓存后的观察。原始数据为
-[native-state-reuse.json](../evidence/2026-10-10-tp8/native-state-reuse.json) 和
-[work256-state-reuse.json](../evidence/2026-10-10-tp8/work256-state-reuse.json)，另补
-[native-eager-state-reuse.json](../evidence/2026-10-10-tp8/native-eager-state-reuse.json)
+[native-state-reuse.json (archive member: `evidence/2026-10-10-tp8/native-state-reuse.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json) 和
+[work256-state-reuse.json (archive member: `evidence/2026-10-10-tp8/work256-state-reuse.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)，另补
+[native-eager-state-reuse.json (archive member: `evidence/2026-10-10-tp8/native-eager-state-reuse.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)
 作为原生 eager 对照；三路各 30/30 完成传输、usage、token-ID 与严格串行
 顺序检查。eager 启动配置见
-[native-eager-manifest.json](../evidence/2026-10-10-tp8/native-eager-manifest.json)。
+[native-eager-manifest.json (archive member: `evidence/2026-10-10-tp8/native-eager-manifest.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)。
 
 | Prompt / 输出上限 | 原生 graph | 原生 eager | 插件 graph |
 | --- | --- | --- | --- |
@@ -276,18 +276,18 @@ eager 的 `[100] / 16` 在 before 两次请求的生成 index 7 出现 `23 ↔ 2
 
 ## 跨轮 prefill、取消与 decode 债务
 
-这部分使用独立启动的 [work256 traced 服务](../evidence/2026-10-10-tp8/work256-traced-manifest.json)，
-在 [纯 P 校准请求](../evidence/2026-10-10-tp8/traced-calibration.json) 后执行长 P、取消
+这部分使用独立启动的 [work256 traced 服务 (archive member: `evidence/2026-10-10-tp8/work256-traced-manifest.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)，
+在 [纯 P 校准请求 (archive member: `evidence/2026-10-10-tp8/traced-calibration.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json) 后执行长 P、取消
 和自然语言对照。它们没有计入前述吞吐。实际配额由本轮校准与 trace 读取，
 不能把校准后的行为当成冷启动时的固定保证。
 
-[严格 checker](../evidence/2026-10-10-tp8/traced-check.json) 通过：22 个 cohort，
+[严格 checker (archive member: `evidence/2026-10-10-tp8/traced-check.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json) 通过：22 个 cohort，
 21 个完成、1 个取消，466 个层进度回执。最大完整 P 为 12000 tokens，最大
 P 完成前 D retirement 步数为 1。回执来源为 20 次 `full_forward_return`、
 4 次 `layer_hooks`、442 次无 P 的 `none`；这些是 host 协议计数，不是
 device kernel 或 FX 命中次数。
 
-[lifecycle-proof.json](../evidence/2026-10-10-tp8/lifecycle-proof.json) 结合客户端时间
+[lifecycle-proof.json (archive member: `evidence/2026-10-10-tp8/lifecycle-proof.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json) 结合客户端时间
 窗口定位 cohort，并保存关键原始 trace 行：
 
 | 用例 | 完整 P 准入 | 实际层进度 | ACK 与随后状态 |
@@ -296,10 +296,10 @@ device kernel 或 FX 命中次数。
 | 取消长 P，cohort 6 | step 86 一次准入 12000 tokens | step 86：0→21；step 87：21→21，新增 0 层 | step 87 取消 ACK；step 88 清除 pending cohort |
 
 两次 12K P 的后续步骤都没有重新准入 prompt token。正常用例的首轮有 D
-完成回执；[客户端进度报告](../evidence/2026-10-10-tp8/traced-progress.json) 记录 P
+完成回执；[客户端进度报告 (archive member: `evidence/2026-10-10-tp8/traced-progress.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json) 记录 P
 请求开始后、P 首内容事件之前有 **1 个 D 内容事件**，支持 P 悬挂期间 D
 确实推进。它不是多个独立 token 的精确计时，也不证明 kernel 同时执行。
-[取消报告](../evidence/2026-10-10-tp8/traced-cancel.json) 与上述 ACK 联合验证 host
+[取消报告 (archive member: `evidence/2026-10-10-tp8/traced-cancel.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json) 与上述 ACK 联合验证 host
 生命周期；没有读取 KV tensor 内容，不能把 cohort 清除写成设备内存已逐字节
 归零的证明。
 
@@ -308,9 +308,9 @@ device kernel 或 FX 命中次数。
 获调度、完成并清债，computed-token 计数没有因延后而提前增加。该证据覆盖
 这 4 组请求，不等于任意负载下的公平性上界。
 
-traced 服务的 [自然语言复验](../evidence/2026-10-10-tp8/native-vs-work256-traced.json)
+traced 服务的 [自然语言复验 (archive member: `evidence/2026-10-10-tp8/native-vs-work256-traced.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)
 另有 16/16 文本与原生一致。完整
-[1398 行 trace](../evidence/2026-10-10-tp8/work256-traced-86528.jsonl) 为 876277 bytes，
+[1398 行 trace (archive member: `evidence/2026-10-10-tp8/work256-traced-86528.jsonl`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json) 为 876277 bytes，
 SHA-256 `935052d0ab64e8a53b9021706c6d2abbc53534f0846f2e5109ccd11636967740`。
 生命周期审计选取的 54 行与该原始 JSONL 对应，未用 TP4 的预设层数替代实测。
 
@@ -318,13 +318,13 @@ SHA-256 `935052d0ab64e8a53b9021706c6d2abbc53534f0846f2e5109ccd11636967740`。
 
 原始性能、输出对照、状态探针、启动日志及 source/producer SHA 均保留于
 [本轮证据目录](../evidence/2026-10-10-tp8/README.md)。三个离线入口分别为
-[性能汇总](../evidence/2026-10-10-tp8/summarize_tp8.py)、
-[正确性审计](../evidence/2026-10-10-tp8/correctness-summary-audit.py) 和
-[生命周期审计](../evidence/2026-10-10-tp8/audit_lifecycle.py)。这些脚本读取已有
+[性能汇总 (archive member: `evidence/2026-10-10-tp8/summarize_tp8.py`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)、
+[正确性审计 (archive member: `evidence/2026-10-10-tp8/correctness-summary-audit.py`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json) 和
+[生命周期审计 (archive member: `evidence/2026-10-10-tp8/audit_lifecycle.py`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)。这些脚本读取已有
 请求回执和 trace 生成离线摘要，不发起推理请求；性能 JSON 没有保存的原始 SSE、finish reason 等字段不能由汇总
 补推，应查独立 serving 回执。
 
-[final-runtime-validation.json](../evidence/2026-10-10-tp8/final-runtime-validation.json)
+[final-runtime-validation.json (archive member: `evidence/2026-10-10-tp8/final-runtime-validation.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)
 确认本轮 12 个 runtime Python 文件 SHA 未变，运行基线仍为上述已合并 commit。
 本轮进行了 TP8 硬件验证与离线审计，没有将 TP4 历史单元测试计数算作本轮
 重跑结果。初始无服务；结束时 native initial、work256、native bracket、

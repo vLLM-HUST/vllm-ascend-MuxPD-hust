@@ -3,12 +3,13 @@
 import argparse
 import importlib.util
 import json
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location(
     "archive_custody",
-    ROOT / "evidence/2026-10-11-tp4-goodput/archive_tp4_evidence.py",
+    ROOT / "scripts/archive_tp4_evidence.py",
 )
 custody = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(custody)
@@ -37,7 +38,10 @@ if __name__ == "__main__":
     parser.add_argument("directory", type=Path)
     args = parser.parse_args()
     index = json.loads(
-        (ROOT / "evidence/2026-10-12-tp4-group-fx/archive-index.json").read_text()
+        (
+            Path(os.environ["BENCHMARK_COLLECTION_ROOT"])
+            / "evidence/2026-10-12-tp4-group-fx/archive-index.json"
+        ).read_text()
     )
     print(
         json.dumps(custody.verify_asset(args.directory, adapt_index(index)), indent=2)

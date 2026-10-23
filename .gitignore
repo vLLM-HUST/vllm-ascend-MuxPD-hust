@@ -15,3 +15,6 @@ local-results/
 
 # Historical originals live in benchmark (issue 326).
 /evidence/2026-10-10-tp4-optimization/
+
+# Migrated collection originals. Retained tracked code/docs are reviewed explicitly.
+/evidence/

@@ -81,21 +81,21 @@ submit 与 device elapsed 的较大者；另保留完整 host round trip 的回�
 完成回执与所报预算的算术一致性，不宣称完整重放了预测器的历史样本缓存。
 实际冻结源码、版本区别与实机通过范围如下。
 
-[独立源码来源审计](../evidence/2026-10-11-tp8-contention/source-provenance-audit.json)
+[独立源码来源审计 (archive member: `evidence/2026-10-11-tp8-contention/source-provenance-audit.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)
 逐文件核对旧插件 initial/clean 的 12 个运行文件与 `7cb5088` 快照，以及
 guard v2 initial/confirm 的 13 个运行文件与 `258aef6`，同时检查原生
 argv 选择器、请求计划和 producer；没有混用不同实现的计时轮次。
 
 guard v1 固定在 `f673277`，其计时阶段为 `guard-initial`，另用
 `guard-diagnostic` 采集生命周期和估计器证据。v1 的
-[trace 校验](../evidence/2026-10-11-tp8-contention/guard-diagnostic-check.json) 通过
+[trace 校验 (archive member: `evidence/2026-10-11-tp8-contention/guard-diagnostic-check.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json) 通过
 1046 条层进度回执，覆盖完整 16383-token 准入；
-[独立生命周期审计](../evidence/2026-10-11-tp8-contention/guard-diagnostic-lifecycle-proof.json)
+[独立生命周期审计 (archive member: `evidence/2026-10-11-tp8-contention/guard-diagnostic-lifecycle-proof.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)
 记录完成与取消 ACK，诊断自然语言对照也达到
-[16/16 文本精确一致](../evidence/2026-10-11-tp8-contention/guard-diagnostic-correctness.json)。
+[16/16 文本精确一致 (archive member: `evidence/2026-10-11-tp8-contention/guard-diagnostic-correctness.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)。
 这些是 v1 的通过范围，不代替 v2 的验证。
 
-v1 的 [估计器审计](../evidence/2026-10-11-tp8-contention/guard-v1-estimator-audit.json)
+v1 的 [估计器审计 (archive member: `evidence/2026-10-11-tp8-contention/guard-v1-estimator-audit.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)
 发现首次独立 D 的约 67 ms 观测会持续影响该形状的最大值估计，而后续稳定
 独立 D 约为 18–21 ms，合格续片的非 P 残差约为 18–26 ms；不能将这个
 差额直接归因于上一轮 P 的设备尾部。v2 固定为
@@ -118,7 +118,7 @@ D 和 P 两侧指标，不能只挑选改善的一侧。
 ## 环境与预登记对照
 
 本轮初始快照为
-[environment-initial.json](../evidence/2026-10-11-tp8-contention/environment-initial.json)，
+[environment-initial.json (archive member: `evidence/2026-10-11-tp8-contention/environment-initial.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)，
 记录时间为 2026-10-11 04:24:32 UTC：八张 Ascend 910B2 初始无 NPU 任务，
 CPU 配额为 32 核，内存上限为 256 GiB。模型解析路径为
 `/data/shared_upload/models/vspec/Qwen3.5-35B-A3B`。这是本轮启动前的观察，
@@ -132,8 +132,8 @@ CPU 配额为 32 核，内存上限为 256 GiB。模型解析路径为
 每个服务的 manifest / 日志确认，不能由计划文件代替运行证据。
 
 对照组与选择规则登记于
-[experiment-plan-v2.json](../evidence/2026-10-11-tp8-contention/experiment-plan-v2.json)。
-[原计划](../evidence/2026-10-11-tp8-contention/experiment-plan.json) 保留；v2 在首次
+[experiment-plan-v2.json (archive member: `evidence/2026-10-11-tp8-contention/experiment-plan-v2.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)。
+[原计划 (archive member: `evidence/2026-10-11-tp8-contention/experiment-plan.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json) 保留；v2 在首次
 正式计时前将 P 到达时间设为所有 D 首 token 之后 0.2 s，以便分开观察 D
 初始准入与注入长 P 的影响。该修改不改变脚本默认值，所有对照通过 CLI
 一致设置 `--prefill-start-delay 0.2`，不得把不同延迟的轮次混为同一配置。
@@ -154,20 +154,20 @@ chunk 后就声称战胜其全部延迟配置。若探索阶段修改 guard 参�
 在服务 ready 和任何客户端请求之前被发现并停止。没有该次启动的计时样本，
 也没有删除较差测量；六份原始启动/停止材料已改名保存为
 `guard-startup-aborted-*`，由
-[中止回执](../evidence/2026-10-11-tp8-contention/guard-startup-aborted-receipt.json)
+[中止回执 (archive member: `evidence/2026-10-11-tp8-contention/guard-startup-aborted-receipt.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)
 记录原名与 SHA。绘图依赖已移至独立 `/root/workspace/.plot-venv`，
-[runtime-after-rollback.json](../evidence/2026-10-11-tp8-contention/runtime-after-rollback.json)
+[runtime-after-rollback.json (archive member: `evidence/2026-10-11-tp8-contention/runtime-after-rollback.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)
 记录原 NumPy 路径与 torch/torch-npu 恢复验证；候选随后从新进程重新启动。
 这个协议偏离应与最终结果一起保留，不把未发请求的启动中止算作失败计时轮。
 
 确认顺序也发生了有记录的修订：
-[首次顺序调整](../evidence/2026-10-11-tp8-contention/confirmation-order-amendment.json)
+[首次顺序调整 (archive member: `evidence/2026-10-11-tp8-contention/confirmation-order-amendment.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)
 把 v1 trace 诊断提前，随后
-[并行工作调整](../evidence/2026-10-11-tp8-contention/confirmation-parallel-work-amendment.json)
+[并行工作调整 (archive member: `evidence/2026-10-11-tp8-contention/confirmation-parallel-work-amendment.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)
 安排固定旧版本服务与 v2 开发交错进行。实际 `old-work256-confirm` 的服务
 于 05:22:57.419935 UTC ready，CPU 回归测试日志最后写入于
 05:23:14.510878 UTC，与首个客户端阶段重叠。
-[排除决定](../evidence/2026-10-11-tp8-contention/confirmation-cpu-overlap.json)
+[排除决定 (archive member: `evidence/2026-10-11-tp8-contention/confirmation-cpu-overlap.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)
 根据这些时间戳、在查看性能指标之前作出：保留原四种负载的全部结果，
 待 CPU 测试结束后在同一个固定旧版本服务上完整重跑四种负载，命名为
 `old-work256-confirm-clean`。最终旧插件对照使用 initial 与 clean 两阶段；
@@ -180,7 +180,7 @@ chunk 后就声称战胜其全部延迟配置。若探索阶段修改 guard 参�
 [graph 启动脚本](../scripts/serve-qwen35-decode-graph.sh)，显式替换完整 policy
 JSON；不能只传 `decode_budget_guard` 一个键并假定其余选项会与脚本合并。
 本轮实际 producer 是
-[guard-v2-initial-launch.sh](../evidence/2026-10-11-tp8-contention/guard-v2-initial-launch.sh)
+[guard-v2-initial-launch.sh (archive member: `evidence/2026-10-11-tp8-contention/guard-v2-initial-launch.sh`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)
 的直接 Python argv，下面的配置与之等价，并把默认 100 / 1000 ms 目标写明。
 
 ```bash
@@ -290,7 +290,7 @@ token，也可能因网络读取而共享时间戳，因此所有上述 gap 都�
 
 ## 最终六轮比较
 
-[独立 SSE 审计](../evidence/2026-10-11-tp8-contention/contention-audit.json.gz) 对全部
+[独立 SSE 审计 (archive member: `evidence/2026-10-11-tp8-contention/contention-audit.json.gz`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json) 对全部
 40 份计时报告通过，最终选择 32 份：四角色 × 四负载 × 两阶段，每份
 含三个 measured repeats。原始 warmup 另行校验且不计时；v1 的四份报告
 和 CPU 测试重叠的旧确认阶段四份报告完整保留。审计还通过 8 项原始事件
@@ -375,15 +375,15 @@ CPU 抖动边界仍然存在。详细四种阈值组合与分角色 goodput 保�
 保留初始准入停顿。红/黄线是超过 200 / 100 ms 的完整相邻事件间隔，
 紫色粗线是 P dispatch 到首 token。没有选择最佳轮次或裁去跨界停顿。
 
-![全部六轮 burst 的完整时间线](../evidence/2026-10-11-tp8-contention/figures/contention-timeline.svg)
+[全部六轮 burst 的完整时间线 (archive member: `evidence/2026-10-11-tp8-contention/figures/contention-timeline.svg`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)
 
 主分布图包含所有请求：无 P 对照每个角色 24 条 D，注入 P 样本数为
 6 / 6 / 18。这里没有 multi-token 消息，仍不能把客户端到达时刻当作
 设备执行或服务端采样时间。
 
-![请求最大间隔与 P TTFT 的全部样本分布](../evidence/2026-10-11-tp8-contention/figures/contention-ecdf.svg)
+[请求最大间隔与 P TTFT 的全部样本分布 (archive member: `evidence/2026-10-11-tp8-contention/figures/contention-ecdf.svg`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)
 
-[post-gate 诊断图](../evidence/2026-10-11-tp8-contention/figures/contention-scoped-gaps.svg)
+[post-gate 诊断图 (archive member: `evidence/2026-10-11-tp8-contention/figures/contention-scoped-gaps.svg`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)
 进一步区分包含边界穿越的 intact gap 与完全位于门槛后的 contained gap。
 Native 与旧插件无 P 组每轮各有一条 D 发生约 0.37 s 初始停顿，因而总体
 仅 18/24 通过；门槛后完全包含的最大 gap 约 30 ms。旧插件的跨门槛
@@ -391,9 +391,9 @@ Native 与旧插件无 P 组每轮各有一条 D 发生约 0.37 s 初始停顿�
 有 P 时，旧插件在长 P 期间仍有约 0.2–0.3 s 的停顿，而 guard v2 的
 整体与门槛后间隔都保持在本次目标内。完整范围字段由独立审计复算。
 
-[绘图脚本](../evidence/2026-10-11-tp8-contention/plot_contention.py) 使用独立
+[绘图脚本 (archive member: `evidence/2026-10-11-tp8-contention/plot_contention.py`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json) 使用独立
 Matplotlib 3.10.7 环境，保存全部输入和
-[图表 manifest](../evidence/2026-10-11-tp8-contention/figures/plot-manifest.json)，
+[图表 manifest (archive member: `evidence/2026-10-11-tp8-contention/figures/plot-manifest.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)，
 包括报告、计划、绘图脚本及审计 SHA。正式产物为 SVG；本地 PNG 预览已
 实际检查全部 burst 与主比较图的轴、图例和裁切，预览目录不进入公开归档。
 
@@ -414,7 +414,7 @@ v2 优先使用合格续片的非 P 残差，减轻早期独立 D 最大值长�
 问题，同时保持未知形状保守首片和原有生命周期契约。这个改进来自实际
 诊断，不能声称论文的空间争用预测器已经移植。
 
-[v2 估计器独立审计](../evidence/2026-10-11-tp8-contention/guard-v2-estimator-audit.json)
+[v2 估计器独立审计 (archive member: `evidence/2026-10-11-tp8-contention/guard-v2-estimator-audit.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)
 核对 983 组 schedule/receipt 配对：50 个合格残差样本的 median / P95 /
 最大值为 19.042 / 22.294 / 24.269 ms；55 步实际选择残差估计，其中
 39 步推进多于一层且超过同一步只用独立 D 后备估计的算术配额。12K
@@ -440,7 +440,7 @@ Ascend 的 npugraph_ex `force_eager=True` 仍调用 FX eager 算子路径，
 原生 16K 与 v1/v2 的诊断自然语言对照均为 16/16 **文本精确一致**，
 对应 arithmetic、counting、抽取与长文抽取，isolated/paired 各重复两次，
 各端 oracle 无失败。v2 证据见
-[自然语言回执](../evidence/2026-10-11-tp8-contention/guard-v2-diagnostic-correctness.json)。
+[自然语言回执 (archive member: `evidence/2026-10-11-tp8-contention/guard-v2-diagnostic-correctness.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)。
 该脚本比较文本及 oracle，不是 token IDs 精确一致证明。
 
 争用基准使用合成 prompt。独立审计从原始 SSE 重建 840 组完整 token IDs
@@ -466,8 +466,8 @@ Ascend 的 npugraph_ex `force_eager=True` 仍调用 FX eager 算子路径，
 v2 诊断的 progress、cancel、满 budget、自然语言和 trace checker 五个
 命令均成功。校验通过 983 条进度回执、26 个 cohort，记录 29 个完成请求
 与 1 个取消请求；最大完整 prompt 为 16383 tokens。来源为
-[trace 校验](../evidence/2026-10-11-tp8-contention/guard-v2-diagnostic-check.json) 与
-[独立生命周期证明](../evidence/2026-10-11-tp8-contention/guard-v2-diagnostic-lifecycle-proof.json)。
+[trace 校验 (archive member: `evidence/2026-10-11-tp8-contention/guard-v2-diagnostic-check.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json) 与
+[独立生命周期证明 (archive member: `evidence/2026-10-11-tp8-contention/guard-v2-diagnostic-lifecycle-proof.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)。
 
 12K cohort 2 在 steps 3–11 以 `1,1,6,6,6,6,6,6,2` 层推进到 40 层，
 完成前已有 8 轮 D 回执。取消 cohort 4 在 step 74 到达 37 层，step 75
@@ -484,11 +484,11 @@ v2 硬件并行证据。完整 profile trace/CSV 与独立分类脚本供离线�
 
 ## 复算与证据发布
 
-[archive_evidence.py](../evidence/2026-10-11-tp8-contention/archive_evidence.py) 已将
+[archive_evidence.py (archive member: `evidence/2026-10-11-tp8-contention/archive_evidence.py`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json) 已将
 所有阶段（含失败/排除回执）及完整 16-rank trace/CSV 保持相对目录归档。
 较大的 JSON/JSONL/CSV 使用确定性 gzip，索引分别记录源、存储、解压字节
 的 SHA-256；八组小型临时文件测试通过，日志和
-[回执](../evidence/2026-10-11-tp8-contention/archive-self-test-receipt.json) 也保留。
+[回执 (archive member: `evidence/2026-10-11-tp8-contention/archive-self-test-receipt.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json) 也保留。
 
 公开环境快照仅移除原始系统级 `processes` 字段，避免公开无关管理命令
 和连接参数。原件留在本地，索引记录这一转换及原件/公开版本的不同 SHA；
@@ -506,8 +506,10 @@ v2 硬件并行证据。完整 profile trace/CSV 与独立分类脚本供离线�
 [归档说明](../evidence/2026-10-11-tp8-contention/ARCHIVE.md)。
 
 ```bash
-python3 evidence/2026-10-11-tp8-contention/archive_evidence.py verify
-python3 evidence/2026-10-11-tp8-contention/archive_evidence.py unpack \
+python3 scripts/archive_tp8_evidence.py verify \
+  --archive "$BENCHMARK_COLLECTION_ROOT/evidence/2026-10-11-tp8-contention"
+python3 scripts/archive_tp8_evidence.py unpack \
+  --archive "$BENCHMARK_COLLECTION_ROOT/evidence/2026-10-11-tp8-contention" \
   --output local-results/tp8-contention-replay
 python3 local-results/tp8-contention-replay/audit_contention.py --require-final \
   --output local-results/tp8-contention-replay/replayed-contention-audit.json
@@ -520,9 +522,9 @@ python3 local-results/tp8-contention-replay/profile-hotspots-audit.py \
 及 34 项审计自检均与封存结果一致。估计器与生命周期重放 JSON 逐字节相同；
 16-rank profile 重放仅规范化来源目录，其他所有字段严格一致。完整命令、
 输入/输出 SHA 及出版检查见归档目录之外的
-[重放回执](../evidence/2026-10-11-tp8-contention-replay-validation.json)，
+[重放回执 (archive member: `evidence/2026-10-11-tp8-contention-replay-validation.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json)，
 封存目录本身未因复算而修改。
 
-[最终环境回执](../evidence/2026-10-11-tp8-contention/environment-final.json) 记录
+[最终环境回执 (archive member: `evidence/2026-10-11-tp8-contention/environment-final.json`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/87651130e720d3e41225c16823642508d4857cd4/archive/mod-collections-20261023/muxpd/manifest.json) 记录
 全部实验服务已停止、八卡空闲，NumPy 仍为恢复后的 1.26.4；初始没有用户
 服务，因此没有自动恢复其他服务。

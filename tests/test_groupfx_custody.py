@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -14,7 +15,10 @@ SPEC.loader.exec_module(groupfx)
 
 def test_adaptation_preserves_all_original_identities():
     original = json.loads(
-        (ROOT / "evidence/2026-10-12-tp4-group-fx/archive-index.json").read_text()
+        (
+            Path(os.environ["BENCHMARK_COLLECTION_ROOT"])
+            / "evidence/2026-10-12-tp4-group-fx/archive-index.json"
+        ).read_text()
     )
     adapted = groupfx.adapt_index(original)
     assert adapted["files"] == original["files"]
