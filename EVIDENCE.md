@@ -54,3 +54,19 @@ All paths below are archive-relative; generation commands may still produce igno
 - `evidence/`
 
 Current forwarding documents, configuration and imported code remain; exact retained paths are tested in tests/test_collection_evidence_boundary.py.
+
+## Mixed design and goodput documents
+
+[Original manifest](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/a76de7e466e5fabb98b1803a6d8a7037e17cb9a8/archive/mod-targeted-20261023/muxpd-documents/manifest.json) binds three unchanged source members,
+including LICENSE, to their Git identity, byte length and SHA256.
+The design keeps implementation/protocol guidance; measured passages and the full
+goodput report are available from their fixed benchmark originals.
+
+```sh
+python scripts/fetch_mod_consumer_evidence.py --config BENCHMARK_DOCUMENTS.json \
+  --destination /absolute/new/external/documents
+```
+
+CI verifies all three snapshot files before writing. This does not recover omitted
+captures or qualify a new runtime configuration. Historical installation identities
+remain provenance; source installation instructions are unchanged.
