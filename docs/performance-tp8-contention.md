@@ -2,7 +2,9 @@
 
 [完整历史原文 / Complete original report](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/b354f203cabb4cfeba72a74e4eefb29dee85776b/archive/mod-targeted-20261023/muxpd-tp8-groupfx/snapshot/docs/performance-tp8-contention.md)
 
-固定队列争用实验观察到 decode 停顿改善，同时存在吞吐和 P TTFT 代价；不是持续到达容量或硬时延保证。v1/v2、初始/确认及排除的 CPU 重叠阶段不可混池。合成 token 差异、启动中止及 profiler/计时边界均保留在原文。
+固定队列争用实验观察到 decode 停顿改善，同时存在吞吐和 P TTFT 代价；不是持续到达容量或硬时延保证。
+
+v1/v2、初始/确认及排除的 CPU 重叠阶段不可混池。合成 token 差异、启动中止及 profiler/计时边界均保留在原文。
 
 ## 原始数据 / Raw evidence
 
