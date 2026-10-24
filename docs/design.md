@@ -362,19 +362,12 @@ worker 为 P 建立 rank membership 相同的 TP/EP sibling groups，D 和 calle
 再恢复路由并销毁本 worker 自建的组，不销毁原生组。该路由支持当前白名单的
 通信调用，不能推广成任意 MoE backend 或 collective 的隔离保证。
 
-isolated8 已完成 Qwen3.5-35B-A3B BF16、TP4+EP、eager 的自然语言对照、
-长 P 进度、取消和四 rank profile；事件数下降，但该 capture 的计算交叠没有
-增加，实测性能也未超过原生。shared 的 TP4 结果和 graph fenced 的后续优化
-同见 [TP4 性能报告](performance-tp4.md)。这些是不同执行组合，不应把
-isolated 通信组与 decode graph 的验证结果合并成未测试的 graph overlap 配置。
-
-shared overlap 的早期设备证据见 [2026-10-10 回执](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/2144d58de108cddaff3800fdcbf12dc9d3ab1d18/archive/mod-consumers-20261023/muxpd/manifest.json)。
-在指定 Qwen3.5-35B-A3B BF16 / Ascend 910B2 / TP2+EP / 固定 8 层配额的
-capture 中，两 rank 的 P/D compute 区间交集分别约占活跃并集的 10.78% 和
-9.16%。计算使用已映射到 P/D 的 CANN physical stream，排除 CPU、拷贝、
-event wait 和通信区间。它证明该 capture 存在设备 compute 任务重叠，不能
-证明同时的每核占用、空间资源隔离、完整工作负载利用率或吞吐提升。profile
-有记录窗口结束时的停止告警；导出区间已检查，但不能据此保证未记录任务的完整性。
+历史测量见 [完整设计原文](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/a76de7e466e5fabb98b1803a6d8a7037e17cb9a8/archive/mod-targeted-20261023/muxpd-documents/snapshot/docs/design.md)，其中保留
+isolated8 的四 rank profile、未超过原生的结果，以及 shared TP2 capture
+的计算区间交集与停止告警。不同执行组合不可拼成未测试的 graph overlap 配置。
+设备 compute 重叠不证明每核占用、空间隔离、完整负载利用率或吞吐提升；
+导出区间通过检查也不保证未记录任务完整。TP4 的独立比较见
+[历史性能入口](performance-tp4.md)。这些历史记录不代表当前配置重新通过验收。
 
 ## 验证与测量
 

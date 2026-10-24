@@ -24,3 +24,5 @@ jobs:
         run: python scripts/fetch_mod_consumer_evidence.py --config BENCHMARK_HISTORY.json --destination "$RUNNER_TEMP/history-evidence"
       - name: Verify remaining collection and every original member
         run: python scripts/fetch_mod_consumer_evidence.py --config BENCHMARK_COLLECTION.json --destination "$RUNNER_TEMP/collection-evidence"
+      - name: Verify historical document originals
+        run: python scripts/fetch_mod_consumer_evidence.py --config BENCHMARK_DOCUMENTS.json --destination "$RUNNER_TEMP/document-evidence"

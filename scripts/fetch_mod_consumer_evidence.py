@@ -8,6 +8,7 @@ import argparse
 import hashlib
 import io
 import json
+import re
 import tarfile
 from pathlib import Path, PurePosixPath
 from urllib.request import Request, urlopen
@@ -74,6 +75,54 @@ def verify(manifest, raw):
     return payloads
 
 
+def fetch_snapshot(manifest, manifest_url):
+    """Read public Git snapshots; validate every member before any write."""
+    if not isinstance(manifest_url, str) or not re.fullmatch(
+        r"https://raw\.githubusercontent\.com/vLLM-HUST/vllm-hust-benchmark/"
+        r"[0-9a-f]{40}/archive/[A-Za-z0-9_/-]+/manifest\.json",
+        manifest_url,
+    ):
+        raise ValueError("Snapshot requires a pinned benchmark manifest URL")
+    if (
+        manifest.get("schema") != "mod-git-custody/v1"
+        or manifest.get("source_visibility") != "public"
+    ):
+        raise ValueError("Unsupported snapshot identity")
+    rows = manifest["files"]
+    if not rows or len(rows) > 1000:
+        raise ValueError("Invalid snapshot member count")
+    payloads = {}
+    total = 0
+    for row in rows:
+        name = row["path"]
+        path = PurePosixPath(name)
+        if (
+            path.is_absolute()
+            or ".." in path.parts
+            or str(path) != name
+            or name == "."
+            or "\\" in name
+            or any(character in name for character in "?#%")
+        ):
+            raise ValueError("Unsafe snapshot member path")
+        if (
+            name in payloads
+            or not isinstance(row["bytes"], int)
+            or not 0 <= row["bytes"] <= 5_000_000
+        ):
+            raise ValueError("Duplicate or oversized snapshot member")
+        total += row["bytes"]
+        if total > 20_000_000:
+            raise ValueError("Snapshot exceeds total size bound")
+        content = fetch(
+            manifest_url.rsplit("/", 1)[0] + "/snapshot/" + name, row["bytes"]
+        )
+        if len(content) != row["bytes"] or digest(content) != row["sha256"]:
+            raise ValueError("Snapshot member checksum/size mismatch")
+        payloads[name] = content
+    return payloads
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     source = parser.add_mutually_exclusive_group()
@@ -94,16 +143,32 @@ def main():
         or repository in destination.parents
     ):
         raise ValueError("Use a new absolute directory outside the source checkout")
+    manifest_url = None
     if args.manifest:
         manifest = json.loads(args.manifest.read_text())
     else:
         config = json.loads(args.config.read_text())
-        raw_manifest = fetch(config["manifest_url"], 2_000_000)
+        manifest_url = config["manifest_url"]
+        raw_manifest = fetch(manifest_url, 2_000_000)
         if digest(raw_manifest) != config["manifest_sha256"]:
             raise ValueError("Manifest checksum mismatch")
         manifest = json.loads(raw_manifest)
-    raw = fetch(manifest["archive"]["url"], manifest["archive"]["bytes"])
-    payloads = verify(manifest, raw)
+    if "archive" in manifest:
+        raw = fetch(manifest["archive"]["url"], manifest["archive"]["bytes"])
+        payloads = verify(manifest, raw)
+    else:
+        payloads = fetch_snapshot(manifest, manifest_url)
+        for row in config.get("document_projections", []):
+            expected_url = (
+                manifest_url.rsplit("/", 1)[0].replace(
+                    "https://raw.githubusercontent.com/vLLM-HUST/vllm-hust-benchmark/",
+                    "https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/",
+                )
+                + "/snapshot/"
+                + row["path"]
+            )
+            if row["path"] not in payloads or row["original_url"] != expected_url:
+                raise ValueError("Document projection is not bound to this snapshot")
     destination.mkdir(parents=True, exist_ok=False)
     for name, content in payloads.items():
         target = destination / name

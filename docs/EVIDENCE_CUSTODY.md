@@ -14,3 +14,7 @@ archived code. Original failures and qualification limits are unchanged.
 Implementation packages stay in this repository. Git-embedded historical
 measurement files remain migration debt tracked by benchmark issue #326; this
 Release migration does not claim that all repository data has been moved.
+
+Mixed design/goodput originals now use the pinned `BENCHMARK_DOCUMENTS.json`
+snapshot and the same fail-closed downloader; see [custody entry](../EVIDENCE.md).
+This bounded migration does not close the remaining organization-wide debt.
