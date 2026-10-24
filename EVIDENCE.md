@@ -70,3 +70,18 @@ python scripts/fetch_mod_consumer_evidence.py --config BENCHMARK_DOCUMENTS.json 
 CI verifies all three snapshot files before writing. This does not recover omitted
 captures or qualify a new runtime configuration. Historical installation identities
 remain provenance; source installation instructions are unchanged.
+
+## TP8 and grouped-prefill mixed reports
+
+[Five-member original manifest](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/b354f203cabb4cfeba72a74e4eefb29dee85776b/archive/mod-targeted-20261023/muxpd-tp8-groupfx/manifest.json) preserves four full reports and LICENSE.
+Raw collection/Release links and named members are listed on all four report entry pages.
+The exploration page explicitly retains the unconfirmed local raw-input gap; the matched-numeric
+archive is not a replacement for its continuous-arrival raw runs. No new device result is claimed.
+
+```sh
+python scripts/fetch_mod_consumer_evidence.py --config BENCHMARK_TP8_DOCUMENTS.json \
+  --destination /absolute/new/external/tp8-documents
+```
+
+The existing collection downloader and canonical Release validators remain authoritative.
+CI also checks the nine selected member identities and all four document projections.
