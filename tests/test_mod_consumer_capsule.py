@@ -1,6 +1,7 @@
 import importlib.util
 import io
 import json
+import os
 import sys
 import tarfile
 from pathlib import Path
@@ -141,11 +142,46 @@ def test_snapshot_rejects_invalid_identity(monkeypatch, kind):
         capsule.fetch_snapshot(manifest, url)
 
 
-def test_document_projection_links():
+@pytest.mark.parametrize(
+    "name", ["BENCHMARK_DOCUMENTS.json", "BENCHMARK_TP8_DOCUMENTS.json"]
+)
+def test_document_projection_links(name):
     root = SCRIPT.parents[1]
-    config = json.loads((root / "BENCHMARK_DOCUMENTS.json").read_text())
+    config = json.loads((root / name).read_text())
     for row in config["document_projections"]:
         assert row["original_url"] in (root / row["path"]).read_text()
+
+
+def test_tp8_raw_links_and_missing_boundary():
+    root = SCRIPT.parents[1]
+    config = json.loads((root / "BENCHMARK_TP8_DOCUMENTS.json").read_text())
+    assert len(config["document_projections"]) == 4
+    assert len(config["evidence_members"]) == 9
+    for row in config["evidence_members"]:
+        document = (root / row["document"]).read_text()
+        assert row["path"] in document
+        assert config["raw_archives"][0]["url"] in document
+    assert (
+        config["raw_archives"][1]["url"]
+        in (root / "docs/validation-tp4-prefill-group-fx.md").read_text()
+    )
+    exploration = (root / "docs/performance-tp8-goodput-exploration.md").read_text()
+    assert "尚未确认恢复" in exploration
+    assert "不能替代" in exploration
+    assert 'id="本轮环境与模型来源"' in (root / "docs/performance-tp8.md").read_text()
+
+
+def test_tp8_downloaded_member_identities():
+    external = os.environ.get("BENCHMARK_COLLECTION_ROOT")
+    if not external:
+        pytest.skip("Remote collection is verified by custody CI")
+    config = json.loads(
+        (SCRIPT.parents[1] / "BENCHMARK_TP8_DOCUMENTS.json").read_text()
+    )
+    for row in config["evidence_members"]:
+        raw = (Path(external) / row["path"]).read_bytes()
+        assert len(raw) == row["bytes"]
+        assert capsule.digest(raw) == row["sha256"]
 
 
 @pytest.mark.parametrize("valid", [True, False])

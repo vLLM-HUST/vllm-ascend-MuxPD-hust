@@ -26,3 +26,9 @@ jobs:
         run: python scripts/fetch_mod_consumer_evidence.py --config BENCHMARK_COLLECTION.json --destination "$RUNNER_TEMP/collection-evidence"
       - name: Verify historical document originals
         run: python scripts/fetch_mod_consumer_evidence.py --config BENCHMARK_DOCUMENTS.json --destination "$RUNNER_TEMP/document-evidence"
+      - name: Verify TP8 and group-FX original documents
+        run: python scripts/fetch_mod_consumer_evidence.py --config BENCHMARK_TP8_DOCUMENTS.json --destination "$RUNNER_TEMP/tp8-document-evidence"
+      - name: Bind selected raw members to the four document consumers
+        env:
+          BENCHMARK_COLLECTION_ROOT: ${{ runner.temp }}/collection-evidence
+        run: python -m pytest -q -c /dev/null tests/test_mod_consumer_capsule.py -k tp8_downloaded_member_identities
