@@ -297,3 +297,70 @@ def test_original_worker_selector_and_postwarmup_extension_rpc(
         "vllm_muxpd.numerical_workers.NumericalObserverExtension"
     )
     assert len(receipt["observer_installation"]) == 4
+
+
+def test_composite_plan_preserves_frozen_inputs_and_keeps_repeat_families_separate():
+    normal, staggered, composite = plan(), plan(True), plan(composite=True)
+    assert (
+        normal["plan_sha256"]
+        == "f24b55775a6a754c61c8edc79aec1bca20877ed09114d291cfe949e5d6196c4c"
+    )
+    assert (
+        staggered["plan_sha256"]
+        == "934caa6c9c14eebc1f4c3f6e2e70755a5e80b685090951d136b29ea0d6374a07"
+    )
+    assert composite["requests"] == 30
+    assert len(composite["phases"]) == 12
+    assert composite["sampling"] == normal["sampling"] == staggered["sampling"]
+    assert composite["maximum_engine_steps"] == 500
+    for offset, family, source in ((0, "normal", normal), (6, "seed-first", staggered)):
+        for i, phase in enumerate(source["phases"]):
+            assert composite["phases"][offset + i] == {
+                **phase,
+                "name": family + "-" + phase["name"],
+            }
+    names = [p["name"] for p in composite["phases"]]
+    assert len(set(names)) == 4 and all(names.count(n) == 3 for n in set(names))
+    with pytest.raises(ValueError, match="not both"):
+        plan(True, composite=True)
+
+
+@pytest.mark.parametrize("role", ["native", "raw", "group"])
+def test_composite_admission_and_single_extension_install(monkeypatch, tmp_path, role):
+    install_fake_engine(monkeypatch, per_token=True)
+    args = arguments(tmp_path)
+    args.role = role
+    frozen = plan(composite=True)
+    args.plan.write_text(json.dumps(frozen))
+    args.plan_sha256 = frozen["plan_sha256"]
+    engine = json.loads(args.engine_args.read_text())
+    engine["enable_chunked_prefill"] = role == "native"
+    if role == "group":
+        engine["batch_admission_policy_config"] = {"compile_prefill_groups": True}
+        engine["additional_config"] = {
+            "ascend_compilation_config": {
+                "enable_npugraph_ex": False,
+                "enable_static_kernel": False,
+            }
+        }
+    args.engine_args.write_text(json.dumps(engine))
+    assert run(args) == 0
+    receipt = json.loads((args.output_dir / "run.json").read_text())
+    assert receipt["passed"] and len(receipt["phases"]) == 12
+    assert sum(len(p["outputs"]) for p in receipt["phases"]) == 30
+    assert sum(len(p["steps"]) for p in receipt["phases"]) == 99
+    for i, phase in enumerate(receipt["phases"]):
+        assert len(phase["admissions"]) == (2 if i >= 9 else 1)
+        if i >= 9:
+            assert phase["admissions"][1]["seed_num_output_tokens"] == 1
+    assert len(receipt["observer_installation"]) == 4
+
+
+def test_composite_native_must_enable_real_mixed_path(tmp_path):
+    args = arguments(tmp_path)
+    frozen = plan(composite=True)
+    args.plan.write_text(json.dumps(frozen))
+    args.plan_sha256 = frozen["plan_sha256"]
+    with pytest.raises(ValueError, match="requires chunked prefill enabled"):
+        run(args)
+    assert not args.output_dir.exists()

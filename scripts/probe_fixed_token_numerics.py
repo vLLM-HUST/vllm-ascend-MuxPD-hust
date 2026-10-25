@@ -30,7 +30,37 @@ def digest(value):
     ).hexdigest()
 
 
-def plan(staggered=False):
+def plan(staggered=False, *, composite=False):
+    if composite:
+        if staggered:
+            raise ValueError("Choose composite or staggered, not both")
+        normal = plan()
+        seed_first = plan(staggered=True)
+        value = {
+            **{key: val for key, val in normal.items() if key != "plan_sha256"},
+            "schema": "muxpd-composite-token-numerics-plan-v1",
+            "requests": 30,
+            "source_plan_sha256": [normal["plan_sha256"], seed_first["plan_sha256"]],
+            "phases": [
+                {**phase, "name": family + "-" + phase["name"]}
+                for family, source in (("normal", normal), ("seed-first", seed_first))
+                for phase in source["phases"]
+            ],
+            "admission": (
+                "Run the complete normal family followed by the complete "
+                "seed-first family in one process, fully draining each phase. "
+                "Only seed-first four-lane phases inject peers after exactly "
+                "one live scheduler output token."
+            ),
+            "scope": (
+                "Thirty requests with three warm repeats per distinct family "
+                "and shape. Native enables chunked prefill for the mixed path; "
+                "raw/group disable it. Family names prevent pooling repetitions "
+                "across arrival conditions. No fresh-process equivalence or "
+                "performance claim is implied by sharing one startup."
+            ),
+        }
+        return {**value, "plan_sha256": digest(value)}
     phases = []
     cohorts = {
         "single-p128": [SHORT_PROMPT],
@@ -141,16 +171,22 @@ def enqueue_bound(llm, inputs, params):
 def run(args):
     frozen = json.loads(args.plan.read_text())
     staggered = frozen.get("schema") == "muxpd-staggered-token-numerics-plan-v1"
-    if frozen != plan(staggered) or frozen["plan_sha256"] != args.plan_sha256:
-        raise ValueError("Plan differs from the frozen 15-request contract")
+    composite = frozen.get("schema") == "muxpd-composite-token-numerics-plan-v1"
+    if (
+        frozen != plan(staggered, composite=composite)
+        or frozen["plan_sha256"] != args.plan_sha256
+    ):
+        raise ValueError("Plan differs from its frozen diagnostic contract")
     engine_args = json.loads(args.engine_args.read_text())
     profile = runtime_profile(args.role, engine_args)
     if (
-        staggered
+        (staggered or composite)
         and args.role == "native"
         and engine_args.get("enable_chunked_prefill") is not True
     ):
-        raise ValueError("Staggered native control requires chunked prefill enabled")
+        raise ValueError(
+            "Staggered/composite native control requires chunked prefill enabled"
+        )
     required = {
         "tensor_parallel_size": 4,
         "async_scheduling": False,
@@ -371,7 +407,9 @@ def main():
     commands = parser.add_subparsers(dest="command", required=True)
     create = commands.add_parser("plan")
     create.add_argument("--output", type=Path, required=True)
-    create.add_argument("--staggered", action="store_true")
+    family = create.add_mutually_exclusive_group()
+    family.add_argument("--staggered", action="store_true")
+    family.add_argument("--composite", action="store_true")
     execute = commands.add_parser("run")
     execute.add_argument("--plan", type=Path, required=True)
     execute.add_argument("--plan-sha256", required=True)
@@ -381,9 +419,9 @@ def main():
     args = parser.parse_args()
     if args.command == "plan":
         with args.output.open("x") as stream:
-            json.dump(plan(args.staggered), stream, indent=2)
+            json.dump(plan(args.staggered, composite=args.composite), stream, indent=2)
             stream.write("\n")
-        print(plan(args.staggered)["plan_sha256"])
+        print(plan(args.staggered, composite=args.composite)["plan_sha256"])
         return 0
     return run(args)
 

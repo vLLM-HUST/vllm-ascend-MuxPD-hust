@@ -101,3 +101,21 @@ path. Raw/group must keep it disabled. Native mixed P/D and separate raw/group
 forward batches deliberately differ: shared request prefix is not the same as
 equal peer-batch context. Keep those comparison scopes separate. This plan is
 not interchangeable with the earlier fully drained cohort plan.
+
+
+## Composite arrival family
+
+Use `plan --composite --output NEW_FILE` to freeze a 30-request plan: all six
+normal phases, followed by all six seed-first phases, within one model process.
+Prompt tokens and sampling parameters are unchanged. Phase names have distinct
+`normal-` and `seed-first-` prefixes, so warm repetitions from different arrival
+conditions cannot be pooled by the analyzer. Each shape/family still repeats
+three times, and the total engine-step watchdog remains 500. The original
+normal and staggered plan hashes remain accepted unchanged.
+
+Native composite runs require chunked prefill enabled; raw/group keep it off.
+Compare all composite roles with the same new source revision and global fusion
+backend. The later family shares prior process history; it is not a new cold
+start. Twelve completed P cohorts produce at most 120 group-return events per
+rank, below the existing 128-event observer cap. This consolidates model startup
+only and does not provide performance measurements.
