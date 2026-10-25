@@ -289,6 +289,50 @@ def attach_observer(worker: Any, runner: Any, lane: str) -> NativeSamplerObserve
     )
 
 
+class PrefillGroupObservationMixin:
+    """Bounded host metadata at P group return, before the original lane switch.
+
+    No tensor reads, synchronization, or model hooks are introduced. Startup
+    callbacks have no serving schedule and are omitted. These events establish
+    observed host state only, not KV contents or numerical equivalence.
+    """
+
+    def _prefill_group_return(self, index: int, *, final: bool) -> None:
+        observer = getattr(self.model_runner, "_muxpd_numerical_observer", None)
+        observed = getattr(self, "_numeric_group_returns", 0)
+        if observer is not None and observer.schedule is not None and observed < 128:
+            from vllm.forward_context import get_forward_context
+
+            context = get_forward_context()
+            layers = context.all_moe_layers
+            task = self._interleaver.active
+            observer.emit(
+                {
+                    "event": "prefill-group-return-observed",
+                    "sequence": observer.sequence,
+                    "group_index": index,
+                    "final": final,
+                    "moe_layer_index": context.moe_layer_index,
+                    "all_moe_layers": list(layers[:128])
+                    if layers is not None
+                    else None,
+                    "all_moe_layers_count": len(layers) if layers is not None else None,
+                    "all_moe_layers_truncated": layers is not None
+                    and len(layers) > 128,
+                    "active_lane": self._execution_backend.active_lane,
+                    "task_name": task.name if task is not None else None,
+                    "task_completed_layers_before_checkpoint": (
+                        task.completed_layers if task is not None else None
+                    ),
+                    "prefill_cohort_id": self._prefill_cohort_id,
+                    "prefill_num_tokens": self._prefill_num_tokens,
+                    "schedule": observer.schedule,
+                }
+            )
+            self._numeric_group_returns = observed + 1
+        return super()._prefill_group_return(index, final=final)
+
+
 def bounded_constant(value: Any, *, depth: int = 0) -> Any:
     """JSON metadata for compiler constants; never read tensor contents."""
     if value is None or isinstance(value, (str, bool, int)):

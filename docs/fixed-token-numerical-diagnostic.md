@@ -49,6 +49,23 @@ CPU argmax inspection; the latter never drives generation. Post-native-warmup
 Triton `constant_args` metadata is captured on every rank without reading tensor
 contents. Integer table IDs alone do not establish equal compiler semantics.
 
+On the grouped-prefill integration branch, `--role group` requires
+`compile_prefill_groups=true` and both `enable_npugraph_ex=false` and
+`enable_static_kernel=false` under `additional_config.ascend_compilation_config`.
+The receipt binds this role to the actual policy and backend settings; a raw/group
+label mismatch is rejected before model initialization. Use the same combined
+source commit and observer for the matched `--role raw` comparison, with the same
+explicit backend settings and only the group policy flag changed. The released
+raw default backend remains a separate comparison.
+
+The grouped diagnostic observes at most 128 serving group-return events per
+rank, before the original callback can switch lanes. It records the host MoE
+index, ordered layer names, active lane, cohort and scheduler metadata, without
+tensor reads or synchronization. Startup returns without a serving schedule are
+omitted. For the qualified 40-layer model, expected post-group indices are
+4, 8, ..., 40; this expectation must be checked against observations. No index is
+modified, and these host values do not prove KV contents or kernel equivalence.
+
 Acceptance must compare identical prompts, actual batching, output prefixes and
 state histories. Start with native-versus-native warm and fresh controls. At the
 first cross-mode token divergence, compare logits only if the histories are

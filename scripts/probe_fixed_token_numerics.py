@@ -82,11 +82,39 @@ def write_json(path, data):
     temporary.replace(path)
 
 
+def runtime_profile(role, engine_args):
+    """Bind the diagnostic label to the actual P and global compiler settings."""
+    policy = engine_args.get("batch_admission_policy_config", {})
+    grouped = policy.get("compile_prefill_groups", False)
+    if type(grouped) is not bool:
+        raise ValueError("compile_prefill_groups must be an explicit boolean")
+    if grouped != (role == "group"):
+        raise ValueError("Diagnostic role and compile_prefill_groups disagree")
+    backend = engine_args.get("additional_config", {}).get(
+        "ascend_compilation_config", {}
+    )
+    if role == "group" and any(
+        backend.get(name) is not False
+        for name in ("enable_npugraph_ex", "enable_static_kernel")
+    ):
+        raise ValueError("Group diagnostic requires explicit fusion backend settings")
+    return {
+        "role": role,
+        "compile_prefill_groups": grouped,
+        "ascend_compilation_config": backend,
+        "comparison_scope": (
+            "Compare raw/group only with identical source, observer, engine "
+            "settings and explicit global compiler backend except the P-group flag."
+        ),
+    }
+
+
 def run(args):
     frozen = json.loads(args.plan.read_text())
     if frozen != plan() or frozen["plan_sha256"] != args.plan_sha256:
         raise ValueError("Plan differs from the frozen 15-request contract")
     engine_args = json.loads(args.engine_args.read_text())
+    profile = runtime_profile(args.role, engine_args)
     required = {
         "tensor_parallel_size": 4,
         "async_scheduling": False,
@@ -108,8 +136,11 @@ def run(args):
     if "worker_cls" in engine_args:
         raise ValueError("The diagnostic selects its worker class explicitly")
     engine_args["worker_cls"] = "vllm_muxpd.numerical_workers." + worker
-    if args.role == "raw" and engine_args.get("enable_chunked_prefill") is not False:
-        raise ValueError("Raw-P diagnostic requires chunked prefill disabled")
+    if (
+        args.role in ("raw", "group")
+        and engine_args.get("enable_chunked_prefill") is not False
+    ):
+        raise ValueError("MuxPD diagnostic requires chunked prefill disabled")
     args.output_dir = args.output_dir.resolve()
     args.output_dir.mkdir(parents=True, exist_ok=False)
     os.environ["MUXPD_NUMERIC_OUTPUT"] = str(args.output_dir / "worker-observations")
@@ -122,6 +153,7 @@ def run(args):
     report = {
         "schema": "muxpd-fixed-token-numerics-run-v1",
         "role": args.role,
+        "runtime_profile": profile,
         "started_at": datetime.now(timezone.utc).isoformat(),
         "process_id": os.getpid(),
         "plan": frozen,
@@ -253,7 +285,7 @@ def main():
     execute.add_argument("--plan", type=Path, required=True)
     execute.add_argument("--plan-sha256", required=True)
     execute.add_argument("--engine-args", type=Path, required=True)
-    execute.add_argument("--role", choices=("native", "raw"), required=True)
+    execute.add_argument("--role", choices=("native", "raw", "group"), required=True)
     execute.add_argument("--output-dir", type=Path, required=True)
     args = parser.parse_args()
     if args.command == "plan":

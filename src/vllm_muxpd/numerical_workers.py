@@ -5,6 +5,7 @@ from vllm_ascend.worker.worker import NPUWorker
 
 from vllm_muxpd.decoupled_worker import DecoupledMuxPDNPUWorker
 from vllm_muxpd.numerical_diagnostics import (
+    PrefillGroupObservationMixin,
     attach_observer,
     compiler_constants_snapshot,
 )
@@ -25,7 +26,9 @@ class NumericalNativeNPUWorker(NumericalWarmupMixin, NPUWorker):
         attach_observer(self, self.model_runner, "native")
 
 
-class NumericalMuxPDNPUWorker(NumericalWarmupMixin, DecoupledMuxPDNPUWorker):
+class NumericalMuxPDNPUWorker(
+    PrefillGroupObservationMixin, NumericalWarmupMixin, DecoupledMuxPDNPUWorker
+):
     def load_model(self):
         super().load_model()
         if get_ascend_config().enable_reduce_sample:

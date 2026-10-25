@@ -3,7 +3,9 @@ import json
 import sys
 from types import ModuleType, SimpleNamespace
 
-from scripts.probe_fixed_token_numerics import digest, plan, run
+import pytest
+
+from scripts.probe_fixed_token_numerics import digest, plan, run, runtime_profile
 
 
 def test_fixed_plan_has_fully_drained_warm_control_phases():
@@ -150,3 +152,41 @@ def test_step_watchdog_preserves_failure_and_calls_shutdown(monkeypatch, tmp_pat
     assert not receipt["passed"] and receipt["shutdown_returned"]
     assert len(receipt["phases"][0]["steps"]) == 500
     assert "exceeded 500" in receipt["errors"][0]
+
+
+def test_group_role_binds_explicit_policy_and_global_backend():
+    engine = {
+        "batch_admission_policy_config": {"compile_prefill_groups": True},
+        "additional_config": {
+            "ascend_compilation_config": {
+                "enable_npugraph_ex": False,
+                "enable_static_kernel": False,
+            }
+        },
+    }
+    result = runtime_profile("group", engine)
+    assert result["compile_prefill_groups"] is True
+    assert (
+        result["ascend_compilation_config"]
+        == engine["additional_config"]["ascend_compilation_config"]
+    )
+    with pytest.raises(ValueError, match="disagree"):
+        runtime_profile("raw", engine)
+    engine["batch_admission_policy_config"]["compile_prefill_groups"] = False
+    assert runtime_profile("raw", engine)["compile_prefill_groups"] is False
+    with pytest.raises(ValueError, match="disagree"):
+        runtime_profile("group", engine)
+    engine["batch_admission_policy_config"]["compile_prefill_groups"] = 0
+    with pytest.raises(ValueError, match="boolean"):
+        runtime_profile("raw", engine)
+
+
+def test_group_role_cannot_hide_default_or_partial_backend():
+    engine = {"batch_admission_policy_config": {"compile_prefill_groups": True}}
+    with pytest.raises(ValueError, match="fusion backend"):
+        runtime_profile("group", engine)
+    engine["additional_config"] = {
+        "ascend_compilation_config": {"enable_npugraph_ex": False}
+    }
+    with pytest.raises(ValueError, match="fusion backend"):
+        runtime_profile("group", engine)

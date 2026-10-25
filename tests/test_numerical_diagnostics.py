@@ -1,13 +1,15 @@
 """Check observational hooks preserve native call/return and ordering."""
 
 import json
-from types import SimpleNamespace
+import sys
+from types import ModuleType, SimpleNamespace
 
 import numpy as np
 import pytest
 
 from vllm_muxpd.numerical_diagnostics import (
     NativeSamplerObserver,
+    PrefillGroupObservationMixin,
     bounded_constant,
 )
 
@@ -205,3 +207,47 @@ def test_compiler_constant_metadata_never_reads_tensor_values():
     assert result["1"]["BLOCK"] == 256
     assert result["1"]["tensor"]["shape"] == [2, 4]
     assert result["1"]["tensor"]["contents_observed"] is False
+
+
+def test_group_metadata_precedes_original_callback_and_is_bounded(monkeypatch):
+    events = []
+    layers = [f"model.layers.{i}.mlp" for i in range(40)]
+    context = SimpleNamespace(all_moe_layers=layers, moe_layer_index=4)
+    forward = ModuleType("vllm.forward_context")
+    forward.get_forward_context = lambda: context
+    monkeypatch.setitem(sys.modules, "vllm.forward_context", forward)
+
+    class Base:
+        def _prefill_group_return(self, index, *, final):
+            events.append(("original", index, final))
+            return "native-result"
+
+    class Worker(PrefillGroupObservationMixin, Base):
+        pass
+
+    worker = Worker()
+    observer = SimpleNamespace(
+        schedule=None, sequence=1, emit=lambda value: events.append(value)
+    )
+    worker.model_runner = SimpleNamespace(_muxpd_numerical_observer=observer)
+    worker._interleaver = SimpleNamespace(
+        active=SimpleNamespace(name="prefill", completed_layers=0)
+    )
+    worker._execution_backend = SimpleNamespace(active_lane="prefill")
+    worker._prefill_cohort_id = 17
+    worker._prefill_num_tokens = 128
+    # Native startup is still forwarded once without a serving observation.
+    assert worker._prefill_group_return(0, final=False) == "native-result"
+    assert events == [("original", 0, False)]
+    events.clear()
+    observer.schedule = {"num_scheduled_tokens": {"r": 128}}
+    assert worker._prefill_group_return(0, final=False) == "native-result"
+    assert events[0]["moe_layer_index"] == 4
+    assert events[0]["all_moe_layers"] == layers
+    assert events[0]["all_moe_layers"] is not layers
+    assert events[0]["task_completed_layers_before_checkpoint"] == 0
+    assert events[1] == ("original", 0, False)
+    worker._numeric_group_returns = 128
+    events.clear()
+    assert worker._prefill_group_return(9, final=True) == "native-result"
+    assert events == [("original", 9, True)]
