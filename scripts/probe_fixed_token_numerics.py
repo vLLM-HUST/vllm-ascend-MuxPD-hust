@@ -21,6 +21,8 @@ try:
 except ImportError:
     from probe_prefill_group_outputs import SHORT_PROMPT
 
+MAX_ENGINE_STEPS = 500
+
 
 def digest(value):
     return hashlib.sha256(
@@ -67,6 +69,7 @@ def plan():
             "output directories. Actual worker schedule and sampler row "
             "snapshots remain authoritative."
         ),
+        "maximum_engine_steps": MAX_ENGINE_STEPS,
     }
     return {**value, "plan_sha256": digest(value)}
 
@@ -162,6 +165,8 @@ def run(args):
             }
             report["phases"].append(observed)
             while llm.llm_engine.has_unfinished_requests():
+                if global_step >= MAX_ENGINE_STEPS:
+                    raise RuntimeError("Diagnostic engine exceeded 500 total steps")
                 global_step += 1
                 before = time.monotonic_ns()
                 outputs = llm.llm_engine.step()
