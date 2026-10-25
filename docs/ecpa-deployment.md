@@ -15,7 +15,7 @@ Bundle ID 为 `org.vllm-hust.muxpd`，版本为 `0.2.0a1`。
 | greenlet | `>=3.1,<4` |
 | Extension Manager | 含 scheduler carrier 和 module evidence 的 `0.3.1.dev1` 开发版本 |
 
-`vllm-muxpd doctor` 仅检查软件版本、Git commit 和已跟踪修改，不初始化设备，
+`vllm-muxpd doctor` 检查软件版本、实际模块来源、Git commit 和已跟踪修改，不初始化设备，
 也不能替代服务验证。Ascend checkout 仅允许已记录的 `csrc/build_aclnn.sh`
 构建修改，其 SHA256 为
 `b089d52475c6cb36fffd733bb5be3fbe4158b6845074751268938e98a1d0042c`。
@@ -24,7 +24,8 @@ Bundle ID 为 `org.vllm-hust.muxpd`，版本为 `0.2.0a1`。
 
 兼容层另有针对 2026-10-25 上游源码的签名、输出字段和 KV 回收契约检查。
 该上游依赖 Torch/NPU 2.13；这些 CPU 检查不是当前服务器上的设备验证。
-Manifest 的 host 范围和部署入口均保留上述固定软件边界。
+Manifest 限制 host 版本；部署命令和 Manager 选择的 scheduler/worker 入口在
+分配原生资源前另行核对上述源码与依赖边界，拒绝 PYTHONPATH 指向其他原生源码。
 
 ## 安装与配置
 
