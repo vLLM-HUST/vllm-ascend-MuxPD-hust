@@ -167,11 +167,13 @@ def test_actual_worker_method_checks_requirement_before_native_init(monkeypatch)
     monkeypatch.delenv("VLLM_BATCH_INVARIANT", raising=False)
     with pytest.raises(ValueError, match="before worker distributed"):
         worker.init_device()
-    assert events == []
+    assert events == ["preflight"]
+    events.clear()
     policy[POLICY_KEY] = "true"
     with pytest.raises(ValueError, match="boolean"):
         worker.init_device()
-    assert events == []
+    assert events == ["preflight"]
+    events.clear()
     policy[POLICY_KEY] = True
     monkeypatch.setenv("HCCL_DETERMINISTIC", "true")
     with pytest.raises(NativeReached):

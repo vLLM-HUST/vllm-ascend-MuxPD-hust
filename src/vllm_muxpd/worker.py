@@ -336,9 +336,9 @@ class MuxPDNPUWorker(NPUWorker):
         super().__init__(vllm_config, *args, **kwargs)
 
     def init_device(self) -> None:
+        managed_runtime_preflight()
         policy = self.vllm_config.scheduler_config.batch_admission_policy_config or {}
         validate_profile_environment(policy)
-        managed_runtime_preflight()
         super().init_device()
         if ascend_utils.get_ascend_device_type() != ascend_utils.AscendDeviceType.A2:
             raise ValueError("MuxPD cooperative runner currently supports Ascend A2")

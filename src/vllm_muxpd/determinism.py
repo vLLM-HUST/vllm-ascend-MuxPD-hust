@@ -1,4 +1,4 @@
-"""Explicit collective environment requirement; never changes kernel semantics."""
+"""Opt-in HCCL requirement and startup metadata."""
 
 from __future__ import annotations
 
