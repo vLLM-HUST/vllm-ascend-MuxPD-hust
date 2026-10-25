@@ -1,6 +1,9 @@
 import copy
+import json
+import sys
+from types import ModuleType, SimpleNamespace
 
-from scripts.probe_fixed_token_numerics import digest, plan
+from scripts.probe_fixed_token_numerics import digest, plan, run
 
 
 def test_fixed_plan_has_fully_drained_warm_control_phases():
@@ -22,3 +25,128 @@ def test_fixed_plan_has_fully_drained_warm_control_phases():
     changed = copy.deepcopy(body)
     changed["phases"][0]["prompts"][0][0] += 1
     assert digest(changed) != value["plan_sha256"]
+
+
+def install_fake_engine(monkeypatch, *, never_finishes=False):
+    class InprocClient:
+        def shutdown(self):
+            self.stopped = True
+
+    class Engine:
+        def __init__(self):
+            self.engine_core = InprocClient()
+            self.output_processor = SimpleNamespace(request_states={})
+            self.pending = []
+
+        def has_unfinished_requests(self):
+            return bool(self.pending)
+
+        def step(self):
+            if never_finishes:
+                return []
+            outputs = []
+            for internal, external, tokens in self.pending:
+                outputs.append(
+                    SimpleNamespace(
+                        request_id=external,
+                        finished=True,
+                        prompt_token_ids=tokens,
+                        outputs=[
+                            SimpleNamespace(
+                                token_ids=list(range(8)),
+                                finish_reason="length",
+                                stop_reason=None,
+                            )
+                        ],
+                    )
+                )
+                del self.output_processor.request_states[internal]
+            self.pending = []
+            return outputs
+
+    class LLM:
+        def __init__(self, **kwargs):
+            self.llm_engine = Engine()
+            self.count = 0
+
+        def enqueue(self, inputs, params, use_tqdm):
+            ids = []
+            for entry in inputs:
+                external = str(self.count)
+                internal = external + "-random-native-suffix"
+                self.count += 1
+                self.llm_engine.output_processor.request_states[internal] = (
+                    SimpleNamespace(external_req_id=external)
+                )
+                self.llm_engine.pending.append(
+                    (internal, external, entry["prompt_token_ids"])
+                )
+                ids.append(internal)
+            return ids
+
+    vllm = ModuleType("vllm")
+    vllm.LLM = LLM
+    vllm.SamplingParams = lambda **kwargs: SimpleNamespace(**kwargs)
+    core = ModuleType("vllm.v1.engine.core_client")
+    core.InprocClient = InprocClient
+    monkeypatch.setitem(sys.modules, "vllm", vllm)
+    monkeypatch.setitem(sys.modules, "vllm.v1.engine.core_client", core)
+    for key in (
+        "MUXPD_NUMERIC_OUTPUT",
+        "MUXPD_NUMERIC_CAPTURE_STEPS",
+        "MUXPD_NUMERIC_RANKS",
+        "VLLM_ENABLE_V1_MULTIPROCESSING",
+    ):
+        monkeypatch.setenv(key, "test-before")
+
+
+def arguments(tmp_path):
+    frozen = tmp_path / "plan.json"
+    frozen.write_text(json.dumps(plan()))
+    engine = tmp_path / "engine.json"
+    engine.write_text(
+        json.dumps(
+            {
+                "tensor_parallel_size": 4,
+                "async_scheduling": False,
+                "enable_prefix_caching": False,
+                "max_num_seqs": 8,
+                "max_model_len": 16384,
+                "max_num_batched_tokens": 16384,
+            }
+        )
+    )
+    return SimpleNamespace(
+        plan=frozen,
+        plan_sha256=plan()["plan_sha256"],
+        engine_args=engine,
+        role="native",
+        output_dir=tmp_path / "out",
+    )
+
+
+def test_internal_external_ids_bound_before_native_completion(monkeypatch, tmp_path):
+    install_fake_engine(monkeypatch)
+    args = arguments(tmp_path)
+    assert run(args) == 0
+    receipt = json.loads((args.output_dir / "run.json").read_text())
+    assert receipt["passed"] and len(receipt["phases"]) == 6
+    for phase in receipt["phases"]:
+        assert set(phase["internal_to_external"]) == set(phase["request_ids"])
+        assert set(phase["internal_to_external"].values()) == set(
+            phase["external_request_ids"]
+        )
+        assert {row["request_id"] for row in phase["outputs"]} == set(
+            phase["external_request_ids"]
+        )
+        assert not set(phase["request_ids"]) & set(phase["external_request_ids"])
+
+
+def test_step_watchdog_preserves_failure_and_calls_shutdown(monkeypatch, tmp_path):
+    install_fake_engine(monkeypatch, never_finishes=True)
+    args = arguments(tmp_path)
+    assert run(args) == 1
+    receipt = json.loads((args.output_dir / "run.json").read_text())
+    assert not receipt["passed"] and receipt["shutdown_returned"]
+    assert len(receipt["phases"][0]["steps"]) == 500
+    assert "exceeded 500" in receipt["errors"][0]

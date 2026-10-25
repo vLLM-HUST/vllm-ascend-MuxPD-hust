@@ -136,6 +136,30 @@ def test_unselected_rank_does_not_clone_or_copy(tmp_path):
     assert not list(tmp_path.glob("*.npy"))
 
 
+def test_padded_graph_descriptor_is_taken_from_native_deferred_state(tmp_path):
+    runner, expected, _ = fixture_runner([])
+    runner.execute_model_state = (None,) * 11 + (
+        SimpleNamespace(
+            num_tokens=4,
+            num_reqs=4,
+            uniform=True,
+            has_lora=False,
+            num_active_loras=0,
+        ),
+    )
+    NativeSamplerObserver(runner, tmp_path, "native", 0)
+    assert runner.execute_model(schedule()) is expected
+    row = json.loads((tmp_path / "rank-0-native.jsonl").read_text().splitlines()[-1])
+    assert row["event"] == "execute-return"
+    assert row["batch_descriptor"] == {
+        "num_tokens": 4,
+        "num_reqs": 4,
+        "uniform": True,
+        "has_lora": False,
+        "num_active_loras": 0,
+    }
+
+
 def test_reject_async_and_non_greedy_paths(tmp_path):
     runner, _, _ = fixture_runner([])
     runner.use_async_scheduling = True

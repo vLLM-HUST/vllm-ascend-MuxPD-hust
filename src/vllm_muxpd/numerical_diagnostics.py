@@ -10,6 +10,7 @@ import hashlib
 import json
 import os
 import time
+from dataclasses import asdict, is_dataclass
 from pathlib import Path
 from typing import Any
 
@@ -94,6 +95,7 @@ class NativeSamplerObserver:
         self.sequence = 0
         self.pending = None
         self.schedule = None
+        self.batch_descriptor = None
         directory.mkdir(parents=True, exist_ok=True)
         self.log = (directory / f"rank-{rank}-{lane}.jsonl").open("x")
         self.emit(
@@ -141,7 +143,36 @@ class NativeSamplerObserver:
                     "schedule": self.schedule,
                 }
             )
-            return execute(output, *args, **kwargs)
+            result = execute(output, *args, **kwargs)
+            state = getattr(runner, "execute_model_state", None)
+            self.batch_descriptor = None
+            if state is not None:
+                if len(state) != 12:
+                    raise RuntimeError("Unknown native execute_model_state contract")
+                descriptor = state[-1]
+                self.batch_descriptor = (
+                    asdict(descriptor)
+                    if is_dataclass(descriptor)
+                    else {
+                        name: getattr(descriptor, name, None)
+                        for name in (
+                            "num_tokens",
+                            "num_reqs",
+                            "uniform",
+                            "has_lora",
+                            "num_active_loras",
+                        )
+                    }
+                )
+            self.emit(
+                {
+                    "event": "execute-return",
+                    "sequence": self.sequence,
+                    "deferred_native_state": state is not None,
+                    "batch_descriptor": self.batch_descriptor,
+                }
+            )
+            return result
 
         def observed_sample(logits, spec_decode_metadata, *args, **kwargs):
             if self.pending is not None:
@@ -207,7 +238,9 @@ class NativeSamplerObserver:
         array = raw.float().cpu().numpy() if raw is not None else None
         for row in pending["rows"]:
             row["sampled_token_ids"] = list(valid_tokens[row["row"]])
-            row["discarded_by_native"] = row["row"] in invalid
+            row["discarded_by_native"] = (
+                row["row"] in invalid or not row["sampled_token_ids"]
+            )
             if array is None or row["output_token_index"] >= self.capture_steps:
                 continue
             values = array[row["row"]]
@@ -239,6 +272,7 @@ class NativeSamplerObserver:
                 "event": "native-sample-observed",
                 "sequence": self.sequence,
                 "schedule": self.schedule,
+                "batch_descriptor": self.batch_descriptor,
                 **pending,
             }
         )

@@ -154,10 +154,20 @@ def run(args):
                 max_tokens=phase["max_tokens"], **frozen["sampling"]
             )
             ids = llm.enqueue(inputs, params, use_tqdm=False)
+            # enqueue returns randomized INTERNAL IDs; RequestOutput exposes
+            # the original EXTERNAL IDs. Bind through the real output states,
+            # before completion removes them. Never infer a mapping by splitting
+            # IDs or globally disable native request-ID randomization.
+            external_ids = [
+                llm.llm_engine.output_processor.request_states[item].external_req_id
+                for item in ids
+            ]
             observed = {
                 "name": phase["name"],
                 "warm_repeat": phase["warm_repeat"],
                 "request_ids": ids,
+                "external_request_ids": external_ids,
+                "internal_to_external": dict(zip(ids, external_ids)),
                 "admitted_before_step": global_step,
                 "prompts": phase["prompts"],
                 "steps": [],
@@ -196,7 +206,7 @@ def run(args):
                         "outputs": rows,
                     }
                 )
-            if {row["request_id"] for row in observed["outputs"]} != set(ids):
+            if {row["request_id"] for row in observed["outputs"]} != set(external_ids):
                 raise RuntimeError("Finished request set differs from admitted phase")
             if any(
                 len(row["outputs"]) != 1 or len(row["outputs"][0]["token_ids"]) != 8
