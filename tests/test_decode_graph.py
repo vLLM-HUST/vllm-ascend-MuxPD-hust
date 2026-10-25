@@ -496,7 +496,7 @@ def test_close_restores_guards_after_failed_initialization_or_capture(fail_captu
     assert "_muxpd_decode_graph_controller" not in vars(d)
 
 
-def test_close_preserves_original_instance_methods_and_later_external_overrides():
+def test_close_retains_external_wrapper_ownership_until_safe_retry():
     r = Runtime()
     cfg = config()
     p, d = Runner(cfg, r), Runner(cfg, r)
@@ -510,10 +510,16 @@ def test_close_preserves_original_instance_methods_and_later_external_overrides(
     original_dispatch = p._determine_batch_execution_and_padding
     external_dispatch = lambda: "external"  # noqa: E731
     p._determine_batch_execution_and_padding = external_dispatch
+    with pytest.raises(RuntimeError, match="changed externally"):
+        ctrl.close()
+    assert p._determine_batch_execution_and_padding is external_dispatch
+    assert not ctrl._closed and ctrl.owner is p and ctrl.decode is d
+    assert any(item[3] is original_dispatch for item in ctrl._patches)
+    p._determine_batch_execution_and_padding = original_dispatch
     ctrl.close()
     assert p._model_forward is original_p
     assert d._model_forward is original_d
-    assert p._determine_batch_execution_and_padding is external_dispatch
+    assert ctrl._closed and not ctrl._patches
     with pytest.raises(RuntimeError, match="closed"):
         original_dispatch(1)
 

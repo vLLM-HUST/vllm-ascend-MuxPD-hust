@@ -442,13 +442,15 @@ class DecodeGraphController:
                 self.decode.model = None
         while self._patches:
             target, name, original, installed = self._patches[-1]
-            # Preserve later external overrides. Successfully restored entries
-            # are removed individually, so a partial failure is retryable.
-            if vars(target).get(name, _MISSING) is installed:
-                if original is _MISSING:
-                    delattr(target, name)
-                else:
-                    setattr(target, name, original)
+            # A foreign wrapper can retain our method in its closure. Keep the
+            # ownership record and stop native resource release until the
+            # original installed method is restored; never overwrite it.
+            if vars(target).get(name, _MISSING) is not installed:
+                raise RuntimeError(f"MuxPD graph method changed externally: {name}")
+            if original is _MISSING:
+                delattr(target, name)
+            else:
+                setattr(target, name, original)
             self._patches.pop()
         self._decode_graph_model = None
         self._attached = False
