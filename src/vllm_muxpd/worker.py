@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ctypes
+import json
 import sys
 from contextlib import contextmanager
 from dataclasses import dataclass, replace
@@ -28,6 +29,11 @@ from vllm_muxpd.decode_graph import (
     validate_decode_graph_config,
 )
 from vllm_muxpd.deployment import managed_runtime_preflight
+from vllm_muxpd.determinism import (
+    profile_required,
+    startup_readback,
+    validate_profile_environment,
+)
 from vllm_muxpd.evidence import emit_runtime_effective
 from vllm_muxpd.lanes import LayerInterleaver
 from vllm_muxpd.native_compat import (
@@ -247,7 +253,7 @@ def _merge_outputs(
 def _validate_worker_config(config: Any) -> None:
     validate_engine_config(config)
     policy = config.scheduler_config.batch_admission_policy_config or {}
-    if "compile_prefill_groups" in policy:
+    if "compile_prefill_groups" in policy or "require_hccl_deterministic" in policy:
         MuxPDConfig.from_mapping(policy)
     decode_graph = policy.get("decode_graph", False)
     errors = []
@@ -330,6 +336,8 @@ class MuxPDNPUWorker(NPUWorker):
         super().__init__(vllm_config, *args, **kwargs)
 
     def init_device(self) -> None:
+        policy = self.vllm_config.scheduler_config.batch_admission_policy_config or {}
+        validate_profile_environment(policy)
         managed_runtime_preflight()
         super().init_device()
         if ascend_utils.get_ascend_device_type() != ascend_utils.AscendDeviceType.A2:
@@ -381,6 +389,19 @@ class MuxPDNPUWorker(NPUWorker):
                 getattr(stream, "npu_stream", None),
             )
         self._configure_execution_backend()
+        if profile_required(policy):
+            readback = startup_readback(
+                policy,
+                rank=self.rank,
+                worker=type(self).__module__ + "." + type(self).__qualname__,
+                torch_deterministic=torch.are_deterministic_algorithms_enabled(),
+                torch_warn_only=torch.is_deterministic_algorithms_warn_only_enabled(),
+                prefill_groups=[
+                    {"name": group.unique_name, "ranks": list(group.ranks)}
+                    for group in self._prefill_groups
+                ],
+            )
+            logger.info("MuxPD collective profile startup %s", json.dumps(readback))
 
     def _configure_execution_backend(self) -> None:
         """Compose graph ownership with stream ordering before loading weights."""

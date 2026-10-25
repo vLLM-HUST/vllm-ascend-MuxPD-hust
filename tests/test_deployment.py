@@ -245,6 +245,7 @@ def arguments():
         trace_path=None,
         dry_run=True,
         experimental_prefill_groups=False,
+        deterministic_collectives=False,
     )
 
 

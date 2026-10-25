@@ -35,8 +35,15 @@ class MuxPDConfig:
     compile_prefill_groups: bool = False
     prefill_layer_token_budget: int = 0
     decode_budget_guard: bool = False
+    require_hccl_deterministic: bool = False
 
     def __post_init__(self) -> None:
+        if type(self.require_hccl_deterministic) is not bool:
+            raise ValueError("MuxPD require_hccl_deterministic must be a boolean")
+        if self.require_hccl_deterministic and self.execution != "decoupled":
+            raise ValueError(
+                "MuxPD require_hccl_deterministic requires execution='decoupled'"
+            )
         for name in (
             "ttft_slo_ms",
             "tpot_slo_ms",

@@ -94,6 +94,47 @@ vllm-muxpd serve --model /path/to/Qwen3.5-35B-A3B --trace-path '/tmp/muxpd-trace
 trace 默认关闭；开启后会增加记录开销，不应把它与无 trace 的性能窗口混用。
 测量回执应存入本地临时目录，发布到中央 benchmark 仓库，而不是本代码仓库。
 
+## 实验性确定性通信配置
+
+`--deterministic-collectives` 显式选择 `HCCL_DETERMINISTIC=true`。
+这项配置仍属实验性：质量、性能成本和当前提交的设备验证需要分别完成。
+它不表示任意输入、任意 batch 或所有算子都具有确定性，也不自动启用
+`VLLM_BATCH_INVARIANT`、`strict` 模式或 Torch 全局确定性设置。
+不传此选项时，插件保留现有环境和默认运行方式。
+
+配置、查看计划和启动必须使用相同选项：
+
+```bash
+vllm-muxpd configuration --deterministic-collectives --output muxpd-deterministic.json
+vllm-hust-ext extension configure org.vllm-hust.muxpd --file muxpd-deterministic.json
+vllm-muxpd plan --model /path/to/Qwen3.5-35B-A3B --deterministic-collectives
+vllm-muxpd serve --model /path/to/Qwen3.5-35B-A3B --deterministic-collectives
+```
+
+保存配置在 `batch_admission_policy_config` 中记录严格布尔值
+`require_hccl_deterministic=true`；Manager 将其连同三个组件选择器投影到启动命令。
+`serve` 在调用 Manager 前设置通信环境，因此 TP 子进程及其中创建的独立 P
+通信组都继承它。若调用方已经显式设置其他值（包括 `strict`），或启用了
+`VLLM_BATCH_INVARIANT`，启动会报冲突，不会默默覆盖。
+worker 在原生设备和通信初始化前检查这个要求；缺失或不匹配会直接失败。
+
+当前 Manager 不支持条件环境声明，只允许覆盖 manifest 已声明的静态环境项。
+本插件没有添加默认 HCCL 环境项，以免改变普通启动或覆盖调用方已有设置。
+因此 `vllm-muxpd plan` 单独展示 `requested_environment`；Manager 的 `--dry-run`
+只展示激活增量，不能用于证明继承的 HCCL 值。绕过 `vllm-muxpd serve` 使用
+通用 `vllm-hust-ext run -- ...` 时，调用方须在新进程启动前显式设置
+`HCCL_DETERMINISTIC=true`，并保存匹配的 policy 要求。
+
+显式启用后，每个 TP rank 在原生和独立通信组初始化完成时输出一条
+`MuxPD collective profile startup` JSON 回执，记录 rank/PID、请求值与环境读回、
+Torch 状态、Manager launch/plan ID（如存在）和独立 P 组的名称/成员。
+该回执不改变采样、执行图或算子，也不升级 Manager 的 `runtime_effective`
+语义；环境读回不是设备实际算法、文本质量或性能收益的证明。
+
+比较性能时，对照组和插件组必须使用相同通信设置。带完整 logits 观察器的
+数值诊断不用于吞吐或延迟测量。移除该配置时，重新保存不带选项的普通配置，
+并在新服务进程中启动；运行中的进程不会切换通信模式。
+
 ## 停止、停用与回滚
 
 先停止接收新请求，等待现有请求完成；前台服务用 Ctrl-C 停止 Manager 监督的
