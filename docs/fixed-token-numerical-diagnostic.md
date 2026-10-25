@@ -34,8 +34,14 @@ cleanup. This diagnostic never edits native source or installed wheels.
 
 Engine JSON must contain TP4, synchronous scheduling, prefix caching off,
 `max_num_seqs=8`, and `max_model_len=max_num_batched_tokens=16384`. It must omit
-`worker_cls`; the driver selects `NumericalNativeNPUWorker` or
-`NumericalMuxPDNPUWorker`. Raw mode additionally requires chunked prefill off and
+`worker_cls` and `worker_extension_cls`. The driver retains the exact production
+`NPUWorker` or `DecoupledMuxPDNPUWorker` selector, and adds the explicitly named
+`NumericalObserverExtension`. After LLM initialization completes native warmup,
+a single collective RPC installs the observers and snapshots compiler constants
+on all four workers before any request is admitted. The extension has only one
+unique RPC method; it overrides no worker lifecycle method. Repeated installation
+is refused. Group callbacks wrap the executor's stored checkpoint after warmup
+and call the original exactly once. Raw mode requires chunked prefill off and
 the normal raw-P scheduler/policy settings. Remaining model, EP, compilation,
 dtype and host options must be matched and retained by the controller. Do not
 enable `VLLM_BATCH_INVARIANT`, HCCL deterministic overrides or new fusion options

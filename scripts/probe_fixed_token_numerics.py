@@ -165,13 +165,16 @@ def run(args):
     if engine_args.get("speculative_config") is not None:
         raise ValueError("Speculation is outside this diagnostic")
     worker = (
-        "NumericalNativeNPUWorker"
+        "vllm_ascend.worker.worker.NPUWorker"
         if args.role == "native"
-        else "NumericalMuxPDNPUWorker"
+        else "vllm_muxpd.decoupled_worker.DecoupledMuxPDNPUWorker"
     )
-    if "worker_cls" in engine_args:
-        raise ValueError("The diagnostic selects its worker class explicitly")
-    engine_args["worker_cls"] = "vllm_muxpd.numerical_workers." + worker
+    if "worker_cls" in engine_args or "worker_extension_cls" in engine_args:
+        raise ValueError("The diagnostic selects its worker and extension explicitly")
+    engine_args["worker_cls"] = worker
+    engine_args["worker_extension_cls"] = (
+        "vllm_muxpd.numerical_workers.NumericalObserverExtension"
+    )
     if (
         args.role in ("raw", "group")
         and engine_args.get("enable_chunked_prefill") is not False
@@ -215,6 +218,19 @@ def run(args):
                 "Actual engine coordinator is not step-driven InprocClient"
             )
         report["engine_coordinator"] = type(llm.llm_engine.engine_core).__name__
+        installed = llm.collective_rpc("muxpd_install_numerical_observers", timeout=30)
+        report["observer_installation"] = installed
+        if (
+            len(installed) != 4
+            or {item.get("rank") for item in installed} != set(range(4))
+            or any(
+                item.get("installed") is not True
+                or item.get("worker_selector") != worker
+                for item in installed
+            )
+        ):
+            raise RuntimeError("Observer installation did not confirm all TP4 workers")
+        write_json(args.output_dir / "run.json", report)
         global_step = 0
         for phase in frozen["phases"]:
             inputs = [{"prompt_token_ids": tokens} for tokens in phase["prompts"]]

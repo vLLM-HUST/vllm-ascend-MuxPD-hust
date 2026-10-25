@@ -80,8 +80,26 @@ def install_fake_engine(monkeypatch, *, never_finishes=False, per_token=False):
         def __init__(self, **kwargs):
             self.llm_engine = Engine()
             self.count = 0
+            self.kwargs = kwargs
+            self.warmup_returned = True
+            self.install_calls = 0
+
+        def collective_rpc(self, method, timeout):
+            assert self.warmup_returned and not self.llm_engine.pending
+            assert self.install_calls == 0
+            assert method == "muxpd_install_numerical_observers" and timeout == 30
+            self.install_calls += 1
+            return [
+                {
+                    "installed": True,
+                    "rank": rank,
+                    "worker_selector": self.kwargs["worker_cls"],
+                }
+                for rank in range(4)
+            ]
 
         def enqueue(self, inputs, params, use_tqdm):
+            assert self.install_calls == 1
             ids = []
             for entry in inputs:
                 external = str(self.count)
@@ -243,3 +261,39 @@ def test_group_role_cannot_hide_default_or_partial_backend():
     }
     with pytest.raises(ValueError, match="fusion backend"):
         runtime_profile("group", engine)
+
+
+@pytest.mark.parametrize("role", ["native", "raw", "group"])
+@pytest.mark.parametrize("staggered", [False, True])
+def test_original_worker_selector_and_postwarmup_extension_rpc(
+    monkeypatch, tmp_path, role, staggered
+):
+    install_fake_engine(monkeypatch, per_token=staggered)
+    args = arguments(tmp_path)
+    args.role = role
+    frozen = plan(staggered)
+    args.plan.write_text(json.dumps(frozen))
+    args.plan_sha256 = frozen["plan_sha256"]
+    engine = json.loads(args.engine_args.read_text())
+    engine["enable_chunked_prefill"] = role == "native" and staggered
+    if role == "group":
+        engine["batch_admission_policy_config"] = {"compile_prefill_groups": True}
+        engine["additional_config"] = {
+            "ascend_compilation_config": {
+                "enable_npugraph_ex": False,
+                "enable_static_kernel": False,
+            }
+        }
+    args.engine_args.write_text(json.dumps(engine))
+    assert run(args) == 0
+    receipt = json.loads((args.output_dir / "run.json").read_text())
+    expected = (
+        "vllm_ascend.worker.worker.NPUWorker"
+        if role == "native"
+        else "vllm_muxpd.decoupled_worker.DecoupledMuxPDNPUWorker"
+    )
+    assert receipt["engine_args"]["worker_cls"] == expected
+    assert receipt["engine_args"]["worker_extension_cls"] == (
+        "vllm_muxpd.numerical_workers.NumericalObserverExtension"
+    )
+    assert len(receipt["observer_installation"]) == 4
