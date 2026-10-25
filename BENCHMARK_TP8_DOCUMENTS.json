@@ -1,0 +1,90 @@
+{
+  "manifest_url": "https://raw.githubusercontent.com/vLLM-HUST/vllm-hust-benchmark/b354f203cabb4cfeba72a74e4eefb29dee85776b/archive/mod-targeted-20261023/muxpd-tp8-groupfx/manifest.json",
+  "manifest_sha256": "9ff3c9b59d70ce118c25d8f6fdc27dc3811825c2c6c6040538a495ec46e2133d",
+  "document_projections": [
+    {
+      "path": "docs/performance-tp8-contention.md",
+      "original_url": "https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/b354f203cabb4cfeba72a74e4eefb29dee85776b/archive/mod-targeted-20261023/muxpd-tp8-groupfx/snapshot/docs/performance-tp8-contention.md"
+    },
+    {
+      "path": "docs/performance-tp8-goodput-exploration.md",
+      "original_url": "https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/b354f203cabb4cfeba72a74e4eefb29dee85776b/archive/mod-targeted-20261023/muxpd-tp8-groupfx/snapshot/docs/performance-tp8-goodput-exploration.md"
+    },
+    {
+      "path": "docs/performance-tp8.md",
+      "original_url": "https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/b354f203cabb4cfeba72a74e4eefb29dee85776b/archive/mod-targeted-20261023/muxpd-tp8-groupfx/snapshot/docs/performance-tp8.md"
+    },
+    {
+      "path": "docs/validation-tp4-prefill-group-fx.md",
+      "original_url": "https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/b354f203cabb4cfeba72a74e4eefb29dee85776b/archive/mod-targeted-20261023/muxpd-tp8-groupfx/snapshot/docs/validation-tp4-prefill-group-fx.md"
+    }
+  ],
+  "evidence_members": [
+    {
+      "document": "docs/performance-tp8-contention.md",
+      "path": "evidence/2026-10-11-tp8-contention/archive-index.json",
+      "bytes": 188136,
+      "sha256": "07275b5a94bdcbb152305a4e83fd347efa44779694e4e2f84c49487c125173c5"
+    },
+    {
+      "document": "docs/performance-tp8-contention.md",
+      "path": "evidence/2026-10-11-tp8-contention/contention-audit.json.gz",
+      "bytes": 508471,
+      "sha256": "6c14a497ea33127f79f4f68666951d2bff74654b154768b61e76e91b810c4e44"
+    },
+    {
+      "document": "docs/performance-tp8-goodput-exploration.md",
+      "path": "evidence/2026-10-11-matched-numeric/review.json",
+      "bytes": 190101,
+      "sha256": "103566acf294cd6c43921bd7e8f50116ce90aab743597a2998b0db829d84d305"
+    },
+    {
+      "document": "docs/performance-tp8-goodput-exploration.md",
+      "path": "evidence/2026-10-11-matched-numeric/review.md",
+      "bytes": 2024,
+      "sha256": "f661e908e3f341b434fabaeca914ecdaa4e2c08132b9d04acb9ee4d744c4595e"
+    },
+    {
+      "document": "docs/performance-tp8.md",
+      "path": "evidence/2026-10-10-tp8/benchmark-summary.json",
+      "bytes": 210741,
+      "sha256": "8dca8708e11ef33e42cbc31d5068f248017935660465735dca7bcff8aa1101a9"
+    },
+    {
+      "document": "docs/performance-tp8.md",
+      "path": "evidence/2026-10-10-tp8/native-state-reuse.json",
+      "bytes": 984906,
+      "sha256": "35b70f309c633b5a7e5f0ef79c39fa7d739cc89a743644b6dab63c7a0a7fbdf2"
+    },
+    {
+      "document": "docs/performance-tp8.md",
+      "path": "evidence/2026-10-10-tp8/work256-state-reuse.json",
+      "bytes": 981091,
+      "sha256": "387beccb62e3fa3d6c1bd90286c7a5721397be41c96ccb791682cce863c33968"
+    },
+    {
+      "document": "docs/validation-tp4-prefill-group-fx.md",
+      "path": "evidence/2026-10-12-tp4-group-fx/archive-index.json",
+      "bytes": 95154,
+      "sha256": "7995e1cb02eef32f697324bd659f41916bc2731068028c75db2dd8d11808b70d"
+    },
+    {
+      "document": "docs/validation-tp4-prefill-group-fx.md",
+      "path": "evidence/2026-10-12-tp4-group-fx/numeric19-independent-audit.json",
+      "bytes": 95194,
+      "sha256": "0eb97183288e3255f015005dc4ae45e56d0b44cdb526d677dd41814f5cfdaa37"
+    }
+  ],
+  "raw_archives": [
+    {
+      "url": "https://github.com/vLLM-HUST/vllm-hust-benchmark/releases/download/evidence-mod-collections-20261023-v1/muxpd.tar.gz",
+      "sha256": "937ae9c56f777efe2fe5b7499a29de9b52a0dbd68e37a0cf4e7565bc8612afbe",
+      "bytes": 120091343
+    },
+    {
+      "url": "https://github.com/vLLM-HUST/vllm-hust-benchmark/releases/download/evidence-tp4-groupfx-20261012/tp4-groupfx-20261012.tar.gz",
+      "sha256": "a931a7329ad534f03fb7d05e7845b43125c19637b7daf33b146dd9aeebcfe951",
+      "bytes": 15707721
+    }
+  ]
+}

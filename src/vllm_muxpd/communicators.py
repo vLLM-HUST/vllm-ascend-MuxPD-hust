@@ -134,23 +134,33 @@ class LaneCollectiveRouter:
                     wrapper = self._wrap(original, target)
                     setattr(native, name, wrapper)
                     self._installed.append((native, name, previous, wrapper))
-        except BaseException:
-            self.restore()
+        except BaseException as primary:
+            try:
+                self.restore()
+            except BaseException as cleanup:
+                if hasattr(primary, "add_note"):
+                    primary.add_note(f"MuxPD router rollback also failed: {cleanup!r}")
             raise
         return self
 
     def restore(self) -> None:
         """Restore only our wrappers; leave external replacements intact."""
         self._check_thread()
-        changed = []
-        for native, name, previous, wrapper in reversed(self._installed):
-            if getattr(native, name, None) is not wrapper:
-                changed.append(name)
-                continue
-            if previous is _MISSING:
-                delattr(native, name)
+        errors = []
+        for index in reversed(range(len(self._installed))):
+            native, name, previous, wrapper = self._installed[index]
+            try:
+                if getattr(native, name, None) is not wrapper:
+                    raise RuntimeError(
+                        f"MuxPD router methods changed externally: {name}"
+                    )
+                if previous is _MISSING:
+                    delattr(native, name)
+                else:
+                    setattr(native, name, previous)
+            except BaseException as error:
+                errors.append(error)
             else:
-                setattr(native, name, previous)
-        self._installed.clear()
-        if changed:
-            raise RuntimeError(f"MuxPD router methods changed externally: {changed}")
+                self._installed.pop(index)
+        if errors:
+            raise errors[0]

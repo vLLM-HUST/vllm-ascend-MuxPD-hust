@@ -22,6 +22,7 @@ from vllm.v1.core.sched.scheduler import Scheduler
 from vllm.v1.request import Request
 
 from .multiplex_scheduler import LayeredMuxPDScheduler
+from .native_compat import validate_lane_result, validate_lane_schedule
 from .policy import Decision, remaining_tokens, request_phase
 from .scheduler import MuxPDScheduler
 
@@ -87,6 +88,8 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         self._cohort_sequence = 0
         self._decoupled_step: _Step | None = None
         self._held_prefill_blocks: dict[str, list[Any]] = {}
+        self._held_prefill_sessions: dict[str, str | None] = {}
+        self._kv_reclaim_error: BaseException | None = None
         self._arrival_monotonic: dict[str, float] = {}
         self._prefill_latency: dict[int, tuple[float, int]] = {}
         self._decode_latency_ms: float | None = None
@@ -124,7 +127,7 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
             raise ValueError("DecoupledMuxPDScheduler requires DecoupledMuxPDNPUWorker")
         if self.defer_block_free or self.connector is not None:
             raise ValueError("Decoupled MuxPD does not support native deferred frees")
-        if self.enable_return_routed_experts:
+        if getattr(self, "enable_return_routed_experts", False):
             raise ValueError("Decoupled MuxPD does not support routed expert outputs")
         if self.lora_config is not None:
             raise ValueError("Decoupled MuxPD does not support LoRA")
@@ -136,6 +139,11 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
             raise ValueError("Decoupled MuxPD does not support structured outputs")
         if request.lora_request is not None:
             raise ValueError("Decoupled MuxPD does not support LoRA")
+        if (
+            getattr(request.sampling_params, "prompt_logprob_token_ids", None)
+            is not None
+        ):
+            raise ValueError("Decoupled MuxPD does not support prompt token scores")
         if (
             self._prefill_cohort
             and request.request_id in self._prefill_cohort.pending_ids
@@ -153,7 +161,7 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
             return set()
         return self._prefill_cohort.pending_ids - self.requests.keys()
 
-    def _free_request_blocks(self, request: Request) -> None:
+    def _free_request_blocks(self, request: Request) -> tuple[int, bool] | None:
         if request.is_finished():
             self._arrival_monotonic.pop(request.request_id, None)
             self._prefill_first_decode_debt.discard(request.request_id)
@@ -167,16 +175,30 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
             self._held_prefill_blocks[request.request_id] = (
                 self.kv_cache_manager.pop_blocks_for_free(request)
             )
-            return
-        super()._free_request_blocks(request)
+            self._held_prefill_sessions[request.request_id] = getattr(
+                request, "session_id", None
+            )
+            return self._native_contract.held_result(
+                self._held_prefill_blocks[request.request_id]
+            )
+        return super()._free_request_blocks(request)
 
-    def _preempt_request(self, request: Request, timestamp: float) -> None:
+    def _preempt_request(
+        self, request: Request, timestamp: float, drop_stale_output: bool = False
+    ) -> None:
         if (
             self._prefill_cohort
             and request.request_id in self._prefill_cohort.pending_ids
         ):
             raise RuntimeError("Cannot preempt a pending decoupled prefill")
-        super()._preempt_request(request, timestamp)
+        if self._native_contract.reports_reclamation:
+            super()._preempt_request(
+                request, timestamp, drop_stale_output=drop_stale_output
+            )
+        else:
+            if drop_stale_output:
+                raise RuntimeError("Legacy MuxPD cannot drop stale KV delivery output")
+            super()._preempt_request(request, timestamp)
         self._prefill_first_decode_debt.discard(request.request_id)
         self._decode_completed_at.pop(request.request_id, None)
 
@@ -979,6 +1001,15 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         step = self._decoupled_step
         if step is None or step.output is not scheduler_output:
             raise RuntimeError("Unknown/reordered decoupled worker transaction")
+        if self._kv_reclaim_error is not None:
+            # BlockPool.free_blocks is not transactional. Preserve the retained
+            # ownership for diagnosis; retrying a partial native free could
+            # decrement refcounts twice. This scheduler must fail closed.
+            raise RuntimeError(
+                "MuxPD KV reclamation previously failed"
+            ) from self._kv_reclaim_error
+        validate_lane_schedule(scheduler_output)
+        validate_lane_result(model_runner_output)
         completed, cancelled, progress, source = self._validate_receipt(
             step, model_runner_output
         )
@@ -1003,9 +1034,20 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         # Validation precedes every mutation. An ACK proves the worker can no
         # longer access this member's buffers, including late-aborted completions.
         for rid in completed | cancelled:
-            blocks = self._held_prefill_blocks.pop(rid, ())
-            if blocks:
-                self.kv_cache_manager.block_pool.free_blocks(reversed(blocks))
+            if rid in self._held_prefill_blocks:
+                blocks = self._held_prefill_blocks[rid]
+                if blocks:
+                    try:
+                        self.kv_cache_manager.block_pool.free_blocks(reversed(blocks))
+                    except BaseException as error:
+                        self._kv_reclaim_error = error
+                        raise
+                # Never emit reclamation while a worker still owns the blocks.
+                # Remove ownership after successful native free, before the
+                # observational event (native EventBus isolates sink errors).
+                del self._held_prefill_blocks[rid]
+                session_id = self._held_prefill_sessions.pop(rid)
+                self._native_contract.emit_reclaimed(rid, session_id, len(blocks))
         if cohort is not None:
             cohort.completed_layers = progress
             cohort.pending_ids.difference_update(completed | cancelled)
@@ -1082,6 +1124,7 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
                     else {}
                 ),
             )
+        self._record_effective_outputs(result)
         return result
 
     def _validate_slice_timing(self, step, model_output, source):

@@ -1,8 +1,0 @@
-{
-  "numpy": "1.26.4",
-  "numpy_path": "/usr/local/python3.12.13/lib/python3.12/site-packages/numpy/__init__.py",
-  "torch": "2.10.0+cpu",
-  "torch_npu": "2.10.0.post4",
-  "python": "3.12.13 (main, Aug  3 2026, 03:58:42) [GCC 12.3.1 (openEuler 12.3.1-105.oe2403sp3)]",
-  "numpy_shadow_absent": true
-}

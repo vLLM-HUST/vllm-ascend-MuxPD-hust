@@ -1,7 +1,0 @@
-{
-  "passed": true,
-  "cancel_delay_s": 0.1,
-  "cancelled_at_monotonic": 6812395.574734392,
-  "prefill_started_monotonic": 6812395.472482128,
-  "decode_content_events_before_prefill_first_token": null
-}

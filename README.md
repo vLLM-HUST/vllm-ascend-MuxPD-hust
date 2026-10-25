@@ -1,5 +1,17 @@
 # MuxPD for HUST vLLM Ascend
 
+维护主体：[vLLM-HUST](https://github.com/vLLM-HUST)。缺陷、兼容性和发布问题请提交到
+[本仓库 Issues](https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/issues)。
+
+`0.2.0a1` 提供可安装的 ECPA 0.3 Bundle，包含成对的 scheduler、admission policy
+和 worker。安装不自动启用；Manager 显式配置后统一投影三个入口，并根据实际输出
+记录运行状态。安装、启用、停止和恢复原生服务见 [ECPA 部署说明](docs/ecpa-deployment.md)。
+版本发布和实机验收由 [Issue #21](https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/issues/21)
+跟踪；这次接入本身不构成新的性能收益结论。
+
+Historical data for the migrated batch is in [benchmark custody](EVIDENCE.md),
+with pinned hashes and an external-directory downloader.
+
 将 MuxWise 的 P/D 解耦机制适配到现有 HUST vLLM，使用原生 KV 分配、抢占、
 取消、采样与 OpenAI API。安装包本身不修改 vLLM；通过显式 scheduler/worker
 类启用，无需改动基线源码。
@@ -59,8 +71,8 @@ Goodput 为原生 16K 对照的 **3.15×**；固定窗口吞吐约 **+0.48%**，
 适用负载、全部对照和复现证据见 [TP4 Goodput 报告](docs/performance-tp4-goodput.md)。
 这是特定到达率下的交互 SLO 收益，不是最大吞吐或任意负载加速保证。
 
-早期 [TP2 验证](evidence/2026-10-10/README.md) 和
-[TP4 eager 验证](evidence/2026-10-10-tp4/README.md) 保留原始回执与未取得收益的结果。
+早期 [TP2 验证](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/2144d58de108cddaff3800fdcbf12dc9d3ab1d18/archive/mod-consumers-20261023/muxpd/manifest.json) 和
+[TP4 eager 验证 (archive member: `evidence/2026-10-10-tp4/README.md`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/812ef01ae992475d4ce6a3bb6a6ce4bda43b5f12/archive/mod-collections-20261023/muxpd/manifest.json) 保留原始回执与未取得收益的结果。
 不同 TP、eager/graph、缓存设置的测量不能直接混用。
 
 ## 固定运行基线
@@ -100,7 +112,7 @@ async scheduling 和 prefix caching，并将 token budget 设置为完整 16K �
 启动脚本默认 TP=2；四卡使用 `ASCEND_RT_VISIBLE_DEVICES=0,1,2,3 MUXPD_TP_SIZE=4`。
 TP4 占用所选四张 NPU，TP8 占用八张，不能与占用相同设备的服务同时运行。
 早期四卡环境的完整启动与复测命令见
-[TP4 记录](evidence/2026-10-10-tp4/README.md#reproduction)。
+[TP4 记录 (archive member: `evidence/2026-10-10-tp4/README.md`)](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/812ef01ae992475d4ce6a3bb6a6ce4bda43b5f12/archive/mod-collections-20261023/muxpd/manifest.json)。
 
 独立 decode 图使用以下入口。P 保持完整 prompt，不进入设备图；D 使用自己
 的静态输入、workspace 和捕获流；两者共享模型权重与 KV。该入口关闭详细 trace，

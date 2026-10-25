@@ -46,6 +46,27 @@ def test_three_methods_route_by_lane_and_restore_native_descriptors():
     router.restore()
 
 
+def test_restore_keeps_foreign_override_pending_for_safe_retry():
+    native, prefill = Communicator("D"), Communicator("P")
+    router = LaneCollectiveRouter(SimpleNamespace(active_lane=None)).install(
+        [(native, prefill)]
+    )
+    wrapper = native.all_gather
+
+    def foreign(value):
+        return value
+
+    native.all_gather = foreign
+    with pytest.raises(RuntimeError, match="changed externally"):
+        router.restore()
+    assert native.all_gather is foreign
+    assert len(router._installed) == 1  # The other two methods were restored.
+    native.all_gather = wrapper
+    router.restore()
+    assert not router._installed
+    assert not any(name in vars(native) for name in router.METHODS)
+
+
 def test_aliases_share_sibling_group_and_repeated_pairs_install_once():
     native_group, prefill_group = object(), object()
     tp = Communicator("Dtp", native_group)

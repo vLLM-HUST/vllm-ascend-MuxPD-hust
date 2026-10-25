@@ -332,6 +332,140 @@ def test_all_cancelled_keeps_engine_alive_until_ack_and_cleanup(make_scheduler):
     assert not scheduler.has_requests()
 
 
+@pytest.mark.parametrize("late_completion", [False, True])
+def test_current_contract_abort_defers_reclaimed_event_until_valid_ack(
+    make_scheduler, late_completion
+):
+    from vllm_muxpd.native_compat import SchedulerContract
+
+    scheduler = make_scheduler(layers_per_slice=4 if late_completion else 1)
+    start_decode(scheduler)
+    scheduler.add_request(request("p", 32))
+    dispatched = scheduler.schedule()
+    if not late_completion:
+        retire(scheduler, dispatched)
+    events = []
+    scheduler._native_contract = SchedulerContract(
+        "hust-oct25",
+        "unused",
+        SimpleNamespace(enabled=True, emit=events.append),
+        lambda **kwargs: kwargs,
+    )
+    scheduler.requests["p"].session_id = "session-p"
+    scheduler.finish_requests("p", RequestStatus.FINISHED_ABORTED)
+    held = scheduler._held_prefill_blocks["p"]
+    assert not events and all(block.ref_cnt > 0 for block in held)
+    output = dispatched if late_completion else scheduler.schedule()
+    result = receipt(
+        output,
+        completed={"p"} if late_completion else (),
+        cancelled=() if late_completion else {"p"},
+    )
+    invalid = receipt(output)
+    invalid.muxpd_prefill_cohort_id = -1
+    with pytest.raises(RuntimeError):
+        scheduler.update_from_output(output, invalid)
+    assert not events and all(block.ref_cnt > 0 for block in held)
+    scheduler.update_from_output(output, result)
+    assert all(block.ref_cnt == 0 for block in held)
+    assert events == [
+        {
+            "request_id": "p",
+            "session_id": "session-p",
+            "kv_blocks": 2,
+            "path": "deferred",
+        }
+    ]
+    assert not scheduler._held_prefill_blocks and not scheduler._held_prefill_sessions
+
+
+def test_preempt_forwards_current_drop_keyword_and_clears_decode_debt(
+    make_scheduler, monkeypatch
+):
+    from vllm.v1.core.sched.scheduler import Scheduler
+
+    from vllm_muxpd.native_compat import SchedulerContract
+
+    scheduler = make_scheduler()
+    start_decode(scheduler)
+    scheduler._native_contract = SchedulerContract("hust-oct25", "unused")
+    calls = []
+
+    def preempt(self, request, timestamp, drop_stale_output=False):
+        calls.append((self, request.request_id, timestamp, drop_stale_output))
+
+    monkeypatch.setattr(Scheduler, "_preempt_request", preempt)
+    scheduler._prefill_first_decode_debt.add("d")
+    scheduler._preempt_request(scheduler.requests["d"], 1.5, drop_stale_output=True)
+    assert calls == [(scheduler, "d", 1.5, True)]
+    assert not scheduler._prefill_first_decode_debt
+
+
+def test_partial_native_reclaim_failure_keeps_ownership_and_rejects_retry(
+    make_scheduler, monkeypatch
+):
+    scheduler = make_scheduler()
+    start_decode(scheduler)
+    scheduler.add_request(request("p", 32))
+    retire(scheduler, scheduler.schedule())
+    scheduler.finish_requests("p", RequestStatus.FINISHED_ABORTED)
+    held = scheduler._held_prefill_blocks["p"]
+    output = scheduler.schedule()
+    result = receipt(output, cancelled={"p"})
+    calls = []
+
+    def partial_free(blocks):
+        # A failure after the first native refcount mutation is not safely
+        # retryable. Keep the retained record but never decrement it twice.
+        blocks = list(blocks)
+        blocks[0].ref_cnt -= 1
+        calls.append(1)
+        raise RuntimeError("partial pool failure")
+
+    monkeypatch.setattr(
+        scheduler.kv_cache_manager.block_pool, "free_blocks", partial_free
+    )
+    with pytest.raises(RuntimeError, match="partial pool failure"):
+        scheduler.update_from_output(output, result)
+    assert scheduler._held_prefill_blocks["p"] is held
+    assert scheduler._prefill_cohort.pending_ids == {"p"}
+    with pytest.raises(RuntimeError, match="previously failed"):
+        scheduler.update_from_output(output, result)
+    assert len(calls) == 1
+
+
+def test_effective_evidence_follows_native_retirement_not_invalid_or_cancelled_work(
+    make_scheduler, monkeypatch
+):
+    import vllm_muxpd.scheduler as module
+
+    events = []
+    monkeypatch.setattr(
+        module, "emit_runtime_effective", lambda owner, **kw: events.append(kw)
+    )
+    scheduler = make_scheduler()
+    scheduler.add_request(request("p", 32))
+    output = scheduler.schedule()
+    assert not events
+    invalid = receipt(output)
+    invalid.muxpd_prefill_cohort_id = -1
+    with pytest.raises(RuntimeError):
+        scheduler.update_from_output(output, invalid)
+    assert not events
+    retire(scheduler, output, completed={"p"})
+    assert events == [
+        {"role": role, "request_count": 1, "output_token_count": 1}
+        for role in ("scheduler", "admission")
+    ]
+    events.clear()
+    scheduler.add_request(request("abort", 32))
+    retire(scheduler, scheduler.schedule())
+    events.clear()  # Valid decode progress may have accompanied the new P.
+    scheduler.finish_requests(None, RequestStatus.FINISHED_ABORTED)
+    retire(scheduler, scheduler.schedule(), cancelled={"abort"})
+    assert not events
+
+
 def test_completion_racing_with_abort_drops_sample_and_unpins(make_scheduler):
     scheduler = make_scheduler(layers_per_slice=4)
     start_decode(scheduler)

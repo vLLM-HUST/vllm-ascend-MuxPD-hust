@@ -59,6 +59,96 @@ def worker_factory():
     return create
 
 
+@pytest.mark.integration
+def test_managed_qualification_failure_precedes_native_device_init(
+    worker_factory, monkeypatch
+):
+    from vllm_muxpd import deployment
+
+    state = worker_factory()
+    for name in deployment._MANAGER_BINDING_ENV:
+        monkeypatch.setenv(name, "managed-binding")
+    monkeypatch.setattr(
+        deployment,
+        "doctor",
+        lambda: {
+            "software_profile_matches": False,
+            "errors": ["unqualified native binary"],
+        },
+    )
+    monkeypatch.setattr(
+        state.module.NPUWorker,
+        "init_device",
+        lambda *args: pytest.fail("native device initialization must not begin"),
+    )
+    with pytest.raises(RuntimeError, match="unqualified native binary"):
+        state.worker.init_device()
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("current", [False, True])
+def test_shared_cache_retains_native_init_arguments_without_allocating(
+    worker_factory, monkeypatch, current
+):
+    state = worker_factory()
+    module = state.module
+    native = module.NPUModelRunner
+    calls = []
+    config = NS(kv_cache_groups=[NS(layer_names=["layer"])])
+    owner = NS(
+        kv_cache_config=config,
+        kernel_block_sizes=[16],
+        kv_caches=[object()],
+        shared_kv_cache_layers={},
+        runner_only_attn_layers=set(),
+    )
+    runner = module._SharedCacheRunner.__new__(module._SharedCacheRunner)
+    runner._owner = owner
+    runner.compilation_config = NS(
+        static_forward_context={"layer": NS(kv_cache=owner.kv_caches[0])}
+    )
+    context = object()
+
+    if current:
+
+        def initialize(self, kv_cache_config, kv_cache_allocation_context=None):
+            self.kv_cache_config = kv_cache_config
+            calls.append(kv_cache_allocation_context)
+            self.initialize_kv_cache_tensors(
+                kv_cache_config,
+                kernel_block_sizes=[16],
+                kv_cache_allocation_context=kv_cache_allocation_context,
+            )
+
+        def tensors(
+            self,
+            kv_cache_config,
+            kernel_block_sizes=None,
+            kv_cache_allocation_context=None,
+        ):
+            pytest.fail("D must not allocate or bind shared backing tensors")
+    else:
+
+        def initialize(self, kv_cache_config):
+            self.kv_cache_config = kv_cache_config
+            calls.append(None)
+            self.initialize_kv_cache_tensors(kv_cache_config)
+
+        def tensors(self, kv_cache_config):
+            pytest.fail("D must not allocate or bind shared backing tensors")
+
+    monkeypatch.setattr(native, "initialize_kv_cache", initialize)
+    monkeypatch.setattr(native, "initialize_kv_cache_tensors", tensors)
+    runner.initialize_kv_cache(config, context if current else None)
+    assert calls == [context if current else None]
+    assert runner.kv_caches is owner.kv_caches
+    if current:
+        runner.kv_caches = None
+        with pytest.raises(RuntimeError, match="block layouts"):
+            runner.initialize_kv_cache_tensors(config, kernel_block_sizes=[32])
+        assert runner.kv_caches is None
+
+
 @pytest.fixture
 def overlap_graph_factory(worker_factory, monkeypatch):
     def create(*, communication_fails=False):
@@ -69,7 +159,8 @@ def overlap_graph_factory(worker_factory, monkeypatch):
         profiled = object()
         monkeypatch.setattr(workspace, "_manager", profiled)
         monkeypatch.setattr(
-            workspace, "WorkspaceManager",
+            workspace,
+            "WorkspaceManager",
             lambda device, num_ubatches: NS(device=device, num_ubatches=num_ubatches),
         )
         runtime.workspace = workspace
@@ -81,11 +172,13 @@ def overlap_graph_factory(worker_factory, monkeypatch):
         policy.update(stream_mode="overlap", overlap_communication="isolated")
         original_controller = state.module.DecodeGraphController
         monkeypatch.setattr(
-            state.module, "DecodeGraphController",
+            state.module,
+            "DecodeGraphController",
             lambda *args: original_controller(*args, runtime=runtime),
         )
         monkeypatch.setattr(
-            state.module, "NPUOverlapBackend",
+            state.module,
+            "NPUOverlapBackend",
             lambda: NPUOverlapBackend(
                 runtime=runtime.npu,
                 forward_context_module=runtime.forward,
@@ -140,7 +233,9 @@ def test_overlap_communication_failure_restores_graph_guards(overlap_graph_facto
 @pytest.mark.integration
 @pytest.mark.parametrize("decode_fails", [False, True])
 def test_overlap_graph_kv_initialization_joins_startup_and_restores_caller(
-    overlap_graph_factory, monkeypatch, decode_fails,
+    overlap_graph_factory,
+    monkeypatch,
+    decode_fails,
 ):
     state = overlap_graph_factory()
     worker = state.worker
@@ -450,7 +545,7 @@ def test_shutdown_before_model_attach_does_not_require_update_stream(
 
 
 @pytest.mark.integration
-def test_shutdown_releases_graph_references_even_if_native_cleanup_fails(
+def test_shutdown_releases_graphs_but_retries_failed_native_cleanup(
     worker_factory, monkeypatch
 ):
     state = worker_factory()
@@ -463,13 +558,19 @@ def test_shutdown_releases_graph_references_even_if_native_cleanup_fails(
     def native_shutdown(worker):
         native_calls.append(worker)
         assert state.decode.model is None
-        raise ValueError("native cleanup failed")
+        if len(native_calls) == 1:
+            raise ValueError("native cleanup failed")
 
     monkeypatch.setattr(state.module.NPUWorker, "shutdown", native_shutdown)
     with pytest.raises(ValueError, match="native cleanup"):
         state.worker.shutdown()
+    assert state.worker.decode_runner is state.decode
+    assert state.worker._streams and not getattr(
+        state.worker, "_muxpd_shutdown_complete", False
+    )
     state.worker.shutdown()
-    assert len(native_calls) == 1
+    state.worker.shutdown()
+    assert len(native_calls) == 2
     assert state.worker.decode_runner is None
     assert state.worker._decode_graph_controller is None
     assert state.controller.snapshot()["closed"]

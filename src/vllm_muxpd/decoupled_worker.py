@@ -459,6 +459,7 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
         if prefill_completed:
             self._clear_prefill()
         self._awaiting_sample = False
+        self._record_effective_output(output)
         return output
 
     def shutdown(self) -> None:

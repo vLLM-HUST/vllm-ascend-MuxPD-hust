@@ -1,0 +1,34 @@
+name: Migrated consumer evidence
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  canonical-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install pytest
+      - run: python -m pytest -q -c /dev/null tests/test_mod_consumer_capsule.py tests/test_migrated_evidence_boundary.py tests/test_collection_evidence_boundary.py
+      - name: Verify canonical archive and every original member
+        run: python scripts/fetch_mod_consumer_evidence.py --destination "$RUNNER_TEMP/consumer-evidence"
+      - name: Verify historical capsule and every original member
+        run: python scripts/fetch_mod_consumer_evidence.py --config BENCHMARK_HISTORY.json --destination "$RUNNER_TEMP/history-evidence"
+      - name: Verify remaining collection and every original member
+        run: python scripts/fetch_mod_consumer_evidence.py --config BENCHMARK_COLLECTION.json --destination "$RUNNER_TEMP/collection-evidence"
+      - name: Verify historical document originals
+        run: python scripts/fetch_mod_consumer_evidence.py --config BENCHMARK_DOCUMENTS.json --destination "$RUNNER_TEMP/document-evidence"
+      - name: Verify TP8 and group-FX original documents
+        run: python scripts/fetch_mod_consumer_evidence.py --config BENCHMARK_TP8_DOCUMENTS.json --destination "$RUNNER_TEMP/tp8-document-evidence"
+      - name: Bind selected raw members to the four document consumers
+        env:
+          BENCHMARK_COLLECTION_ROOT: ${{ runner.temp }}/collection-evidence
+        run: python -m pytest -q -c /dev/null tests/test_mod_consumer_capsule.py -k tp8_downloaded_member_identities

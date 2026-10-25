@@ -16,6 +16,21 @@ from test_worker_graph import (
 from vllm_muxpd.lanes import LayerInterleaver
 
 
+@pytest.mark.parametrize("flag", [0, None, "", []])
+def test_worker_rejects_falsey_non_boolean_group_opt_in(
+    worker_factory, monkeypatch, flag
+):
+    module = worker_factory().module
+    monkeypatch.setattr(module, "validate_engine_config", lambda _: None)
+    config = NS(
+        scheduler_config=NS(
+            batch_admission_policy_config={"compile_prefill_groups": flag}
+        )
+    )
+    with pytest.raises(ValueError, match="compile_prefill_groups must be a boolean"):
+        module._validate_worker_config(config)
+
+
 @pytest.mark.parametrize("fail", [False, True])
 def test_startup_prefill_scope_owns_lane_and_joins_before_restore(
     overlap_graph_factory, monkeypatch, fail

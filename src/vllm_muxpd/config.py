@@ -213,9 +213,17 @@ def validate_engine_config(config: Any) -> None:
     ):
         if getattr(parallel, name, 1) != 1:
             errors.append(f"{name} must be 1 (tensor parallelism is supported)")
-    for name in ("speculative_config", "kv_transfer_config", "ec_transfer_config"):
+    for name in (
+        "speculative_config",
+        "kv_transfer_config",
+        "ec_transfer_config",
+    ):
         if getattr(config, name, None) is not None:
             errors.append(f"{name} is not supported")
+    if getattr(getattr(config, "aux_output_config", None), "enabled", False):
+        errors.append("auxiliary output connectors are not supported")
+    if getattr(model, "return_sampling_mask", False):
+        errors.append("return_sampling_mask is not supported")
     if getattr(model, "is_encoder_decoder", False) or getattr(
         model, "is_diffusion", False
     ):

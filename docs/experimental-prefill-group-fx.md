@@ -10,6 +10,44 @@ The [validation report](validation-tp4-prefill-group-fx.md) records the evidence
 and its limits. No group-FX throughput or Goodput benefit has been established.
 This does not include the short-prefill PIECEWISE or pipelined-sampler experiments.
 
+## Current runtime integration
+
+The branch now includes main's native KV-reclamation compatibility, process-owned
+ECPA output receipts and retryable shutdown. Closing P group handles happens only
+after P/D/update stream joins, before closing the D controller; a failed group
+close retains its handle and prevents native shared-model cleanup. These source
+changes do not establish a numerical fix or requalify the historical device
+results for this newer source tree.
+
+The installed recipe accepts an explicit `--experimental-prefill-groups` flag on
+`configuration`, `plan` and `serve`. Without it, the existing raw-P configuration
+and launch command are unchanged. For example, after installing the candidate
+build in the separately qualified native environment:
+
+```sh
+vllm-muxpd configuration --experimental-prefill-groups \
+  --output muxpd-group-configuration.json
+vllm-hust-ext extension configure org.vllm-hust.muxpd \
+  --file muxpd-group-configuration.json
+vllm-hust-ext extension enable org.vllm-hust.muxpd
+vllm-muxpd serve --model /path/to/Qwen3.5-35B-A3B \
+  --tensor-parallel-size 4 --experimental-prefill-groups --dry-run
+```
+
+Configuration and dry-run do not launch a model. An actual launch additionally
+requires explicit device selection and the normal `serve` call without dry-run.
+Serve rejects a saved raw configuration when the group flag is selected and vice
+versa. The flag projects `compile_prefill_groups=true` and selects the required
+fusion backend with `enable_npugraph_ex=false` and `enable_static_kernel=false`;
+the worker still checks the complete group recipe and native AOT requirement.
+This remains an unqualified experiment, not a change to the alpha release's
+published hardware qualification.
+
+A matched raw-P control must use the same fusion-backend settings explicitly in
+its host configuration. The normal raw-P launch recipe retains its prior native
+backend default, so comparing that recipe directly with the group flag would
+also change D compilation and cannot isolate the effect of grouping P.
+
 ## Execution and restrictions
 
 With `compile_prefill_groups=true`, the P runner executes the existing embedding,

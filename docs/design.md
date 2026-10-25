@@ -331,7 +331,7 @@ P 进入编译上下文；已悬挂的 P 始终继续逐层 raw 执行。编译�
 controller 的 `snapshot()` 按实际 descriptor 对应的已捕获 graph entry 区分
 D capture、replay 与 eager fallback，仅看到 `FULL` 不计作 replay。
 `prefill_compiled_calls` 表示允许编译执行的调用数，不能单独证明实际 FX 命中；
-本轮另外保存了 [四 rank 的编译执行 profile 证据](../evidence/2026-10-10-tp4-optimization/graph-compiled-profile-proof.md)。
+本轮另外保存了 [四 rank 的编译执行 profile 证据](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/afd47a8e9964b71844dec75a8e908f279ae98202/archive/mod-history-20261023/muxpd/manifest.json)（归档成员 `evidence/2026-10-10-tp4-optimization/graph-compiled-profile-proof.md`）。
 
 纯 D 步骤直接复用原生 runner/sampler，省去逐层 greenlet 编排。仅在 graph
 fenced、连续两轮纯 D、前轮已成功采样且未配置 profiler 时，省去本轮冗余的
@@ -362,19 +362,12 @@ worker 为 P 建立 rank membership 相同的 TP/EP sibling groups，D 和 calle
 再恢复路由并销毁本 worker 自建的组，不销毁原生组。该路由支持当前白名单的
 通信调用，不能推广成任意 MoE backend 或 collective 的隔离保证。
 
-isolated8 已完成 Qwen3.5-35B-A3B BF16、TP4+EP、eager 的自然语言对照、
-长 P 进度、取消和四 rank profile；事件数下降，但该 capture 的计算交叠没有
-增加，实测性能也未超过原生。shared 的 TP4 结果和 graph fenced 的后续优化
-同见 [TP4 性能报告](performance-tp4.md)。这些是不同执行组合，不应把
-isolated 通信组与 decode graph 的验证结果合并成未测试的 graph overlap 配置。
-
-shared overlap 的早期设备证据见 [2026-10-10 回执](../evidence/2026-10-10/README.md#device-profile-independent-pd-compute-intervals)。
-在指定 Qwen3.5-35B-A3B BF16 / Ascend 910B2 / TP2+EP / 固定 8 层配额的
-capture 中，两 rank 的 P/D compute 区间交集分别约占活跃并集的 10.78% 和
-9.16%。计算使用已映射到 P/D 的 CANN physical stream，排除 CPU、拷贝、
-event wait 和通信区间。它证明该 capture 存在设备 compute 任务重叠，不能
-证明同时的每核占用、空间资源隔离、完整工作负载利用率或吞吐提升。profile
-有记录窗口结束时的停止告警；导出区间已检查，但不能据此保证未记录任务的完整性。
+历史测量见 [完整设计原文](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/a76de7e466e5fabb98b1803a6d8a7037e17cb9a8/archive/mod-targeted-20261023/muxpd-documents/snapshot/docs/design.md)，其中保留
+isolated8 的四 rank profile、未超过原生的结果，以及 shared TP2 capture
+的计算区间交集与停止告警。不同执行组合不可拼成未测试的 graph overlap 配置。
+设备 compute 重叠不证明每核占用、空间隔离、完整负载利用率或吞吐提升；
+导出区间通过检查也不保证未记录任务完整。TP4 的独立比较见
+[历史性能入口](performance-tp4.md)。这些历史记录不代表当前配置重新通过验收。
 
 ## 验证与测量
 
@@ -413,7 +406,7 @@ SSE、usage、功能 oracle、重复稳定性及文本哈希；`--require-exact`
 只说明这些用例通过，不能替代长期随机、取消与内存压力测试。
 
 图模式还使用 token-ID 状态复用探针，覆盖单 token P、双 token 对照和长 P
-前后历史。当前 [三路调查](../evidence/2026-10-10-tp4-optimization/one-token-prefill-investigation.md)
+前后历史。当前 [三路调查](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/afd47a8e9964b71844dec75a8e908f279ae98202/archive/mod-history-20261023/muxpd/manifest.json)（归档成员 `evidence/2026-10-10-tp4-optimization/one-token-prefill-investigation.md`）
 记录了原生 graph 的单 token P 首输出不稳定，而原生 eager 与插件 graph 在
 同一探针中稳定；双 token P 的后续差异在三路均存在。证据支持继续检查原生
 GDN graph 路由与状态更新，尚未证明缓存泄漏，也不能据此归因所有生成差异。
@@ -433,3 +426,6 @@ trace 的 `decoupled_schedule` / `decoupled_complete` 记录 cohort、pending P�
 本轮 D、配额来源、prefill-first 债务、层进度来源和 ACK；后续 P 层执行不会
 再次记入 prompt token admission。trace 可关闭以测量常规执行性能；关闭 trace
 的运行不能作为逐轮层进度证据，需保留独立协议验证回执。
+
+
+TP4 optimization links open the benchmark member manifest. Retrieve the named original through EVIDENCE.md; omitted full captures are not recovered.
