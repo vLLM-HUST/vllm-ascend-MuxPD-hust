@@ -82,9 +82,8 @@ def validate_decode_graph_config(config: Any, policy: Any) -> None:
         if getattr(config, name, None) is not None:
             errors.append(f"{name} is unsupported by decode graphs")
     offload = getattr(config, "offload_config", None)
-    if (
-        _value(_value(offload, "uva"), "cpu_offload_gb", 0)
-        or _value(_value(offload, "prefetch"), "offload_group_size", 0)
+    if _value(_value(offload, "uva"), "cpu_offload_gb", 0) or _value(
+        _value(offload, "prefetch"), "offload_group_size", 0
     ):
         errors.append("model offloading is unsupported by decode graphs")
     if errors:
@@ -434,33 +433,33 @@ class DecodeGraphController:
             raise RuntimeError("Cannot close during owner capture redirection")
         if self._compile_prefill_active:
             raise RuntimeError("Cannot close during full prefill compilation")
+        wrapper = self._decode_graph_model
+        if wrapper is not None:
+            # Keep ownership if native graph destruction fails; the worker must
+            # not release captured KV until this operation can be retried.
+            wrapper.concrete_aclgraph_entries.clear()
+            if self.decode.model is wrapper:
+                self.decode.model = None
+        while self._patches:
+            target, name, original, installed = self._patches[-1]
+            # A foreign wrapper can retain our method in its closure. Keep the
+            # ownership record and stop native resource release until the
+            # original installed method is restored; never overwrite it.
+            if vars(target).get(name, _MISSING) is not installed:
+                raise RuntimeError(f"MuxPD graph method changed externally: {name}")
+            if original is _MISSING:
+                delattr(target, name)
+            else:
+                setattr(target, name, original)
+            self._patches.pop()
+        self._decode_graph_model = None
+        self._attached = False
+        self.owner = None
+        self.decode = None
+        self.stream = None
+        self.workspace = None
+        self.runtime = None
         self._closed = True
-        try:
-            wrapper = self._decode_graph_model
-            if wrapper is not None:
-                # Drop graph objects before the native owner frees captured KV.
-                wrapper.concrete_aclgraph_entries.clear()
-                if self.decode.model is wrapper:
-                    self.decode.model = None
-        finally:
-            try:
-                for target, name, original, installed in reversed(self._patches):
-                    # Preserve a later external override; do not clobber it.
-                    if vars(target).get(name, _MISSING) is not installed:
-                        continue
-                    if original is _MISSING:
-                        delattr(target, name)
-                    else:
-                        setattr(target, name, original)
-            finally:
-                self._patches.clear()
-                self._decode_graph_model = None
-                self._attached = False
-                self.owner = None
-                self.decode = None
-                self.stream = None
-                self.workspace = None
-                self.runtime = None
 
     def install_prefill_guards(self) -> None:
         """Install before owner KV init; never mutate shared compilation config."""
@@ -520,6 +519,7 @@ class DecodeGraphController:
         self._patch_instance(self.owner, "use_aclgraph", False)
         self._patch_instance(self.owner, "_muxpd_decode_graph_controller", self)
         if profile_run is not None:
+
             @wraps(profile_run)
             def compiled_profile_run(*args, **kwargs):
                 # Native startup profiles max_num_tokens before KV sizing and
@@ -591,8 +591,10 @@ class DecodeGraphController:
             # ACLGraphWrapper sets capturing inside its first FULL call, after
             # this observer starts. A new concrete entry also proves capture if
             # a native implementation restores that flag before returning.
-            if capturing or getattr(ctx, "capturing", False) or (
-                full and not captured_before and has_captured_entry(descriptor)
+            if (
+                capturing
+                or getattr(ctx, "capturing", False)
+                or (full and not captured_before and has_captured_entry(descriptor))
             ):
                 key = "decode_capture_forward_calls"
             elif full and captured_before:

@@ -30,6 +30,31 @@ from vllm.v1.structured_output import StructuredOutputManager
 from vllm_muxpd.scheduler import MuxPDScheduler
 
 
+def test_managed_qualification_failure_precedes_native_allocator(monkeypatch):
+    from vllm_muxpd import deployment
+    from vllm_muxpd.scheduler import Scheduler
+
+    for name in deployment._MANAGER_BINDING_ENV:
+        monkeypatch.setenv(name, "managed-binding")
+    monkeypatch.setattr(
+        deployment,
+        "doctor",
+        lambda: {
+            "software_profile_matches": False,
+            "errors": ["unqualified current core"],
+        },
+    )
+    monkeypatch.setattr(
+        Scheduler,
+        "__init__",
+        lambda *args, **kwargs: pytest.fail("native allocation must not begin"),
+    )
+    scheduler = MuxPDScheduler.__new__(MuxPDScheduler)
+    with pytest.raises(RuntimeError, match="unqualified current core"):
+        scheduler.__init__(object())
+    assert not hasattr(scheduler, "_native_contract")
+
+
 @pytest.fixture(scope="module")
 def tiny_model(tmp_path_factory):
     path = tmp_path_factory.mktemp("tiny-llama-config")

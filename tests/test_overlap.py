@@ -51,6 +51,21 @@ class Communicator:
         return ("scatter", value, dim)
 
 
+def test_gate_restore_keeps_failed_entry_and_tail_until_retry():
+    runtime = Runtime()
+    comm = Communicator(object())
+    gate = CollectiveGates(runtime).install([comm])
+    comm.all_reduce(1)
+    wrapper = comm.all_gather
+    comm.all_gather = lambda value: value
+    with pytest.raises(RuntimeError, match="changed externally"):
+        gate.restore()
+    assert len(gate._installed) == 1 and gate._tails
+    comm.all_gather = wrapper
+    gate.restore()
+    assert not gate._installed and not gate._tails
+
+
 def backend():
     runtime = Runtime()
     original_manager = object()

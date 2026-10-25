@@ -44,7 +44,8 @@ class LayeredMuxPDScheduler(MuxPDScheduler):
         elif self._pause_state != PauseState.UNPAUSED:
             snapshots = tuple(r for r in snapshots if r.state == "running")
         snapshots = tuple(
-            r for r in snapshots
+            r
+            for r in snapshots
             if r.num_in_flight_tokens == 0 and remaining_tokens(r) > 0
         )
         p_candidates = tuple(r for r in snapshots if request_phase(r) == "prefill")
@@ -92,14 +93,17 @@ class LayeredMuxPDScheduler(MuxPDScheduler):
             # native scheduling passes visible to the worker.
             retry_snapshots = self._muxpd_snapshots()
             retry = policy.choose(
-                retry_snapshots, now, available_prefill_slots=0,
+                retry_snapshots,
+                now,
+                available_prefill_slots=0,
                 force_decode=True,
             )
             if retry.request_ids:
                 first_output = output
                 snapshots = retry_snapshots
                 output = self._schedule_layered_selection(
-                    retry.request_ids, snapshots,
+                    retry.request_ids,
+                    snapshots,
                 )
                 output.finished_req_ids.update(first_output.finished_req_ids)
                 output.preempted_req_ids.update(first_output.preempted_req_ids)
@@ -119,8 +123,13 @@ class LayeredMuxPDScheduler(MuxPDScheduler):
         output.muxpd_prefill_request_ids = p_ids
         output.muxpd_layers_per_slice = policy.config.layers_per_slice
         phase = (
-            "multiplex" if p_ids and d_ids else "prefill" if p_ids
-            else "decode" if d_ids else None
+            "multiplex"
+            if p_ids and d_ids
+            else "prefill"
+            if p_ids
+            else "decode"
+            if d_ids
+            else None
         )
         output.muxpd_phase = phase
         decision = Decision(
@@ -161,9 +170,9 @@ class LayeredMuxPDScheduler(MuxPDScheduler):
 
     def update_from_output(self, scheduler_output, model_runner_output):
         pending = self._layered_pending
-        if (
-            pending is not None and pending[0] is not scheduler_output
-        ) or (pending is None and scheduler_output.total_num_scheduled_tokens):
+        if (pending is not None and pending[0] is not scheduler_output) or (
+            pending is None and scheduler_output.total_num_scheduled_tokens
+        ):
             raise RuntimeError("Unknown/reordered layered MuxPD transaction")
         result = Scheduler.update_from_output(
             self, scheduler_output, model_runner_output
@@ -190,4 +199,5 @@ class LayeredMuxPDScheduler(MuxPDScheduler):
                     )
                     + "\n"
                 )
+        self._record_effective_outputs(result)
         return result

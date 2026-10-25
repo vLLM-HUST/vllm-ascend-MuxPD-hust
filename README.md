@@ -1,7 +1,16 @@
 # MuxPD for HUST vLLM Ascend
 
+维护主体：[vLLM-HUST](https://github.com/vLLM-HUST)。缺陷、兼容性和发布问题请提交到
+[本仓库 Issues](https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/issues)。
+
+`0.2.0a1` 提供可安装的 ECPA 0.3 Bundle，包含成对的 scheduler、admission policy
+和 worker。安装不自动启用；Manager 显式配置后统一投影三个入口，并根据实际输出
+记录运行状态。安装、启用、停止和恢复原生服务见 [ECPA 部署说明](docs/ecpa-deployment.md)。
+版本发布和实机验收由 [Issue #21](https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/issues/21)
+跟踪；这次接入本身不构成新的性能收益结论。
+
 Historical data for the migrated batch is in [benchmark custody](EVIDENCE.md),
-with pinned hashes and an external-directory downloader. Source/runtime behavior is unchanged.
+with pinned hashes and an external-directory downloader.
 
 将 MuxWise 的 P/D 解耦机制适配到现有 HUST vLLM，使用原生 KV 分配、抢占、
 取消、采样与 OpenAI API。安装包本身不修改 vLLM；通过显式 scheduler/worker
