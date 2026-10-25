@@ -162,6 +162,30 @@ def test_native_device_group_aliases_share_one_prefill_coordinator(setup_worker)
 
 
 @pytest.mark.integration
+def test_failed_router_restore_retains_groups_and_handle_for_retry(setup_worker):
+    state = setup_worker
+    worker = state.worker
+    worker._configure_overlap_communication(state.backend)
+    router = worker._collective_router
+    original = router.restore
+    calls = []
+
+    def restore():
+        calls.append(1)
+        if len(calls) == 1:
+            raise RuntimeError("router restore failure")
+        original()
+
+    router.restore = restore
+    with pytest.raises(RuntimeError, match="router restore failure"):
+        worker._release_overlap_communication()
+    assert worker._collective_router is router and len(worker._prefill_groups) == 2
+    assert not any(event[0] == "destroy" for event in state.events)
+    worker._release_overlap_communication()
+    assert worker._collective_router is None and not worker._prefill_groups
+
+
+@pytest.mark.integration
 def test_single_rank_groups_need_no_router_or_clones(setup_worker):
     state = setup_worker
     for group in state.native:

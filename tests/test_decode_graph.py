@@ -264,7 +264,12 @@ def test_capture_uses_decode_stream_in_both_native_layers_and_restores():
     )
     assert ctrl.capture_decode() == 32
     assert d.calls[-1] == (
-        "capture", ctrl.stream, ctrl.stream, ctrl.stream, ctrl.workspace, ctrl.stream
+        "capture",
+        ctrl.stream,
+        ctrl.stream,
+        ctrl.stream,
+        ctrl.workspace,
+        ctrl.stream,
     )
     assert original == (
         r.npu_runner.graph_capture,
@@ -366,10 +371,17 @@ def test_decode_forward_statistics_require_matching_captured_entry(
     assert vars(ctx) == before
     stats = ctrl.snapshot()
     assert stats[expected] == 1
-    assert sum(stats[key] for key in (
-        "decode_replay_calls", "decode_eager_fallback_calls",
-        "decode_capture_forward_calls",
-    )) == 1
+    assert (
+        sum(
+            stats[key]
+            for key in (
+                "decode_replay_calls",
+                "decode_eager_fallback_calls",
+                "decode_capture_forward_calls",
+            )
+        )
+        == 1
+    )
     assert stats["decode_uncaptured_full_calls"] == uncaptured
 
 
@@ -515,6 +527,60 @@ def test_close_rejects_active_capture_redirection_without_corruption():
         assert not ctrl.snapshot()["closed"]
     assert p.capture_model == original
     ctrl.close()
+
+
+def test_close_graph_clear_failure_preserves_owner_and_retries():
+    ctrl, owner, decode, _ = controller()
+    ctrl.capture_decode()
+    wrapper = ctrl._decode_graph_model
+
+    class Entries(dict):
+        failed = False
+
+        def clear(self):
+            if not self.failed:
+                self.failed = True
+                raise RuntimeError("graph clear failed")
+            super().clear()
+
+    wrapper.concrete_aclgraph_entries = Entries(wrapper.concrete_aclgraph_entries)
+    patches = list(ctrl._patches)
+    with pytest.raises(RuntimeError, match="graph clear failed"):
+        ctrl.close()
+    assert not ctrl._closed and ctrl.owner is owner and ctrl.decode is decode
+    assert ctrl._patches == patches and ctrl._decode_graph_model is wrapper
+    ctrl.close()
+    assert ctrl._closed and ctrl.owner is None and not ctrl._patches
+
+
+def test_close_patch_failure_removes_only_successful_entries():
+    ctrl, owner, _, _ = controller()
+
+    class Target:
+        fail = True
+
+        def __setattr__(self, name, value):
+            if name == "method" and value == "original" and self.fail:
+                raise RuntimeError("restore failed")
+            super().__setattr__(name, value)
+
+    target = Target()
+    target.method = installed = object()
+    safe = NS(method=installed)
+    ctrl._patches.extend(
+        [
+            (target, "method", "original", installed),
+            (safe, "method", "original", installed),
+        ]
+    )
+    with pytest.raises(RuntimeError, match="restore failed"):
+        ctrl.close()
+    assert safe.method == "original"
+    assert ctrl._patches[-1][0] is target
+    assert ctrl.owner is owner and not ctrl._closed
+    target.fail = False
+    ctrl.close()
+    assert target.method == "original" and ctrl._closed
 
 
 @pytest.mark.parametrize("field", ["input_batch", "input_ids", "positions"])

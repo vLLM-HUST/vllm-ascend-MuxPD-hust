@@ -60,8 +60,8 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
     def _snapshot_prefill_progress(self) -> None:
         if self._prefill_task is not None:
             task = self._prefill_task.tasks["prefill"]
-            complete_return = (
-                task.done and getattr(self, "_prefill_full_forward_return", False)
+            complete_return = task.done and getattr(
+                self, "_prefill_full_forward_return", False
             )
             self._iteration_prefill_layers_completed = (
                 self._decoder_layer_count if complete_return else task.completed_layers
@@ -320,8 +320,10 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
             return None
 
         budget = None
-        if pending and not scheduler_output.muxpd_pause_prefill and not (
-            pending <= (cancelled | self._prefill_cancelled)
+        if (
+            pending
+            and not scheduler_output.muxpd_pause_prefill
+            and not (pending <= (cancelled | self._prefill_cancelled))
         ):
             budget = scheduler_output.muxpd_layers_per_slice
             if type(budget) is not int or budget < 1:
@@ -448,6 +450,7 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
         if prefill_completed:
             self._clear_prefill()
         self._awaiting_sample = False
+        self._record_effective_output(output)
         return output
 
     def shutdown(self) -> None:

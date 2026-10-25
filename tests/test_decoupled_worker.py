@@ -224,9 +224,13 @@ def test_decode_only_reuses_native_rows_without_greenlet_and_preserves_lifecycle
     output.preempted_req_ids = {"preempted"}
     output.new_block_ids_to_zero = [42]
     output.scheduled_cached_reqs = CachedRequestData(
-        req_ids=["d"], resumed_req_ids={"d"}, new_token_ids=[],
-        all_token_ids={"d": [3, 4]}, new_block_ids=[([42],)],
-        num_computed_tokens=[9], num_output_tokens=[2],
+        req_ids=["d"],
+        resumed_req_ids={"d"},
+        new_token_ids=[],
+        all_token_ids={"d": [3, 4]},
+        new_block_ids=[([42],)],
+        num_computed_tokens=[9],
+        num_output_tokens=[2],
     )
     caller = worker._execution_backend.capture()
     worker.execute_model(output)
@@ -278,8 +282,12 @@ def test_decode_only_path_yields_to_persistent_prefill_then_returns(simulation, 
     assert first.req_ids == ["d"] and first.muxpd_prefill_layers_completed == 1
     task = worker._prefill_task
     worker.execute_model(
-        schedule(pending=("p",), decode=("d",), cancel=("p",) if cancel else (),
-                 finish=not cancel)
+        schedule(
+            pending=("p",),
+            decode=("d",),
+            cancel=("p",) if cancel else (),
+            finish=not cancel,
+        )
     )
     assert not worker._decode_only_fast_path
     result = worker.sample_tokens(None)
@@ -329,7 +337,8 @@ def test_decode_only_native_compaction_order_falls_back_to_merge(
     worker, _ = simulation
     worker.execute_model(schedule(decode=("d1", "d2")))
     native = ModelRunnerOutput(
-        req_ids=["d2", "d1"], req_id_to_index={"d2": 0, "d1": 1},
+        req_ids=["d2", "d1"],
+        req_id_to_index={"d2": 0, "d1": 1},
         sampled_token_ids=[[22], [11]],
     )
     monkeypatch.setattr(worker.decode_runner, "sample_tokens", lambda grammar: native)
@@ -491,9 +500,7 @@ def test_partial_cancel_keeps_forward_progress_without_training_timer(
     worker.execute_model(schedule(new_p=("p", "q"), pending=("p", "q")))
     worker.sample_tokens(None)
     assert len(timers) == 2
-    worker.execute_model(
-        schedule(pending=("p", "q"), decode=("d",), cancel=("p",))
-    )
+    worker.execute_model(schedule(pending=("p", "q"), decode=("d",), cancel=("p",)))
     partial = worker.sample_tokens(None)
     assert partial.muxpd_prefill_layers_completed == 2
     assert partial.muxpd_prefill_slice_timing is None
@@ -586,7 +593,8 @@ def test_overlap_zeroes_once_before_lanes_and_joins_only_sampled_decode(simulati
 
 @pytest.mark.integration
 def test_prefill_layer_quota_and_final_layer_retirement_with_complete_decode(
-    simulation, monkeypatch,
+    simulation,
+    monkeypatch,
 ):
     worker, events = simulation
     worker.decode_runner.layers = 4
@@ -793,6 +801,71 @@ def test_shutdown_abort_join_failure_retains_task_and_resources_for_retry(
     assert events.count(("native_shutdown",)) == 1
     assert events.index(("restore",)) < events.index(("destroy",))
     assert events.index(("destroy",)) < events.index(("native_shutdown",))
+
+
+@pytest.mark.integration
+def test_native_shutdown_failure_is_not_marked_complete(simulation, monkeypatch):
+    from vllm_muxpd.worker import NPUWorker
+
+    worker, _ = simulation
+    decode = worker.decode_runner
+    streams = worker._streams.copy()
+    calls = []
+
+    def native_shutdown(self):
+        calls.append(self)
+        if len(calls) == 1:
+            raise RuntimeError("native shutdown failed")
+
+    monkeypatch.setattr(NPUWorker, "shutdown", native_shutdown)
+    with pytest.raises(RuntimeError, match="native shutdown failed"):
+        worker.shutdown()
+    assert not getattr(worker, "_muxpd_shutdown_complete", False)
+    assert worker.decode_runner is decode and worker._streams == streams
+    worker.shutdown()
+    worker.shutdown()
+    assert len(calls) == 2 and worker._muxpd_shutdown_complete
+
+
+@pytest.mark.integration
+def test_effective_worker_evidence_only_after_successful_sampling(
+    simulation, monkeypatch
+):
+    import vllm_muxpd.worker as module
+
+    worker, _ = simulation
+    events = []
+    monkeypatch.setattr(
+        module, "emit_runtime_effective", lambda owner, **kw: events.append(kw)
+    )
+    worker.execute_model(schedule(new_p=("p",), pending=("p",), decode=("d",)))
+    assert not events
+    result = worker.sample_tokens(None)
+    assert result.req_ids == ["d"]
+    assert events == [{"role": "worker", "request_count": 1, "output_token_count": 1}]
+
+
+@pytest.mark.integration
+def test_interleaver_close_failure_never_frees_shared_resources(
+    simulation, monkeypatch
+):
+    from vllm_muxpd.worker import NPUWorker
+
+    worker, events = simulation
+    calls = []
+
+    def close():
+        calls.append(1)
+        if len(calls) == 1:
+            raise ValueError("primary close failure")
+
+    worker._interleaver = SimpleNamespace(close=close)
+    monkeypatch.setattr(NPUWorker, "shutdown", lambda self: events.append(("native",)))
+    with pytest.raises(ValueError, match="primary close failure"):
+        worker.shutdown()
+    assert ("native",) not in events and worker.decode_runner is not None
+    worker.shutdown()
+    assert events.count(("native",)) == 1
 
 
 def enable_fake_prefill_compile(worker, events):

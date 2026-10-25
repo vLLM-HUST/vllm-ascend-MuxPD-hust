@@ -15,11 +15,14 @@ from vllm.v1.core.sched.batch_admission import (
     BatchRequest,
 )
 from vllm.v1.core.sched.interface import PauseState
-from vllm.v1.core.sched.output import SchedulerOutput
+from vllm.v1.core.sched.output import CachedRequestData, NewRequestData, SchedulerOutput
 from vllm.v1.core.sched.scheduler import Scheduler
+from vllm.v1.outputs import ModelRunnerOutput
 from vllm.v1.request import Request
 
 from .config import validate_engine_config
+from .evidence import emit_runtime_effective
+from .native_compat import scheduler_contract
 from .policy import Decision, MuxPDPolicy, remaining_tokens, request_phase
 
 
@@ -34,6 +37,13 @@ class MuxPDScheduler(Scheduler):
     def __init__(self, vllm_config: Any, *args: Any, **kwargs: Any) -> None:
         if BATCH_ADMISSION_POLICY_API_VERSION != "1.1":
             raise RuntimeError("MuxPD requires HUST batch-admission API 1.1")
+        self._native_contract = scheduler_contract(
+            Scheduler,
+            SchedulerOutput,
+            ModelRunnerOutput,
+            CachedRequestData,
+            NewRequestData,
+        )
         validate_engine_config(vllm_config)
         super().__init__(vllm_config, *args, **kwargs)
         if self.need_mamba_block_aligned_split:
@@ -64,6 +74,8 @@ class MuxPDScheduler(Scheduler):
             self._muxpd_trace = path.open("a", encoding="utf-8", buffering=1)
 
     def add_request(self, request: Request) -> None:
+        if getattr(request, "replay_start", 0) != 0:
+            raise ValueError("MuxPD does not support external partial KV replay")
         if request.has_encoder_inputs or request.mm_features:
             raise ValueError(
                 "MuxPD currently supports text-only requests; "
@@ -89,7 +101,7 @@ class MuxPDScheduler(Scheduler):
         for snapshot in snapshots:
             request = self.requests[snapshot.request_id]
             if self._is_blocked_waiting_status(request.status):
-                if not self._try_promote_blocked_waiting_request(request):
+                if not getattr(self, self._native_contract.blocked_method)(request):
                     continue
             if request.spec_token_ids or request.num_output_placeholders:
                 raise RuntimeError(
@@ -258,7 +270,28 @@ class MuxPDScheduler(Scheduler):
                     )
                     + "\n"
                 )
+        self._record_effective_outputs(result)
         return result
+
+    def _record_effective_outputs(self, result: dict) -> None:
+        # Count only outputs actually retired by native scheduling. A sampled
+        # token discarded after a host abort is not an effective scheduler step.
+        rows = [row for batch in result.values() for row in batch.outputs]
+        tokens = sum(len(row.new_token_ids) for row in rows)
+        requests = sum(bool(row.new_token_ids) for row in rows)
+        if tokens:
+            emit_runtime_effective(
+                self,
+                role="scheduler",
+                request_count=requests,
+                output_token_count=tokens,
+            )
+            emit_runtime_effective(
+                self.muxpd_policy,
+                role="admission",
+                request_count=requests,
+                output_token_count=tokens,
+            )
 
     def _record_muxpd_step(
         self,

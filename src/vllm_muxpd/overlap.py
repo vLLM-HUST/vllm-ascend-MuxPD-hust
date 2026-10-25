@@ -124,27 +124,35 @@ class CollectiveGates:
                     wrapper = self._wrap(original, id(group))
                     setattr(communicator, name, wrapper)
                     self._installed.append((communicator, name, previous, wrapper))
-        except BaseException:
-            self.restore()
+        except BaseException as primary:
+            try:
+                self.restore()
+            except BaseException as cleanup:
+                if hasattr(primary, "add_note"):
+                    primary.add_note(f"MuxPD gate rollback also failed: {cleanup!r}")
             raise
         return self
 
     def restore(self) -> None:
         """Remove our wrappers; never overwrite another actor's replacement."""
         self._check_thread()
-        changed: list[str] = []
-        for communicator, name, previous, wrapper in reversed(self._installed):
-            if getattr(communicator, name, None) is not wrapper:
-                changed.append(name)
-                continue
-            if previous is _MISSING:
-                delattr(communicator, name)
+        errors = []
+        for index in reversed(range(len(self._installed))):
+            communicator, name, previous, wrapper = self._installed[index]
+            try:
+                if getattr(communicator, name, None) is not wrapper:
+                    raise RuntimeError(f"MuxPD gate methods changed externally: {name}")
+                if previous is _MISSING:
+                    delattr(communicator, name)
+                else:
+                    setattr(communicator, name, previous)
+            except BaseException as error:
+                errors.append(error)
             else:
-                setattr(communicator, name, previous)
-        self._installed.clear()
+                self._installed.pop(index)
+        if errors:
+            raise errors[0]
         self._tails.clear()
-        if changed:
-            raise RuntimeError(f"MuxPD gate methods changed externally: {changed}")
 
 
 @dataclass(frozen=True)
