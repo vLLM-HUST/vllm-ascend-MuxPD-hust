@@ -60,6 +60,32 @@ def worker_factory():
 
 
 @pytest.mark.integration
+def test_managed_qualification_failure_precedes_native_device_init(
+    worker_factory, monkeypatch
+):
+    from vllm_muxpd import deployment
+
+    state = worker_factory()
+    for name in deployment._MANAGER_BINDING_ENV:
+        monkeypatch.setenv(name, "managed-binding")
+    monkeypatch.setattr(
+        deployment,
+        "doctor",
+        lambda: {
+            "software_profile_matches": False,
+            "errors": ["unqualified native binary"],
+        },
+    )
+    monkeypatch.setattr(
+        state.module.NPUWorker,
+        "init_device",
+        lambda *args: pytest.fail("native device initialization must not begin"),
+    )
+    with pytest.raises(RuntimeError, match="unqualified native binary"):
+        state.worker.init_device()
+
+
+@pytest.mark.integration
 @pytest.mark.parametrize("current", [False, True])
 def test_shared_cache_retains_native_init_arguments_without_allocating(
     worker_factory, monkeypatch, current

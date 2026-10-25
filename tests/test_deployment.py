@@ -14,12 +14,13 @@ from vllm_muxpd import deployment
 
 def test_metadata_and_recipes_do_not_import_native_code():
     source = """
-import importlib.abc, json, sys
-class DenyNative(importlib.abc.MetaPathFinder):
-    def find_spec(self, fullname, *args):
-        if fullname.split('.')[0] in {'torch', 'torch_npu', 'vllm', 'vllm_ascend'}:
-            raise AssertionError('native import during static inspection: ' + fullname)
-sys.meta_path.insert(0, DenyNative())
+import builtins, json, sys
+original_import = builtins.__import__
+def deny_native(name, *args, **kwargs):
+    if name.split('.')[0] in {'torch', 'torch_npu', 'vllm', 'vllm_ascend'}:
+        raise AssertionError('native import during static inspection: ' + name)
+    return original_import(name, *args, **kwargs)
+builtins.__import__ = deny_native
 from vllm_muxpd import deployment
 assert len(deployment.manifest()['components']) == 3
 policy = deployment.configuration()['launch_options']['batch_admission_policy_config']
@@ -112,9 +113,13 @@ def test_source_checkout_rejects_wrong_commit_and_tracked_modifications(
 ):
     source = tmp_path / "native"
     source.mkdir()
+    package = source / "vllm"
+    package.mkdir()
+    origin = package / "__init__.py"
+    origin.write_text("raise AssertionError('qualification must not execute native')\n")
     subprocess.run(["git", "init", str(source)], capture_output=True, check=True)
     (source / "runtime.py").write_text("original = True\n")
-    subprocess.run(["git", "-C", str(source), "add", "runtime.py"], check=True)
+    subprocess.run(["git", "-C", str(source), "add", "."], check=True)
     subprocess.run(
         [
             "git",
@@ -141,12 +146,76 @@ def test_source_checkout_rejects_wrong_commit_and_tracked_modifications(
         ),
     )
     monkeypatch.setattr(metadata, "distribution", lambda _: fake)
+    monkeypatch.delitem(sys.modules, "vllm", raising=False)
+    monkeypatch.syspath_prepend(str(source))
     assert deployment._source_checkout("vllm", commit)["commit"] == commit
+    assert "vllm" not in sys.modules
+    shadow = tmp_path / "shadow"
+    (shadow / "vllm").mkdir(parents=True)
+    (shadow / "vllm/__init__.py").write_text("raise AssertionError('no imports')\n")
+    with monkeypatch.context() as shadow_patch:
+        shadow_patch.syspath_prepend(str(shadow))
+        with pytest.raises(ValueError, match="import origin differs"):
+            deployment._source_checkout("vllm", commit)
+        assert "vllm" not in sys.modules
     with pytest.raises(ValueError, match="not qualified"):
         deployment._source_checkout("vllm", "0" * 40)
     (source / "runtime.py").write_text("original = False\n")
     with pytest.raises(ValueError, match="tracked sources differ"):
         deployment._source_checkout("vllm", commit)
+
+
+@pytest.fixture
+def runtime_binding(monkeypatch):
+    for name in deployment._MANAGER_BINDING_ENV:
+        monkeypatch.delenv(name, raising=False)
+
+    def enable():
+        for name in deployment._MANAGER_BINDING_ENV:
+            monkeypatch.setenv(name, "manager-binding")
+
+    return enable
+
+
+def test_unmanaged_legacy_skips_qualification(runtime_binding, monkeypatch):
+    monkeypatch.setattr(
+        deployment, "doctor", lambda: pytest.fail("legacy must not run doctor")
+    )
+    assert deployment.managed_runtime_preflight() is None
+
+
+def test_qualification_and_effective_evidence_use_the_same_binding_keys():
+    from vllm_muxpd import evidence
+
+    assert deployment._MANAGER_BINDING_ENV == evidence._BINDING_ENV
+
+
+def test_partial_binding_fails_before_qualification(runtime_binding, monkeypatch):
+    monkeypatch.setenv("VLLM_ECPA_LAUNCH_ID", "launch")
+    monkeypatch.setattr(deployment, "doctor", lambda: pytest.fail("partial binding"))
+    with pytest.raises(RuntimeError, match="incomplete Manager binding"):
+        deployment.managed_runtime_preflight()
+
+
+def test_managed_qualification_is_rechecked_and_fails_closed(
+    runtime_binding, monkeypatch
+):
+    runtime_binding()
+    result = {"software_profile_matches": True, "errors": []}
+    calls = []
+
+    def doctor():
+        calls.append(1)
+        return result
+
+    monkeypatch.setattr(deployment, "doctor", doctor)
+    assert deployment.managed_runtime_preflight() is result
+    result.update(
+        software_profile_matches=False, errors=["current source is unqualified"]
+    )
+    with pytest.raises(RuntimeError, match="current source is unqualified"):
+        deployment.managed_runtime_preflight()
+    assert len(calls) == 2
 
 
 @pytest.fixture

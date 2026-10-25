@@ -144,15 +144,20 @@ def test_slice_observer_runs_inside_lane_before_its_existing_completion_fence():
     interleaver.add("p", forward, "prefill")
     interleaver.step("p", 2, observer=Observer())
     assert events == [
-        ("start", "prefill"), ("layer", 0), ("layer", 1),
-        ("stop", "prefill"), ("fence", "prefill"),
+        ("start", "prefill"),
+        ("layer", 0),
+        ("layer", 1),
+        ("stop", "prefill"),
+        ("fence", "prefill"),
     ]
     assert backend.state == "caller"
     events.clear()
     interleaver.step("p", 2, observer=Observer())
     assert events == [
-        ("start", "prefill"), ("layer", 2),
-        ("stop", "prefill"), ("fence", "prefill"),
+        ("start", "prefill"),
+        ("layer", 2),
+        ("stop", "prefill"),
+        ("fence", "prefill"),
     ]
     assert interleaver.tasks["p"].done
     assert backend.state == "caller"
@@ -302,7 +307,8 @@ def test_second_runner_constructs_buffers_but_reuses_weights_and_cache(
     lane.kv_cache_config = SimpleNamespace(
         kv_cache_groups=[SimpleNamespace(layer_names=["attn", "gdn"])]
     )
-    caches = lane.initialize_kv_cache_tensors(None)
+    owner.kv_cache_config = lane.kv_cache_config
+    caches = lane.initialize_kv_cache_tensors(lane.kv_cache_config)
     assert lane.model is owner.model
     assert lane.input_batch is not owner.input_batch
     assert lane.requests is owner.requests

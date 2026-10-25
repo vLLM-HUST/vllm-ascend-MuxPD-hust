@@ -21,6 +21,7 @@ from vllm.v1.outputs import ModelRunnerOutput
 from vllm.v1.request import Request
 
 from .config import validate_engine_config
+from .deployment import managed_runtime_preflight
 from .evidence import emit_runtime_effective
 from .native_compat import scheduler_contract
 from .policy import Decision, MuxPDPolicy, remaining_tokens, request_phase
@@ -35,6 +36,7 @@ class MuxPDScheduler(Scheduler):
     """
 
     def __init__(self, vllm_config: Any, *args: Any, **kwargs: Any) -> None:
+        managed_runtime_preflight()
         if BATCH_ADMISSION_POLICY_API_VERSION != "1.1":
             raise RuntimeError("MuxPD requires HUST batch-admission API 1.1")
         self._native_contract = scheduler_contract(

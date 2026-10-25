@@ -13,6 +13,7 @@ import os
 import subprocess
 import sys
 from importlib import metadata, resources
+from importlib.util import find_spec
 from pathlib import Path
 
 from . import __version__
@@ -22,6 +23,14 @@ CORE_COMMIT = "d0f22d2bda562156e4dbf433ce645e1769b4f804"
 ASCEND_COMMIT = "03766ac696fde5ab1980d80ca0b8543d3580c989"
 ASCEND_BUILD_EDIT_SHA = (
     "b089d52475c6cb36fffd733bb5be3fbe4158b6845074751268938e98a1d0042c"
+)
+_MANAGER_BINDING_ENV = (
+    "VLLM_ECPA_EVIDENCE_SINK",
+    "VLLM_ECPA_EVIDENCE_STRICT",
+    "VLLM_ECPA_PLAN_ID",
+    "VLLM_ECPA_LAUNCH_ID",
+    "VLLM_HUST_EXT_EVIDENCE_PATH",
+    "VLLM_HUST_EXT_MODULE_BINDING",
 )
 
 
@@ -141,6 +150,20 @@ def _source_checkout(distribution_name: str, expected_commit: str) -> dict:
     ):
         raise ValueError(f"{distribution_name} is not the qualified source checkout")
     source = Path(unquote(parsed.path)).resolve()
+    # Top-level find_spec does not execute the package. Metadata can describe
+    # one editable checkout while PYTHONPATH actually selects another tree.
+    module = distribution_name.replace("-", "_")
+    expected_origin = (source / module / "__init__.py").resolve(strict=True)
+    spec = find_spec(module)
+    if (
+        spec is None
+        or spec.origin is None
+        or Path(spec.origin).resolve(strict=True) != expected_origin
+    ):
+        raise ValueError(
+            f"{distribution_name} import origin differs from qualified checkout: "
+            f"{getattr(spec, 'origin', None)!r}"
+        )
 
     def git(*args):
         return subprocess.check_output(
@@ -166,7 +189,12 @@ def _source_checkout(distribution_name: str, expected_commit: str) -> dict:
             raise ValueError(
                 f"{distribution_name} tracked sources differ from qualification"
             )
-    return {"version": distribution.version, "source": str(source), "commit": head}
+    return {
+        "version": distribution.version,
+        "source": str(source),
+        "commit": head,
+        "import_origin": str(expected_origin),
+    }
 
 
 def doctor() -> dict:
@@ -185,6 +213,7 @@ def doctor() -> dict:
             result["sources"][name] = _source_checkout(name, commit)
         except (
             OSError,
+            ImportError,
             ValueError,
             subprocess.SubprocessError,
             metadata.PackageNotFoundError,
@@ -206,6 +235,28 @@ def doctor() -> dict:
     except metadata.PackageNotFoundError:
         result["errors"].append("greenlet: install the layered or ecpa extra")
     result["software_profile_matches"] = not result["errors"]
+    return result
+
+
+def managed_runtime_preflight() -> dict | None:
+    """Gate every Manager class-carrier path before native resource mutation.
+
+    The installed CLI also checks qualification, but generic Manager ``run``
+    can select these classes directly. Recheck in each actual carrier process;
+    never cache a parent's result across spawn or a changed import path. Direct
+    legacy launches keep their existing interface checks and opt-in behavior.
+    This gate does not authenticate a launch or emit effective-work evidence.
+    """
+    present = [name in os.environ for name in _MANAGER_BINDING_ENV]
+    if not any(present):
+        return None
+    if not all(os.environ.get(name) for name in _MANAGER_BINDING_ENV):
+        raise RuntimeError("incomplete Manager binding before MuxPD initialization")
+    result = doctor()
+    if not result["software_profile_matches"]:
+        raise RuntimeError(
+            "unqualified managed MuxPD native stack: " + "; ".join(result["errors"])
+        )
     return result
 
 

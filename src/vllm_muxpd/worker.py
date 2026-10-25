@@ -26,6 +26,7 @@ from vllm_muxpd.decode_graph import (
     GraphLaneState,
     validate_decode_graph_config,
 )
+from vllm_muxpd.deployment import managed_runtime_preflight
 from vllm_muxpd.evidence import emit_runtime_effective
 from vllm_muxpd.lanes import LayerInterleaver
 from vllm_muxpd.native_compat import (
@@ -324,6 +325,7 @@ class MuxPDNPUWorker(NPUWorker):
         super().__init__(vllm_config, *args, **kwargs)
 
     def init_device(self) -> None:
+        managed_runtime_preflight()
         super().init_device()
         if ascend_utils.get_ascend_device_type() != ascend_utils.AscendDeviceType.A2:
             raise ValueError("MuxPD cooperative runner currently supports Ascend A2")
