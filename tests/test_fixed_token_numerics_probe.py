@@ -29,7 +29,7 @@ def test_fixed_plan_has_fully_drained_warm_control_phases():
     assert digest(changed) != value["plan_sha256"]
 
 
-def install_fake_engine(monkeypatch, *, never_finishes=False):
+def install_fake_engine(monkeypatch, *, never_finishes=False, per_token=False):
     class InprocClient:
         def shutdown(self):
             self.stopped = True
@@ -37,6 +37,9 @@ def install_fake_engine(monkeypatch, *, never_finishes=False):
     class Engine:
         def __init__(self):
             self.engine_core = InprocClient()
+            self.engine_core.engine_core = SimpleNamespace(
+                scheduler=SimpleNamespace(requests={})
+            )
             self.output_processor = SimpleNamespace(request_states={})
             self.pending = []
 
@@ -47,7 +50,13 @@ def install_fake_engine(monkeypatch, *, never_finishes=False):
             if never_finishes:
                 return []
             outputs = []
+            pending = []
             for internal, external, tokens in self.pending:
+                request = self.engine_core.engine_core.scheduler.requests[internal]
+                request.num_output_tokens += 1 if per_token else 8
+                if request.num_output_tokens < 8:
+                    pending.append((internal, external, tokens))
+                    continue
                 outputs.append(
                     SimpleNamespace(
                         request_id=external,
@@ -63,7 +72,8 @@ def install_fake_engine(monkeypatch, *, never_finishes=False):
                     )
                 )
                 del self.output_processor.request_states[internal]
-            self.pending = []
+                del self.engine_core.engine_core.scheduler.requests[internal]
+            self.pending = pending
             return outputs
 
     class LLM:
@@ -82,6 +92,9 @@ def install_fake_engine(monkeypatch, *, never_finishes=False):
                 )
                 self.llm_engine.pending.append(
                     (internal, external, entry["prompt_token_ids"])
+                )
+                self.llm_engine.engine_core.engine_core.scheduler.requests[internal] = (
+                    SimpleNamespace(num_output_tokens=0)
                 )
                 ids.append(internal)
             return ids
@@ -152,6 +165,46 @@ def test_step_watchdog_preserves_failure_and_calls_shutdown(monkeypatch, tmp_pat
     assert not receipt["passed"] and receipt["shutdown_returned"]
     assert len(receipt["phases"][0]["steps"]) == 500
     assert "exceeded 500" in receipt["errors"][0]
+
+
+def test_staggered_gate_uses_live_scheduler_when_client_is_final_only(
+    monkeypatch, tmp_path
+):
+    install_fake_engine(monkeypatch, per_token=True)
+    args = arguments(tmp_path)
+    frozen = plan(staggered=True)
+    args.plan.write_text(json.dumps(frozen))
+    args.plan_sha256 = frozen["plan_sha256"]
+    engine = json.loads(args.engine_args.read_text())
+    engine["enable_chunked_prefill"] = True
+    args.engine_args.write_text(json.dumps(engine))
+    assert run(args) == 0
+    receipt = json.loads((args.output_dir / "run.json").read_text())
+    assert receipt["passed"]
+    for phase in receipt["phases"][3:]:
+        assert phase["initial_request_count"] == 1
+        assert phase["steps"][0]["outputs"] == []
+        assert len(phase["admissions"]) == 2
+        initial, peers = phase["admissions"]
+        assert len(initial["request_ids"]) == 1
+        assert len(peers["request_ids"]) == 3
+        assert peers["seed_num_output_tokens"] == 1
+        assert peers["seed_live_in_scheduler"] is True
+        assert peers["after_step"] == initial["after_step"] + 1
+        assert len(phase["outputs"]) == 4
+
+
+def test_staggered_plan_keeps_original_control_plan_identity():
+    original = plan()
+    assert original["plan_sha256"] == (
+        "f24b55775a6a754c61c8edc79aec1bca20877ed09114d291cfe949e5d6196c4c"
+    )
+    staggered = plan(staggered=True)
+    assert staggered["requests"] == 15
+    assert staggered["plan_sha256"] != original["plan_sha256"]
+    assert [p["prompts"] for p in original["phases"]] == [
+        p["prompts"] for p in staggered["phases"]
+    ]
 
 
 def test_group_role_binds_explicit_policy_and_global_backend():

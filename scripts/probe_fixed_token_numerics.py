@@ -30,7 +30,7 @@ def digest(value):
     ).hexdigest()
 
 
-def plan():
+def plan(staggered=False):
     phases = []
     cohorts = {
         "single-p128": [SHORT_PROMPT],
@@ -71,6 +71,25 @@ def plan():
         ),
         "maximum_engine_steps": MAX_ENGINE_STEPS,
     }
+    if staggered:
+        value["schema"] = "muxpd-staggered-token-numerics-plan-v1"
+        value["admission"] = (
+            "single-P128 phases fully drain; four-lane phases first enqueue "
+            "lane0, then enqueue lanes1-3 immediately after an explicit engine "
+            "step leaves the live scheduler seed request with exactly one "
+            "output token. Fully drain before the next phase."
+        )
+        value["scope"] = (
+            "Bounded historical D1/P384 reproduction; identical token prompts "
+            "and seed-output-count admission gate across roles. Native uses "
+            "chunked prefill enabled for its mixed path; raw/group use complete "
+            "P with chunked prefill disabled. Actual worker batches differ by "
+            "design and must remain distinguished in logit comparisons."
+        )
+        for phase in value["phases"]:
+            if phase["name"] == "four-p128":
+                phase["name"] = "four-p128-staggered"
+                phase["admit_remaining_after_seed_tokens"] = 1
     return {**value, "plan_sha256": digest(value)}
 
 
@@ -109,12 +128,29 @@ def runtime_profile(role, engine_args):
     }
 
 
+def enqueue_bound(llm, inputs, params):
+    """Capture authoritative internal/external IDs before native completion."""
+    ids = llm.enqueue(inputs, params, use_tqdm=False)
+    external = [
+        llm.llm_engine.output_processor.request_states[item].external_req_id
+        for item in ids
+    ]
+    return ids, external
+
+
 def run(args):
     frozen = json.loads(args.plan.read_text())
-    if frozen != plan() or frozen["plan_sha256"] != args.plan_sha256:
+    staggered = frozen.get("schema") == "muxpd-staggered-token-numerics-plan-v1"
+    if frozen != plan(staggered) or frozen["plan_sha256"] != args.plan_sha256:
         raise ValueError("Plan differs from the frozen 15-request contract")
     engine_args = json.loads(args.engine_args.read_text())
     profile = runtime_profile(args.role, engine_args)
+    if (
+        staggered
+        and args.role == "native"
+        and engine_args.get("enable_chunked_prefill") is not True
+    ):
+        raise ValueError("Staggered native control requires chunked prefill enabled")
     required = {
         "tensor_parallel_size": 4,
         "async_scheduling": False,
@@ -185,27 +221,32 @@ def run(args):
             params = SamplingParams(
                 max_tokens=phase["max_tokens"], **frozen["sampling"]
             )
-            ids = llm.enqueue(inputs, params, use_tqdm=False)
-            # enqueue returns randomized INTERNAL IDs; RequestOutput exposes
-            # the original EXTERNAL IDs. Bind through the real output states,
-            # before completion removes them. Never infer a mapping by splitting
-            # IDs or globally disable native request-ID randomization.
-            external_ids = [
-                llm.llm_engine.output_processor.request_states[item].external_req_id
-                for item in ids
-            ]
+            gate = phase.get("admit_remaining_after_seed_tokens")
+            initial = inputs[:1] if gate is not None else inputs
+            ids, external_ids = enqueue_bound(llm, initial, params)
             observed = {
                 "name": phase["name"],
                 "warm_repeat": phase["warm_repeat"],
                 "request_ids": ids,
                 "external_request_ids": external_ids,
                 "internal_to_external": dict(zip(ids, external_ids)),
-                "admitted_before_step": global_step,
+                "admissions": [
+                    {
+                        "after_step": global_step,
+                        "trigger": "phase-start",
+                        "request_ids": ids.copy(),
+                        "external_request_ids": external_ids.copy(),
+                    }
+                ],
+                "initial_admission_before_step": global_step,
+                "initial_request_count": len(initial),
+                "staggered_gate_output_tokens": gate,
                 "prompts": phase["prompts"],
                 "steps": [],
                 "outputs": [],
             }
             report["phases"].append(observed)
+            remaining = inputs[1:] if gate is not None else []
             while llm.llm_engine.has_unfinished_requests():
                 if global_step >= MAX_ENGINE_STEPS:
                     raise RuntimeError("Diagnostic engine exceeded 500 total steps")
@@ -238,6 +279,39 @@ def run(args):
                         "outputs": rows,
                     }
                 )
+                if remaining:
+                    scheduler = llm.llm_engine.engine_core.engine_core.scheduler
+                    seed = scheduler.requests.get(ids[0])
+                    if seed is None:
+                        raise RuntimeError(
+                            "Seed retired before staggered admission gate"
+                        )
+                    count = int(seed.num_output_tokens)
+                    if count > gate:
+                        raise RuntimeError(
+                            "Seed passed the exact one-token admission gate"
+                        )
+                    if count == gate:
+                        more_ids, more_external = enqueue_bound(llm, remaining, params)
+                        observed["admissions"].append(
+                            {
+                                "after_step": global_step,
+                                "trigger": "live-seed-output-count",
+                                "seed_request_id": ids[0],
+                                "seed_num_output_tokens": count,
+                                "seed_live_in_scheduler": True,
+                                "request_ids": more_ids.copy(),
+                                "external_request_ids": more_external.copy(),
+                            }
+                        )
+                        ids.extend(more_ids)
+                        external_ids.extend(more_external)
+                        observed["internal_to_external"].update(
+                            zip(more_ids, more_external)
+                        )
+                        remaining = []
+            if remaining:
+                raise RuntimeError("Phase ended before all requests were admitted")
             if {row["request_id"] for row in observed["outputs"]} != set(external_ids):
                 raise RuntimeError("Finished request set differs from admitted phase")
             if any(
@@ -281,6 +355,7 @@ def main():
     commands = parser.add_subparsers(dest="command", required=True)
     create = commands.add_parser("plan")
     create.add_argument("--output", type=Path, required=True)
+    create.add_argument("--staggered", action="store_true")
     execute = commands.add_parser("run")
     execute.add_argument("--plan", type=Path, required=True)
     execute.add_argument("--plan-sha256", required=True)
@@ -290,9 +365,9 @@ def main():
     args = parser.parse_args()
     if args.command == "plan":
         with args.output.open("x") as stream:
-            json.dump(plan(), stream, indent=2)
+            json.dump(plan(args.staggered), stream, indent=2)
             stream.write("\n")
-        print(plan()["plan_sha256"])
+        print(plan(args.staggered)["plan_sha256"])
         return 0
     return run(args)
 

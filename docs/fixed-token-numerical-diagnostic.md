@@ -74,3 +74,24 @@ inputs. A small argmax margin or within-native variability alone is not a waiver
 for plugin-induced differences. Use measured native-control distributions to
 justify any later BF16 tolerance and separately assess task quality. The driver
 `passed` flag means collection plus shutdown completed, not numerical acceptance.
+
+## Explicit staggered arrival family
+
+Create the independent second plan with `plan --staggered --output NEW_FILE`.
+It retains the three single-P128 warm phases, then runs three four-lane phases
+where lane 0 is admitted first. After an explicit step leaves that live
+scheduler request with exactly one generated token, lanes 1–3 are enqueued
+together before the next step. All four still generate eight tokens. This
+reproduces D1/P384 without relying on HTTP arrival races.
+
+The trigger reads the authoritative in-process scheduler request's
+`num_output_tokens`, because `LLM.enqueue()` selects FINAL_ONLY client outputs.
+The admission receipt records the step, live seed count, and exact internal and
+external identities. A missing/retired seed or a count that skips past one is a
+failure; no arrival is silently moved to a different condition.
+
+The native staggered control must enable chunked prefill for its real mixed
+path. Raw/group must keep it disabled. Native mixed P/D and separate raw/group
+forward batches deliberately differ: shared request prefix is not the same as
+equal peer-batch context. Keep those comparison scopes separate. This plan is
+not interchangeable with the earlier fully drained cohort plan.
