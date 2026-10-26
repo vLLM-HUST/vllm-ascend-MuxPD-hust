@@ -24,7 +24,8 @@ f7 raw-P 与 group-P 在固定题集的完整输出一致，但两者均未通�
 答案不退化门槛；总正确数增加不能抵消原生控制均答对题目上的新增错误。
 该已知质量问题继续由 [#23](https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/issues/23) 跟踪。
 当前价值是长 prefill 插入时较短的最坏出词停顿；相对实用原版参考，吞吐、
-首字延迟和常规出词间隔 P99 均更差。因此 [PR #10](https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/pull/10)
+首字延迟和常规出词间隔的尾部表现均更差。
+因此 [PR #10](https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/pull/10)
 仅提供显式启用的实验优化，不能视为通用替代或答案质量通过。
 
 这次文档更新沿用 `98eac12dc2595a8742a81b58e96b899fed905194` 的运行时代码，
