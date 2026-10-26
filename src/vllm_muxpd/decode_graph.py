@@ -76,8 +76,9 @@ def validate_decode_graph_config(config: Any, policy: Any) -> None:
         errors.append("max_cudagraph_capture_size must match the largest capture size")
     if getattr(config, "use_v2_model_runner", False):
         errors.append("only the V1 model runner is supported")
-    if scheduler.async_scheduling is not False:
-        errors.append("async_scheduling must be false")
+    async_decode = _value(policy, "async_decode_pipeline", False)
+    if scheduler.async_scheduling is not async_decode:
+        errors.append(f"async_scheduling must be {str(async_decode).lower()}")
     for name in ("speculative_config", "lora_config", "weight_transfer_config"):
         if getattr(config, name, None) is not None:
             errors.append(f"{name} is unsupported by decode graphs")
