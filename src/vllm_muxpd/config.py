@@ -36,8 +36,22 @@ class MuxPDConfig:
     prefill_layer_token_budget: int = 0
     decode_budget_guard: bool = False
     require_hccl_deterministic: bool = False
+    async_decode_pipeline: bool = False
 
     def __post_init__(self) -> None:
+        if type(self.async_decode_pipeline) is not bool:
+            raise ValueError("MuxPD async_decode_pipeline must be a boolean")
+        if self.async_decode_pipeline and (
+            self.execution != "decoupled"
+            or self.adaptive_layers
+            or self.prefill_first
+            or self.decode_budget_guard
+            or self.compile_full_prefill
+            or self.prefill_layer_token_budget
+        ):
+            raise ValueError(
+                "MuxPD async_decode_pipeline requires decoupled fixed layer quotas"
+            )
         if type(self.require_hccl_deterministic) is not bool:
             raise ValueError("MuxPD require_hccl_deterministic must be a boolean")
         if self.require_hccl_deterministic and self.execution != "decoupled":
@@ -198,7 +212,23 @@ def validate_engine_config(config: Any) -> None:
     cache = config.cache_config
     parallel = config.parallel_config
     errors: list[str] = []
-    if scheduler.async_scheduling is not False:
+    raw = getattr(scheduler, "batch_admission_policy_config", None) or {}
+    async_decode = raw.get("async_decode_pipeline", False)
+    if type(async_decode) is not bool:
+        errors.append("async_decode_pipeline must be a boolean")
+    if async_decode:
+        MuxPDConfig.from_mapping(raw)
+        if scheduler.async_scheduling is not True:
+            errors.append("async_decode_pipeline requires async_scheduling=true")
+        if scheduler.scheduler_cls != (
+            "vllm_muxpd.async_scheduler.AsyncDecoupledMuxPDScheduler"
+        ) or parallel.worker_cls != (
+            "vllm_muxpd.async_worker.AsyncDecoupledMuxPDNPUWorker"
+        ):
+            errors.append(
+                "async_decode_pipeline requires its exact scheduler/worker pair"
+            )
+    elif scheduler.async_scheduling is not False:
         errors.append("async_scheduling must be explicitly false")
     if scheduler.enable_chunked_prefill:
         errors.append("enable_chunked_prefill must be false")
@@ -237,8 +267,9 @@ def validate_engine_config(config: Any) -> None:
         errors.append("only decoder-only autoregressive generation is supported")
     if getattr(model, "runner_type", "generate") != "generate":
         errors.append("model runner_type must be 'generate'")
-    if getattr(config, "max_concurrent_batches", 1) != 1:
-        errors.append("max_concurrent_batches must be 1")
+    concurrency = 2 if async_decode else 1
+    if getattr(config, "max_concurrent_batches", 1) != concurrency:
+        errors.append(f"max_concurrent_batches must be {concurrency}")
     policy = getattr(scheduler, "batch_admission_policy", None)
     if policy is not None:
         name = (

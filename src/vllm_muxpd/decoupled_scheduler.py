@@ -122,9 +122,16 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         self._layered_pending = None
         if self.muxpd_policy.config.execution != "decoupled":
             raise ValueError("DecoupledMuxPDScheduler requires execution='decoupled'")
-        expected_worker = "vllm_muxpd.decoupled_worker.DecoupledMuxPDNPUWorker"
-        if vllm_config.parallel_config.worker_cls != expected_worker:
-            raise ValueError("DecoupledMuxPDScheduler requires DecoupledMuxPDNPUWorker")
+        expected_workers = (
+            "vllm_muxpd.decoupled_worker.DecoupledMuxPDNPUWorker",
+            "vllm_muxpd.atomic_worker.AtomicDecoupledMuxPDNPUWorker",
+        )
+        if self.muxpd_policy.config.async_decode_pipeline:
+            expected_workers = ("vllm_muxpd.async_worker.AsyncDecoupledMuxPDNPUWorker",)
+        if vllm_config.parallel_config.worker_cls not in expected_workers:
+            raise ValueError(
+                "DecoupledMuxPDScheduler requires a paired decoupled worker"
+            )
         if self.defer_block_free or self.connector is not None:
             raise ValueError("Decoupled MuxPD does not support native deferred frees")
         if getattr(self, "enable_return_routed_experts", False):
@@ -354,7 +361,12 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         # rows. The separate cancellation control requests a safe ACK instead.
         if cohort is not None:
             output.finished_req_ids.difference_update(cohort.pending_ids)
-            if set(output.preempted_req_ids or ()) & cohort.pending_ids:
+            resumed_prefills = new_prefill_ids & set(
+                output.scheduled_cached_reqs.resumed_req_ids
+            )
+            if (set(output.preempted_req_ids or ()) & cohort.pending_ids) - (
+                resumed_prefills
+            ):
                 raise RuntimeError("Native scheduler preempted a pinned prefill")
         output.muxpd_execution = "decoupled"
         output.muxpd_pending_prefill_ids = frozenset(

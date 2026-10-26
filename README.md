@@ -9,6 +9,12 @@
 版本发布和实机验收由 [Issue #21](https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/issues/21)
 跟踪；这次接入本身不构成新的性能收益结论。
 
+新增默认关闭的 [异步 Decode 调度入口](docs/experimental-async-decode.md)：
+纯 D 阶段复用原生异步队列，进入 P 前排空队列，完整 P 仍通过独立模型 batch
+推进。该入口需要新的成对 scheduler/worker 和显式配置，原有同步默认不变。
+完整普通 API 启动命令、适用边界和本轮实验入口见该说明；Manager 尚未对这条
+路径完成资格验证，不能直接套用现有 Manager 启动命令。
+
 Historical data for the migrated batch is in [benchmark custody](EVIDENCE.md),
 with pinned hashes and an external-directory downloader.
 
@@ -23,14 +29,17 @@ source98 的普通 worker 和 Manager 服务桥接、后续性能与生命周期
 f7 raw-P 与 group-P 在固定题集的完整输出一致，但两者均未通过预先冻结的
 答案不退化门槛；总正确数增加不能抵消原生控制均答对题目上的新增错误。
 该已知质量问题继续由 [#23](https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/issues/23) 跟踪。
-当前价值是长 prefill 插入时较短的最坏出词停顿；相对实用原版参考，吞吐、
+上一轮同步接入的价值是长 prefill 插入时较短的最坏出词停顿；相对实用原版参考，吞吐、
 首字延迟和常规出词间隔的尾部表现均更差。
 因此 [PR #10](https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/pull/10)
 仅提供显式启用的实验优化，不能视为通用替代或答案质量通过。
 
-这次文档更新沿用 `98eac12dc2595a8742a81b58e96b899fed905194` 的运行时代码，
-设备桥接实际使用的也是该源码；后续纯文档提交的 HEAD 不代表新做了一轮设备验收。
-已发布包、默认 raw-P 配方和实验候选的证据身份分别保留。
+上述 source98 设备桥接实际使用
+`98eac12dc2595a8742a81b58e96b899fed905194`，属于上一轮固定源码证据。
+本轮异步调度的测量另存于
+[调度实验报告发布路径](https://github.com/vLLM-HUST/vllm-hust-benchmark/tree/8b5a7d57c94bb34b1756ee7c867dbe72094bcd9c/reports/muxpd-scheduling-20261026/)
+（以报告中的源码和配置身份为准）。已发布包、默认 raw-P 配方和实验候选
+分别评估；异步调度修改没有解决上述答案质量问题。
 
 将 MuxWise 的 P/D 解耦机制适配到现有 HUST vLLM，使用原生 KV 分配、抢占、
 取消、采样与 OpenAI API。安装包本身不修改 vLLM；通过显式 scheduler/worker
@@ -106,7 +115,7 @@ Goodput 为原生 16K 对照的 **3.15×**；固定窗口吞吐约 **+0.48%**，
 | vllm-hust | `d0f22d2bda562156e4dbf433ce645e1769b4f804` |
 | vllm-ascend-hust | `03766ac696fde5ab1980d80ca0b8543d3580c989` |
 | 模型 / 设备 | Qwen3.5-35B-A3B / Ascend 910B2，BF16，TP2+EP、TP4+EP、TP8+EP |
-| 执行 | V1 NPU runner，同步，纯文本；eager 或显式 decode graph |
+| 执行 | V1 NPU runner，纯文本；默认同步，异步 D 须使用独立实验入口；eager 或显式 decode graph |
 | 底层依赖 | 复用已运行环境，不重新解析 torch / torch-npu / CANN |
 
 参考正式 [ASPLOS 2026 论文 v3](https://arxiv.org/html/2504.14489v3) 与作者指定
@@ -215,6 +224,7 @@ CPU 测试覆盖策略与协程；原生 Scheduler 测试覆盖 KV 容量、抢�
 | `decode_graph` | false | decoupled 的独立 FULL_DECODE_ONLY 图；默认 fenced，实验 overlap 须 isolated 通信及受支持的 P 路径 |
 | `compile_full_prefill` | false | decode graph 模式中，新 P 可一次完成时复用原生编译路径；需启动预热 |
 | `compile_prefill_groups` | false | 默认关闭的四层 FX P 分组；仅支持专门的固定 q4/fusion 配方，见 [group-FX 说明](docs/experimental-prefill-group-fx.md) |
+| `async_decode_pipeline` | false | 纯 D 使用原生异步队列，P 前排空；须显式异步 scheduler/worker 配对，见 [启动说明](docs/experimental-async-decode.md) |
 | `require_hccl_deterministic` | false | 要求启动前的 HCCL 环境匹配显式确定性通信配置；不是任意输出确定性保证 |
 | `overlap_communication` | shared | 实验 `isolated` 为 overlap 的 P 创建独立 TP/EP 通信组 |
 | `trace_path` | null | 可选 JSONL 文件；支持 `{pid}`，不记录 prompt 内容 |
