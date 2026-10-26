@@ -68,7 +68,11 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
             )
             self._iteration_prefill_layers_total = self._decoder_layer_count
             self._iteration_prefill_progress_source = (
-                "full_forward_return" if complete_return else "layer_hooks"
+                "group_forward_return"
+                if getattr(self, "_prefill_groups_enabled", False)
+                else "full_forward_return"
+                if complete_return
+                else "layer_hooks"
             )
 
     def _execute_compiled_prefill(self, output: SchedulerOutput, controller: Any):
@@ -330,6 +334,11 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
                 raise ValueError("MuxPD layer budget must be a positive integer")
             if scheduler_output.muxpd_finish_prefill:
                 budget = None
+            if getattr(self, "_prefill_groups_enabled", False) and budget not in (
+                None,
+                4,
+            ):
+                raise ValueError("Prefill FX groups require an atomic four-layer quota")
 
         if new_prefills:
             output = _select_requests(

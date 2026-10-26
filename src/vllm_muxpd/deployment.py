@@ -17,6 +17,7 @@ from importlib.util import find_spec
 from pathlib import Path
 
 from . import __version__
+from .determinism import launch_environment, requested_environment
 
 EXTENSION_ID = "org.vllm-hust.muxpd"
 CORE_COMMIT = "d0f22d2bda562156e4dbf433ce645e1769b4f804"
@@ -42,7 +43,15 @@ def manifest() -> dict:
     )
 
 
-def configuration(trace_path: str | None = None) -> dict:
+def configuration(
+    trace_path: str | None = None,
+    *,
+    experimental_prefill_groups: bool = False,
+    deterministic_collectives: bool = False,
+) -> dict:
+    if type(experimental_prefill_groups) is not bool:
+        raise ValueError("experimental_prefill_groups must be a boolean")
+    requested_environment(deterministic_collectives)
     # Keep the same raw-P q4 algorithm as the existing streaming entry point.
     policy = {
         "execution": "decoupled",
@@ -56,11 +65,20 @@ def configuration(trace_path: str | None = None) -> dict:
         "decode_budget_guard": False,
         "overlap_communication": "isolated",
     }
-    if trace_path is not None:
+    if experimental_prefill_groups:
+        policy["compile_prefill_groups"] = True
+    if deterministic_collectives:
+        policy["require_hccl_deterministic"] = True
+    if (
+        trace_path is not None
+        or experimental_prefill_groups
+        or deterministic_collectives
+    ):
         from .config import MuxPDConfig
 
         MuxPDConfig(**policy, trace_path=trace_path)
-        policy["trace_path"] = trace_path
+        if trace_path is not None:
+            policy["trace_path"] = trace_path
     return {"launch_options": {"batch_admission_policy_config": policy}}
 
 
@@ -71,7 +89,10 @@ def host_command(
     host: str = "127.0.0.1",
     port: int = 8002,
     served_model_name: str = "Qwen3.5-35B-A3B",
+    experimental_prefill_groups: bool = False,
 ) -> list[str]:
+    if type(experimental_prefill_groups) is not bool:
+        raise ValueError("experimental_prefill_groups must be a boolean")
     if not model.strip() or not host.strip() or not served_model_name.strip():
         raise ValueError("model, host and served model name must be nonempty")
     if type(tensor_parallel_size) is not int or tensor_parallel_size not in (2, 4):
@@ -84,6 +105,12 @@ def host_command(
         "cudagraph_capture_sizes": [1, 2, 4, 8],
         "max_cudagraph_capture_size": 8,
     }
+    additional_config = {"enable_cpu_binding": False}
+    if experimental_prefill_groups:
+        additional_config["ascend_compilation_config"] = {
+            "enable_npugraph_ex": False,
+            "enable_static_kernel": False,
+        }
     # Class/policy selectors are deliberately absent: the Manager must project
     # the installed Bundle's three components together, with conflict checking.
     return [
@@ -126,7 +153,7 @@ def host_command(
         "--no-enforce-eager",
         "--no-numa-bind",
         "--additional-config",
-        '{"enable_cpu_binding":false}',
+        json.dumps(additional_config, separators=(",", ":")),
         "--compilation-config",
         json.dumps(compile_config, separators=(",", ":")),
     ]
@@ -273,7 +300,11 @@ def serve(args) -> int:
     saved = load_config().extension(EXTENSION_ID)
     if not saved.enabled:
         raise ValueError(f"explicitly configure and enable {EXTENSION_ID} first")
-    if saved.configuration != configuration(args.trace_path):
+    if saved.configuration != configuration(
+        args.trace_path,
+        experimental_prefill_groups=args.experimental_prefill_groups,
+        deterministic_collectives=args.deterministic_collectives,
+    ):
         raise ValueError(
             "saved Manager configuration differs from this streaming profile"
         )
@@ -290,10 +321,12 @@ def serve(args) -> int:
         host=args.host,
         port=args.port,
         served_model_name=args.served_model_name,
+        experimental_prefill_groups=args.experimental_prefill_groups,
     )
-    return manager.main(
-        ["run", *(["--dry-run"] if args.dry_run else []), "--", *command]
-    )
+    with launch_environment(args.deterministic_collectives):
+        return manager.main(
+            ["run", *(["--dry-run"] if args.dry_run else []), "--", *command]
+        )
 
 
 def main(argv=None) -> int:
@@ -309,6 +342,16 @@ def main(argv=None) -> int:
     )
     config.add_argument("--output", type=Path)
     config.add_argument("--trace-path")
+    config.add_argument(
+        "--experimental-prefill-groups",
+        action="store_true",
+        help="select unqualified four-layer FX prefill groups; does not enable",
+    )
+    config.add_argument(
+        "--deterministic-collectives",
+        action="store_true",
+        help="require experimental HCCL_DETERMINISTIC=true; default unchanged",
+    )
     for name in ("plan", "serve"):
         child = commands.add_parser(name)
         child.add_argument("--model", required=True)
@@ -319,6 +362,16 @@ def main(argv=None) -> int:
         child.add_argument("--port", type=int, default=8002)
         child.add_argument("--served-model-name", default="Qwen3.5-35B-A3B")
         child.add_argument("--trace-path")
+        child.add_argument(
+            "--experimental-prefill-groups",
+            action="store_true",
+            help="select unqualified grouped P with the required fusion backend",
+        )
+        child.add_argument(
+            "--deterministic-collectives",
+            action="store_true",
+            help="select experimental HCCL=true collective profile; cost unqualified",
+        )
         if name == "serve":
             child.add_argument("--dry-run", action="store_true")
     args = parser.parse_args(argv)
@@ -330,17 +383,34 @@ def main(argv=None) -> int:
         elif args.action == "doctor":
             value = doctor()
         elif args.action == "configuration":
-            value = configuration(args.trace_path)
+            value = configuration(
+                args.trace_path,
+                experimental_prefill_groups=args.experimental_prefill_groups,
+                deterministic_collectives=args.deterministic_collectives,
+            )
         else:
             value = {
                 "extension_id": EXTENSION_ID,
-                "configuration": configuration(args.trace_path),
+                "configuration": configuration(
+                    args.trace_path,
+                    experimental_prefill_groups=args.experimental_prefill_groups,
+                    deterministic_collectives=args.deterministic_collectives,
+                ),
+                "requested_environment": requested_environment(
+                    args.deterministic_collectives
+                ),
+                "deterministic_profile_status": (
+                    "experimental; quality and performance cost unqualified"
+                    if args.deterministic_collectives
+                    else "not requested"
+                ),
                 "host_command": host_command(
                     args.model,
                     tensor_parallel_size=args.tensor_parallel_size,
                     host=args.host,
                     port=args.port,
                     served_model_name=args.served_model_name,
+                    experimental_prefill_groups=args.experimental_prefill_groups,
                 ),
                 "scope": "recipe only; Manager supplies all three component selectors",
             }

@@ -244,6 +244,8 @@ def arguments():
         served_model_name="qwen",
         trace_path=None,
         dry_run=True,
+        experimental_prefill_groups=False,
+        deterministic_collectives=False,
     )
 
 
@@ -252,6 +254,64 @@ def test_serve_uses_manager_with_explicit_enabled_matching_configuration(manager
     assert deployment.serve(arguments()) == 0
     assert calls[0][:3] == ["run", "--dry-run", "--"]
     assert "--scheduler-cls" not in calls[0]
+
+
+def test_group_profile_requires_explicit_matching_activation(manager):
+    saved, calls = manager
+    args = arguments()
+    args.experimental_prefill_groups = True
+    with pytest.raises(ValueError, match="saved Manager configuration differs"):
+        deployment.serve(args)
+    assert calls == []
+    saved.configuration = deployment.configuration(experimental_prefill_groups=True)
+    assert deployment.serve(args) == 0
+    command = calls[0]
+    additional = json.loads(command[command.index("--additional-config") + 1])
+    assert additional["ascend_compilation_config"] == {
+        "enable_npugraph_ex": False,
+        "enable_static_kernel": False,
+    }
+    assert (
+        saved.configuration["launch_options"]["batch_admission_policy_config"][
+            "compile_prefill_groups"
+        ]
+        is True
+    )
+    args.experimental_prefill_groups = False
+    with pytest.raises(ValueError, match="saved Manager configuration differs"):
+        deployment.serve(args)
+    assert len(calls) == 1
+
+
+@pytest.mark.parametrize("flag", [0, 1, "true", None])
+def test_group_profile_rejects_non_boolean_opt_in(flag):
+    with pytest.raises(ValueError, match="must be a boolean"):
+        deployment.configuration(experimental_prefill_groups=flag)
+    with pytest.raises(ValueError, match="must be a boolean"):
+        deployment.host_command("/model", experimental_prefill_groups=flag)
+
+
+def test_raw_recipe_and_explicit_group_cli_do_not_start_models(capsys):
+    raw = deployment.configuration()
+    assert (
+        "compile_prefill_groups"
+        not in raw["launch_options"]["batch_admission_policy_config"]
+    )
+    command = deployment.host_command("/model")
+    assert command[command.index("--additional-config") + 1] == (
+        '{"enable_cpu_binding":false}'
+    )
+    assert (
+        deployment.main(["plan", "--model", "/model", "--experimental-prefill-groups"])
+        == 0
+    )
+    planned = json.loads(capsys.readouterr().out)
+    assert planned["configuration"] == deployment.configuration(
+        experimental_prefill_groups=True
+    )
+    assert planned["host_command"] == deployment.host_command(
+        "/model", experimental_prefill_groups=True
+    )
 
 
 @pytest.mark.parametrize(

@@ -1,5 +1,17 @@
 # Canonical historical data
 
+Current follow-up navigation: [bounded numerical investigation and source98
+deployment evidence](https://github.com/vLLM-HUST/vllm-hust-benchmark/tree/ef849ef49577c491fee68317ffc96d52796cd379/reports/muxpd-followup-20261025),
+[performance and lifecycle append v4](https://github.com/vLLM-HUST/vllm-hust-benchmark/tree/ef849ef49577c491fee68317ffc96d52796cd379/reports/muxpd-followup-20261025/performance-lifecycle-v4),
+and [immutable evidence assets](https://github.com/vLLM-HUST/vllm-hust-benchmark/releases/tag/evidence-muxpd-followup-20261025).
+New measurements, failures and raw run data live in that benchmark repository;
+this code repository maintains implementation, usage and limitations. The
+historical manifests and download instructions below retain their original
+identities. The [complete quality/reference/profile follow-up](https://github.com/vLLM-HUST/vllm-hust-benchmark/tree/ebddb585390c333ac1f8c6ea40cfeead3c4321af/reports/muxpd-followup-20261025/quality-reference-v5)
+retains the failed native-relative quality gates and practical performance costs.
+Closing the bounded numerical investigation does not resolve the open quality
+limitation in [#23](https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/issues/23).
+
 This migration batch is stored only in [vllm-hust-benchmark](https://github.com/vLLM-HUST/vllm-hust-benchmark/tree/2144d58de108cddaff3800fdcbf12dc9d3ab1d18/archive/mod-consumers-20261023/muxpd).
 `BENCHMARK_EVIDENCE.json` pins the manifest and its SHA256. The manifest preserves original
 repository/commit/path identities, failures and every file hash. This is custody, not a new result.

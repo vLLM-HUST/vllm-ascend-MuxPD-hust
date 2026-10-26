@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import ctypes
+import json
 import sys
+from contextlib import contextmanager
 from dataclasses import dataclass, replace
 from typing import Any
 
@@ -19,7 +21,7 @@ from vllm_ascend.ascend_config import get_ascend_config
 from vllm_ascend.worker.worker import NPUModelRunner, NPUWorker
 
 from vllm_muxpd.communicators import LaneCollectiveRouter
-from vllm_muxpd.config import validate_engine_config
+from vllm_muxpd.config import MuxPDConfig, validate_engine_config
 from vllm_muxpd.decode_graph import (
     DecodeGraphController,
     GraphFencedExecutionBackend,
@@ -27,6 +29,11 @@ from vllm_muxpd.decode_graph import (
     validate_decode_graph_config,
 )
 from vllm_muxpd.deployment import managed_runtime_preflight
+from vllm_muxpd.determinism import (
+    profile_required,
+    startup_readback,
+    validate_profile_environment,
+)
 from vllm_muxpd.evidence import emit_runtime_effective
 from vllm_muxpd.lanes import LayerInterleaver
 from vllm_muxpd.native_compat import (
@@ -246,6 +253,8 @@ def _merge_outputs(
 def _validate_worker_config(config: Any) -> None:
     validate_engine_config(config)
     policy = config.scheduler_config.batch_admission_policy_config or {}
+    if "compile_prefill_groups" in policy or "require_hccl_deterministic" in policy:
+        MuxPDConfig.from_mapping(policy)
     decode_graph = policy.get("decode_graph", False)
     errors = []
     if type(decode_graph) is not bool:
@@ -294,6 +303,8 @@ class MuxPDNPUWorker(NPUWorker):
         raw = vllm_config.scheduler_config.batch_admission_policy_config or {}
         self._decode_graph_enabled = raw.get("decode_graph", False)
         self._decode_graph_controller: DecodeGraphController | None = None
+        self._prefill_groups_enabled = raw.get("compile_prefill_groups", False)
+        self._prefill_group_executor = None
         self._layers_per_slice = raw.get("layers_per_slice", 1)
         self._stream_mode = raw.get("stream_mode", "fenced")
         self._prefill_slice_timing_enabled = raw.get("decode_budget_guard", False)
@@ -326,10 +337,20 @@ class MuxPDNPUWorker(NPUWorker):
 
     def init_device(self) -> None:
         managed_runtime_preflight()
+        policy = self.vllm_config.scheduler_config.batch_admission_policy_config or {}
+        validate_profile_environment(policy)
         super().init_device()
         if ascend_utils.get_ascend_device_type() != ascend_utils.AscendDeviceType.A2:
             raise ValueError("MuxPD cooperative runner currently supports Ascend A2")
         ascend = get_ascend_config()
+        if self._prefill_groups_enabled and (
+            ascend.ascend_compilation_config.enable_npugraph_ex
+            or ascend.ascend_compilation_config.enable_static_kernel
+        ):
+            raise ValueError(
+                "Prefill groups require fusion FX backend without "
+                "npugraph_ex/static kernels"
+            )
         if ascend.msmonitor_use_daemon:
             raise ValueError("MuxPD cooperative execution requires msmonitor disabled")
         if ascend.eplb_config.dynamic_eplb or ascend.eplb_config.expert_map_path:
@@ -368,6 +389,19 @@ class MuxPDNPUWorker(NPUWorker):
                 getattr(stream, "npu_stream", None),
             )
         self._configure_execution_backend()
+        if profile_required(policy):
+            readback = startup_readback(
+                policy,
+                rank=self.rank,
+                worker=type(self).__module__ + "." + type(self).__qualname__,
+                torch_deterministic=torch.are_deterministic_algorithms_enabled(),
+                torch_warn_only=torch.is_deterministic_algorithms_warn_only_enabled(),
+                prefill_groups=[
+                    {"name": group.unique_name, "ranks": list(group.ranks)}
+                    for group in self._prefill_groups
+                ],
+            )
+            logger.info("MuxPD collective profile startup %s", json.dumps(readback))
 
     def _configure_execution_backend(self) -> None:
         """Compose graph ownership with stream ordering before loading weights."""
@@ -543,6 +577,25 @@ class MuxPDNPUWorker(NPUWorker):
             raise ValueError("MuxPD could not find the Qwen3.5 decoder layers")
         self._decoder_layer_count = len(layers)
         final_layer = layers[-1]
+        if getattr(self, "_prefill_groups_enabled", False):
+            from vllm_muxpd.prefill_groups import PrefillGroupExecutor
+
+            if any(
+                layer._forward_hooks or layer._forward_pre_hooks for layer in layers
+            ):
+                raise ValueError("Prefill groups cannot bypass external decoder hooks")
+            self._prefill_group_executor = PrefillGroupExecutor(
+                self.model_runner,
+                model.model,
+                checkpoint=self._prefill_group_return,
+                lane_check=self._check_prefill_group_lane,
+                startup_scope=self._prefill_group_startup,
+                is_startup=lambda: (
+                    self._interleaver is None
+                    and not self._decode_graph_controller._captured
+                ),
+            )
+            self._prefill_group_executor.install()
 
         def after_layer(module: Any, args: Any, output: Any) -> None:
             del args, output
@@ -560,6 +613,53 @@ class MuxPDNPUWorker(NPUWorker):
             self._stream_mode,
             self._overlap_communication,
         )
+
+    def _check_prefill_group_lane(self) -> None:
+        import vllm.v1.worker.workspace as workspace
+
+        state = self._lane_states["prefill"]
+        if (
+            self._execution_backend.active_lane != "prefill"
+            or torch.npu.current_stream() != state.stream
+            or workspace._manager is not state.workspace_manager
+        ):
+            raise RuntimeError("Prefill group stream/workspace ownership changed")
+
+    def _prefill_group_return(self, index: int, *, final: bool) -> None:
+        interleaver = self._interleaver
+        if interleaver is None:
+            return  # Native startup dummy forward after prepared group profiling.
+        task = interleaver.active
+        if task is None or task.name != "prefill" or task.completed_layers != index * 4:
+            raise RuntimeError("Prefill group returned out of order")
+        self.muxpd_stats["slices"] += 1
+        if self.vllm_config.scheduler_config.batch_admission_policy_config.get(
+            "trace_path"
+        ):
+            logger.info(
+                "MuxPD P group FX returned rank=%d cohort=%s "
+                "group=%d layers=%d tokens=%d",
+                self.rank,
+                self._prefill_cohort_id,
+                index,
+                (index + 1) * 4,
+                self._prefill_num_tokens,
+            )
+        interleaver.checkpoint_group(4, final=final)
+
+    @contextmanager
+    def _prefill_group_startup(self):
+        backend = self._execution_backend
+        caller = backend.capture()
+        backend.begin_batch(preparation_lane=None)
+        try:
+            backend.restore(self._lane_states["prefill"])
+            yield
+            self._streams["prefill"].synchronize()
+        finally:
+            backend.fence()
+            backend.restore(caller)
+            backend.join(["prefill"])
 
     def initialize_from_config(self, kv_cache_config: Any) -> None:
         super().initialize_from_config(kv_cache_config)
@@ -600,6 +700,15 @@ class MuxPDNPUWorker(NPUWorker):
         # ATB warmup, CPU binding, memory accounting and seed-reset behavior.
         with controller.redirect_owner_capture():
             result = super().compile_or_warm_up_model()
+        groups = getattr(self, "_prefill_group_executor", None)
+        if groups is not None:
+            if not groups.ready:
+                raise RuntimeError(
+                    "Prefill groups did not finish startup AOT profiling"
+                )
+            logger.info(
+                "MuxPD prefill group FX rank=%d %s", self.rank, groups.snapshot()
+            )
         logger.info("MuxPD decode graph rank=%d %s", self.rank, controller.snapshot())
         return result
 
@@ -779,6 +888,10 @@ class MuxPDNPUWorker(NPUWorker):
                 update_stream = getattr(self.decode_runner, "update_stream", None)
                 if update_stream is not None:
                     update_stream.synchronize()
+                groups = getattr(self, "_prefill_group_executor", None)
+                if groups is not None:
+                    groups.close()
+                    self._prefill_group_executor = None
                 logger.info(
                     "MuxPD decode graph final rank=%d %s",
                     self.rank,
