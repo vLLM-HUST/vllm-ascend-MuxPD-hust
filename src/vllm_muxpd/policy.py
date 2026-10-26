@@ -78,6 +78,7 @@ class MuxPDPolicy:
             "vllm_muxpd.scheduler.MuxPDScheduler",
             "vllm_muxpd.multiplex_scheduler.LayeredMuxPDScheduler",
             "vllm_muxpd.decoupled_scheduler.DecoupledMuxPDScheduler",
+            "vllm_muxpd.async_scheduler.AsyncDecoupledMuxPDScheduler",
         ):
             raise ValueError(
                 "MuxPDPolicy requires a paired MuxPD scheduler_cls; "

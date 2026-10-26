@@ -831,7 +831,9 @@ class MuxPDNPUWorker(NPUWorker):
         try:
             for phase in self._pending_lanes:
                 backend.restore(self._lane_states[phase])
-                output = runners[phase].sample_tokens(None)
+                output = self._materialize_lane_output(
+                    runners[phase].sample_tokens(None)
+                )
                 if not isinstance(output, ModelRunnerOutput):
                     raise RuntimeError(
                         "MuxPD requires synchronous native sampler output"
@@ -854,6 +856,9 @@ class MuxPDNPUWorker(NPUWorker):
         if self.execution_mode == "layered":
             self._record_effective_output(merged)
         return merged
+
+    def _materialize_lane_output(self, output: Any) -> ModelRunnerOutput:
+        return output
 
     def _record_effective_output(self, output: ModelRunnerOutput) -> None:
         tokens = sum(len(row) for row in output.sampled_token_ids)
