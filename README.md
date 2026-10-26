@@ -12,11 +12,30 @@
 Historical data for the migrated batch is in [benchmark custody](EVIDENCE.md),
 with pinned hashes and an external-directory downloader.
 
+当前实现提供默认关闭的 [group-FX 入口](docs/experimental-prefill-group-fx.md)和
+[确定性通信选项](docs/ecpa-deployment.md#实验性确定性通信配置)。
+[#11](https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/issues/11#issuecomment-6405978497)
+已按显式 TP4 配置与冻结输入的有界调查完成关闭；历史失败与默认配置的数值限制仍保留。
+source98 的普通 worker 和 Manager 服务桥接、后续性能与生命周期记录统一见
+[中央 follow-up 入口](https://github.com/vLLM-HUST/vllm-hust-benchmark/tree/ef849ef49577c491fee68317ffc96d52796cd379/reports/muxpd-followup-20261025)。
+完整质量、实用原版默认后端参考和实际混合 profile 已完成，见
+[当前结果与适用范围](https://github.com/vLLM-HUST/vllm-hust-benchmark/tree/ebddb585390c333ac1f8c6ea40cfeead3c4321af/reports/muxpd-followup-20261025/quality-reference-v5)。
+f7 raw-P 与 group-P 在固定题集的完整输出一致，但两者均未通过预先冻结的
+答案不退化门槛；总正确数增加不能抵消原生控制均答对题目上的新增错误。
+该已知质量问题继续由 [#23](https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/issues/23) 跟踪。
+当前价值是长 prefill 插入时较短的最坏出词停顿；相对实用原版参考，吞吐、
+首字延迟和常规出词间隔 P99 均更差。因此 [PR #10](https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/pull/10)
+仅提供显式启用的实验优化，不能视为通用替代或答案质量通过。
+
+这次文档更新沿用 `98eac12dc2595a8742a81b58e96b899fed905194` 的运行时代码，
+设备桥接实际使用的也是该源码；后续纯文档提交的 HEAD 不代表新做了一轮设备验收。
+已发布包、默认 raw-P 配方和实验候选的证据身份分别保留。
+
 将 MuxWise 的 P/D 解耦机制适配到现有 HUST vLLM，使用原生 KV 分配、抢占、
 取消、采样与 OpenAI API。安装包本身不修改 vLLM；通过显式 scheduler/worker
 类启用，无需改动基线源码。
 
-**状态：固定环境集成验证通过，性能调优版本。** 当前实现包含完整 prefill、独立 P/D 模型
+**状态：raw-P 固定环境集成已验证；可选实验路径按各自证据范围评估。** 当前实现包含完整 prefill、独立 P/D 模型
 batch；串行策略具有在线延迟估计和等待阈值。实验 worker 使用独立输入/metadata 与共享
 权重/KV，通过 transformer 层边界切换。完整层 event fence 是正确性起点，
 不代表设备 kernel 重叠或论文中的空间资源分区。`decoupled` 模式将完整 prefill
@@ -33,6 +52,10 @@ batch；串行策略具有在线延迟估计和等待阈值。实验 worker 使�
 同组 collective 和采样完成所需依赖，取消普通层边界的跨流等待，并隔离两条
 lane 的临时 workspace。设备并行程度必须由
 NPU profiler 验证，不能由 Python 协程或调度 trace 推断。
+当前固定配方未启用 stream 资源配额；它沿用开启内部格式的原生 V1 runner，
+不满足该配额接口要求关闭内部格式的前提，因此不表示论文的 Cube/Vector 空间分区。
+
+以下性能段落记录历史配置结果；版本、负载和代价见各自报告，不能直接赋予当前实验候选。
 
 TP4 调优加入独立 decode 图、完整 P 编译、按 cohort token 工作量分配层数，
 并减少连续 D 的 host 调用与事件依赖。两组负载各六轮测量的聚合吞吐高于
@@ -188,8 +211,10 @@ CPU 测试覆盖策略与协程；原生 Scheduler 测试覆盖 KV 容量、抢�
 | `adaptive_layers` | false | decoupled 按本机耗时和 TTFT 预算放大层配额 |
 | `decode_budget_guard` | false | adaptive fenced 按观测的 D 和 P 片段耗时限制层配额；仅是延迟预算启发式 |
 | `prefill_first` | false | adaptive fenced 判断 P 可在本轮完成时先执行 P，下一轮偿还 D 执行机会 |
-| `decode_graph` | false | decoupled 的独立 FULL_DECODE_ONLY 图；默认 fenced，实验 overlap 须 isolated 通信与 raw P |
+| `decode_graph` | false | decoupled 的独立 FULL_DECODE_ONLY 图；默认 fenced，实验 overlap 须 isolated 通信及受支持的 P 路径 |
 | `compile_full_prefill` | false | decode graph 模式中，新 P 可一次完成时复用原生编译路径；需启动预热 |
+| `compile_prefill_groups` | false | 默认关闭的四层 FX P 分组；仅支持专门的固定 q4/fusion 配方，见 [group-FX 说明](docs/experimental-prefill-group-fx.md) |
+| `require_hccl_deterministic` | false | 要求启动前的 HCCL 环境匹配显式确定性通信配置；不是任意输出确定性保证 |
 | `overlap_communication` | shared | 实验 `isolated` 为 overlap 的 P 创建独立 TP/EP 通信组 |
 | `trace_path` | null | 可选 JSONL 文件；支持 `{pid}`，不记录 prompt 内容 |
 
@@ -234,8 +259,9 @@ PP/DP/CP、speculative decoding、KV/EC transfer、streaming-input continuation
 
 默认 worker 仍要求 eager。`decode_graph=true` 必须配合 `--no-enforce-eager`、
 `FULL_DECODE_ONLY`、编译 mode 3 和明确的捕获大小（当前脚本为 1/2/4/8）；
-实验 overlap 图只允许 isolated 通信与 raw P，完整配置见
-[Goodput 实验说明](docs/goodput-experiments.md)；不支持 shared overlap 图、
+实验 overlap 图要求 isolated 通信；普通 raw P 配方见
+[Goodput 实验说明](docs/goodput-experiments.md)，默认关闭的四层分组 P 则受
+[group-FX 专用约束](docs/experimental-prefill-group-fx.md)限制。不支持 shared overlap 图、
 ENPU、offload 或运行中重新捕获。图只覆盖 D，首次单 token
 P 也强制 `NONE`。`trace_path=null` 不构造逐轮诊断记录；需要生命周期证据时
 显式开启 trace，并在计时报告中说明。

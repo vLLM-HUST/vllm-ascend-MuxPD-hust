@@ -3,7 +3,8 @@
 Bundle ID 为 `org.vllm-hust.muxpd`，版本为 `0.2.0a1`。
 这是 Qwen3.5-35B-A3B / 910B2 / BF16 / TP2 或 TP4 + EP 的固定软件栈入口。
 完整 prompt 保持在 P lane，D lane 使用独立图与通信组，每轮独立提交输出。
-默认采用现有 raw-P 四层切片 streaming 配置；不是 group-FX 实验入口。
+默认采用现有 raw-P 四层切片 streaming 配置。默认关闭的 group-FX 选项及固定
+适配约束见 [实验入口](experimental-prefill-group-fx.md)，不会由安装自动启用。
 
 ## 软件边界
 
@@ -97,7 +98,12 @@ trace 默认关闭；开启后会增加记录开销，不应把它与无 trace �
 ## 实验性确定性通信配置
 
 `--deterministic-collectives` 显式选择 `HCCL_DETERMINISTIC=true`。
-这项配置仍属实验性：质量、性能成本和当前提交的设备验证需要分别完成。
+这项配置仍属实验性。source98 已有单独的
+[普通 worker 与 Manager 服务桥接](https://github.com/vLLM-HUST/vllm-hust-benchmark/tree/ef849ef49577c491fee68317ffc96d52796cd379/reports/muxpd-followup-20261025/device-evidence-v3)；
+配对质量、性能及 profile 的完整处置见
+[当前报告](https://github.com/vLLM-HUST/vllm-hust-benchmark/tree/ebddb585390c333ac1f8c6ea40cfeead3c4321af/reports/muxpd-followup-20261025/quality-reference-v5)。该桥接实际运行源码为
+`98eac12dc2595a8742a81b58e96b899fed905194`。本次文档更新未改动其运行时代码，
+文档 HEAD 不是新的实测源码或新 wheel 验收。
 它不表示任意输入、任意 batch 或所有算子都具有确定性，也不自动启用
 `VLLM_BATCH_INVARIANT`、`strict` 模式或 Torch 全局确定性设置。
 不传此选项时，插件保留现有环境和默认运行方式。
@@ -110,6 +116,23 @@ vllm-hust-ext extension configure org.vllm-hust.muxpd --file muxpd-deterministic
 vllm-muxpd plan --model /path/to/Qwen3.5-35B-A3B --deterministic-collectives
 vllm-muxpd serve --model /path/to/Qwen3.5-35B-A3B --deterministic-collectives
 ```
+
+同时选择 group-FX 时，三个命令都使用相同组合：
+
+```bash
+vllm-muxpd configuration --experimental-prefill-groups --deterministic-collectives \
+  --output muxpd-group-deterministic.json
+vllm-hust-ext extension configure org.vllm-hust.muxpd --file muxpd-group-deterministic.json
+vllm-muxpd plan --model /path/to/Qwen3.5-35B-A3B --tensor-parallel-size 4 \
+  --experimental-prefill-groups --deterministic-collectives
+vllm-muxpd serve --model /path/to/Qwen3.5-35B-A3B --tensor-parallel-size 4 \
+  --experimental-prefill-groups --deterministic-collectives --dry-run
+```
+
+该示例沿用前文显式 enable 和设备选择步骤；确认投影后，实际启动时去掉 `--dry-run`。
+group flag 选择所需 fusion 后端；deterministic flag 本身不改变普通 raw 后端默认值。
+因此普通 Manager raw/group 激活桥接不是仅改变 P 分组的后端匹配比较，
+也不提供 token 等价证据。配对数值和性能比较的配置须以 canonical 报告为准。
 
 保存配置在 `batch_admission_policy_config` 中记录严格布尔值
 `require_hccl_deterministic=true`；Manager 将其连同三个组件选择器投影到启动命令。
@@ -130,10 +153,19 @@ worker 在原生设备和通信初始化前检查这个要求；缺失或不匹�
 Torch 状态、Manager launch/plan ID（如存在）和独立 P 组的名称/成员。
 该回执不改变采样、执行图或算子，也不升级 Manager 的 `runtime_effective`
 语义；环境读回不是设备实际算法、文本质量或性能收益的证明。
+source98 桥接的退出状态及 native abort/清理警告按原样保存在中央证据中；
+设备清空和外层监督器未升级清理不表示所有内部组件都执行了无信号的优雅 drain。
 
 比较性能时，对照组和插件组必须使用相同通信设置。带完整 logits 观察器的
 数值诊断不用于吞吐或延迟测量。移除该配置时，重新保存不带选项的普通配置，
 并在新服务进程中启动；运行中的进程不会切换通信模式。
+本轮性能和生命周期数据见 [canonical v4](https://github.com/vLLM-HUST/vllm-hust-benchmark/tree/ef849ef49577c491fee68317ffc96d52796cd379/reports/muxpd-followup-20261025/performance-lifecycle-v4)。
+实用 native 默认后端参考与实际混合 profile 已完成，结果及全部失败见上方当前报告。
+原严格无截断门槛与补充答案不退化门槛均未通过。f7 group-P 保留了固定题集上
+raw-P 的完整输出，也保留了相对原生控制的新增错误；整体正确数提高不抵消这些错误。
+该配置改善特定长 prefill 场景的最坏出词停顿，同时损失吞吐并增加首字延迟与常规 P99。
+服务桥接、原始输出一致或性能测量均不能替代答案质量验收，已知限制由
+[#23](https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/issues/23) 继续跟踪。
 
 ## 停止、停用与回滚
 
