@@ -47,11 +47,18 @@ def configuration(
     trace_path: str | None = None,
     *,
     experimental_prefill_groups: bool = False,
+    experimental_prefill_prefix_layout: bool = False,
     deterministic_collectives: bool = False,
 ) -> dict:
+    if type(experimental_prefill_prefix_layout) is not bool:
+        raise ValueError("experimental_prefill_prefix_layout must be a boolean")
+    if experimental_prefill_prefix_layout and experimental_prefill_groups:
+        raise ValueError("prefix layout and prefill groups are mutually exclusive")
     if type(experimental_prefill_groups) is not bool:
         raise ValueError("experimental_prefill_groups must be a boolean")
     requested_environment(deterministic_collectives)
+    if experimental_prefill_prefix_layout and not deterministic_collectives:
+        raise ValueError("prefix layout requires --deterministic-collectives")
     # Keep the same raw-P q4 algorithm as the existing streaming entry point.
     policy = {
         "execution": "decoupled",
@@ -65,6 +72,8 @@ def configuration(
         "decode_budget_guard": False,
         "overlap_communication": "isolated",
     }
+    if experimental_prefill_prefix_layout:
+        policy["experimental_prefill_collective_layout"] = "prefix"
     if experimental_prefill_groups:
         policy["compile_prefill_groups"] = True
     if deterministic_collectives:
@@ -90,13 +99,20 @@ def host_command(
     port: int = 8002,
     served_model_name: str = "Qwen3.5-35B-A3B",
     experimental_prefill_groups: bool = False,
+    experimental_prefill_prefix_layout: bool = False,
 ) -> list[str]:
+    if type(experimental_prefill_prefix_layout) is not bool:
+        raise ValueError("experimental_prefill_prefix_layout must be a boolean")
+    if experimental_prefill_prefix_layout and experimental_prefill_groups:
+        raise ValueError("prefix layout and prefill groups are mutually exclusive")
     if type(experimental_prefill_groups) is not bool:
         raise ValueError("experimental_prefill_groups must be a boolean")
     if not model.strip() or not host.strip() or not served_model_name.strip():
         raise ValueError("model, host and served model name must be nonempty")
     if type(tensor_parallel_size) is not int or tensor_parallel_size not in (2, 4):
         raise ValueError("this deployment profile supports TP2 or TP4")
+    if experimental_prefill_prefix_layout and tensor_parallel_size != 4:
+        raise ValueError("prefix layout requires TP4")
     if type(port) is not int or not 1 <= port <= 65535:
         raise ValueError("port must be between 1 and 65535")
     compile_config = {
@@ -106,7 +122,7 @@ def host_command(
         "max_cudagraph_capture_size": 8,
     }
     additional_config = {"enable_cpu_binding": False}
-    if experimental_prefill_groups:
+    if experimental_prefill_groups or experimental_prefill_prefix_layout:
         additional_config["ascend_compilation_config"] = {
             "enable_npugraph_ex": False,
             "enable_static_kernel": False,
@@ -303,6 +319,9 @@ def serve(args) -> int:
     if saved.configuration != configuration(
         args.trace_path,
         experimental_prefill_groups=args.experimental_prefill_groups,
+        experimental_prefill_prefix_layout=getattr(
+            args, "experimental_prefill_prefix_layout", False
+        ),
         deterministic_collectives=args.deterministic_collectives,
     ):
         raise ValueError(
@@ -322,6 +341,9 @@ def serve(args) -> int:
         port=args.port,
         served_model_name=args.served_model_name,
         experimental_prefill_groups=args.experimental_prefill_groups,
+        experimental_prefill_prefix_layout=getattr(
+            args, "experimental_prefill_prefix_layout", False
+        ),
     )
     with launch_environment(args.deterministic_collectives):
         return manager.main(
@@ -348,6 +370,11 @@ def main(argv=None) -> int:
         help="select unqualified four-layer FX prefill groups; does not enable",
     )
     config.add_argument(
+        "--experimental-prefill-prefix-layout",
+        action="store_true",
+        help="experimental TP4 prefix layout; requires --deterministic-collectives",
+    )
+    config.add_argument(
         "--deterministic-collectives",
         action="store_true",
         help="require experimental HCCL_DETERMINISTIC=true; default unchanged",
@@ -368,6 +395,11 @@ def main(argv=None) -> int:
             help="select unqualified grouped P with the required fusion backend",
         )
         child.add_argument(
+            "--experimental-prefill-prefix-layout",
+            action="store_true",
+            help="experimental TP4 prefix layout; quality and cost unqualified",
+        )
+        child.add_argument(
             "--deterministic-collectives",
             action="store_true",
             help="select experimental HCCL=true collective profile; cost unqualified",
@@ -386,6 +418,9 @@ def main(argv=None) -> int:
             value = configuration(
                 args.trace_path,
                 experimental_prefill_groups=args.experimental_prefill_groups,
+                experimental_prefill_prefix_layout=getattr(
+                    args, "experimental_prefill_prefix_layout", False
+                ),
                 deterministic_collectives=args.deterministic_collectives,
             )
         else:
@@ -394,6 +429,9 @@ def main(argv=None) -> int:
                 "configuration": configuration(
                     args.trace_path,
                     experimental_prefill_groups=args.experimental_prefill_groups,
+                    experimental_prefill_prefix_layout=getattr(
+                        args, "experimental_prefill_prefix_layout", False
+                    ),
                     deterministic_collectives=args.deterministic_collectives,
                 ),
                 "requested_environment": requested_environment(
@@ -411,6 +449,9 @@ def main(argv=None) -> int:
                     port=args.port,
                     served_model_name=args.served_model_name,
                     experimental_prefill_groups=args.experimental_prefill_groups,
+                    experimental_prefill_prefix_layout=getattr(
+                        args, "experimental_prefill_prefix_layout", False
+                    ),
                 ),
                 "scope": "recipe only; Manager supplies all three component selectors",
             }
