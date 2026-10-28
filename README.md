@@ -37,9 +37,32 @@ f7 raw-P 与 group-P 在固定题集的完整输出一致，但两者均未通�
 上述 source98 设备桥接实际使用
 `98eac12dc2595a8742a81b58e96b899fed905194`，属于上一轮固定源码证据。
 本轮异步调度的测量另存于
-[调度实验报告发布路径](https://github.com/vLLM-HUST/vllm-hust-benchmark/tree/8b5a7d57c94bb34b1756ee7c867dbe72094bcd9c/reports/muxpd-scheduling-20261026/)
+[调度实验报告发布路径](https://github.com/vLLM-HUST/vllm-hust-benchmark/tree/1c70f51a70e90943851e246a41fa13e9afc5332c/reports/muxpd-scheduling-20261026/)
 （以报告中的源码和配置身份为准）。已发布包、默认 raw-P 配方和实验候选
 分别评估；异步调度修改没有解决上述答案质量问题。
+
+**版本、配置与验收范围不能互相替代。** 下表列出实际运行身份；当前 `main`、
+文档提交和相同的软件版本号都不能把旧结果转记为新配置的收益。
+
+| 证据对象 | 实际运行身份 | 关键配置 | 可引用结论与限制 |
+|---|---|---|---|
+| 已发布安装包 `0.2.0a1` | 插件源码 `658b4d0b4e8982bd281499005500ac4c3e0100f5`；wheel 身份见[发行资格](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/19081ff39a25c3c8ac821ae7885688ea24a03e90/reports/muxpd-ecpa-20261025/RELEASE-QUALIFICATION.md) | TP4、同步 raw-P q4、isolated 通信、独立 D graph，经 Manager 显式启用 | 限定安装、启用、取消和回滚等功能验收；非精确等价，无该安装包性能声明。 |
+| 同步 raw/group 配对 | `f7ed21e183b27d2141176f3e7a5c8a5ff4ede07d` | TP4、HCCL=true、同步调度、fusion 后端；raw/group 仅 P 分组不同 | 固定答案不退化门槛 **FAIL**；收益与代价按对应配置一起引用。[质量与性能 v5](https://github.com/vLLM-HUST/vllm-hust-benchmark/tree/ebddb585390c333ac1f8c6ea40cfeead3c4321af/reports/muxpd-followup-20261025/quality-reference-v5) |
+| 历史 TP4 streaming | `5342e8cd9f7407f4b7d43ea34517b59eff2b3253` | 同步 raw-P q4、isolated 通信、独立 D graph；固定到达计划，对照原生 async/chunked 16K | 特定每请求双 SLO 的历史 Goodput 记录；收益与代价均以原报告为准，不授予当前包、后续候选或饱和容量资格。[历史原件](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/a76de7e466e5fabb98b1803a6d8a7037e17cb9a8/archive/mod-targeted-20261023/muxpd-documents/snapshot/docs/performance-tp4-goodput.md) |
+| 异步 Decode 候选 | 执行源码 `880173922196f07e96b5ae43fee20335be02efa2`；合并 `eff31ee8d1ce1bacd6e9d30840fd709895a98fe8` 的运行时代码与测试字节相同 | TP4、HCCL=true、group-P q4、fusion 后端；纯 D 两批异步流水，P 前排空 | 普通源码入口实验；收益与代价见对应记录。未重做固定质量门，未建立 HTTP Goodput、Manager 或新安装包资格。[异步报告](https://github.com/vLLM-HUST/vllm-hust-benchmark/tree/1c70f51a70e90943851e246a41fa13e9afc5332c/reports/muxpd-scheduling-20261026/) |
+
+已发布插件 wheel 的 SHA256 为
+`7cc6b1d9fc8a2afa90526495a7f33e4d08901001d7c7195fbac3bf9ad06ecd7f`；
+Manager 的实机包、最终发行包及运行时字节关联分别见上表发行资格记录。
+source98 的普通 worker / Manager 桥接仍只有其原有功能范围，不能替代 f7
+质量实测、新安装包或异步候选验收。
+
+#24 的调度修复关闭不改变 #23 的质量失败。关闭 #23 必须回到预先冻结的质量门：
+使用完整固定题集、两次独立原生对照及原评分、截断规则验证实际修复；原生双对照
+均正确题上的新增错误不能被总正确数抵消。严格门与补充门分别报告，历史失败保留。
+三道丢失题的数值与终止差异追踪见
+[复核记录发布位置](https://github.com/vLLM-HUST/vllm-hust-benchmark/tree/1c70f51a70e90943851e246a41fa13e9afc5332c/reports/muxpd-quality-review-20261028/)
+（原始证据与公开验证回执均已归档；质量门仍未通过）。
 
 将 MuxWise 的 P/D 解耦机制适配到现有 HUST vLLM，使用原生 KV 分配、抢占、
 取消、采样与 OpenAI API。安装包本身不修改 vLLM；通过显式 scheduler/worker
