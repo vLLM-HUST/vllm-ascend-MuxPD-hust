@@ -21,8 +21,9 @@ with pinned hashes and an external-directory downloader.
 当前实现提供默认关闭的 [group-FX 入口](docs/experimental-prefill-group-fx.md)和
 [确定性通信选项](docs/ecpa-deployment.md#实验性确定性通信配置)。
 另提供默认关闭的 [P collective 零前缀布局实验](docs/experimental-prefill-collective-prefix.md)：
-限定同步 raw TP4/EP4 profile，已完成 CPU 约束/生命周期测试，尚需当前 main 的
-新 baseline 桥、完整质量和匹配性能验证，不能沿用外部诊断结果宣称资格通过。
+限定同步 raw TP4/EP4 profile。候选运行时 `3e3b202` 已通过固定八请求、目标18输出的
+硬件移植桥与生命周期检查，独立复核通过288对完整词表 logits和48对完整保存前缀。
+该短窗口不构成完整答案质量或性能资格；原完整200题答案不退化门仍 FAIL，入口继续默认关闭。
 [#11](https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/issues/11#issuecomment-6405978497)
 已按显式 TP4 配置与冻结输入的有界调查完成关闭；历史失败与默认配置的数值限制仍保留。
 source98 的普通 worker 和 Manager 服务桥接、后续性能与生命周期记录统一见

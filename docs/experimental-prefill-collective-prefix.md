@@ -1,11 +1,12 @@
 # Experimental prefill collective prefix layout
 
 `experimental_prefill_collective_layout` defaults to `"off"`. `"prefix"` is an
-explicit experimental communication-layout option. It has CPU lifecycle tests,
-but this implementation on current main has **not** passed a new accelerator
-baseline bridge, full quality gate, or matched performance evaluation. It must
-remain opt-in until those checks are completed. No default manifest, environment,
-or ordinary launch recipe is changed.
+explicit experimental communication-layout option. Runtime commit
+`3e3b2023431a424287ae9e9da285642131f7bb6e` passed the bounded TP4 implementation
+and lifecycle bridge described below. Full-answer quality qualification and
+matched performance evaluation remain outstanding; the original full200 answer
+non-regression gate remains **FAIL**. The option remains opt-in. No default
+manifest, environment, or ordinary launch recipe is changed.
 
 ## Supported scope
 
@@ -98,7 +99,9 @@ are excluded. The pinned Ascend
 before returning from native warmup. The first real execute also compares the
 installation router snapshot and runner-idle state to detect unexpected
 intervening collective/model state. These source boundaries need re-auditing
-for another native stack; device startup bridge evidence remains required.
+for another native stack. The bounded startup and lifecycle bridge below covers
+this pinned implementation and stack; changed source boundaries require renewed
+validation.
 
 Any admission, ownership, collective or copy-back failure poisons the experiment
 permanently for that worker. A collective is never retried. Failure retains
@@ -142,7 +145,7 @@ and numerical/performance bridge. Post-warmup scratch memory is additional to
 the earlier KV memory profile and may cause an allocation failure; no fallback
 is attempted.
 
-## Validation still required
+## Validation status and remaining gates
 
 CPU tests cover default-off configuration, unsupported combinations, actual
 scheduled D0/D1/multi-D maps, suspended P with changing D batches, alias/single
@@ -150,10 +153,35 @@ collective behavior, fresh-P checks, poisoning, clear/cancellation/sync failures
 slot restoration, partial installation and 200 successive cohorts with bounded
 history. Lifecycle tests execute the actual worker methods against CPU sentinels.
 
-Frozen external diagnostic results motivated this experiment; they do not
-qualify this implementation. Before considering a merge/release, establish a
-new main raw/off baseline, main-prefix to frozen-prefix startup/tensor/output
-bridge, complete original quality evaluation with unchanged scoring and token
-budgets, and matched off/on performance measurements. Report original strict
-completeness gates and any native truncations honestly. Neither the CPU tests
-nor a small layer/logits bridge replaces those checks.
+Four TP4 runs at runtime commit `3e3b2023431a424287ae9e9da285642131f7bb6e`
+completed the off/prefix port and observer bridges. For frozen batch6 with eight
+requests, execution stopped when target `mmlu-pro-10672` reached 18 generated
+tokens. Off and prefix each matched their corresponding frozen implementation
+in 144 full-vocabulary logits vectors and all eight retained token prefixes.
+Independent inspection verified 288 vector pairs and 48 retained-prefix pairs
+across six comparisons. These are complete retained prefixes, not complete
+answers: the seed retained 28 tokens and the other seven requests retained 18
+each.
+
+All four controllers exited with code zero and no owned processes remaining.
+Both prefix runs restored three owned slots on each rank, with no active cohort
+or collective. Executor SIGTERM cleanup was recorded; natural worker exit is
+not asserted. This evidence covers physical cards 0,2,3,4 and the pinned profile.
+The independent audit summary SHA256 is
+`64c15f600834e42e5c4a2842ed9ce357ce373699757d4b45cf14f78528341400`.
+The bridge's raw logits have not completed public archive readback.
+
+The subsequent `52bc27816d906e12684541e62818c22a2853cc25` commit adds NumPy only
+to the test dependency extra; runtime source bytes are unchanged. The hardware
+result remains attributed to `3e3b202`. Status is tracked in
+[PR #27](https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/pull/27).
+
+This bounded bridge does not qualify full answers, general native-batch
+equivalence, throughput or Goodput. The separately identified external-prefix
+[full200 evaluation](https://github.com/vLLM-HUST/vllm-hust-benchmark/releases/tag/evidence-muxpd-prefix-quality-full-20261028)
+remains FAIL, including the new `mmlu-pro-07338` truncation on a question both
+native controls answered correctly. Remaining work is to resolve that divergence,
+validate the actual candidate against the unchanged full dataset, budgets and
+scoring rules, and perform matched off/on performance measurements. Report the
+original strict completeness gates and native truncations separately. Subsequent
+runtime changes need an appropriate new implementation bridge.
