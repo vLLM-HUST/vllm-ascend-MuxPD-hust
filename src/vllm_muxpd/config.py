@@ -50,7 +50,7 @@ class MuxPDConfig:
             or self.stream_mode != "overlap"
             or self.overlap_communication != "isolated"
             or not self.decode_graph
-            or self.layers_per_slice != 4
+            or self.layers_per_slice not in (4, 40)
             or self.adaptive_layers
             or self.prefill_first
             or self.decode_budget_guard
@@ -61,7 +61,7 @@ class MuxPDConfig:
             or not self.require_hccl_deterministic
         ):
             raise ValueError(
-                "MuxPD prefix layout requires synchronous raw isolated graph q4 "
+                "MuxPD prefix layout requires synchronous raw isolated graph q4 or q40 "
                 "with require_hccl_deterministic and no other prefill experiment"
             )
         if type(self.async_decode_pipeline) is not bool:

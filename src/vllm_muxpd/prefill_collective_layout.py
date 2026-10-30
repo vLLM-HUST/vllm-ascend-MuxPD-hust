@@ -800,10 +800,14 @@ def install_on_worker(worker):
         or worker._overlap_communication != "isolated"
         or not worker._decode_graph_enabled
         or worker._prefill_groups_enabled
-        or worker._layers_per_slice != 4
+        or worker._layers_per_slice not in (4, 40)
+        or worker._layers_per_slice != policy.get("layers_per_slice")
         or getattr(worker, "_muxpd_layer_capture_v3", None) is not None
     ):
-        raise RuntimeError("Layout requires unobserved raw isolated q4 execution")
+        raise RuntimeError(
+            "Layout requires unobserved raw isolated q4 or q40 execution "
+            "matching the configured layer quota"
+        )
     graph = worker._decode_graph_controller.snapshot()
     if (
         not graph["captured"]

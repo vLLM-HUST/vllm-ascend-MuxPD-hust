@@ -12,7 +12,7 @@ manifest, environment, or ordinary launch recipe is changed.
 
 The initial profile requires the exact synchronous
 `DecoupledMuxPDScheduler` / `DecoupledMuxPDNPUWorker` pair, V1 NPU runners, isolated
-P communication, overlap streams, fixed q4, raw complete fresh prefills, and
+P communication, overlap streams, fixed q4 or q40, raw complete fresh prefills, and
 FULL_DECODE_ONLY graphs with capture sizes `[1,2,4,8]`. It requires BF16 TP4/EP4
 on Ascend A2 and the Qwen3.5-35B-A3B architectural profile (including 40 layers,
 2048 hidden width, 256 experts and eight selected experts). Architectural
@@ -51,6 +51,26 @@ compilation backends. Direct policy configuration accepts only the literal
 strings `"off"` and `"prefix"`; bool, `auto`, diagnostic `copy_only`, and `suffix`
 are rejected. There is no automatic enablement, fallback, retry, or input-based
 selection.
+
+For the q40 candidate, explicitly set `layers_per_slice: 40` in the same
+`batch_admission_policy_config` that selects `"prefix"`. This completes all
+40 model layers in one P advancement. The existing q4 CLI recipe is unchanged;
+other quotas and adaptive/grouped-prefill modes remain rejected. Installation
+also verifies that the worker's actual quota matches its validated policy.
+
+The q40 change is motivated by an external diagnostic on the original eight
+requests in batch7. Its completed-answer primary and independent analyses found 8/8 correct
+natural stops: previously truncated `mmlu-pro-07338` answered H in 3292 tokens,
+versus 8192 and `length` in the historical q4-prefix full200 run. All eight
+outputs extend the qualified short q40 plain prefixes. The historical controls
+include seven preceding batches, so this fresh batch is a posterior diagnostic,
+not a matched full-answer causal comparison or a complete200 quality result.
+Primary SHA256: `029831e8b47748516fecf70de37941bd4a52d87db471b836e09e177b386b9804`.
+Independent SHA256: `7ec93a9ed3a8a24e263308c0d108fd15b79fa6990e93a411f1a125cb1b1f661e`.
+This external implementation does not qualify the built-in q40 runtime; its
+original affected batches and a separately fresh full200 run remain required.
+The original full200 non-regression gate remains FAIL, and no q40 throughput
+or Goodput improvement is claimed.
 
 ## Tensor and admission contract
 
