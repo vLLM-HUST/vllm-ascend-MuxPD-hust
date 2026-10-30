@@ -37,8 +37,33 @@ class MuxPDConfig:
     decode_budget_guard: bool = False
     require_hccl_deterministic: bool = False
     async_decode_pipeline: bool = False
+    experimental_prefill_collective_layout: str = "off"
 
     def __post_init__(self) -> None:
+        layout = self.experimental_prefill_collective_layout
+        if type(layout) is not str or layout not in ("off", "prefix"):
+            raise ValueError(
+                "experimental_prefill_collective_layout must be off or prefix"
+            )
+        if layout == "prefix" and (
+            self.execution != "decoupled"
+            or self.stream_mode != "overlap"
+            or self.overlap_communication != "isolated"
+            or not self.decode_graph
+            or self.layers_per_slice not in (4, 40)
+            or self.adaptive_layers
+            or self.prefill_first
+            or self.decode_budget_guard
+            or self.prefill_layer_token_budget
+            or self.compile_full_prefill
+            or self.compile_prefill_groups
+            or self.async_decode_pipeline
+            or not self.require_hccl_deterministic
+        ):
+            raise ValueError(
+                "MuxPD prefix layout requires synchronous raw isolated graph q4 or q40 "
+                "with require_hccl_deterministic and no other prefill experiment"
+            )
         if type(self.async_decode_pipeline) is not bool:
             raise ValueError("MuxPD async_decode_pipeline must be a boolean")
         if self.async_decode_pipeline and (
@@ -213,6 +238,12 @@ def validate_engine_config(config: Any) -> None:
     parallel = config.parallel_config
     errors: list[str] = []
     raw = getattr(scheduler, "batch_admission_policy_config", None) or {}
+    if "experimental_prefill_collective_layout" in raw:
+        MuxPDConfig.from_mapping(raw)
+        if raw["experimental_prefill_collective_layout"] == "prefix":
+            from .prefill_collective_layout import validate_prefix_engine_config
+
+            validate_prefix_engine_config(config)
     async_decode = raw.get("async_decode_pipeline", False)
     if type(async_decode) is not bool:
         errors.append("async_decode_pipeline must be a boolean")

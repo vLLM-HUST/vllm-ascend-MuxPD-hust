@@ -20,6 +20,10 @@ with pinned hashes and an external-directory downloader.
 
 当前实现提供默认关闭的 [group-FX 入口](docs/experimental-prefill-group-fx.md)和
 [确定性通信选项](docs/ecpa-deployment.md#实验性确定性通信配置)。
+另提供默认关闭的 [P collective 零前缀布局实验](docs/experimental-prefill-collective-prefix.md)：
+限定同步 raw TP4/EP4 profile。候选运行时 `3e3b202` 已通过固定八请求、目标18输出的
+硬件移植桥与生命周期检查，独立复核通过288对完整词表 logits和48对完整保存前缀。
+该短窗口不构成完整答案质量或性能资格；原完整200题答案不退化门仍 FAIL，入口继续默认关闭。
 [#11](https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/issues/11#issuecomment-6405978497)
 已按显式 TP4 配置与冻结输入的有界调查完成关闭；历史失败与默认配置的数值限制仍保留。
 source98 的普通 worker 和 Manager 服务桥接、后续性能与生命周期记录统一见
@@ -249,6 +253,7 @@ CPU 测试覆盖策略与协程；原生 Scheduler 测试覆盖 KV 容量、抢�
 | `compile_prefill_groups` | false | 默认关闭的四层 FX P 分组；仅支持专门的固定 q4/fusion 配方，见 [group-FX 说明](docs/experimental-prefill-group-fx.md) |
 | `async_decode_pipeline` | false | 纯 D 使用原生异步队列，P 前排空；须显式异步 scheduler/worker 配对，见 [启动说明](docs/experimental-async-decode.md) |
 | `require_hccl_deterministic` | false | 要求启动前的 HCCL 环境匹配显式确定性通信配置；不是任意输出确定性保证 |
+| `experimental_prefill_collective_layout` | `"off"` | 默认关闭的同步 raw P TP collective 零前缀布局；仅 `"prefix"` 可启用，须新 main 质量/性能验证，见 [实验约束](docs/experimental-prefill-collective-prefix.md) |
 | `overlap_communication` | shared | 实验 `isolated` 为 overlap 的 P 创建独立 TP/EP 通信组 |
 | `trace_path` | null | 可选 JSONL 文件；支持 `{pid}`，不记录 prompt 内容 |
 

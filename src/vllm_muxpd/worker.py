@@ -253,7 +253,14 @@ def _merge_outputs(
 def _validate_worker_config(config: Any) -> None:
     validate_engine_config(config)
     policy = config.scheduler_config.batch_admission_policy_config or {}
-    if "compile_prefill_groups" in policy or "require_hccl_deterministic" in policy:
+    if any(
+        name in policy
+        for name in (
+            "compile_prefill_groups",
+            "require_hccl_deterministic",
+            "experimental_prefill_collective_layout",
+        )
+    ):
         MuxPDConfig.from_mapping(policy)
     decode_graph = policy.get("decode_graph", False)
     errors = []
@@ -301,6 +308,9 @@ class MuxPDNPUWorker(NPUWorker):
             raise RuntimeError("MuxPD requires matching native core/Ascend contracts")
         _validate_worker_config(vllm_config)
         raw = vllm_config.scheduler_config.batch_admission_policy_config or {}
+        self._prefill_collective_layout_mode = raw.get(
+            "experimental_prefill_collective_layout", "off"
+        )
         self._decode_graph_enabled = raw.get("decode_graph", False)
         self._decode_graph_controller: DecodeGraphController | None = None
         self._prefill_groups_enabled = raw.get("compile_prefill_groups", False)
@@ -343,12 +353,15 @@ class MuxPDNPUWorker(NPUWorker):
         if ascend_utils.get_ascend_device_type() != ascend_utils.AscendDeviceType.A2:
             raise ValueError("MuxPD cooperative runner currently supports Ascend A2")
         ascend = get_ascend_config()
-        if self._prefill_groups_enabled and (
+        if (
+            self._prefill_groups_enabled
+            or getattr(self, "_prefill_collective_layout_mode", "off") == "prefix"
+        ) and (
             ascend.ascend_compilation_config.enable_npugraph_ex
             or ascend.ascend_compilation_config.enable_static_kernel
         ):
             raise ValueError(
-                "Prefill groups require fusion FX backend without "
+                "Prefill groups/prefix layout require fusion FX backend without "
                 "npugraph_ex/static kernels"
             )
         if ascend.msmonitor_use_daemon:
@@ -689,6 +702,8 @@ class MuxPDNPUWorker(NPUWorker):
         controller = self._decode_graph_controller
         if controller is None:
             return super().compile_or_warm_up_model()
+        if getattr(self, "_prefill_collective_layout", None) is not None:
+            raise RuntimeError("Prefix layout startup is already finalized")
         if (
             self._interleaver is not None
             or self._pending_lanes
@@ -710,6 +725,12 @@ class MuxPDNPUWorker(NPUWorker):
                 "MuxPD prefill group FX rank=%d %s", self.rank, groups.snapshot()
             )
         logger.info("MuxPD decode graph rank=%d %s", self.rank, controller.snapshot())
+        if getattr(self, "_prefill_collective_layout_mode", "off") == "prefix":
+            from .prefill_collective_layout import install_on_worker
+
+            logger.info(
+                "MuxPD prefix layout startup %s", json.dumps(install_on_worker(self))
+            )
         return result
 
     def _retire_finished(self, finished: set[str]) -> None:
@@ -883,6 +904,11 @@ class MuxPDNPUWorker(NPUWorker):
             if self._interleaver is not None:
                 self._interleaver.close()
                 self._interleaver = None
+            if getattr(self, "_prefill_collective_layout", None) is not None:
+                from .prefill_collective_layout import shutdown_on_worker
+
+                receipt = shutdown_on_worker(self)
+                logger.info("MuxPD prefix layout final %s", json.dumps(receipt))
             while self._hook_handles:
                 self._hook_handles[-1].remove()
                 self._hook_handles.pop()
