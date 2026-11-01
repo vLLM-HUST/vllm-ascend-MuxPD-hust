@@ -1,6 +1,7 @@
 # MuxPD for HUST vLLM Ascend
 
-维护主体：[vLLM-HUST](https://github.com/vLLM-HUST)。缺陷、兼容性和发布问题请提交到
+项目负责人：毛潮云（[Irisuko](https://github.com/Irisuko)），指导老师：罗瑞坤。
+vLLM-HUST 提供仓库与发布基础设施。缺陷、兼容性和发布问题请提交到
 [本仓库 Issues](https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/issues)。
 
 `0.2.0a1` 提供可安装的 ECPA 0.3 Bundle，包含成对的 scheduler、admission policy
