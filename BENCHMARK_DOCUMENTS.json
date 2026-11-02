@@ -1,0 +1,14 @@
+{
+  "manifest_url": "https://raw.githubusercontent.com/vLLM-HUST/vllm-hust-benchmark/a76de7e466e5fabb98b1803a6d8a7037e17cb9a8/archive/mod-targeted-20261023/muxpd-documents/manifest.json",
+  "manifest_sha256": "2bf33c9343cff0260d2119c6dcaf05b0d98451da8bad90eef464c4a6d440ed82",
+  "document_projections": [
+    {
+      "path": "docs/design.md",
+      "original_url": "https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/a76de7e466e5fabb98b1803a6d8a7037e17cb9a8/archive/mod-targeted-20261023/muxpd-documents/snapshot/docs/design.md"
+    },
+    {
+      "path": "docs/performance-tp4-goodput.md",
+      "original_url": "https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/a76de7e466e5fabb98b1803a6d8a7037e17cb9a8/archive/mod-targeted-20261023/muxpd-documents/snapshot/docs/performance-tp4-goodput.md"
+    }
+  ]
+}
