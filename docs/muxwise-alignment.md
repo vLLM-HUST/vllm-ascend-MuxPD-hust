@@ -26,8 +26,8 @@
    队列中的 D 输出若结束请求，其释放的槽位在退休后的下一次 `schedule_batch` 中生效。
 2. **token-work 层配额与异步 D 可组合**（`config.py`）。对应 MuxWise 的
    `split_forward_token_budget`，该配额只依赖 cohort token 数，不依赖延迟样本。
-   实测在 fenced 模式下把 9.7K P 切为 6 层一片时，每轮 D 间隔约 105 ms，优于不切片，
-   但差于 isolated overlap q4（最大间隔约 85–115 ms），因此未进入推荐配置。
+   试验中它在 fenced 模式下优于不切片，但差于 isolated overlap q4，因此未进入推荐配置；
+   数值只在 benchmark 仓库的评测报告中维护。
 
 ## 推荐配置（TP2 已测）
 
