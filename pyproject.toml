@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vllm-ascend-muxpd"
+version = "0.2.0a1"
+description = "MuxWise-inspired phase-separated scheduling for HUST vLLM Ascend"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+dependencies = ["packaging>=24"]
+
+[project.optional-dependencies]
+test = ["pytest>=8", "ruff>=0.9", "greenlet>=3.1,<4", "httpx>=0.27"]
+layered = ["greenlet>=3.1,<4"]
+ecpa = ["greenlet>=3.1,<4", "vllm-hust-ext>=0.3.1.dev1,<0.4"]
+
+[project.scripts]
+vllm-muxpd = "vllm_muxpd.deployment:main"
+
+[project.entry-points."vllm_hust.extension_bundles"]
+"org.vllm-hust.muxpd" = "vllm_muxpd.manifests"
+
+[project.urls]
+Repository = "https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust"
+Issues = "https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+vllm_muxpd = ["manifests/*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["integration: requires the pinned HUST vLLM runtime", "npu: requires Ascend hardware"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+# Preserve the exact audit scripts whose hashes appear in archived receipts.
+"evidence/**/*.py" = ["E501"]
+
+# Keep executed experiment controllers byte-identical to their recorded hashes.
+"evidence/2026-10-11-tp8-contention/**/*.py" = ["E501", "E701", "E702", "I001"]
