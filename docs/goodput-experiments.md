@@ -69,11 +69,12 @@ worker ACK，不能为了 goodput 提前释放 P 的 KV。存在未完成 P 时�
 [worker 校验](../src/vllm_muxpd/worker.py) 和
 [图校验](../src/vllm_muxpd/decode_graph.py) 为准。
 
-`da9a8b1` 的早期 P 先提交路径已完成本机自然语言 16/16 文本精确一致、
-graph serving、取消及满 token budget 的诊断；这不是 token IDs 全等证明，
-也不自动覆盖 `71e70b4` 的 D 先提交路径或上面的固定 8 层参数。新版本的
-正确性、生命周期与容量结果需各自记录，当前不宣称持续 goodput 或总吞吐
-收益。
+`da9a8b1` 的早期 P 先提交诊断检查了自然语言文本、graph serving、取消和
+满 token budget。限定用例的文本精确一致，但不能由此推断 token IDs 全等，
+也不能把结果用于 `71e70b4` 的 D 先提交路径或上面的固定 8 层参数。
+早期诊断的出处是[本仓库的历史使用说明](https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/blob/b6b33ed593f0cb5600f5d86c508331d6cf46b247/docs/goodput-experiments.md#L72-L76)。
+后续配置与失败记录另见[中央 TP8 持续到达探索报告](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/b354f203cabb4cfeba72a74e4eefb29dee85776b/archive/mod-targeted-20261023/muxpd-tp8-groupfx/snapshot/docs/performance-tp8-goodput-exploration.md)。
+新版本须分别记录正确性、生命周期与容量，当前不宣称持续 goodput 或总吞吐收益。
 
 上述 P 先提交和 D 先提交两组诊断均使用 `prefill_layer_token_budget=262144`
 的 work256 配置，以保持提交顺序消融的配额一致；它们均不是固定 8 层。
