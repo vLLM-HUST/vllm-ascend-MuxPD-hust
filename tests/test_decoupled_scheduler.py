@@ -382,10 +382,14 @@ def test_current_contract_abort_defers_reclaimed_event_until_valid_ack(
 def test_preempt_forwards_current_drop_keyword_and_clears_decode_debt(
     make_scheduler, monkeypatch
 ):
-    from vllm.v1.core.sched.scheduler import Scheduler
-
+    from vllm_muxpd.decoupled_scheduler import DecoupledMuxPDScheduler
     from vllm_muxpd.native_compat import SchedulerContract
 
+    # vllm_ascend platform patches may rebind the module-level Scheduler name
+    # after import; patch the class MuxPD actually inherits from.
+    Scheduler = next(
+        k for k in DecoupledMuxPDScheduler.__mro__ if k.__name__ == "Scheduler"
+    )
     scheduler = make_scheduler()
     start_decode(scheduler)
     scheduler._native_contract = SchedulerContract("hust-oct25", "unused")
