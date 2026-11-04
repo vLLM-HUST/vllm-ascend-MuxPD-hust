@@ -353,6 +353,28 @@ def test_waiting_without_free_slot_keeps_decode_pipelined(make_async_scheduler):
     assert output.muxpd_prefill_request_ids == {"p"}
 
 
+def test_full_slots_under_kv_pressure_drain_instead_of_preempting_all(
+    make_async_scheduler,
+):
+    # Queued D outputs hold the blocks of any preempted decode, so a native
+    # preemption pass with a batch in flight cannot free capacity.
+    scheduler = make_async_scheduler(trace=False, num_blocks=5, max_num_seqs=2)
+    driver = QueueDriver(scheduler)
+    for rid in ("a", "b"):
+        scheduler.add_request(base.request(rid, tokens=31, max_tokens=64))
+    output = driver.schedule()
+    driver.retire(completed=set(output.muxpd_prefill_request_ids))
+    assert scheduler.kv_cache_manager.block_pool.get_num_free_blocks() == 0
+    scheduler.add_request(base.request("w", tokens=8))
+    first = driver.schedule()
+    assert first.num_scheduled_tokens == {"a": 1, "b": 1}
+    assert driver.schedule() is None
+    driver.retire()
+    resumed = driver.schedule()
+    assert resumed is not None and resumed.total_num_scheduled_tokens
+    assert scheduler.running
+
+
 def test_keep_pause_rejects_queued_decode_before_mutating_state(make_async_scheduler):
     scheduler = make_async_scheduler(trace=False)
     driver = QueueDriver(scheduler)

@@ -91,6 +91,20 @@ class AsyncDecoupledMuxPDScheduler(DecoupledMuxPDScheduler):
             return False
         return len(self.running) < self.max_num_running_reqs
 
+    def _decode_kv_pressure(self) -> bool:
+        """Whether the next decode step might need native preemption.
+
+        While a D batch is queued, every running decode owns an in-flight
+        output, so a native preemption only moves the victim's blocks into
+        the held set and frees nothing. Allocation would then keep failing and
+        preempt every request, including the requester. Drain instead whenever
+        free blocks cannot give each running request one block per KV group.
+        """
+        manager = self.kv_cache_manager
+        groups = getattr(manager, "num_kv_cache_groups", 1)
+        free = manager.block_pool.get_num_free_blocks()
+        return free < len(self.running) * groups
+
     def _update_after_schedule(self, output):
         decode_ids = {
             rid
@@ -140,6 +154,7 @@ class AsyncDecoupledMuxPDScheduler(DecoupledMuxPDScheduler):
             len(self._async_steps) >= 2
             or self._prefill_cohort is not None
             or self._admissible_waiting()
+            or self._decode_kv_pressure()
             or any(q.step.cohort_id is not None for q in self._async_steps)
         ):
             return None
