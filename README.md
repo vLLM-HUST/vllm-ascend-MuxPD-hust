@@ -61,7 +61,7 @@ source98 的普通 worker / Manager 桥接仍只有其原有功能范围，不�
 #24 的调度修复关闭不改变 #23 的质量失败。关闭 #23 必须回到预先冻结的质量门：
 使用完整固定题集、两次独立原生对照及原评分、截断规则验证实际修复；原生双对照
 均正确题上的新增错误不能被总正确数抵消。严格门与补充门分别报告，历史失败保留。
-三道丢失题的数值与终止差异追踪见
+丢失题目的数值与终止差异追踪见
 [复核记录发布位置](https://github.com/vLLM-HUST/vllm-hust-benchmark/tree/1c70f51a70e90943851e246a41fa13e9afc5332c/reports/muxpd-quality-review-20261028/)
 （原始证据与公开验证回执均已归档；质量门仍未通过）。
 
@@ -93,24 +93,23 @@ NPU profiler 验证，不能由 Python 协程或调度 trace 推断。
 
 TP4 调优加入独立 decode 图、完整 P 编译、按 cohort token 工作量分配层数，
 并减少连续 D 的 host 调用与事件依赖。两组负载各六轮测量的聚合吞吐高于
-原生 graph 基线；自然语言 16/16 对照一致，但部分合成序列仍有差异，且部分
-延迟指标未改善。完整结果与限制见 [TP4 性能报告](docs/performance-tp4.md)。
+原生 graph 基线。固定自然语言用例的文本一致，但部分合成序列仍有差异，
+部分延迟指标也未改善。原始结果见[中央归档清单](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/afd47a8e9964b71844dec75a8e908f279ae98202/archive/mod-history-20261023/muxpd/manifest.json)中的 `docs/performance-tp4.md`。
 这不是对任意负载或全部指标不退化的保证，也不是论文硬件分区的实现。
 
-八卡 TP8 迁移验证复用同一配置：每方每负载六轮，混合负载吞吐基本持平
-（177.302 → 177.314 tokens/s），decode-heavy 为 243.153 → 244.002 tokens/s。
-阶段波动大于合并收益，不能宣称稳定加速；mixed 的请求平均 TPOT P95 上升
-0.87%。自然语言 16/16 对照一致，合成用例文本 33/56 一致。
-方法、原始回执及输出稳定性限制见 [TP8 实验报告](docs/performance-tp8.md)。
+八卡 TP8 迁移验证复用同一配置，每方每负载六轮。混合负载吞吐基本持平，
+decode-heavy 的汇总吞吐略有上升，但阶段波动大于收益，未能证明稳定加速。
+混合负载下，请求级平均 TPOT 的 P95 上升。自然语言对照文本一致，
+合成用例只部分一致。逐项结果、原始回执和稳定性限制见[中央 TP8 实验报告](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/b354f203cabb4cfeba72a74e4eefb29dee85776b/archive/mod-targeted-20261023/muxpd-tp8-groupfx/snapshot/docs/performance-tp8.md)。
 
 持续 D 加长 P 的 TP8 争用实验取得明确的延迟取舍：启用可选
 `decode_budget_guard` v2 后，三种长 P 负载各六轮的 D 最大事件间隔 P95
-从原生 16K 的 385–398 ms 降到 66–68 ms，所有请求满足本轮 D 100 ms /
-P TTFT 1 s 观察目标；吞吐低 1.96%–3.54%，P TTFT P95 增加 22.62%–28.49%。
+均低于原生 16K 对照。请求满足本轮 D 间隔 100 ms 和 P TTFT 1 s 的观察目标，
+但整体吞吐降低，P 首字时间的 P95 上升。
 原生 2K chunk、旧插件、无注入 P 控制及所有重复轮次均保留。
-自然语言为 16/16 文本精确一致，合成 token IDs 仍有重复及跨配置差异。
-这不是硬 SLO 保证或设备空间分区；guard 默认关闭，完整启用示例、图表与
-全部证据见 [TP8 争用实验报告](docs/performance-tp8-contention.md)。
+自然语言对照文本完全一致，合成 token IDs 在重复运行和跨配置比较中仍有差异。
+guard 默认关闭，以上结果不能证明硬 SLO 保证或设备空间分区。
+完整启用示例、指标及失败记录见[中央 TP8 争用实验报告](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/b354f203cabb4cfeba72a74e4eefb29dee85776b/archive/mod-targeted-20261023/muxpd-tp8-groupfx/snapshot/docs/performance-tp8-contention.md)。
 
 持续到达的容量验证使用独立 Poisson plan 和严格原始 SSE 回执，区分 pooled
 TBT P99 与每请求双 SLO goodput，并调优原生 chunk budget / async 基线。
@@ -122,10 +121,9 @@ TBT P99 与每请求双 SLO goodput，并调优原生 chunk budget / async 基�
 针对短输出流与长 prefill 争用的 TP4 交互场景，新增显式入口
 [`serve-qwen35-streaming.sh`](scripts/serve-qwen35-streaming.sh)：raw P 四层切片、
 独立 decode 图和通信组。三个独立到达 seed、交换卡组的六个确认窗口中，
-满足 TTFT≤1 s 且每个单 token 间隔≤100 ms 的请求由 **117/378 增至 368/378**，
-Goodput 为原生 16K 对照的 **3.15×**；固定窗口吞吐约 **+0.48%**，视为基本持平。
-收益是减少每请求最坏停顿，代价是 TTFT 和 pooled token-gap P99 增加。
-适用负载、全部对照和复现证据见 [TP4 Goodput 报告](docs/performance-tp4-goodput.md)。
+相较于原生 16K 对照，更多请求同时满足 TTFT≤1 s 和每个单 token 间隔≤100 ms，
+Goodput 提高，固定窗口吞吐基本持平。每请求的最坏停顿缩短，但 TTFT 和
+pooled token-gap P99 上升。适用负载、逐组结果与复现证据见[中央 TP4 Goodput 报告](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/a76de7e466e5fabb98b1803a6d8a7037e17cb9a8/archive/mod-targeted-20261023/muxpd-documents/snapshot/docs/performance-tp4-goodput.md)。
 这是特定到达率下的交互 SLO 收益，不是最大吞吐或任意负载加速保证。
 
 早期 [TP2 验证](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/2144d58de108cddaff3800fdcbf12dc9d3ab1d18/archive/mod-consumers-20261023/muxpd/manifest.json) 和
