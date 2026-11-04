@@ -10,6 +10,7 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
+from vllm.logger import init_logger
 from vllm.v1.core.sched.batch_admission import (
     BATCH_ADMISSION_POLICY_API_VERSION,
     BatchRequest,
@@ -17,14 +18,17 @@ from vllm.v1.core.sched.batch_admission import (
 from vllm.v1.core.sched.interface import PauseState
 from vllm.v1.core.sched.output import CachedRequestData, NewRequestData, SchedulerOutput
 from vllm.v1.core.sched.scheduler import Scheduler
+from vllm.v1.engine import EngineCoreOutput, EngineCoreOutputs
 from vllm.v1.outputs import ModelRunnerOutput
-from vllm.v1.request import Request
+from vllm.v1.request import Request, RequestStatus
 
 from .config import validate_engine_config
 from .deployment import managed_runtime_preflight
 from .evidence import emit_runtime_effective
 from .native_compat import scheduler_contract
 from .policy import Decision, MuxPDPolicy, remaining_tokens, request_phase
+
+logger = init_logger(__name__)
 
 
 class MuxPDScheduler(Scheduler):
@@ -69,6 +73,7 @@ class MuxPDScheduler(Scheduler):
         self.last_muxpd_step: dict[str, Any] | None = None
         self._muxpd_pending: tuple[SchedulerOutput, float, Decision, int] | None = None
         self._muxpd_trace = None
+        self._muxpd_rejected: list[Request] = []
         trace_path = self.muxpd_policy.config.trace_path
         if trace_path:
             path = Path(trace_path.format(pid=os.getpid())).expanduser()
@@ -95,7 +100,45 @@ class MuxPDScheduler(Scheduler):
             raise ValueError(
                 "MuxPD prompt must leave at least one token within max_model_len"
             )
+        reason = self._unsupported_reason(request)
+        if reason is not None:
+            # EngineCore treats add_request and worker exceptions as fatal.
+            # Finish only this request with a request-scoped error instead.
+            logger.warning("MuxPD rejected request %s: %s", request.request_id, reason)
+            request.status = RequestStatus.FINISHED_ERROR
+            self._muxpd_rejected.append(request)
+            return
         super().add_request(request)
+
+    def _unsupported_reason(self, request: Request) -> str | None:
+        params = request.sampling_params
+        if params is None:
+            return "generation requires sampling parameters"
+        if params.logprobs is not None or params.prompt_logprobs is not None:
+            return "logprobs are not supported"
+        if params.structured_outputs is not None:
+            return "structured outputs are not supported"
+        return None
+
+    def has_requests(self) -> bool:
+        return super().has_requests() or bool(self._muxpd_rejected)
+
+    def _finish_outputs(self, result: dict) -> dict:
+        self._record_effective_outputs(result)
+        rejected, self._muxpd_rejected = self._muxpd_rejected, []
+        for request in rejected:
+            row = EngineCoreOutput(
+                request_id=request.request_id,
+                new_token_ids=[],
+                finish_reason=request.get_finished_reason(),
+                trace_headers=request.trace_headers,
+            )
+            packet = result.get(request.client_index)
+            if packet is None:
+                result[request.client_index] = EngineCoreOutputs(outputs=[row])
+            else:
+                packet.outputs.append(row)
+        return result
 
     def _muxpd_snapshots(self) -> tuple[BatchRequest, ...]:
         snapshots = self._make_batch_request_snapshots()
@@ -272,8 +315,7 @@ class MuxPDScheduler(Scheduler):
                     )
                     + "\n"
                 )
-        self._record_effective_outputs(result)
-        return result
+        return self._finish_outputs(result)
 
     def _record_effective_outputs(self, result: dict) -> None:
         # Count only outputs actually retired by native scheduling. A sampled

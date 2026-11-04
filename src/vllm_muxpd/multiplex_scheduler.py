@@ -199,5 +199,4 @@ class LayeredMuxPDScheduler(MuxPDScheduler):
                     )
                     + "\n"
                 )
-        self._record_effective_outputs(result)
-        return result
+        return self._finish_outputs(result)

@@ -468,3 +468,23 @@ def test_native_engine_queue_retires_zero_token_control_without_sample_rpc(
     if not cancel_prefill:
         assert scheduler.requests["p"].num_output_tokens == 1
         assert scheduler.requests["p"].num_output_placeholders == 0
+
+
+def test_unsupported_request_is_flushed_through_the_async_queue(
+    make_async_scheduler,
+):
+    from vllm.v1.engine import FinishReason
+
+    scheduler = make_async_scheduler(trace=False)
+    driver = QueueDriver(scheduler)
+    bad = base.request("bad", tokens=16)
+    bad.sampling_params.logprobs = 1
+    scheduler.add_request(bad)
+    output = driver.schedule()
+    assert output is not None and not output.total_num_scheduled_tokens
+    result = driver.retire()
+    rows = [r for p in result.values() for r in p.outputs]
+    assert [(r.request_id, r.finish_reason) for r in rows] == [
+        ("bad", FinishReason.ERROR)
+    ]
+    assert not scheduler.has_requests()
