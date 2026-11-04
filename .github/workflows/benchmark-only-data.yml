@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: vLLM-HUST/.github
-          ref: fa129e64dca4841a27cb317344298682c17de232
+          ref: bed49f543686a616953782f38a4de48042cdde62
           persist-credentials: false
       - name: Inspect metadata with pinned trusted policy; never execute PR code
         env:
