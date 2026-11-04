@@ -334,6 +334,25 @@ def test_skipped_waiting_also_drains_before_new_transaction(make_async_scheduler
     assert pending.num_computed_tokens == 64
 
 
+def test_waiting_without_free_slot_keeps_decode_pipelined(make_async_scheduler):
+    scheduler = make_async_scheduler(trace=False)
+    driver = QueueDriver(scheduler)
+    driver.start_decode()
+    driver.schedule()
+    scheduler.max_num_running_reqs = len(scheduler.running)
+    pending = base.request("p", tokens=64)
+    scheduler.add_request(pending)
+    second = driver.schedule()
+    assert second is not None and second.num_scheduled_tokens == {"d": 1}
+    assert pending.num_computed_tokens == 0
+    assert driver.schedule() is None
+    driver.retire()
+    driver.retire()
+    scheduler.max_num_running_reqs = 8
+    output = driver.schedule()
+    assert output.muxpd_prefill_request_ids == {"p"}
+
+
 def test_keep_pause_rejects_queued_decode_before_mutating_state(make_async_scheduler):
     scheduler = make_async_scheduler(trace=False)
     driver = QueueDriver(scheduler)

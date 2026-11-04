@@ -47,10 +47,12 @@ class MuxPDConfig:
             or self.prefill_first
             or self.decode_budget_guard
             or self.compile_full_prefill
-            or self.prefill_layer_token_budget
         ):
+            # The token-work quota (MuxWise split_forward_token_budget) is a
+            # pure scheduler-side layer count and needs no latency samples.
             raise ValueError(
-                "MuxPD async_decode_pipeline requires decoupled fixed layer quotas"
+                "MuxPD async_decode_pipeline requires decoupled fixed or "
+                "token-work layer quotas"
             )
         if type(self.require_hccl_deterministic) is not bool:
             raise ValueError("MuxPD require_hccl_deterministic must be a boolean")

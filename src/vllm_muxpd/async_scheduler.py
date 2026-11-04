@@ -77,6 +77,20 @@ class AsyncDecoupledMuxPDScheduler(DecoupledMuxPDScheduler):
             )
         return tuple(eligible)
 
+    def _admissible_waiting(self) -> bool:
+        """Whether a drain could let a waiting prompt start its prefill.
+
+        With every running slot occupied no waiting prompt can be admitted, so
+        draining would only serialize decode until a request finishes. Queued
+        D outputs can finish requests, but a slot freed that way is observed
+        on the next schedule_batch call after retirement.
+        """
+        if not (self.waiting or self.skipped_waiting):
+            return False
+        if self._pause_state != PauseState.UNPAUSED:
+            return False
+        return len(self.running) < self.max_num_running_reqs
+
     def _update_after_schedule(self, output):
         decode_ids = {
             rid
@@ -125,8 +139,7 @@ class AsyncDecoupledMuxPDScheduler(DecoupledMuxPDScheduler):
         if self._async_steps and (
             len(self._async_steps) >= 2
             or self._prefill_cohort is not None
-            or self.waiting
-            or self.skipped_waiting
+            or self._admissible_waiting()
             or any(q.step.cohort_id is not None for q in self._async_steps)
         ):
             return None

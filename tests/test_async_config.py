@@ -68,9 +68,17 @@ def test_async_requires_exactly_two_native_concurrent_batches():
         {"prefill_first": True},
         {"decode_budget_guard": True},
         {"compile_full_prefill": True},
-        {"prefill_layer_token_budget": 8192},
     ],
 )
 def test_async_excludes_other_adaptive_policy_experiments(other):
-    with pytest.raises(ValueError, match="fixed layer quotas"):
+    with pytest.raises(ValueError, match="token-work layer quotas"):
         MuxPDConfig(execution="decoupled", async_decode_pipeline=True, **other)
+
+
+def test_async_accepts_token_work_layer_quota():
+    result = MuxPDConfig(
+        execution="decoupled",
+        async_decode_pipeline=True,
+        prefill_layer_token_budget=65536,
+    )
+    assert result.prefill_layer_token_budget == 65536
