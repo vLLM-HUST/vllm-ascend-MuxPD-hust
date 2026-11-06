@@ -78,6 +78,14 @@ class _Step:
     guard_decode_shape: tuple[int, int, int] | None = None
 
 
+# Admission reasons under which a P-only step deferred existing decodes.
+_PREFILL_FIRST_REASONS = (
+    "deadline_prefill_first",
+    "full_budget_prefill_first",
+    "token_budget_prefill_first",
+)
+
+
 class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
     """Admit complete prompts once, then independently retire P and D outputs."""
 
@@ -395,11 +403,7 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
                 if rid in running_ids
             }
         deferred_decode_ids = frozenset()
-        if self._prefill_first_admission["reason"] in (
-            "deadline_prefill_first",
-            "full_budget_prefill_first",
-            "token_budget_prefill_first",
-        ):
+        if self._prefill_first_admission["reason"] in _PREFILL_FIRST_REASONS:
             if new_prefill_ids and not decode_ids:
                 deferred_decode_ids = frozenset(
                     self._prefill_first_admission["deferred_decode_ids"]
@@ -471,14 +475,14 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
             else None
         )
         self._decoupled_step = _Step(
-            output,
-            _output_for_update(output, decode_ids),
-            output.muxpd_prefill_cohort_id,
-            started,
-            expected_layers,
-            calibration_phase,
-            deferred_decode_ids,
-            self._decode_shape(
+            output=output,
+            decode_output=_output_for_update(output, decode_ids),
+            cohort_id=output.muxpd_prefill_cohort_id,
+            started_at=started,
+            expected_layers=expected_layers,
+            calibration_phase=calibration_phase,
+            deferred_decode_ids=deferred_decode_ids,
+            guard_decode_shape=self._decode_shape(
                 [self._guard_live_decodes[rid] for rid in sorted(decode_ids)]
             )
             if self.muxpd_policy.config.decode_budget_guard and decode_ids

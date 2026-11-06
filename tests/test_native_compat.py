@@ -143,3 +143,10 @@ def test_reclamation_bridge_only_emits_after_explicit_ack_call():
     old = SchedulerContract("hust-oct10", "blocked")
     assert old.held_result([1]) is None
     old.emit_reclaimed("r", None, 1)
+
+
+def test_lane_validators_only_name_known_native_fields():
+    from vllm_muxpd import native_compat as nc
+
+    assert set(nc._UNSPLITTABLE_SCHEDULE_FIELDS) <= nc._SCHEDULER_NEW
+    assert set(nc._UNSUPPORTED_RESULT_FIELDS) <= nc._RUNNER_OLD | nc._RUNNER_NEW

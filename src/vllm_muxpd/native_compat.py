@@ -195,23 +195,39 @@ def _nonempty(value: Any) -> bool:
     )
 
 
+# SchedulerOutput/ModelRunnerOutput fields whose contents cannot be split
+# between the P and D lanes. Order is the reporting order of the first hit.
+_UNSPLITTABLE_SCHEDULE_FIELDS = (
+    "scheduled_encoder_inputs",
+    "scheduled_encoder_input_stats",
+    "scheduled_spec_decode_tokens",
+    "has_structured_output_requests",
+    "pending_structured_output_tokens",
+    "num_invalid_spec_tokens",
+    "kv_connector_metadata",
+    "has_sync_kv_loads",
+    "aux_output_connector_metadata",
+    "ec_connector_metadata",
+    "ec_manager_metadata",
+    "kv_cache_block_copies",
+    "kv_connector_block_state",
+)
+_UNSUPPORTED_RESULT_FIELDS = (
+    "logprobs",
+    "pooler_output",
+    "kv_connector_output",
+    "ec_connector_output",
+    "routed_experts",
+    "aux_output_connector_output",
+    "sampling_masks",
+    "prompt_token_id_logprobs_dict",
+    "cudagraph_stats",
+)
+
+
 def validate_lane_schedule(output: Any) -> None:
     """Reject work whose side effects cannot be split across independent lanes."""
-    for name in (
-        "scheduled_encoder_inputs",
-        "scheduled_encoder_input_stats",
-        "scheduled_spec_decode_tokens",
-        "has_structured_output_requests",
-        "pending_structured_output_tokens",
-        "num_invalid_spec_tokens",
-        "kv_connector_metadata",
-        "has_sync_kv_loads",
-        "aux_output_connector_metadata",
-        "ec_connector_metadata",
-        "ec_manager_metadata",
-        "kv_cache_block_copies",
-        "kv_connector_block_state",
-    ):
+    for name in _UNSPLITTABLE_SCHEDULE_FIELDS:
         if _nonempty(getattr(output, name, None)):
             raise RuntimeError(f"Unsupported MuxPD lane scheduling field: {name}")
     if output.num_spec_tokens_to_schedule:
@@ -222,17 +238,7 @@ def validate_lane_schedule(output: Any) -> None:
 
 
 def validate_lane_result(output: Any) -> None:
-    for name in (
-        "logprobs",
-        "pooler_output",
-        "kv_connector_output",
-        "ec_connector_output",
-        "routed_experts",
-        "aux_output_connector_output",
-        "sampling_masks",
-        "prompt_token_id_logprobs_dict",
-        "cudagraph_stats",
-    ):
+    for name in _UNSUPPORTED_RESULT_FIELDS:
         if _nonempty(getattr(output, name, None)):
             raise RuntimeError(f"Unsupported MuxPD lane output metadata: {name}")
     if (
