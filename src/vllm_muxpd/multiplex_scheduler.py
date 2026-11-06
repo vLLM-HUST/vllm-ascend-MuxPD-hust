@@ -6,8 +6,6 @@ an independent runner and input batch; prompt tokens are never chunked.
 
 from __future__ import annotations
 
-import json
-import os
 import time
 from typing import Any
 
@@ -185,18 +183,10 @@ class LayeredMuxPDScheduler(MuxPDScheduler):
             if scheduler_output.muxpd_phase in ("decode", "multiplex"):
                 self.muxpd_policy.last_decode_at = now
             if self._muxpd_trace is not None:
-                self._muxpd_trace.write(
-                    json.dumps(
-                        {
-                            "event": "complete",
-                            "time": now,
-                            "pid": os.getpid(),
-                            "step": self.muxpd_stats["steps"],
-                            "phase": scheduler_output.muxpd_phase,
-                            "duration_ms": duration_ms,
-                        },
-                        sort_keys=True,
-                    )
-                    + "\n"
+                self._write_trace(
+                    "complete",
+                    now,
+                    phase=scheduler_output.muxpd_phase,
+                    duration_ms=duration_ms,
                 )
         return self._finish_outputs(result)

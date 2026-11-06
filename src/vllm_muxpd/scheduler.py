@@ -303,23 +303,27 @@ class MuxPDScheduler(Scheduler):
             self.muxpd_stats["completed_batches"] += 1
             self._muxpd_pending = None
             if self._muxpd_trace is not None:
-                self._muxpd_trace.write(
-                    json.dumps(
-                        {
-                            "event": "complete",
-                            "time": completed,
-                            "pid": os.getpid(),
-                            "step": self.muxpd_stats["steps"],
-                            "phase": decision.phase,
-                            "duration_ms": duration_ms,
-                            "prefill_scale": self.muxpd_policy.prefill_scale,
-                            "decode_scale": self.muxpd_policy.decode_scale,
-                        },
-                        sort_keys=True,
-                    )
-                    + "\n"
+                self._write_trace(
+                    "complete",
+                    completed,
+                    phase=decision.phase,
+                    duration_ms=duration_ms,
+                    prefill_scale=self.muxpd_policy.prefill_scale,
+                    decode_scale=self.muxpd_policy.decode_scale,
                 )
         return self._finish_outputs(result)
+
+    def _write_trace(self, event: str, now: float, **fields: Any) -> dict[str, Any]:
+        """Append one JSONL record; callers check that tracing is enabled."""
+        record = {
+            "event": event,
+            "time": now,
+            "pid": os.getpid(),
+            "step": self.muxpd_stats["steps"],
+            **fields,
+        }
+        self._muxpd_trace.write(json.dumps(record, sort_keys=True) + "\n")
+        return record
 
     def _record_effective_outputs(self, result: dict) -> None:
         # Count only outputs actually retired by native scheduling. A sampled
@@ -352,25 +356,19 @@ class MuxPDScheduler(Scheduler):
             return
         by_id = {r.request_id: r for r in snapshots}
         scheduled = output.num_scheduled_tokens
-        record = {
-            "event": "schedule",
-            "time": now,
-            "pid": os.getpid(),
-            "step": self.muxpd_stats["steps"],
-            "phase": decision.phase,
-            "request_ids": list(scheduled),
-            "scheduled_tokens": dict(scheduled),
-            "expected_tokens": {rid: remaining_tokens(by_id[rid]) for rid in scheduled},
-            "computed_before": {
-                rid: by_id[rid].num_computed_tokens for rid in scheduled
-            },
-            "request_phases": {rid: request_phase(by_id[rid]) for rid in scheduled},
-            "preempted_req_ids": sorted(output.preempted_req_ids),
-            "finished_req_ids": sorted(output.finished_req_ids),
-            "policy": asdict(decision),
-        }
-        self.last_muxpd_step = record
-        self._muxpd_trace.write(json.dumps(record, sort_keys=True) + "\n")
+        self.last_muxpd_step = self._write_trace(
+            "schedule",
+            now,
+            phase=decision.phase,
+            request_ids=list(scheduled),
+            scheduled_tokens=dict(scheduled),
+            expected_tokens={rid: remaining_tokens(by_id[rid]) for rid in scheduled},
+            computed_before={rid: by_id[rid].num_computed_tokens for rid in scheduled},
+            request_phases={rid: request_phase(by_id[rid]) for rid in scheduled},
+            preempted_req_ids=sorted(output.preempted_req_ids),
+            finished_req_ids=sorted(output.finished_req_ids),
+            policy=asdict(decision),
+        )
 
     def export_muxpd_stats(self) -> dict[str, int]:
         return dict(self.muxpd_stats)

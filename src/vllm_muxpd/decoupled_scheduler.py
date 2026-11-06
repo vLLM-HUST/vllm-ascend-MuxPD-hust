@@ -8,9 +8,7 @@ including zero-token continuation and cancellation-control steps.
 
 from __future__ import annotations
 
-import json
 import math
-import os
 import time
 from collections import OrderedDict
 from dataclasses import dataclass, replace
@@ -1351,16 +1349,4 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
 
     def _trace_decoupled(self, event: str, **fields) -> None:
         if self._muxpd_trace is not None:
-            self._muxpd_trace.write(
-                json.dumps(
-                    {
-                        "event": event,
-                        "pid": os.getpid(),
-                        "time": time.monotonic(),
-                        "step": self.muxpd_stats["steps"],
-                        **fields,
-                    },
-                    sort_keys=True,
-                )
-                + "\n"
-            )
+            self._write_trace(event, time.monotonic(), **fields)
