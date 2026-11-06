@@ -142,26 +142,32 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
     def add_request(self, request: Request) -> None:
         if not math.isfinite(request.arrival_time):
             raise ValueError("MuxPD request arrival_time must be finite")
-        if request.use_structured_output:
-            raise ValueError("Decoupled MuxPD does not support structured outputs")
         if request.lora_request is not None:
             raise ValueError("Decoupled MuxPD does not support LoRA")
-        if (
-            getattr(request.sampling_params, "prompt_logprob_token_ids", None)
-            is not None
-        ):
-            raise ValueError("Decoupled MuxPD does not support prompt token scores")
         if (
             self._prefill_cohort
             and request.request_id in self._prefill_cohort.pending_ids
         ):
             raise ValueError("Request ID is still awaiting prefill retirement")
         super().add_request(request)
+        if request.is_finished():
+            # Rejected at admission; it never enters the scheduler's state.
+            return
         # Native Request uses epoch seconds. Convert once to the scheduler clock
         # while retaining time already spent queued before engine admission.
         self._arrival_monotonic[request.request_id] = time.monotonic() - max(
             0.0, time.time() - request.arrival_time
         )
+
+    def _unsupported_reason(self, request: Request) -> str | None:
+        reason = super()._unsupported_reason(request)
+        if reason is None and (
+            getattr(request.sampling_params, "prompt_logprob_token_ids", None)
+            is not None
+        ):
+            # Forward-compatible: the pinned vLLM has no such field yet.
+            return "prompt token scores are not supported"
+        return reason
 
     def _cancelled_prefill_ids(self) -> set[str]:
         if self._prefill_cohort is None:

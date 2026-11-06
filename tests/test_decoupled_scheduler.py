@@ -2051,6 +2051,38 @@ def test_unsupported_sampling_fails_only_that_request(make_scheduler, field):
     assert not scheduler._muxpd_rejected and decode.num_output_tokens == 2
 
 
+def test_structured_output_request_fails_only_that_request(make_scheduler):
+    from vllm.sampling_params import StructuredOutputsParams
+    from vllm.v1.engine import FinishReason
+
+    scheduler = make_scheduler()
+    decode = start_decode(scheduler)
+    params = SamplingParams(
+        max_tokens=32, structured_outputs=StructuredOutputsParams(choice=["y", "n"])
+    )
+    params.update_from_generation_config({}, 127)
+    bad = Request("bad", [1] * 16, params, None, client_index=0)
+    assert bad.use_structured_output
+    scheduler.add_request(bad)  # must not raise: EngineCore treats that as fatal
+    output = scheduler.schedule()
+    assert set(output.num_scheduled_tokens) == {"d"}
+    result = retire(scheduler, output)
+    rows = {r.request_id: r for p in result.values() for r in p.outputs}
+    assert rows["bad"].finish_reason == FinishReason.ERROR
+    assert rows["bad"].new_token_ids == [] and rows["d"].new_token_ids
+    assert decode.num_output_tokens == 2
+
+
+def test_rejected_request_leaves_no_arrival_bookkeeping(make_scheduler):
+    scheduler = make_scheduler()
+    bad = request("bad", 16)
+    bad.sampling_params.logprobs = 1
+    scheduler.add_request(bad)
+    retire(scheduler, scheduler.schedule())
+    assert not scheduler.has_requests()
+    assert "bad" not in scheduler._arrival_monotonic
+
+
 def test_unsupported_request_on_idle_engine_is_flushed(make_scheduler):
     from vllm.v1.engine import FinishReason
 

@@ -490,6 +490,31 @@ def test_unsupported_request_is_flushed_through_the_async_queue(
     assert not scheduler.has_requests()
 
 
+def test_structured_output_request_is_flushed_through_the_async_queue(
+    make_async_scheduler,
+):
+    from vllm.sampling_params import SamplingParams, StructuredOutputsParams
+    from vllm.v1.engine import FinishReason
+    from vllm.v1.request import Request
+
+    scheduler = make_async_scheduler(trace=False)
+    driver = QueueDriver(scheduler)
+    params = SamplingParams(
+        max_tokens=32, structured_outputs=StructuredOutputsParams(choice=["y", "n"])
+    )
+    params.update_from_generation_config({}, 127)
+    bad = Request("bad", [1] * 16, params, None, client_index=0)
+    assert bad.use_structured_output
+    scheduler.add_request(bad)
+    driver.schedule()
+    rows = [r for p in driver.retire().values() for r in p.outputs]
+    assert [(r.request_id, r.finish_reason) for r in rows] == [
+        ("bad", FinishReason.ERROR)
+    ]
+    assert not scheduler.has_requests()
+    assert "bad" not in scheduler._arrival_monotonic
+
+
 def test_rejected_request_reported_finished_to_dp_clients(make_async_scheduler):
     scheduler = make_async_scheduler(trace=False)
     scheduler.finished_req_ids_dict = {}
