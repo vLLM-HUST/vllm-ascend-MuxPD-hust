@@ -131,6 +131,7 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
                 # This path was admitted with a full quota. Even a raw Python
                 # fallback must not suspend inside the compilation context.
                 layer_budget = None
+            observer = None
             if (
                 lane == "prefill"
                 and getattr(self, "_prefill_slice_timing_enabled", False)
@@ -138,7 +139,7 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
             ):
                 if self._stream_mode != "fenced":
                     raise RuntimeError("MuxPD slice timing requires fenced execution")
-                timer = PrefillSliceTimer(
+                observer = PrefillSliceTimer(
                     torch.npu.Event(enable_timing=True),
                     torch.npu.Event(enable_timing=True),
                     self._streams["prefill"],
@@ -146,24 +147,21 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
                     prefill_tokens=self._prefill_num_tokens,
                     compiled=getattr(self, "_prefill_compiled", False),
                 )
-                self._iteration_prefill_timer = timer
-                try:
-                    interleaver.step(
-                        lane,
-                        sys.maxsize if layer_budget is None else layer_budget,
-                        observer=timer,
-                    )
-                except BaseException:
-                    # Match run()'s full-forward unwind behavior. Partial steps
-                    # keep their existing fail-closed engine-error semantics.
-                    if layer_budget is None:
-                        interleaver.close()
-                    raise
-                return
-            if layer_budget is None:
-                interleaver.run((lane,), sys.maxsize)
-            else:
-                interleaver.step(lane, layer_budget)
+                self._iteration_prefill_timer = observer
+            # Each lane interleaver owns exactly one task, so an unbounded step
+            # runs the forward to completion.
+            try:
+                interleaver.step(
+                    lane,
+                    sys.maxsize if layer_budget is None else layer_budget,
+                    observer=observer,
+                )
+            except BaseException:
+                # A failed full forward unwinds its stack (as run() does).
+                # Partial steps keep their fail-closed engine-error semantics.
+                if layer_budget is None:
+                    interleaver.close()
+                raise
         finally:
             self._interleaver = None
 
