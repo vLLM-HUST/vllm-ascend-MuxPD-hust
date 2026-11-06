@@ -179,19 +179,22 @@ def install(layout: str) -> bool:
         )
         return torch.cat([block_table[:real], pad], 0)
 
-    def bsh_kwargs(self, query, key, value, block_table, block_size, kv_lens):
-        b = query.shape[0]
+    def bsh_query(self, query):
+        return query.view(query.shape[0], 1, self.num_heads * self.head_size)
+
+    def bsh_kwargs(src, query_bsh, key, value, block_table, block_size, kv_lens):
+        """FIA arguments of one BSH S=1 decode call; ``src`` is an impl or param."""
         return dict(
-            query=query.view(b, 1, self.num_heads * self.head_size),
+            query=query_bsh,
             key=key,
             value=value,
             block_table=block_table,
             input_layout="BSH",
             block_size=block_size,
             actual_seq_lengths_kv=kv_lens,
-            num_key_value_heads=self.num_kv_heads,
-            num_heads=self.num_heads,
-            scale=self.scale,
+            num_key_value_heads=src.num_kv_heads,
+            num_heads=src.num_heads,
+            scale=src.scale,
             sparse_mode=0,
         )
 
@@ -200,15 +203,7 @@ def install(layout: str) -> bool:
             self._muxpd_layer_name = layer.layer_name
         return orig_forward(self, layer, *args, **kwargs)
 
-    def forward_fused_infer_attention(
-        self, query, key, value, attn_metadata, output, kv_cache=None
-    ):
-        rows = eligible(self, attn_metadata)
-        if rows is None:
-            STATS["passthrough"] += 1
-            return orig_fia(self, query, key, value, attn_metadata, output, kv_cache)
-        if extra.capturing:
-            return orig_fia(self, query, key, value, attn_metadata, output, kv_cache)
+    def bsh_forward(self, query, key, value, attn_metadata, output, rows, kv_cache):
         real, total = rows
         key, value, block_size, block_table, kv = self._get_fia_params(
             key, value, attn_metadata, kv_cache
@@ -217,7 +212,7 @@ def install(layout: str) -> bool:
         attn, _ = torch_npu.npu_fused_infer_attention_score(
             **bsh_kwargs(
                 self,
-                q,
+                bsh_query(self, q),
                 key,
                 value,
                 bsh_block_table(block_table, real, total),
@@ -229,12 +224,7 @@ def install(layout: str) -> bool:
         STATS["eager_calls"] += 1
         return output
 
-    def full_graph_fia(self, query, key, value, attn_metadata, output, layer=None):
-        rows = eligible(self, attn_metadata)
-        if rows is None:
-            return orig_full_graph_fia(
-                self, query, key, value, attn_metadata, output, layer
-            )
+    def bsh_capture(self, query, key, value, attn_metadata, output, rows):
         real, total = rows
         key, value, block_size, block_table, kv = self._get_fia_params(
             key, value, attn_metadata
@@ -251,7 +241,9 @@ def install(layout: str) -> bool:
         if workspace is None:
             max_kv = [self.vllm_config.model_config.max_model_len] * total
             workspace = torch_npu._npu_fused_infer_attention_score_get_max_workspace(
-                **bsh_kwargs(self, q, key, value, buf, block_size, max_kv)
+                **bsh_kwargs(
+                    self, bsh_query(self, q), key, value, buf, block_size, max_kv
+                )
             )
             workspaces[total] = workspace
         stream = torch_npu.npu.current_stream()
@@ -283,7 +275,9 @@ def install(layout: str) -> bool:
         )
         torch.npu.graph_task_group_begin(stream)
         torch_npu.npu_fused_infer_attention_score.out(
-            **bsh_kwargs(self, q, key, value, buf, block_size, kv_lens),
+            **bsh_kwargs(
+                self, bsh_query(self, q), key, value, buf, block_size, kv_lens
+            ),
             workspace=workspace,
             out=[out, lse],
         )
@@ -291,44 +285,20 @@ def install(layout: str) -> bool:
         STATS["captured_calls"] += 1
         return output[:total].view(total, self.num_heads, self.head_size), total
 
-    def update_graph_params(
-        update_stream,
-        forward_context,
-        num_tokens,
-        vllm_config,
-        speculative_config=None,
-        draft_attn_metadatas=None,
-    ):
-        graph_params = get_graph_params()
-        params = graph_params.attn_params.get(num_tokens, []) if graph_params else []
-        kinds = {isinstance(p, BSHGraphParam) for p in params}
-        if True not in kinds or extra.is_draft_model:
-            return orig_update(
-                update_stream,
-                forward_context,
-                num_tokens,
-                vllm_config,
-                speculative_config,
-                draft_attn_metadatas=draft_attn_metadatas,
-            )
-        if kinds != {True}:
+    def replay_rows(p, attn_metadata, label):
+        """Replay metadata of ``p``'s layer, checked against its captured size."""
+        md = attn_metadata[p.layer_name]
+        rows = decode_rows(md.actual_seq_lengths_q)
+        if rows is None or rows[1] != p.batch:
             raise RuntimeError(
-                "MuxPD BSH decode graph mixes BSH and TND attention params"
+                f"MuxPD {label} decode replay metadata is not a decode batch"
             )
-        attn_metadata = forward_context.attn_metadata
+        return md, rows
+
+    def bsh_update(params, handles, events, attn_metadata, update_stream):
         with torch.npu.stream(update_stream):
-            for p, handle, event in zip(
-                params,
-                graph_params.handles[num_tokens],
-                graph_params.events[num_tokens],
-            ):
-                md = attn_metadata[p.layer_name]
-                rows = decode_rows(md.actual_seq_lengths_q)
-                if rows is None or rows[1] != p.batch:
-                    raise RuntimeError(
-                        "MuxPD BSH decode replay metadata is not a decode batch"
-                    )
-                real, total = rows
+            for p, handle, event in zip(params, handles, events):
+                md, (real, total) = replay_rows(p, attn_metadata, "BSH")
                 if md.block_tables.shape[0] < total:
                     raise RuntimeError(
                         "MuxPD BSH decode replay block table has too few rows"
@@ -338,25 +308,20 @@ def install(layout: str) -> bool:
                 # the replay already queued on the main stream waits on `event`.
                 torch.npu.graph_task_update_begin(update_stream, handle)
                 torch_npu.npu_fused_infer_attention_score.out(
-                    query=p.query.view(total, 1, p.num_heads * p.query.shape[-1]),
-                    key=p.key,
-                    value=p.value,
-                    block_table=md.block_tables[:total],
-                    input_layout="BSH",
-                    block_size=p.block_size,
-                    actual_seq_lengths_kv=padded_kv_lengths(
-                        md.seq_lens_list, real, total
+                    **bsh_kwargs(
+                        p,
+                        p.query.view(total, 1, p.num_heads * p.query.shape[-1]),
+                        p.key,
+                        p.value,
+                        md.block_tables[:total],
+                        p.block_size,
+                        padded_kv_lengths(md.seq_lens_list, real, total),
                     ),
-                    num_key_value_heads=p.num_kv_heads,
-                    num_heads=p.num_heads,
-                    scale=p.scale,
-                    sparse_mode=0,
                     workspace=p.workspace,
                     out=[p.output, p.softmax_lse],
                 )
                 torch.npu.graph_task_update_end(update_stream)
                 event.record(update_stream)
-        STATS["graph_updates"] += 1
 
     # ---- "row": every decode row is its own native TND M=1 call ----
     # Bit-identical to what the same request computes alone (concurrency 1) on
@@ -494,13 +459,7 @@ def install(layout: str) -> bool:
     def row_update(params, handles, events, attn_metadata, update_stream):
         with torch.npu.stream(update_stream):
             for p, handle, event in zip(params, handles, events):
-                md = attn_metadata[p.layer_name]
-                rows = decode_rows(md.actual_seq_lengths_q)
-                if rows is None or rows[1] != p.batch:
-                    raise RuntimeError(
-                        "MuxPD row decode replay metadata is not a decode batch"
-                    )
-                real, total = rows
+                md, (real, total) = replay_rows(p, attn_metadata, "row")
                 bt_row, kv_len = row_plan(
                     real, total, md.seq_lens_list, md.block_tables.shape[0]
                 )[p.row]
@@ -534,38 +493,43 @@ def install(layout: str) -> bool:
                 event.record(update_stream)
                 p.padded = padded
 
+    # ---- one dispatch skeleton; the layout only selects the leaves ----
     if layout == "row":
+        eager_leaf, capture_leaf, update_leaf = row_forward, row_capture, row_update
+        param_cls, mixed_error = (
+            RowGraphParam,
+            "MuxPD row decode graph mixes row and native attention params",
+        )
+    else:
+        eager_leaf, capture_leaf, update_leaf = bsh_forward, bsh_capture, bsh_update
+        param_cls, mixed_error = (
+            BSHGraphParam,
+            "MuxPD BSH decode graph mixes BSH and TND attention params",
+        )
 
-        def forward_fused_infer_attention(  # noqa: F811
-            self, query, key, value, attn_metadata, output, kv_cache=None
-        ):
-            rows = eligible(self, attn_metadata)
-            if rows is None:
-                STATS["passthrough"] += 1
-                return orig_fia(
-                    self, query, key, value, attn_metadata, output, kv_cache
-                )
-            if extra.capturing:
-                return orig_fia(
-                    self, query, key, value, attn_metadata, output, kv_cache
-                )
-            return row_forward(
-                self, query, key, value, attn_metadata, output, rows, kv_cache
+    def forward_fused_infer_attention(
+        self, query, key, value, attn_metadata, output, kv_cache=None
+    ):
+        rows = eligible(self, attn_metadata)
+        if rows is None:
+            STATS["passthrough"] += 1
+            return orig_fia(self, query, key, value, attn_metadata, output, kv_cache)
+        if extra.capturing:
+            # Capture goes through full_graph_fia; keep the native warmup call.
+            return orig_fia(self, query, key, value, attn_metadata, output, kv_cache)
+        return eager_leaf(
+            self, query, key, value, attn_metadata, output, rows, kv_cache
+        )
+
+    def full_graph_fia(self, query, key, value, attn_metadata, output, layer=None):
+        rows = eligible(self, attn_metadata)
+        if rows is None:
+            return orig_full_graph_fia(
+                self, query, key, value, attn_metadata, output, layer
             )
+        return capture_leaf(self, query, key, value, attn_metadata, output, rows)
 
-        def full_graph_fia(  # noqa: F811
-            self, query, key, value, attn_metadata, output, layer=None
-        ):
-            rows = eligible(self, attn_metadata)
-            if rows is None:
-                return orig_full_graph_fia(
-                    self, query, key, value, attn_metadata, output, layer
-                )
-            return row_capture(self, query, key, value, attn_metadata, output, rows)
-
-    param_cls = RowGraphParam if layout == "row" else BSHGraphParam
-
-    def update_dispatch(
+    def update_graph_params(
         update_stream,
         forward_context,
         num_tokens,
@@ -576,8 +540,8 @@ def install(layout: str) -> bool:
         graph_params = get_graph_params()
         params = graph_params.attn_params.get(num_tokens, []) if graph_params else []
         kinds = {isinstance(p, param_cls) for p in params}
-        if layout == "bsh" or True not in kinds or extra.is_draft_model:
-            return update_graph_params(
+        if True not in kinds or extra.is_draft_model:
+            return orig_update(
                 update_stream,
                 forward_context,
                 num_tokens,
@@ -586,10 +550,8 @@ def install(layout: str) -> bool:
                 draft_attn_metadatas=draft_attn_metadatas,
             )
         if kinds != {True}:
-            raise RuntimeError(
-                "MuxPD row decode graph mixes row and native attention params"
-            )
-        row_update(
+            raise RuntimeError(mixed_error)
+        update_leaf(
             params,
             graph_params.handles[num_tokens],
             graph_params.events[num_tokens],
@@ -601,10 +563,6 @@ def install(layout: str) -> bool:
     impl.forward = forward
     impl.forward_fused_infer_attention = forward_fused_infer_attention
     impl.full_graph_fia = full_graph_fia
-    impl.update_graph_params = staticmethod(update_dispatch)
-    _INSTALLED.update(
-        layout=layout,
-        impl=impl,
-        originals=(orig_forward, orig_fia, orig_full_graph_fia, orig_update),
-    )
+    impl.update_graph_params = staticmethod(update_graph_params)
+    _INSTALLED["layout"] = layout
     return True
