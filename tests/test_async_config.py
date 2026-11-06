@@ -93,3 +93,11 @@ def test_async_pair_accepts_scheduler_class_object():
     result = config()
     result.scheduler_config.scheduler_cls = AsyncDecoupledMuxPDScheduler
     validate_engine_config(result)
+
+
+@pytest.mark.parametrize("value", [object(), 3])
+def test_async_pair_reports_unrecognised_scheduler_values_as_config_errors(value):
+    result = config()
+    result.scheduler_config.scheduler_cls = value
+    with pytest.raises(ValueError, match="exact scheduler/worker pair"):
+        validate_engine_config(result)

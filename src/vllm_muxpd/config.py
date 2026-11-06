@@ -17,9 +17,13 @@ ASYNC_WORKER_CLS = "vllm_muxpd.async_worker.AsyncDecoupledMuxPDNPUWorker"
 
 def qualified_name(obj: Any) -> Any:
     """Dotted path for a class given as an object; strings and None pass through."""
-    if obj is None or isinstance(obj, str):
+    module = getattr(obj, "__module__", None)
+    name = getattr(obj, "__qualname__", None)
+    if obj is None or isinstance(obj, str) or module is None or name is None:
+        # Strings and None pass through; anything else is compared as-is and
+        # therefore reported as a mismatch rather than raising here.
         return obj
-    return f"{obj.__module__}.{obj.__qualname__}"
+    return f"{module}.{name}"
 
 
 @dataclass(frozen=True)
