@@ -206,7 +206,13 @@ class MuxPDConfig:
                 raise ValueError("MuxPD trace_path must be a nonempty string or null")
             try:
                 self.trace_path.format(pid=0)
-            except (KeyError, ValueError, IndexError) as exc:
+            except (
+                KeyError,
+                ValueError,
+                IndexError,
+                TypeError,
+                AttributeError,
+            ) as exc:
                 raise ValueError(
                     "MuxPD trace_path supports only the {pid} placeholder"
                 ) from exc

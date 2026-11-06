@@ -137,6 +137,8 @@ def test_supported_execution_modes_and_scheduler_pairing(mode, scheduler):
         {"estimate_safety_factor": 0.5},
         {"unknown_knob": 1},
         {"trace_path": "{unknown}"},
+        {"trace_path": "{pid[0]}"},
+        {"trace_path": "{pid.real.x}"},
         {"execution": "other"},
         {"stream_mode": "other"},
         {"execution": "serial", "stream_mode": "overlap"},
