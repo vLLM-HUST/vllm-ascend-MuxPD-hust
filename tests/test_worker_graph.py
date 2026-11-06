@@ -300,7 +300,7 @@ def test_native_compile_keeps_memory_owner_and_native_tail_return(
     assert "capture_model" not in vars(state.owner)
     assert not any(call[0] == "capture" for call in state.owner.calls)
     assert state.decode.calls[-1][0] == "capture"
-    assert state.controller._captured
+    assert state.controller.snapshot()["captured"]
     # Do not mask a worker/controller API mismatch with a fake snapshot method.
     assert isinstance(state.controller.snapshot(), dict)
 
@@ -326,7 +326,7 @@ def test_native_compile_failure_restores_capture_and_keeps_owner(
     assert state.worker.model_runner is state.owner
     assert state.owner.capture_model == original_capture
     assert "capture_model" not in vars(state.owner)
-    assert state.controller._captured is fail_after_capture
+    assert state.controller.snapshot()["captured"] is fail_after_capture
 
 
 @pytest.mark.integration

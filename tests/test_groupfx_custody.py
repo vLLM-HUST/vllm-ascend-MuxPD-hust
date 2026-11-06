@@ -14,10 +14,15 @@ SPEC.loader.exec_module(groupfx)
 
 
 def test_adaptation_preserves_all_original_identities():
+    root = os.environ.get("BENCHMARK_COLLECTION_ROOT")
+    if not root:
+        pytest.fail(
+            "BENCHMARK_COLLECTION_ROOT must point at the fetched collection "
+            "(see EVIDENCE.md and .github/workflows/tests.yml)"
+        )
     original = json.loads(
         (
-            Path(os.environ["BENCHMARK_COLLECTION_ROOT"])
-            / "evidence/2026-10-12-tp4-group-fx/archive-index.json"
+            Path(root) / "evidence/2026-10-12-tp4-group-fx/archive-index.json"
         ).read_text()
     )
     adapted = groupfx.adapt_index(original)

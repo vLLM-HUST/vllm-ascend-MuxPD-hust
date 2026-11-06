@@ -55,27 +55,17 @@ class AsyncDecoupledMuxPDScheduler(DecoupledMuxPDScheduler):
             raise ValueError("Request ID still has an in-flight decode output")
         super().add_request(request)
 
-    def _muxpd_snapshots(self):
-        snapshots = self._make_batch_request_snapshots()
-        eligible = []
-        for snapshot in snapshots:
-            request = self.requests[snapshot.request_id]
-            if self._is_blocked_waiting_status(request.status):
-                if not getattr(self, self._native_contract.blocked_method)(request):
-                    continue
-            if request.spec_token_ids:
-                raise RuntimeError("Async MuxPD does not support speculative tokens")
-            # EngineCore in_flight_tokens counts scheduled prompt tokens too.
-            # Only actual D output placeholders extend the generated context.
-            eligible.append(
-                replace(
-                    snapshot,
-                    num_output_tokens=(
-                        snapshot.num_output_tokens + request.num_output_placeholders
-                    ),
-                )
-            )
-        return tuple(eligible)
+    def _muxpd_snapshot(self, snapshot, request):
+        if request.spec_token_ids:
+            raise RuntimeError("Async MuxPD does not support speculative tokens")
+        # EngineCore in_flight_tokens counts scheduled prompt tokens too.
+        # Only actual D output placeholders extend the generated context.
+        return replace(
+            snapshot,
+            num_output_tokens=(
+                snapshot.num_output_tokens + request.num_output_placeholders
+            ),
+        )
 
     def _admissible_waiting(self) -> bool:
         """Whether a drain could let a waiting prompt start its prefill.
@@ -236,28 +226,21 @@ class AsyncDecoupledMuxPDScheduler(DecoupledMuxPDScheduler):
         if request.is_finished():
             # Preserve the parent's host lifecycle cleanup while retaining the
             # physical blocks until the last queued D output acknowledges them.
-            self._arrival_monotonic.pop(rid, None)
-            self._prefill_first_decode_debt.discard(rid)
-            self._decode_completed_at.pop(rid, None)
+            self._forget_finished_request(rid)
         if rid not in self._async_held_decode_blocks:
-            self._async_held_decode_blocks[rid] = (
-                self.kv_cache_manager.pop_blocks_for_free(request)
+            self._detach_blocks(
+                request,
+                self._async_held_decode_blocks,
+                self._async_held_decode_sessions,
             )
-            self._async_held_decode_sessions[rid] = getattr(request, "session_id", None)
         return self._native_contract.held_result(self._async_held_decode_blocks[rid])
 
     def _release_decode_blocks(self):
         live = self._queued_decode_ids()
         for rid in tuple(self._async_held_decode_blocks):
-            if rid in live:
-                continue
-            blocks = self._async_held_decode_blocks[rid]
-            try:
-                if blocks:
-                    self.kv_cache_manager.block_pool.free_blocks(reversed(blocks))
-            except BaseException as error:
-                self._kv_reclaim_error = error
-                raise
-            del self._async_held_decode_blocks[rid]
-            session = self._async_held_decode_sessions.pop(rid)
-            self._native_contract.emit_reclaimed(rid, session, len(blocks))
+            if rid not in live:
+                self._reclaim_held_blocks(
+                    rid,
+                    self._async_held_decode_blocks,
+                    self._async_held_decode_sessions,
+                )

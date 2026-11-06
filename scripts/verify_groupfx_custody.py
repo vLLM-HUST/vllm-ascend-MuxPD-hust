@@ -37,10 +37,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("directory", type=Path)
     args = parser.parse_args()
+    collection = os.environ.get("BENCHMARK_COLLECTION_ROOT")
+    if not collection:
+        parser.error(
+            "set BENCHMARK_COLLECTION_ROOT to the verified collection; see EVIDENCE.md"
+        )
     index = json.loads(
         (
-            Path(os.environ["BENCHMARK_COLLECTION_ROOT"])
-            / "evidence/2026-10-12-tp4-group-fx/archive-index.json"
+            Path(collection) / "evidence/2026-10-12-tp4-group-fx/archive-index.json"
         ).read_text()
     )
     print(

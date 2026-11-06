@@ -271,3 +271,46 @@ def test_pause_new_defers_waiting_and_pause_all_has_no_work(make_layered_schedul
     output = scheduler.schedule()
     assert not output.num_scheduled_tokens
     assert output.muxpd_phase is None
+
+
+def test_unsupported_request_fails_alone_in_a_layered_transaction(
+    make_layered_scheduler,
+):
+    from vllm.v1.engine import FinishReason
+
+    scheduler = make_layered_scheduler()
+    scheduler.add_request(request("a", 16))
+    complete(scheduler, scheduler.schedule())
+    bad = request("bad", 16)
+    bad.sampling_params.logprobs = 1
+    scheduler.add_request(bad)  # must not raise: EngineCore treats that as fatal
+    output = scheduler.schedule()
+    assert output.num_scheduled_tokens == {"a": 1}
+    rows = {
+        row.request_id: row
+        for packet in complete(scheduler, output).values()
+        for row in packet.outputs
+    }
+    assert rows["bad"].finish_reason == FinishReason.ERROR
+    assert rows["bad"].new_token_ids == [] and rows["a"].new_token_ids
+
+
+def test_abort_during_inflight_transaction_drops_sample_and_frees_kv(
+    make_layered_scheduler,
+):
+    scheduler = make_layered_scheduler()
+    pool = scheduler.kv_cache_manager.block_pool
+    free_before = pool.get_num_free_blocks()
+    scheduler.add_request(request("a", 16))
+    complete(scheduler, scheduler.schedule())
+    output = scheduler.schedule()
+    scheduler.finish_requests("a", RequestStatus.FINISHED_ABORTED)
+    rows = [
+        row for packet in complete(scheduler, output).values() for row in packet.outputs
+    ]
+    assert all(row.request_id != "a" or not row.new_token_ids for row in rows)
+    assert pool.get_num_free_blocks() == free_before
+    lifecycle = scheduler.schedule()
+    assert lifecycle.finished_req_ids == {"a"} and lifecycle.muxpd_phase is None
+    complete(scheduler, lifecycle)
+    assert not scheduler.has_requests()

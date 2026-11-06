@@ -73,6 +73,9 @@ def make_scheduler(tmp_path):
         decode_budget_guard=False,
         tpot_slo_ms=0.001,
         trace=True,
+        worker_cls="vllm_muxpd.decoupled_worker.DecoupledMuxPDNPUWorker",
+        scheduler_cls=None,
+        configure=None,
     ):
         config = VllmConfig(
             model_config=ModelConfig(
@@ -113,9 +116,7 @@ def make_scheduler(tmp_path):
                 enable_prefix_caching=False,
                 mamba_cache_mode="none",
             ),
-            parallel_config=ParallelConfig(
-                worker_cls="vllm_muxpd.decoupled_worker.DecoupledMuxPDNPUWorker",
-            ),
+            parallel_config=ParallelConfig(worker_cls=worker_cls),
         )
         config.cache_config.num_gpu_blocks = num_blocks
         kv_config = KVCacheConfig(
@@ -135,7 +136,9 @@ def make_scheduler(tmp_path):
         )
         init_none_hash(sha256)
         register_all_kvcache_specs(config)
-        scheduler = DecoupledMuxPDScheduler(
+        if configure is not None:
+            configure(config)
+        scheduler = (scheduler_cls or DecoupledMuxPDScheduler)(
             vllm_config=config,
             kv_cache_config=kv_config,
             block_size=16,
@@ -204,6 +207,12 @@ def start_decode(scheduler, tokens=8, max_tokens=32, client=0):
     assert output.muxpd_finish_prefill
     retire(scheduler, output, completed={"d"})
     return req
+
+
+def trace_rows(scheduler, event=None):
+    lines = Path(scheduler.muxpd_policy.config.trace_path).read_text().splitlines()
+    rows = [json.loads(line) for line in lines]
+    return [row for row in rows if event is None or row["event"] == event]
 
 
 def output_ids(outputs):
@@ -754,7 +763,7 @@ def test_adaptive_requires_both_pure_phase_samples(make_scheduler, clock):
     output = scheduler.schedule()
     assert output.muxpd_layers_per_slice == 1
     assert not output.muxpd_finish_prefill
-    rows = [json.loads(x) for x in open(scheduler.muxpd_policy.config.trace_path)]
+    rows = trace_rows(scheduler)
     assert rows[-1]["quota"]["reason"] == "uncalibrated"
     assert rows[-1]["quota"]["latency_samples"] == {"prefill": 1, "decode": 0}
     clock.now += 0.280
@@ -783,7 +792,7 @@ def test_adaptive_deadline_quota_uses_measured_cost_and_retains_decode(
     clock.now += 0.410
     assert output_ids(retire(scheduler, output, completed={"p"})) == {"d", "p"}
     assert scheduler._latency_samples == {"prefill": 1, "decode": 1}
-    rows = [json.loads(x) for x in open(scheduler.muxpd_policy.config.trace_path)]
+    rows = trace_rows(scheduler)
     quota = [x["quota"] for x in rows if x["event"] == "decoupled_schedule"][-1]
     assert quota["reason"] == "deadline_finish"
     assert quota["decode_slo_feasible_without_prefill"] is False
@@ -1417,8 +1426,7 @@ def calibrate_guard_decode(scheduler, clock, tokens=64):
 
 
 def last_quota(scheduler):
-    rows = [json.loads(line) for line in open(scheduler.muxpd_policy.config.trace_path)]
-    return [row["quota"] for row in rows if row["event"] == "decoupled_schedule"][-1]
+    return [row["quota"] for row in trace_rows(scheduler, "decoupled_schedule")][-1]
 
 
 def seed_raw_slice(scheduler, shape=(64,), cost=1):
@@ -2051,6 +2059,58 @@ def test_unsupported_sampling_fails_only_that_request(make_scheduler, field):
     assert not scheduler._muxpd_rejected and decode.num_output_tokens == 2
 
 
+def test_structured_output_request_fails_only_that_request(make_scheduler):
+    from vllm.sampling_params import StructuredOutputsParams
+    from vllm.v1.engine import FinishReason
+
+    scheduler = make_scheduler()
+    decode = start_decode(scheduler)
+    params = SamplingParams(
+        max_tokens=32, structured_outputs=StructuredOutputsParams(choice=["y", "n"])
+    )
+    params.update_from_generation_config({}, 127)
+    bad = Request("bad", [1] * 16, params, None, client_index=0)
+    assert bad.use_structured_output
+    scheduler.add_request(bad)  # must not raise: EngineCore treats that as fatal
+    output = scheduler.schedule()
+    assert set(output.num_scheduled_tokens) == {"d"}
+    result = retire(scheduler, output)
+    rows = {r.request_id: r for p in result.values() for r in p.outputs}
+    assert rows["bad"].finish_reason == FinishReason.ERROR
+    assert rows["bad"].new_token_ids == [] and rows["d"].new_token_ids
+    assert decode.num_output_tokens == 2
+
+
+def test_rejected_request_leaves_no_arrival_bookkeeping(make_scheduler):
+    scheduler = make_scheduler()
+    bad = request("bad", 16)
+    bad.sampling_params.logprobs = 1
+    scheduler.add_request(bad)
+    retire(scheduler, scheduler.schedule())
+    assert not scheduler.has_requests()
+    assert "bad" not in scheduler._arrival_monotonic
+
+
+def test_rejected_construction_closes_the_trace_file(make_scheduler, monkeypatch):
+    import builtins
+    import io
+
+    opened = []
+    real_open = io.open
+
+    def tracking_open(path, *args, **kwargs):
+        handle = real_open(path, *args, **kwargs)
+        if str(path).endswith("trace.jsonl"):
+            opened.append(handle)
+        return handle
+
+    monkeypatch.setattr(builtins, "open", tracking_open)
+    monkeypatch.setattr(io, "open", tracking_open)
+    with pytest.raises(ValueError, match="paired decoupled worker"):
+        make_scheduler(worker_cls="vllm_muxpd.worker.MuxPDNPUWorker")
+    assert opened and all(handle.closed for handle in opened)
+
+
 def test_unsupported_request_on_idle_engine_is_flushed(make_scheduler):
     from vllm.v1.engine import FinishReason
 
@@ -2067,3 +2127,29 @@ def test_unsupported_request_on_idle_engine_is_flushed(make_scheduler):
         ("bad", FinishReason.ERROR)
     ]
     assert not scheduler.has_requests()
+
+
+def test_prompt_token_score_request_fails_only_that_request(make_scheduler):
+    # Forward-compatible guard: the pinned SamplingParams has no such field,
+    # so set it on the instance as a newer vLLM would.
+    from vllm.v1.engine import FinishReason
+
+    scheduler = make_scheduler()
+    decode = start_decode(scheduler)
+    bad = request("bad", 16)
+    native = bad.sampling_params
+
+    class NewerParams:
+        prompt_logprob_token_ids = [1]
+
+        def __getattr__(self, name):
+            return getattr(native, name)
+
+    bad.sampling_params = NewerParams()
+    scheduler.add_request(bad)
+    output = scheduler.schedule()
+    assert set(output.num_scheduled_tokens) == {"d"}
+    result = retire(scheduler, output)
+    rows = {r.request_id: r for p in result.values() for r in p.outputs}
+    assert rows["bad"].finish_reason == FinishReason.ERROR
+    assert decode.num_output_tokens == 2

@@ -8,7 +8,7 @@ import time
 from collections import Counter
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from vllm.logger import init_logger
 from vllm.v1.core.sched.batch_admission import (
@@ -152,12 +152,16 @@ class MuxPDScheduler(Scheduler):
             if self._is_blocked_waiting_status(request.status):
                 if not getattr(self, self._native_contract.blocked_method)(request):
                     continue
-            if request.spec_token_ids or request.num_output_placeholders:
-                raise RuntimeError(
-                    "MuxPD encountered unsupported in-flight or speculative tokens"
-                )
-            eligible.append(snapshot)
+            eligible.append(self._muxpd_snapshot(snapshot, request))
         return tuple(eligible)
+
+    def _muxpd_snapshot(self, snapshot: BatchRequest, request: Request) -> BatchRequest:
+        """Validate one schedulable request and return the snapshot the policy sees."""
+        if request.spec_token_ids or request.num_output_placeholders:
+            raise RuntimeError(
+                "MuxPD encountered unsupported in-flight or speculative tokens"
+            )
+        return snapshot
 
     def _muxpd_native_schedule(
         self,
@@ -192,6 +196,32 @@ class MuxPDScheduler(Scheduler):
                 )
         return output
 
+    def _retry_forced_decode(
+        self,
+        first_output: SchedulerOutput,
+        now: float,
+        schedule_fn: Callable[
+            [Decision, tuple[BatchRequest, ...]], SchedulerOutput
+        ],
+    ) -> tuple[SchedulerOutput, tuple[BatchRequest, ...], Decision] | None:
+        """Progress live decodes after a complete prefill did not fit in KV.
+
+        Returns the retried output with its snapshots and decision, or None
+        when no decode can run. Lifecycle notifications from the first (empty)
+        native pass stay visible to the worker.
+        """
+        snapshots = self._muxpd_snapshots()
+        decision = self.muxpd_policy.choose(
+            snapshots, now, available_prefill_slots=0, force_decode=True
+        )
+        if not decision.request_ids:
+            return None
+        output = schedule_fn(decision, snapshots)
+        output.finished_req_ids.update(first_output.finished_req_ids)
+        output.preempted_req_ids.update(first_output.preempted_req_ids)
+        self.muxpd_stats["prefill_capacity_deferrals"] += 1
+        return output, snapshots, decision
+
     def schedule(self, throttle_prefills: bool = False) -> SchedulerOutput:
         if throttle_prefills:
             raise RuntimeError("MuxPD does not support DP prefill throttling")
@@ -219,20 +249,11 @@ class MuxPDScheduler(Scheduler):
         # they can finish and release capacity. Preserve lifecycle notifications
         # produced by the first (empty) native scheduling pass.
         if not output.total_num_scheduled_tokens and decision.phase == "prefill":
-            retry_snapshots = self._muxpd_snapshots()
-            retry_decision = self.muxpd_policy.choose(
-                retry_snapshots,
-                started,
-                available_prefill_slots=0,
-                force_decode=True,
+            retried = self._retry_forced_decode(
+                output, started, self._muxpd_native_schedule
             )
-            if retry_decision.request_ids:
-                first_output = output
-                snapshots, decision = retry_snapshots, retry_decision
-                output = self._muxpd_native_schedule(decision, snapshots)
-                output.finished_req_ids.update(first_output.finished_req_ids)
-                output.preempted_req_ids.update(first_output.preempted_req_ids)
-                self.muxpd_stats["prefill_capacity_deferrals"] += 1
+            if retried is not None:
+                output, snapshots, decision = retried
             elif not self.running and decision.request_ids:
                 raise RuntimeError(
                     "MuxPD cannot fit a complete prefill into available KV cache; "
@@ -303,23 +324,27 @@ class MuxPDScheduler(Scheduler):
             self.muxpd_stats["completed_batches"] += 1
             self._muxpd_pending = None
             if self._muxpd_trace is not None:
-                self._muxpd_trace.write(
-                    json.dumps(
-                        {
-                            "event": "complete",
-                            "time": completed,
-                            "pid": os.getpid(),
-                            "step": self.muxpd_stats["steps"],
-                            "phase": decision.phase,
-                            "duration_ms": duration_ms,
-                            "prefill_scale": self.muxpd_policy.prefill_scale,
-                            "decode_scale": self.muxpd_policy.decode_scale,
-                        },
-                        sort_keys=True,
-                    )
-                    + "\n"
+                self._write_trace(
+                    "complete",
+                    completed,
+                    phase=decision.phase,
+                    duration_ms=duration_ms,
+                    prefill_scale=self.muxpd_policy.prefill_scale,
+                    decode_scale=self.muxpd_policy.decode_scale,
                 )
         return self._finish_outputs(result)
+
+    def _write_trace(self, event: str, now: float, **fields: Any) -> dict[str, Any]:
+        """Append one JSONL record; callers check that tracing is enabled."""
+        record = {
+            "event": event,
+            "time": now,
+            "pid": os.getpid(),
+            "step": self.muxpd_stats["steps"],
+            **fields,
+        }
+        self._muxpd_trace.write(json.dumps(record, sort_keys=True) + "\n")
+        return record
 
     def _record_effective_outputs(self, result: dict) -> None:
         # Count only outputs actually retired by native scheduling. A sampled
@@ -352,33 +377,30 @@ class MuxPDScheduler(Scheduler):
             return
         by_id = {r.request_id: r for r in snapshots}
         scheduled = output.num_scheduled_tokens
-        record = {
-            "event": "schedule",
-            "time": now,
-            "pid": os.getpid(),
-            "step": self.muxpd_stats["steps"],
-            "phase": decision.phase,
-            "request_ids": list(scheduled),
-            "scheduled_tokens": dict(scheduled),
-            "expected_tokens": {rid: remaining_tokens(by_id[rid]) for rid in scheduled},
-            "computed_before": {
-                rid: by_id[rid].num_computed_tokens for rid in scheduled
-            },
-            "request_phases": {rid: request_phase(by_id[rid]) for rid in scheduled},
-            "preempted_req_ids": sorted(output.preempted_req_ids),
-            "finished_req_ids": sorted(output.finished_req_ids),
-            "policy": asdict(decision),
-        }
-        self.last_muxpd_step = record
-        self._muxpd_trace.write(json.dumps(record, sort_keys=True) + "\n")
+        self.last_muxpd_step = self._write_trace(
+            "schedule",
+            now,
+            phase=decision.phase,
+            request_ids=list(scheduled),
+            scheduled_tokens=dict(scheduled),
+            expected_tokens={rid: remaining_tokens(by_id[rid]) for rid in scheduled},
+            computed_before={rid: by_id[rid].num_computed_tokens for rid in scheduled},
+            request_phases={rid: request_phase(by_id[rid]) for rid in scheduled},
+            preempted_req_ids=sorted(output.preempted_req_ids),
+            finished_req_ids=sorted(output.finished_req_ids),
+            policy=asdict(decision),
+        )
 
     def export_muxpd_stats(self) -> dict[str, int]:
         return dict(self.muxpd_stats)
+
+    def _close_muxpd_trace(self) -> None:
+        if self._muxpd_trace is not None:
+            self._muxpd_trace.close()
+            self._muxpd_trace = None
 
     def shutdown(self) -> None:
         try:
             super().shutdown()
         finally:
-            if self._muxpd_trace is not None:
-                self._muxpd_trace.close()
-                self._muxpd_trace = None
+            self._close_muxpd_trace()

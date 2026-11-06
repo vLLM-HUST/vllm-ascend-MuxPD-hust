@@ -74,12 +74,15 @@ text-only, BF16, Qwen3.5 and native-source compatibility restrictions apply.
 
 ## Queue and lifecycle boundaries
 
-Only pure decode transactions can have two batches in flight. Any waiting or
-skipped request stops queue filling, even when that request cannot yet acquire
-KV. Prefill admission, continuation and cancellation run after all queued
-decode outputs retire, with one such transaction in flight. A persistently
-nonempty waiting queue can therefore remove most of the pipeline opportunity;
-the change does not establish a capacity benefit for saturated arrivals.
+Only pure decode transactions can have two batches in flight. The queue drains
+before the next batch when a prefill cohort is pending, when a waiting or
+skipped request could be admitted (the scheduler is unpaused and a running slot
+is free), or when free KV blocks cannot give every running request one block per
+KV group. With every running slot occupied, waiting requests do not stop queue
+filling. Prefill admission, continuation and cancellation run after all queued
+decode outputs retire, with one such transaction in flight. Admissible waiting
+requests can therefore remove most of the pipeline opportunity; the change does
+not establish a capacity benefit for saturated arrivals.
 
 A zero-token P continuation or cancellation still returns its receipt from the
 execute RPC, because the native queued engine does not issue a separate sample

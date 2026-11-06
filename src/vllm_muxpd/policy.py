@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal, Mapping, Sequence
 
-from .config import MuxPDConfig
+from .config import ASYNC_SCHEDULER_CLS, MuxPDConfig, qualified_name
 
 if TYPE_CHECKING:
     from vllm.v1.core.sched.batch_admission import BatchRequest
@@ -44,7 +44,13 @@ class Decision:
 
 
 class MuxPDPolicy:
-    """Choose one homogeneous batch; mutations are committed after allocation."""
+    """Choose one homogeneous batch; mutations are committed after allocation.
+
+    Only the serial scheduler feeds completed batch durations back through
+    ``observe_batch``; layered and decoupled schedulers keep the configured
+    static coefficients (``prefill_scale``/``decode_scale`` stay 1.0) and use
+    their own estimators for layer quotas.
+    """
 
     def __init__(
         self,
@@ -63,22 +69,18 @@ class MuxPDPolicy:
         self.prefill_scale = 1.0
         self.decode_scale = 1.0
         self._batch_sequence = 0
+        # Diagnostic only; nothing reads it back.
         self.last_decision = Decision(None, (), "empty")
 
     @classmethod
     def from_config(cls, config: Mapping[str, Any], vllm_config: Any) -> "MuxPDPolicy":
         scheduler = vllm_config.scheduler_config
-        implementation = getattr(scheduler, "scheduler_cls", None)
-        name = (
-            implementation
-            if isinstance(implementation, str) or implementation is None
-            else f"{implementation.__module__}.{implementation.__qualname__}"
-        )
+        name = qualified_name(getattr(scheduler, "scheduler_cls", None))
         if name not in (
             "vllm_muxpd.scheduler.MuxPDScheduler",
             "vllm_muxpd.multiplex_scheduler.LayeredMuxPDScheduler",
             "vllm_muxpd.decoupled_scheduler.DecoupledMuxPDScheduler",
-            "vllm_muxpd.async_scheduler.AsyncDecoupledMuxPDScheduler",
+            ASYNC_SCHEDULER_CLS,
         ):
             raise ValueError(
                 "MuxPDPolicy requires a paired MuxPD scheduler_cls; "

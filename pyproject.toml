@@ -34,6 +34,8 @@ vllm_muxpd = ["manifests/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Several tests import scripts/ as a package; do not depend on the caller's cwd.
+pythonpath = ["."]
 markers = ["integration: requires the pinned HUST vLLM runtime", "npu: requires Ascend hardware"]
 
 [tool.ruff]

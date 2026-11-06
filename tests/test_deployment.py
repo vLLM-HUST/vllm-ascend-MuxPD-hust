@@ -338,3 +338,45 @@ def test_serve_cannot_silently_run_native_or_another_profile(
     with pytest.raises(ValueError):
         deployment.serve(arguments())
     assert calls == []
+
+
+def test_streaming_script_matches_the_installed_recipe():
+    # The Manager recipe claims to be the same raw-P q4 algorithm as the
+    # existing streaming entry point; keep the two from drifting apart.
+    import re
+    from pathlib import Path
+
+    script = (
+        Path(__file__).parents[1] / "scripts/serve-qwen35-streaming.sh"
+    ).read_text()
+
+    def script_json(flag):
+        (value,) = re.findall(rf"{flag}\s*\\?\s*'([^']*)'", script)
+        return json.loads(value)
+
+    command = deployment.host_command("/model")
+
+    def command_json(flag):
+        return json.loads(command[command.index(flag) + 1])
+
+    assert (
+        script_json("--batch-admission-policy-config")
+        == deployment.configuration()["launch_options"][
+            "batch_admission_policy_config"
+        ]
+    )
+    for flag in ("--compilation-config", "--additional-config"):
+        assert script_json(flag) == command_json(flag)
+
+
+def test_package_version_is_declared_once_consistently():
+    tomllib = pytest.importorskip("tomllib")
+    from pathlib import Path
+
+    from vllm_muxpd import __version__
+
+    project = tomllib.loads(
+        (Path(__file__).parents[1] / "pyproject.toml").read_text()
+    )["project"]
+    assert project["version"] == __version__
+    assert deployment.manifest()["extension_version"] == __version__

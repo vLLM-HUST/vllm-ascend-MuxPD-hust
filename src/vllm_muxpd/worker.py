@@ -21,7 +21,11 @@ from vllm_ascend.ascend_config import get_ascend_config
 from vllm_ascend.worker.worker import NPUModelRunner, NPUWorker
 
 from vllm_muxpd.communicators import LaneCollectiveRouter
-from vllm_muxpd.config import MuxPDConfig, validate_engine_config
+from vllm_muxpd.config import (
+    PREFILL_GROUP_LAYERS,
+    MuxPDConfig,
+    validate_engine_config,
+)
 from vllm_muxpd.decode_graph import (
     DecodeGraphController,
     GraphFencedExecutionBackend,
@@ -93,7 +97,7 @@ class _SharedCacheRunner(NPUModelRunner):
     """Independent buffers/builders, with no second model/cache allocation."""
 
     def __init__(self, config: Any, device: Any, owner: NPUModelRunner):
-        self._native_cache_contract = runner_contract(NPUModelRunner)
+        runner_contract(NPUModelRunner)  # Reject unsupported runners before init.
         super().__init__(config, device)
         self._owner = owner
         self.requests = owner.requests
@@ -604,7 +608,7 @@ class MuxPDNPUWorker(NPUWorker):
                 startup_scope=self._prefill_group_startup,
                 is_startup=lambda: (
                     self._interleaver is None
-                    and not self._decode_graph_controller._captured
+                    and not self._decode_graph_controller.captured
                 ),
             )
             self._prefill_group_executor.install()
@@ -642,7 +646,11 @@ class MuxPDNPUWorker(NPUWorker):
         if interleaver is None:
             return  # Native startup dummy forward after prepared group profiling.
         task = interleaver.active
-        if task is None or task.name != "prefill" or task.completed_layers != index * 4:
+        if (
+            task is None
+            or task.name != "prefill"
+            or task.completed_layers != index * PREFILL_GROUP_LAYERS
+        ):
             raise RuntimeError("Prefill group returned out of order")
         self.muxpd_stats["slices"] += 1
         if self.vllm_config.scheduler_config.batch_admission_policy_config.get(
@@ -654,10 +662,10 @@ class MuxPDNPUWorker(NPUWorker):
                 self.rank,
                 self._prefill_cohort_id,
                 index,
-                (index + 1) * 4,
+                (index + 1) * PREFILL_GROUP_LAYERS,
                 self._prefill_num_tokens,
             )
-        interleaver.checkpoint_group(4, final=final)
+        interleaver.checkpoint_group(PREFILL_GROUP_LAYERS, final=final)
 
     @contextmanager
     def _prefill_group_startup(self):
@@ -760,6 +768,16 @@ class MuxPDNPUWorker(NPUWorker):
                     "pooling or structured outputs"
                 )
 
+    def _apply_request_lifecycle(self, output: SchedulerOutput) -> None:
+        """Validate the batch, then retire/invalidate rows on both runners."""
+        self._validate_requests(output)
+        self._retire_finished(output.finished_req_ids)
+        self._invalidate_batch_rows(
+            set(output.preempted_req_ids or ())
+            | output.scheduled_cached_reqs.resumed_req_ids
+            | {req.req_id for req in output.scheduled_new_reqs}
+        )
+
     def _step_profiler(self) -> None:
         if getattr(self, "profiler", None) is not None:
             self.profiler.step()
@@ -783,13 +801,7 @@ class MuxPDNPUWorker(NPUWorker):
         if self._pending_lanes:
             raise RuntimeError("MuxPD requires sample_tokens before the next execute")
         self._step_profiler()
-        self._validate_requests(scheduler_output)
-        self._retire_finished(scheduler_output.finished_req_ids)
-        self._invalidate_batch_rows(
-            set(scheduler_output.preempted_req_ids or ())
-            | scheduler_output.scheduled_cached_reqs.resumed_req_ids
-            | {req.req_id for req in scheduler_output.scheduled_new_reqs}
-        )
+        self._apply_request_lifecycle(scheduler_output)
         scheduled = set(scheduler_output.num_scheduled_tokens)
         if not scheduled:
             return ModelRunnerOutput(req_ids=[], req_id_to_index={})
@@ -833,6 +845,14 @@ class MuxPDNPUWorker(NPUWorker):
 
     @torch.inference_mode()
     def sample_tokens(self, grammar_output: Any) -> ModelRunnerOutput:
+        merged = self._sample_pending_lanes(grammar_output)
+        self._record_effective_output(merged)
+        return merged
+
+    def _sample_pending_lanes(
+        self, grammar_output: Any, *, passthrough: bool = False
+    ) -> ModelRunnerOutput:
+        """Sample every executed lane on its own stream and merge the rows."""
         if grammar_output is not None:
             raise ValueError("MuxPD cooperative worker does not support grammar output")
         outputs = []
@@ -853,9 +873,7 @@ class MuxPDNPUWorker(NPUWorker):
                 outputs.append(output)
                 backend.fence()
             merged = _merge_outputs(
-                outputs,
-                self._pending_order,
-                passthrough=getattr(self, "_decode_only_fast_path", False),
+                outputs, self._pending_order, passthrough=passthrough
             )
             self._pending_lanes = []
             self._pending_order = []
@@ -865,8 +883,6 @@ class MuxPDNPUWorker(NPUWorker):
                 # Decode ACK must not wait for a still-suspended prefill. A
                 # completed prefill is joined only when it was sampled here.
                 backend.join(sampled_lanes)
-        if self.execution_mode == "layered":
-            self._record_effective_output(merged)
         return merged
 
     def _materialize_lane_output(self, output: Any) -> ModelRunnerOutput:

@@ -8,9 +8,7 @@ including zero-token continuation and cancellation-control steps.
 
 from __future__ import annotations
 
-import json
 import math
-import os
 import time
 from collections import OrderedDict
 from dataclasses import dataclass, replace
@@ -21,6 +19,11 @@ from vllm.v1.core.sched.output import CachedRequestData, SchedulerOutput
 from vllm.v1.core.sched.scheduler import Scheduler
 from vllm.v1.request import Request
 
+from .config import (
+    ASYNC_WORKER_CLS,
+    PREFILL_GROUP_LAYERS,
+    PREFILL_GROUP_MODEL_LAYERS,
+)
 from .multiplex_scheduler import LayeredMuxPDScheduler
 from .native_compat import validate_lane_result, validate_lane_schedule
 from .policy import Decision, remaining_tokens, request_phase
@@ -75,6 +78,14 @@ class _Step:
     guard_decode_shape: tuple[int, int, int] | None = None
 
 
+# Admission reasons under which a P-only step deferred existing decodes.
+_PREFILL_FIRST_REASONS = (
+    "deadline_prefill_first",
+    "full_budget_prefill_first",
+    "token_budget_prefill_first",
+)
+
+
 class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
     """Admit complete prompts once, then independently retire P and D outputs."""
 
@@ -114,6 +125,13 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         # Reuse the common validated allocator setup, without the layered-only
         # execution/worker checks in LayeredMuxPDScheduler.__init__.
         MuxPDScheduler.__init__(self, vllm_config, *args, **kwargs)
+        try:
+            self._validate_decoupled_setup(vllm_config)
+        except BaseException:
+            self._close_muxpd_trace()
+            raise
+
+    def _validate_decoupled_setup(self, vllm_config: Any) -> None:
         self._decoder_layer_count = getattr(
             vllm_config.model_config.hf_text_config, "num_hidden_layers", None
         )
@@ -127,7 +145,7 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
             "vllm_muxpd.atomic_worker.AtomicDecoupledMuxPDNPUWorker",
         )
         if self.muxpd_policy.config.async_decode_pipeline:
-            expected_workers = ("vllm_muxpd.async_worker.AsyncDecoupledMuxPDNPUWorker",)
+            expected_workers = (ASYNC_WORKER_CLS,)
         if vllm_config.parallel_config.worker_cls not in expected_workers:
             raise ValueError(
                 "DecoupledMuxPDScheduler requires a paired decoupled worker"
@@ -142,48 +160,93 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
     def add_request(self, request: Request) -> None:
         if not math.isfinite(request.arrival_time):
             raise ValueError("MuxPD request arrival_time must be finite")
-        if request.use_structured_output:
-            raise ValueError("Decoupled MuxPD does not support structured outputs")
         if request.lora_request is not None:
             raise ValueError("Decoupled MuxPD does not support LoRA")
-        if (
-            getattr(request.sampling_params, "prompt_logprob_token_ids", None)
-            is not None
-        ):
-            raise ValueError("Decoupled MuxPD does not support prompt token scores")
         if (
             self._prefill_cohort
             and request.request_id in self._prefill_cohort.pending_ids
         ):
             raise ValueError("Request ID is still awaiting prefill retirement")
         super().add_request(request)
+        if request.is_finished():
+            # Rejected at admission; it never enters the scheduler's state.
+            return
         # Native Request uses epoch seconds. Convert once to the scheduler clock
         # while retaining time already spent queued before engine admission.
         self._arrival_monotonic[request.request_id] = time.monotonic() - max(
             0.0, time.time() - request.arrival_time
         )
 
+    def _unsupported_reason(self, request: Request) -> str | None:
+        reason = super()._unsupported_reason(request)
+        if reason is None and (
+            getattr(request.sampling_params, "prompt_logprob_token_ids", None)
+            is not None
+        ):
+            # Forward-compatible: the pinned vLLM has no such field yet.
+            return "prompt token scores are not supported"
+        return reason
+
     def _cancelled_prefill_ids(self) -> set[str]:
         if self._prefill_cohort is None:
             return set()
         return self._prefill_cohort.pending_ids - self.requests.keys()
 
+    def _forget_finished_request(self, request_id: str) -> None:
+        """Drop host-side scheduling state of a finished request."""
+        self._arrival_monotonic.pop(request_id, None)
+        self._prefill_first_decode_debt.discard(request_id)
+        self._decode_completed_at.pop(request_id, None)
+
+    def _detach_blocks(
+        self,
+        request: Request,
+        held_blocks: dict[str, list[Any]],
+        held_sessions: dict[str, str | None],
+    ) -> None:
+        """Remove native block ownership but keep the refcounts in ``held_blocks``.
+
+        The blocks return to the pool only through ``_reclaim_held_blocks``,
+        after the worker can no longer access them.
+        """
+        held_blocks[request.request_id] = self.kv_cache_manager.pop_blocks_for_free(
+            request
+        )
+        held_sessions[request.request_id] = getattr(request, "session_id", None)
+
+    def _reclaim_held_blocks(
+        self,
+        request_id: str,
+        held_blocks: dict[str, list[Any]],
+        held_sessions: dict[str, str | None],
+    ) -> None:
+        blocks = held_blocks[request_id]
+        if blocks:
+            try:
+                self.kv_cache_manager.block_pool.free_blocks(reversed(blocks))
+            except BaseException as error:
+                # BlockPool.free_blocks is not transactional; see the fail-closed
+                # latch check in update_from_output.
+                self._kv_reclaim_error = error
+                raise
+        # Never emit reclamation while a worker still owns the blocks.
+        # Remove ownership after successful native free, before the
+        # observational event (native EventBus isolates sink errors).
+        del held_blocks[request_id]
+        session_id = held_sessions.pop(request_id)
+        self._native_contract.emit_reclaimed(request_id, session_id, len(blocks))
+
     def _free_request_blocks(self, request: Request) -> tuple[int, bool] | None:
         if request.is_finished():
-            self._arrival_monotonic.pop(request.request_id, None)
-            self._prefill_first_decode_debt.discard(request.request_id)
-            self._decode_completed_at.pop(request.request_id, None)
+            self._forget_finished_request(request.request_id)
         cohort = self._prefill_cohort
         if cohort is not None and request.request_id in cohort.pending_ids:
             # Remove native ownership immediately, but retain the block refcounts
             # until the worker confirms the suspended forward no longer uses them.
             if request.request_id in self._held_prefill_blocks:
                 raise RuntimeError("Prefill blocks were detached more than once")
-            self._held_prefill_blocks[request.request_id] = (
-                self.kv_cache_manager.pop_blocks_for_free(request)
-            )
-            self._held_prefill_sessions[request.request_id] = getattr(
-                request, "session_id", None
+            self._detach_blocks(
+                request, self._held_prefill_blocks, self._held_prefill_sessions
             )
             return self._native_contract.held_result(
                 self._held_prefill_blocks[request.request_id]
@@ -340,11 +403,7 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
                 if rid in running_ids
             }
         deferred_decode_ids = frozenset()
-        if self._prefill_first_admission["reason"] in (
-            "deadline_prefill_first",
-            "full_budget_prefill_first",
-            "token_budget_prefill_first",
-        ):
+        if self._prefill_first_admission["reason"] in _PREFILL_FIRST_REASONS:
             if new_prefill_ids and not decode_ids:
                 deferred_decode_ids = frozenset(
                     self._prefill_first_admission["deferred_decode_ids"]
@@ -391,9 +450,8 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
             cohort.completed_layers if cohort else 0
         )
         output.muxpd_prefill_layers_total = self._decoder_layer_count if cohort else 0
-        fully_cancelled = bool(
-            cohort
-            and set(output.muxpd_cancel_prefill_request_ids) == cohort.pending_ids
+        fully_cancelled = bool(cohort) and self._cancels_whole_cohort(
+            output, cohort.pending_ids
         )
         expected_layers = 0
         if cohort:
@@ -417,14 +475,14 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
             else None
         )
         self._decoupled_step = _Step(
-            output,
-            _output_for_update(output, decode_ids),
-            output.muxpd_prefill_cohort_id,
-            started,
-            expected_layers,
-            calibration_phase,
-            deferred_decode_ids,
-            self._decode_shape(
+            output=output,
+            decode_output=_output_for_update(output, decode_ids),
+            cohort_id=output.muxpd_prefill_cohort_id,
+            started_at=started,
+            expected_layers=expected_layers,
+            calibration_phase=calibration_phase,
+            deferred_decode_ids=deferred_decode_ids,
+            guard_decode_shape=self._decode_shape(
                 [self._guard_live_decodes[rid] for rid in sorted(decode_ids)]
             )
             if self.muxpd_policy.config.decode_budget_guard and decode_ids
@@ -566,7 +624,7 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         )
         guard["control_step"] = bool(
             output.muxpd_pause_prefill
-            or set(output.muxpd_cancel_prefill_request_ids) == cohort.pending_ids
+            or self._cancels_whole_cohort(output, cohort.pending_ids)
         )
         info["decode_budget"] = guard
         info["reason"] = "decode_budget_quota"
@@ -575,6 +633,13 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         # the entire token admission budget while existing D waits for one turn.
         output.muxpd_finish_prefill = quota == remaining and not guard["control_step"]
         return info
+
+    @staticmethod
+    def _cancels_whole_cohort(output, pending_ids) -> bool:
+        """Whether this step asks the worker to cancel every pending P member."""
+        return bool(pending_ids) and (
+            set(output.muxpd_cancel_prefill_request_ids) == pending_ids
+        )
 
     @staticmethod
     def _decode_shape(contexts: list[int]) -> tuple[int, int, int] | None:
@@ -725,6 +790,11 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         cache[key] = value
         cache.move_to_end(key)
 
+    def _guard_cache_record_max(self, cache, key, value, phase):
+        """Keep the largest observation per key together with its sample count."""
+        old, count = self._guard_cache_read(cache, key) or (0.0, 0)
+        self._guard_cache_store(cache, key, (max(old, value), count + 1), phase)
+
     def _guard_cache_stats(self):
         return {
             "entry_limit_per_mapping": _GUARD_ESTIMATE_CACHE_LIMIT,
@@ -770,8 +840,9 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         )
         info["work_quota"] = work_quota
         remaining = self._decoder_layer_count - cohort.completed_layers
-        cancelled = set(output.muxpd_cancel_prefill_request_ids)
-        control_step = output.muxpd_pause_prefill or cancelled == cohort.pending_ids
+        control_step = output.muxpd_pause_prefill or self._cancels_whole_cohort(
+            output, cohort.pending_ids
+        )
         if config.prefill_layer_token_budget:
             output.muxpd_layers_per_slice = min(remaining, base_quota)
             if not control_step and output.muxpd_layers_per_slice == remaining:
@@ -907,7 +978,7 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
             raise RuntimeError("Worker did not finish an unopposed prefill")
         if step.output.muxpd_pause_prefill and completed & alive:
             raise RuntimeError("Worker advanced a paused prefill")
-        if pending and set(step.output.muxpd_cancel_prefill_request_ids) == pending:
+        if self._cancels_whole_cohort(step.output, pending):
             if completed | cancelled != pending:
                 raise RuntimeError(
                     "Worker did not acknowledge full cohort cancellation"
@@ -962,7 +1033,9 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         grouped = self.muxpd_policy.config.compile_prefill_groups
         if cohort and (grouped != (source == "group_forward_return")):
             raise RuntimeError("Prefill group progress source/config mismatch")
-        if source == "group_forward_return" and (total != 40 or progress % 4):
+        if source == "group_forward_return" and (
+            total != PREFILL_GROUP_MODEL_LAYERS or progress % PREFILL_GROUP_LAYERS
+        ):
             raise RuntimeError(
                 "Prefill group progress must end at an actual four-layer boundary"
             )
@@ -1047,19 +1120,9 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         # longer access this member's buffers, including late-aborted completions.
         for rid in completed | cancelled:
             if rid in self._held_prefill_blocks:
-                blocks = self._held_prefill_blocks[rid]
-                if blocks:
-                    try:
-                        self.kv_cache_manager.block_pool.free_blocks(reversed(blocks))
-                    except BaseException as error:
-                        self._kv_reclaim_error = error
-                        raise
-                # Never emit reclamation while a worker still owns the blocks.
-                # Remove ownership after successful native free, before the
-                # observational event (native EventBus isolates sink errors).
-                del self._held_prefill_blocks[rid]
-                session_id = self._held_prefill_sessions.pop(rid)
-                self._native_contract.emit_reclaimed(rid, session_id, len(blocks))
+                self._reclaim_held_blocks(
+                    rid, self._held_prefill_blocks, self._held_prefill_sessions
+                )
         if cohort is not None:
             cohort.completed_layers = progress
             cohort.pending_ids.difference_update(completed | cancelled)
@@ -1211,14 +1274,8 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         ):
             return {"phase": None, "reason": "invalid_cancelled_or_paused_sample"}
         if cohort is None and step.guard_decode_shape:
-            old, count = self._guard_cache_read(
-                self._guard_decode_cost, step.guard_decode_shape
-            ) or (0.0, 0)
-            self._guard_cache_store(
-                self._guard_decode_cost,
-                step.guard_decode_shape,
-                (max(old, duration), count + 1),
-                "decode",
+            self._guard_cache_record_max(
+                self._guard_decode_cost, step.guard_decode_shape, duration, "decode"
             )
             return {"phase": "decode", "shape": list(step.guard_decode_shape)}
         if cohort:
@@ -1287,13 +1344,10 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
                         "residual_ms": residual,
                     }
                     if accepted:
-                        old, count = self._guard_cache_read(
-                            self._guard_decode_residual, step.guard_decode_shape
-                        ) or (0.0, 0)
-                        self._guard_cache_store(
+                        self._guard_cache_record_max(
                             self._guard_decode_residual,
                             step.guard_decode_shape,
-                            (max(old, residual), count + 1),
+                            residual,
                             "decode_residual",
                         )
                 return {
@@ -1316,16 +1370,4 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
 
     def _trace_decoupled(self, event: str, **fields) -> None:
         if self._muxpd_trace is not None:
-            self._muxpd_trace.write(
-                json.dumps(
-                    {
-                        "event": event,
-                        "pid": os.getpid(),
-                        "time": time.monotonic(),
-                        "step": self.muxpd_stats["steps"],
-                        **fields,
-                    },
-                    sort_keys=True,
-                )
-                + "\n"
-            )
+            self._write_trace(event, time.monotonic(), **fields)

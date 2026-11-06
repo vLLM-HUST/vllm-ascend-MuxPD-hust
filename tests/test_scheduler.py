@@ -315,3 +315,49 @@ def test_stale_empty_output_cannot_retire_pending_batch(make_scheduler):
     assert scheduler._muxpd_pending[0] is pending_output
     complete(scheduler, pending_output)
     assert scheduler._muxpd_pending is None
+
+
+@pytest.mark.parametrize("field", ["logprobs", "prompt_logprobs"])
+def test_unsupported_request_fails_alone_without_stopping_decode(
+    make_scheduler, field
+):
+    from vllm.v1.engine import FinishReason
+
+    scheduler = make_scheduler()
+    scheduler.add_request(request("a", 20))
+    complete(scheduler, scheduler.schedule())
+    bad = request("bad", 16)
+    setattr(bad.sampling_params, field, 1)
+    scheduler.add_request(bad)  # must not raise: EngineCore treats that as fatal
+    assert "bad" not in scheduler.requests
+    output = scheduler.schedule()
+    assert output.num_scheduled_tokens == {"a": 1}
+    rows = {
+        row.request_id: row
+        for packet in complete(scheduler, output).values()
+        for row in packet.outputs
+    }
+    assert rows["bad"].finish_reason == FinishReason.ERROR
+    assert rows["bad"].new_token_ids == [] and rows["a"].new_token_ids
+
+
+def test_abort_during_inflight_decode_drops_its_sample_and_frees_kv(make_scheduler):
+    scheduler = make_scheduler()
+    pool = scheduler.kv_cache_manager.block_pool
+    free_before = pool.get_num_free_blocks()
+    scheduler.add_request(request("a", 20))
+    complete(scheduler, scheduler.schedule())
+    output = scheduler.schedule()
+    assert output.num_scheduled_tokens == {"a": 1}
+    scheduler.finish_requests("a", RequestStatus.FINISHED_ABORTED)
+    rows = [
+        row for packet in complete(scheduler, output).values() for row in packet.outputs
+    ]
+    assert all(row.request_id != "a" or not row.new_token_ids for row in rows)
+    assert pool.get_num_free_blocks() == free_before
+    # The worker still learns about the abort through the next lifecycle step.
+    lifecycle = scheduler.schedule()
+    assert lifecycle.finished_req_ids == {"a"}
+    assert not lifecycle.num_scheduled_tokens
+    complete(scheduler, lifecycle)
+    assert not scheduler.has_requests()

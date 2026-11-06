@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from threading import get_ident
 from typing import Any, Protocol
 
 from greenlet import GreenletExit, getcurrent, greenlet
+
+logger = logging.getLogger(__name__)
 
 
 class ExecutionBackend(Protocol):
@@ -149,17 +152,24 @@ class LayerInterleaver:
                 for name in names:
                     self.step(name, layer_budget)
             return {name: self.tasks[name].result for name in names}
-        except BaseException:
-            self.close()
+        except BaseException as primary:
+            close_preserving(self, primary)
             raise
 
     def close(self) -> None:
-        """Unwind suspended contexts deterministically on the owning thread."""
+        """Unwind suspended contexts deterministically on the owning thread.
+
+        Every suspended lane is unwound even if an earlier one fails; the first
+        failure is raised afterwards. A lane whose unwind failed is not fenced.
+        """
         self._check_thread()
         caller_state = self.backend.capture()
+        first_error: BaseException | None = None
         try:
             for task in self.tasks.values():
-                if not task.done:
+                if task.done:
+                    continue
+                try:
                     if not task.coroutine:
                         # A never-started stack owns no device state. Restoring
                         # it could violate a backend's initial-preparation fence.
@@ -168,6 +178,28 @@ class LayerInterleaver:
                     self.backend.restore(task.state)
                     task.coroutine.throw(GreenletExit)
                     self.backend.fence()
+                except BaseException as error:
+                    if first_error is None:
+                        first_error = error
         finally:
             self.active = None
-            self.backend.restore(caller_state)
+            try:
+                self.backend.restore(caller_state)
+            except BaseException as restore_error:
+                if first_error is not None:
+                    # Keep the lane-unwind failure reachable as the cause.
+                    raise restore_error from first_error
+                raise
+        if first_error is not None:
+            raise first_error
+
+
+def close_preserving(interleaver: LayerInterleaver, primary: BaseException) -> None:
+    """Close after ``primary`` failed; a cleanup error must not replace it."""
+    try:
+        interleaver.close()
+    except BaseException as cleanup:
+        # Logged on every Python version; notes exist only from 3.11.
+        logger.warning("MuxPD lane unwind also failed", exc_info=cleanup)
+        if hasattr(primary, "add_note"):
+            primary.add_note(f"MuxPD lane unwind also failed: {cleanup!r}")

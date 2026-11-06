@@ -143,3 +143,83 @@ def test_reclamation_bridge_only_emits_after_explicit_ack_call():
     old = SchedulerContract("hust-oct10", "blocked")
     assert old.held_result([1]) is None
     old.emit_reclaimed("r", None, 1)
+
+
+def test_lane_validators_only_name_known_native_fields():
+    from vllm_muxpd import native_compat as nc
+
+    assert set(nc._UNSPLITTABLE_SCHEDULE_FIELDS) <= nc._SCHEDULER_NEW
+    assert set(nc._UNSUPPORTED_RESULT_FIELDS) <= nc._RUNNER_OLD | nc._RUNNER_NEW
+
+
+_SCHEDULE_FIELDS = (
+    "scheduled_encoder_inputs",
+    "scheduled_encoder_input_stats",
+    "scheduled_spec_decode_tokens",
+    "has_structured_output_requests",
+    "pending_structured_output_tokens",
+    "num_invalid_spec_tokens",
+    "kv_connector_metadata",
+    "has_sync_kv_loads",
+    "aux_output_connector_metadata",
+    "ec_connector_metadata",
+    "ec_manager_metadata",
+    "kv_cache_block_copies",
+    "kv_connector_block_state",
+)
+_RESULT_FIELDS = (
+    "logprobs",
+    "pooler_output",
+    "kv_connector_output",
+    "ec_connector_output",
+    "routed_experts",
+    "aux_output_connector_output",
+    "sampling_masks",
+    "prompt_token_id_logprobs_dict",
+    "cudagraph_stats",
+)
+
+
+def _schedule(**fields):
+    from types import SimpleNamespace
+
+    return SimpleNamespace(
+        num_spec_tokens_to_schedule=0, scheduled_new_reqs=[], **fields
+    )
+
+
+def _result(**fields):
+    from types import SimpleNamespace
+
+    return SimpleNamespace(
+        req_ids=["a"], req_id_to_index={"a": 0}, sampled_token_ids=[[1]], **fields
+    )
+
+
+@pytest.mark.parametrize("name", _SCHEDULE_FIELDS)
+def test_lane_schedule_rejects_each_unsplittable_field(name):
+    from vllm_muxpd.native_compat import validate_lane_schedule
+
+    validate_lane_schedule(_schedule(**{name: None}))
+    with pytest.raises(RuntimeError, match=f"scheduling field: {name}$"):
+        validate_lane_schedule(_schedule(**{name: [1]}))
+
+
+@pytest.mark.parametrize("name", _RESULT_FIELDS)
+def test_lane_result_rejects_each_unsupported_field(name):
+    from vllm_muxpd.native_compat import validate_lane_result
+
+    validate_lane_result(_result(**{name: {}}))
+    with pytest.raises(RuntimeError, match=f"output metadata: {name}$"):
+        validate_lane_result(_result(**{name: [1]}))
+
+
+def test_lane_validators_report_the_first_field_in_declared_order():
+    from vllm_muxpd.native_compat import validate_lane_result, validate_lane_schedule
+
+    both = dict.fromkeys((_SCHEDULE_FIELDS[0], _SCHEDULE_FIELDS[-1]), [1])
+    with pytest.raises(RuntimeError, match=_SCHEDULE_FIELDS[0]):
+        validate_lane_schedule(_schedule(**both))
+    both = dict.fromkeys((_RESULT_FIELDS[0], _RESULT_FIELDS[-1]), [1])
+    with pytest.raises(RuntimeError, match=_RESULT_FIELDS[0]):
+        validate_lane_result(_result(**both))

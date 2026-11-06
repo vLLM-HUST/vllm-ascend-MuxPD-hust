@@ -82,3 +82,22 @@ def test_async_accepts_token_work_layer_quota():
         prefill_layer_token_budget=65536,
     )
     assert result.prefill_layer_token_budget == 65536
+
+
+def test_async_pair_accepts_scheduler_class_object():
+    # SchedulerConfig.scheduler_cls may hold the class itself; MuxPDPolicy
+    # already accepts that form, so engine validation must agree.
+    pytest.importorskip("vllm")
+    from vllm_muxpd.async_scheduler import AsyncDecoupledMuxPDScheduler
+
+    result = config()
+    result.scheduler_config.scheduler_cls = AsyncDecoupledMuxPDScheduler
+    validate_engine_config(result)
+
+
+@pytest.mark.parametrize("value", [object(), 3])
+def test_async_pair_reports_unrecognised_scheduler_values_as_config_errors(value):
+    result = config()
+    result.scheduler_config.scheduler_cls = value
+    with pytest.raises(ValueError, match="exact scheduler/worker pair"):
+        validate_engine_config(result)

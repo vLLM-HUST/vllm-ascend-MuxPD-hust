@@ -6,8 +6,6 @@ an independent runner and input batch; prompt tokens are never chunked.
 
 from __future__ import annotations
 
-import json
-import os
 import time
 from typing import Any
 
@@ -27,11 +25,17 @@ class LayeredMuxPDScheduler(MuxPDScheduler):
 
     def __init__(self, vllm_config: Any, *args: Any, **kwargs: Any) -> None:
         super().__init__(vllm_config, *args, **kwargs)
-        if self.muxpd_policy.config.execution != "layered":
-            raise ValueError("LayeredMuxPDScheduler requires execution='layered'")
-        worker = vllm_config.parallel_config.worker_cls
-        if worker != "vllm_muxpd.worker.MuxPDNPUWorker":
-            raise ValueError("LayeredMuxPDScheduler requires MuxPDNPUWorker")
+        try:
+            if self.muxpd_policy.config.execution != "layered":
+                raise ValueError(
+                    "LayeredMuxPDScheduler requires execution='layered'"
+                )
+            worker = vllm_config.parallel_config.worker_cls
+            if worker != "vllm_muxpd.worker.MuxPDNPUWorker":
+                raise ValueError("LayeredMuxPDScheduler requires MuxPDNPUWorker")
+        except BaseException:
+            self._close_muxpd_trace()
+            raise
         self._layered_pending = None
 
     def schedule(self, throttle_prefills: bool = False):
@@ -91,23 +95,15 @@ class LayeredMuxPDScheduler(MuxPDScheduler):
             # Progress those decodes instead of repeatedly returning the same
             # empty P-only transaction. Keep lifecycle side effects from both
             # native scheduling passes visible to the worker.
-            retry_snapshots = self._muxpd_snapshots()
-            retry = policy.choose(
-                retry_snapshots,
+            retried = self._retry_forced_decode(
+                output,
                 now,
-                available_prefill_slots=0,
-                force_decode=True,
+                lambda retry, retry_snapshots: self._schedule_layered_selection(
+                    retry.request_ids, retry_snapshots
+                ),
             )
-            if retry.request_ids:
-                first_output = output
-                snapshots = retry_snapshots
-                output = self._schedule_layered_selection(
-                    retry.request_ids,
-                    snapshots,
-                )
-                output.finished_req_ids.update(first_output.finished_req_ids)
-                output.preempted_req_ids.update(first_output.preempted_req_ids)
-                self.muxpd_stats["prefill_capacity_deferrals"] += 1
+            if retried is not None:
+                output, snapshots, _ = retried
             if not output.total_num_scheduled_tokens and not self.running:
                 raise RuntimeError(
                     "Layered MuxPD cannot fit a complete prefill into available "
@@ -185,18 +181,10 @@ class LayeredMuxPDScheduler(MuxPDScheduler):
             if scheduler_output.muxpd_phase in ("decode", "multiplex"):
                 self.muxpd_policy.last_decode_at = now
             if self._muxpd_trace is not None:
-                self._muxpd_trace.write(
-                    json.dumps(
-                        {
-                            "event": "complete",
-                            "time": now,
-                            "pid": os.getpid(),
-                            "step": self.muxpd_stats["steps"],
-                            "phase": scheduler_output.muxpd_phase,
-                            "duration_ms": duration_ms,
-                        },
-                        sort_keys=True,
-                    )
-                    + "\n"
+                self._write_trace(
+                    "complete",
+                    now,
+                    phase=scheduler_output.muxpd_phase,
+                    duration_ms=duration_ms,
                 )
         return self._finish_outputs(result)

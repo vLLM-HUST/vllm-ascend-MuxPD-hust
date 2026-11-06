@@ -7,7 +7,7 @@ from typing import Any
 import torch
 from vllm.v1.outputs import AsyncModelRunnerOutput, ModelRunnerOutput
 
-from .decoupled_worker import DecoupledMuxPDNPUWorker
+from .decoupled_worker import DecoupledMuxPDNPUWorker, attach_prefill_receipt
 from .worker import _merge_outputs
 
 
@@ -28,13 +28,7 @@ class _AsyncDecodeOutput(AsyncModelRunnerOutput):
         )
         # No worker/runner state is read on the native output thread. A later
         # execute/sample RPC can already have replaced every iteration field.
-        output.muxpd_prefill_cohort_id = None
-        output.muxpd_completed_prefill_ids = frozenset()
-        output.muxpd_cancelled_prefill_ids = frozenset()
-        output.muxpd_prefill_layers_completed = 0
-        output.muxpd_prefill_layers_total = 0
-        output.muxpd_prefill_progress_source = "none"
-        output.muxpd_prefill_slice_timing = None
+        attach_prefill_receipt(output)
         return output
 
 

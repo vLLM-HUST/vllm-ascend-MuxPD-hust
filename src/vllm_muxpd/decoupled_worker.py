@@ -11,13 +11,40 @@ import torch
 from vllm.v1.core.sched.output import SchedulerOutput
 from vllm.v1.outputs import ModelRunnerOutput
 
-from vllm_muxpd.lanes import LayerInterleaver
+from vllm_muxpd.config import PREFILL_GROUP_LAYERS
+from vllm_muxpd.lanes import LayerInterleaver, close_preserving
 from vllm_muxpd.slice_timing import PrefillSliceTimer
 from vllm_muxpd.worker import (
     MuxPDNPUWorker,
     _merge_outputs,
     _select_requests,
 )
+
+
+def attach_prefill_receipt(
+    output: ModelRunnerOutput,
+    *,
+    cohort_id: int | None = None,
+    completed: frozenset[str] = frozenset(),
+    cancelled: frozenset[str] = frozenset(),
+    layers_completed: int = 0,
+    layers_total: int = 0,
+    progress_source: str = "none",
+    slice_timing: dict[str, Any] | None = None,
+) -> None:
+    """Set the decoupled P receipt fields the scheduler validates.
+
+    The defaults describe a transaction without prefill activity.
+    """
+    output.muxpd_prefill_cohort_id = cohort_id
+    output.muxpd_completed_prefill_ids = completed
+    output.muxpd_cancelled_prefill_ids = cancelled
+    # Enqueued layer boundaries are progress evidence, not device completion
+    # or permission to free KV. Only the completion/cancellation ACK is that.
+    output.muxpd_prefill_layers_completed = layers_completed
+    output.muxpd_prefill_layers_total = layers_total
+    output.muxpd_prefill_progress_source = progress_source
+    output.muxpd_prefill_slice_timing = slice_timing
 
 
 class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
@@ -31,6 +58,13 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
     execution_mode = "decoupled"
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
+        self._clear_prefill()
+        self._reset_iteration(None)
+        self._awaiting_sample = False
+        super().__init__(*args, **kwargs)
+
+    def _clear_prefill(self) -> None:
+        """Forget the suspended cohort (state that spans engine iterations)."""
         self._prefill_task: LayerInterleaver | None = None
         self._prefill_cohort_id: int | None = None
         self._prefill_order: list[str] = []
@@ -38,24 +72,18 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
         self._prefill_compiled = False
         self._prefill_full_forward_return = False
         self._prefill_num_tokens = 0
-        self._iteration_prefill_timer: PrefillSliceTimer | None = None
-        self._awaiting_sample = False
-        self._iteration_cohort_id: int | None = None
+
+    def _reset_iteration(self, cohort_id: int | None) -> None:
+        """Start the per-iteration receipt state for one execute/sample pair."""
+        self._iteration_cohort_id = cohort_id
         self._iteration_prefill_layers_completed = 0
         self._iteration_prefill_layers_total = 0
         self._iteration_prefill_progress_source = "none"
+        self._iteration_prefill_timer: PrefillSliceTimer | None = None
         self._cancelled_ack: set[str] = set()
         self._decode_only_fast_path = False
-        super().__init__(*args, **kwargs)
-
-    def _clear_prefill(self) -> None:
-        self._prefill_task = None
-        self._prefill_cohort_id = None
-        self._prefill_order = []
-        self._prefill_cancelled = set()
-        self._prefill_compiled = False
-        self._prefill_full_forward_return = False
-        self._prefill_num_tokens = 0
+        self._pending_lanes: list[str] = []
+        self._pending_order: list[str] = []
 
     def _snapshot_prefill_progress(self) -> None:
         if self._prefill_task is not None:
@@ -103,6 +131,7 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
                 # This path was admitted with a full quota. Even a raw Python
                 # fallback must not suspend inside the compilation context.
                 layer_budget = None
+            observer = None
             if (
                 lane == "prefill"
                 and getattr(self, "_prefill_slice_timing_enabled", False)
@@ -110,7 +139,7 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
             ):
                 if self._stream_mode != "fenced":
                     raise RuntimeError("MuxPD slice timing requires fenced execution")
-                timer = PrefillSliceTimer(
+                observer = PrefillSliceTimer(
                     torch.npu.Event(enable_timing=True),
                     torch.npu.Event(enable_timing=True),
                     self._streams["prefill"],
@@ -118,24 +147,21 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
                     prefill_tokens=self._prefill_num_tokens,
                     compiled=getattr(self, "_prefill_compiled", False),
                 )
-                self._iteration_prefill_timer = timer
-                try:
-                    interleaver.step(
-                        lane,
-                        sys.maxsize if layer_budget is None else layer_budget,
-                        observer=timer,
-                    )
-                except BaseException:
-                    # Match run()'s full-forward unwind behavior. Partial steps
-                    # keep their existing fail-closed engine-error semantics.
-                    if layer_budget is None:
-                        interleaver.close()
-                    raise
-                return
-            if layer_budget is None:
-                interleaver.run((lane,), sys.maxsize)
-            else:
-                interleaver.step(lane, layer_budget)
+                self._iteration_prefill_timer = observer
+            # Each lane interleaver owns exactly one task, so an unbounded step
+            # runs the forward to completion.
+            try:
+                interleaver.step(
+                    lane,
+                    sys.maxsize if layer_budget is None else layer_budget,
+                    observer=observer,
+                )
+            except BaseException as primary:
+                # A failed full forward unwinds its stack (as run() does).
+                # Partial steps keep their fail-closed engine-error semantics.
+                if layer_budget is None:
+                    close_preserving(interleaver, primary)
+                raise
         finally:
             self._interleaver = None
 
@@ -268,22 +294,8 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
         )
         if protected:
             raise RuntimeError("MuxPD cannot retire or preempt a pinned prefill")
-        self._validate_requests(scheduler_output)
-        self._retire_finished(scheduler_output.finished_req_ids)
-        self._invalidate_batch_rows(
-            set(scheduler_output.preempted_req_ids or ())
-            | scheduler_output.scheduled_cached_reqs.resumed_req_ids
-            | {req.req_id for req in scheduler_output.scheduled_new_reqs}
-        )
-        self._iteration_cohort_id = cohort_id
-        self._iteration_prefill_layers_completed = 0
-        self._iteration_prefill_layers_total = 0
-        self._iteration_prefill_progress_source = "none"
-        self._iteration_prefill_timer = None
-        self._cancelled_ack = set()
-        self._decode_only_fast_path = False
-        self._pending_lanes = []
-        self._pending_order = []
+        self._apply_request_lifecycle(scheduler_output)
+        self._reset_iteration(cohort_id)
         decodes = scheduled - new_prefills
         if decodes & pending:
             raise RuntimeError("A pinned prefill cannot simultaneously enter decode")
@@ -336,7 +348,7 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
                 budget = None
             if getattr(self, "_prefill_groups_enabled", False) and budget not in (
                 None,
-                4,
+                PREFILL_GROUP_LAYERS,
             ):
                 raise ValueError("Prefill FX groups require an atomic four-layer quota")
 
@@ -418,7 +430,9 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
         if prefill_completed:
             cancelled.update(self._prefill_cancelled)
             completed.update(set(self._prefill_order) - cancelled)
-        output = super().sample_tokens(grammar_output)
+        output = self._sample_pending_lanes(
+            grammar_output, passthrough=self._decode_only_fast_path
+        )
         if cancelled:
             keep = [req_id for req_id in output.req_ids if req_id not in cancelled]
             filtered = ModelRunnerOutput(
@@ -437,24 +451,26 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
             )
             output = _merge_outputs([filtered], keep)
             self._retire_finished(cancelled)
-        output.muxpd_prefill_cohort_id = self._iteration_cohort_id
-        output.muxpd_completed_prefill_ids = frozenset(completed)
-        output.muxpd_cancelled_prefill_ids = frozenset(cancelled)
-        # Enqueued layer boundaries are progress evidence, not device completion
-        # or permission to free KV. Only the completion/cancellation ACK is that.
-        output.muxpd_prefill_layers_completed = self._iteration_prefill_layers_completed
-        output.muxpd_prefill_layers_total = self._iteration_prefill_layers_total
-        output.muxpd_prefill_progress_source = self._iteration_prefill_progress_source
         timer = getattr(self, "_iteration_prefill_timer", None)
-        output.muxpd_prefill_slice_timing = (
-            timer.receipt(
-                self._iteration_prefill_layers_completed,
-                # Fenced samplers wait for the P slice tail before their native
-                # synchronous D2H. Empty transactions have no such barrier.
-                completion_barrier=sampled_lane and self._stream_mode == "fenced",
-            )
-            if timer is not None
-            else None
+        attach_prefill_receipt(
+            output,
+            cohort_id=self._iteration_cohort_id,
+            completed=frozenset(completed),
+            cancelled=frozenset(cancelled),
+            layers_completed=self._iteration_prefill_layers_completed,
+            layers_total=self._iteration_prefill_layers_total,
+            progress_source=self._iteration_prefill_progress_source,
+            slice_timing=(
+                timer.receipt(
+                    self._iteration_prefill_layers_completed,
+                    # Fenced samplers wait for the P slice tail before their
+                    # native synchronous D2H. Empty transactions have no such
+                    # barrier.
+                    completion_barrier=sampled_lane and self._stream_mode == "fenced",
+                )
+                if timer is not None
+                else None
+            ),
         )
         if prefill_completed:
             self._clear_prefill()

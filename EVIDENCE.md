@@ -59,7 +59,7 @@ python scripts/fetch_mod_consumer_evidence.py --config BENCHMARK_COLLECTION.json
 export BENCHMARK_COLLECTION_ROOT=/absolute/new/external/collection
 ```
 
-This root is separate from BENCHMARK_EVIDENCE_ROOT and BENCHMARK_HISTORY_ROOT.
+This root is separate from BENCHMARK_EVIDENCE_ROOT and the history destination.
 Do not execute archived scripts; use the maintained repository validators.
 All paths below are archive-relative; generation commands may still produce ignored local outputs.
 

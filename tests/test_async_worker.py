@@ -6,6 +6,8 @@ import pytest
 from test_decoupled_worker import schedule
 from test_decoupled_worker import simulation as simulation
 
+pytestmark = pytest.mark.integration
+
 
 @pytest.fixture
 def async_worker(simulation):
@@ -63,6 +65,31 @@ def test_decode_outputs_survive_next_transaction_without_materialization(async_w
         assert output.muxpd_prefill_progress_source == "none"
     with pytest.raises(RuntimeError, match="already consumed"):
         first.get_output()
+
+
+def test_async_and_synchronous_receipts_carry_the_same_prefill_fields(async_worker):
+    worker, _ = async_worker
+    worker.execute_model(schedule(decode=("d1",)))
+    deferred = worker.sample_tokens(None).get_output()
+    worker.execute_model(
+        schedule(new_p=("p",), pending=("p",), decode=("d2",), finish=True)
+    )
+    synchronous = worker.sample_tokens(None)
+
+    def fields(output):
+        return {key for key in vars(output) if key.startswith("muxpd_")}
+
+    assert fields(deferred) == fields(synchronous)
+    assert {key: getattr(deferred, key) for key in fields(deferred)} == {
+        "muxpd_prefill_cohort_id": None,
+        "muxpd_completed_prefill_ids": frozenset(),
+        "muxpd_cancelled_prefill_ids": frozenset(),
+        "muxpd_prefill_layers_completed": 0,
+        "muxpd_prefill_layers_total": 0,
+        "muxpd_prefill_progress_source": "none",
+        "muxpd_prefill_slice_timing": None,
+    }
+    assert synchronous.muxpd_completed_prefill_ids == frozenset({"p"})
 
 
 def test_async_decode_keeps_caller_dependency_for_future_kv_zeroing(async_worker):
@@ -145,3 +172,31 @@ def test_recomputed_prefill_rejects_missing_history_before_mutation(async_worker
     with pytest.raises(RuntimeError, match="complete prefill history"):
         worker._restore_prefill_history(output)
     assert state.output_token_ids == [-1]
+
+
+@pytest.mark.parametrize("failure", ["execute", "sample"])
+def test_async_decode_failures_restore_caller_and_block_reuse(
+    async_worker, monkeypatch, failure
+):
+    worker, _ = async_worker
+    caller = worker._execution_backend.capture()
+
+    def fail(*args):
+        raise ValueError("native failure")
+
+    if failure == "execute":
+        monkeypatch.setattr(worker.decode_runner, "execute_model", fail)
+        with pytest.raises(ValueError, match="native failure"):
+            worker.execute_model(schedule(decode=("d",)))
+        assert not worker._awaiting_sample and worker._pending_lanes == []
+    else:
+        worker.execute_model(schedule(decode=("d",)))
+        monkeypatch.setattr(worker.decode_runner, "sample_tokens", fail)
+        with pytest.raises(ValueError, match="native failure"):
+            worker.sample_tokens(None)
+        # No receipt was produced, so the transaction must not be reusable.
+        assert worker._awaiting_sample and worker._pending_lanes == ["decode"]
+        with pytest.raises(RuntimeError, match="sampler ACK"):
+            worker.execute_model(schedule(decode=("d",)))
+    assert worker._interleaver is None
+    assert worker._execution_backend.capture() == caller

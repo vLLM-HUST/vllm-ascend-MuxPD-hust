@@ -181,8 +181,9 @@ async def collect(tmp_path, server, *, gate_timeout=1, timeout=2, cancel=False):
             )
             if cancel:
                 # Wait for the deliberately blocked first mixed D cohort.
-                while len(server.seen) < 10:
+                while len(server.seen) < 10 and not task.done():
                     await asyncio.sleep(0)
+                assert not task.done(), "probe stopped before the blocked D cohort"
                 task.cancel()
             await task
     finally:

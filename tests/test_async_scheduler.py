@@ -20,8 +20,7 @@ def make_async_scheduler(make_scheduler, monkeypatch):
 
     monkeypatch.setenv("VLLM_USE_V2_MODEL_RUNNER", "0")
 
-    def construct(**kwargs):
-        config = kwargs["vllm_config"]
+    def configure(config):
         config.scheduler_config.async_scheduling = True
         config.scheduler_config.scheduler_cls = (
             "vllm_muxpd.async_scheduler.AsyncDecoupledMuxPDScheduler"
@@ -32,10 +31,13 @@ def make_async_scheduler(make_scheduler, monkeypatch):
         config.parallel_config.worker_cls = (
             "vllm_muxpd.async_worker.AsyncDecoupledMuxPDNPUWorker"
         )
-        return AsyncDecoupledMuxPDScheduler(**kwargs)
 
-    monkeypatch.setattr(base, "DecoupledMuxPDScheduler", construct)
-    return make_scheduler
+    def make(**kwargs):
+        return make_scheduler(
+            scheduler_cls=AsyncDecoupledMuxPDScheduler, configure=configure, **kwargs
+        )
+
+    return make
 
 
 class QueueDriver:
@@ -488,6 +490,31 @@ def test_unsupported_request_is_flushed_through_the_async_queue(
         ("bad", FinishReason.ERROR)
     ]
     assert not scheduler.has_requests()
+
+
+def test_structured_output_request_is_flushed_through_the_async_queue(
+    make_async_scheduler,
+):
+    from vllm.sampling_params import SamplingParams, StructuredOutputsParams
+    from vllm.v1.engine import FinishReason
+    from vllm.v1.request import Request
+
+    scheduler = make_async_scheduler(trace=False)
+    driver = QueueDriver(scheduler)
+    params = SamplingParams(
+        max_tokens=32, structured_outputs=StructuredOutputsParams(choice=["y", "n"])
+    )
+    params.update_from_generation_config({}, 127)
+    bad = Request("bad", [1] * 16, params, None, client_index=0)
+    assert bad.use_structured_output
+    scheduler.add_request(bad)
+    driver.schedule()
+    rows = [r for p in driver.retire().values() for r in p.outputs]
+    assert [(r.request_id, r.finish_reason) for r in rows] == [
+        ("bad", FinishReason.ERROR)
+    ]
+    assert not scheduler.has_requests()
+    assert "bad" not in scheduler._arrival_monotonic
 
 
 def test_rejected_request_reported_finished_to_dp_clients(make_async_scheduler):

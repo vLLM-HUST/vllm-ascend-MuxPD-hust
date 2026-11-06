@@ -3,8 +3,28 @@
 from __future__ import annotations
 
 import math
+import string
 from dataclasses import dataclass, fields
 from typing import Any, Mapping
+
+# The experimental group-FX prefill recipe compiles the 40-layer Qwen3.5 backbone
+# as ten atomic four-layer groups; see docs/experimental-prefill-group-fx.md.
+PREFILL_GROUP_LAYERS = 4
+PREFILL_GROUP_MODEL_LAYERS = 40
+
+ASYNC_SCHEDULER_CLS = "vllm_muxpd.async_scheduler.AsyncDecoupledMuxPDScheduler"
+ASYNC_WORKER_CLS = "vllm_muxpd.async_worker.AsyncDecoupledMuxPDNPUWorker"
+
+
+def qualified_name(obj: Any) -> Any:
+    """Dotted path for a class given as an object; strings and None pass through."""
+    module = getattr(obj, "__module__", None)
+    name = getattr(obj, "__qualname__", None)
+    if obj is None or isinstance(obj, str) or module is None or name is None:
+        # Strings and None pass through; anything else is compared as-is and
+        # therefore reported as a mismatch rather than raising here.
+        return obj
+    return f"{module}.{name}"
 
 
 @dataclass(frozen=True)
@@ -185,7 +205,7 @@ class MuxPDConfig:
             and self.decode_graph
             and self.stream_mode == "overlap"
             and self.overlap_communication == "isolated"
-            and self.layers_per_slice == 4
+            and self.layers_per_slice == PREFILL_GROUP_LAYERS
             and self.prefill_layer_token_budget == 0
             and not self.adaptive_layers
             and not self.prefill_first
@@ -200,11 +220,19 @@ class MuxPDConfig:
             if not isinstance(self.trace_path, str) or not self.trace_path.strip():
                 raise ValueError("MuxPD trace_path must be a nonempty string or null")
             try:
-                self.trace_path.format(pid=0)
-            except (KeyError, ValueError, IndexError) as exc:
+                fields = [
+                    (name, spec, conversion)
+                    for _, name, spec, conversion in string.Formatter().parse(
+                        self.trace_path
+                    )
+                    if name is not None
+                ]
+            except ValueError as exc:
                 raise ValueError(
                     "MuxPD trace_path supports only the {pid} placeholder"
                 ) from exc
+            if any(field != ("pid", "", None) for field in fields):
+                raise ValueError("MuxPD trace_path supports only the {pid} placeholder")
 
     @classmethod
     def from_mapping(cls, raw: Mapping[str, Any] | None) -> "MuxPDConfig":
@@ -233,10 +261,9 @@ def validate_engine_config(config: Any) -> None:
         MuxPDConfig.from_mapping(raw)
         if scheduler.async_scheduling is not True:
             errors.append("async_decode_pipeline requires async_scheduling=true")
-        if scheduler.scheduler_cls != (
-            "vllm_muxpd.async_scheduler.AsyncDecoupledMuxPDScheduler"
-        ) or parallel.worker_cls != (
-            "vllm_muxpd.async_worker.AsyncDecoupledMuxPDNPUWorker"
+        if (
+            qualified_name(scheduler.scheduler_cls) != ASYNC_SCHEDULER_CLS
+            or parallel.worker_cls != ASYNC_WORKER_CLS
         ):
             errors.append(
                 "async_decode_pipeline requires its exact scheduler/worker pair"
@@ -285,12 +312,7 @@ def validate_engine_config(config: Any) -> None:
         errors.append(f"max_concurrent_batches must be {concurrency}")
     policy = getattr(scheduler, "batch_admission_policy", None)
     if policy is not None:
-        name = (
-            policy
-            if isinstance(policy, str)
-            else f"{policy.__module__}.{policy.__qualname__}"
-        )
-        if name != "vllm_muxpd.policy.MuxPDPolicy":
+        if qualified_name(policy) != "vllm_muxpd.policy.MuxPDPolicy":
             errors.append(
                 "batch_admission_policy must be vllm_muxpd.policy.MuxPDPolicy"
             )

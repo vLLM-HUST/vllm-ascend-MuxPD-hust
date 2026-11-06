@@ -105,7 +105,7 @@ class Backend:
         pass
 
 
-def fixture():
+def make_group_state():
     backend, ctx, config_stack = (
         Backend(),
         NS(cudagraph_runtime_mode=Mode.NONE, capturing=False, skip_compiled=True),
@@ -273,7 +273,7 @@ def test_source_has_ten_real_distinct_forward_definitions():
 
 
 def test_startup_direct_serving_no_recompile_and_original_model_retained(monkeypatch):
-    state = fixture()
+    state = make_group_state()
     monkeypatch.setenv("TORCHINDUCTOR_CACHE_DIR", "/D/cache")
     assert state.owner.profile_run() == 140
     assert state.executor.ready and state.owner.model is state.model
@@ -289,7 +289,7 @@ def test_startup_direct_serving_no_recompile_and_original_model_retained(monkeyp
 
 
 def test_group_yield_restores_config_and_cancel_unwinds_proxy_without_retirement():
-    state = fixture()
+    state = make_group_state()
     state.owner.profile_run()
     interleaver = LayerInterleaver(state.backend)
 
@@ -319,7 +319,7 @@ def test_group_yield_restores_config_and_cancel_unwinds_proxy_without_retirement
 
 
 def test_ten_atomic_steps_complete_actual_40_layers_then_norm():
-    state = fixture()
+    state = make_group_state()
     state.owner.profile_run()
     interleaver = LayerInterleaver(state.backend)
     state.executor.checkpoint = lambda index, final: interleaver.checkpoint_group(
@@ -341,7 +341,7 @@ def test_ten_atomic_steps_complete_actual_40_layers_then_norm():
 
 @pytest.mark.parametrize("corrupt", ["handle", "shape", "context"])
 def test_serving_rejects_identity_or_shape_or_graph_context_change(corrupt):
-    state = fixture()
+    state = make_group_state()
     state.owner.profile_run()
     state.backend.state = "P"
     if corrupt == "handle":
@@ -358,7 +358,7 @@ def test_serving_rejects_identity_or_shape_or_graph_context_change(corrupt):
 
 
 def test_four_layer_budget_cannot_report_partial_group_as_single_layer():
-    state = fixture()
+    state = make_group_state()
     state.owner.profile_run()
     interleaver = LayerInterleaver(state.backend)
     state.executor.checkpoint = lambda index, final: interleaver.checkpoint_group(
