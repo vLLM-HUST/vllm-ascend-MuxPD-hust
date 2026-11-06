@@ -65,6 +65,31 @@ def test_decode_outputs_survive_next_transaction_without_materialization(async_w
         first.get_output()
 
 
+def test_async_and_synchronous_receipts_carry_the_same_prefill_fields(async_worker):
+    worker, _ = async_worker
+    worker.execute_model(schedule(decode=("d1",)))
+    deferred = worker.sample_tokens(None).get_output()
+    worker.execute_model(
+        schedule(new_p=("p",), pending=("p",), decode=("d2",), finish=True)
+    )
+    synchronous = worker.sample_tokens(None)
+
+    def fields(output):
+        return {key for key in vars(output) if key.startswith("muxpd_")}
+
+    assert fields(deferred) == fields(synchronous)
+    assert {key: getattr(deferred, key) for key in fields(deferred)} == {
+        "muxpd_prefill_cohort_id": None,
+        "muxpd_completed_prefill_ids": frozenset(),
+        "muxpd_cancelled_prefill_ids": frozenset(),
+        "muxpd_prefill_layers_completed": 0,
+        "muxpd_prefill_layers_total": 0,
+        "muxpd_prefill_progress_source": "none",
+        "muxpd_prefill_slice_timing": None,
+    }
+    assert synchronous.muxpd_completed_prefill_ids == frozenset({"p"})
+
+
 def test_async_decode_keeps_caller_dependency_for_future_kv_zeroing(async_worker):
     worker, events = async_worker
     if worker._stream_mode != "overlap":
