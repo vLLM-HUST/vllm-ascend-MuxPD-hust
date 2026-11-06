@@ -13,9 +13,11 @@ from contextlib import contextmanager
 from types import SimpleNamespace
 
 import pytest
-import torch
 
-from vllm_muxpd import decode_attention as da
+torch = pytest.importorskip("torch")
+
+
+from vllm_muxpd import decode_attention as da  # noqa: E402
 
 NH, HS, MASK = 2, 4, "causal-mask"
 
