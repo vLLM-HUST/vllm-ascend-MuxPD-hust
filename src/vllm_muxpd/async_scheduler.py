@@ -236,28 +236,21 @@ class AsyncDecoupledMuxPDScheduler(DecoupledMuxPDScheduler):
         if request.is_finished():
             # Preserve the parent's host lifecycle cleanup while retaining the
             # physical blocks until the last queued D output acknowledges them.
-            self._arrival_monotonic.pop(rid, None)
-            self._prefill_first_decode_debt.discard(rid)
-            self._decode_completed_at.pop(rid, None)
+            self._forget_finished_request(rid)
         if rid not in self._async_held_decode_blocks:
-            self._async_held_decode_blocks[rid] = (
-                self.kv_cache_manager.pop_blocks_for_free(request)
+            self._detach_blocks(
+                request,
+                self._async_held_decode_blocks,
+                self._async_held_decode_sessions,
             )
-            self._async_held_decode_sessions[rid] = getattr(request, "session_id", None)
         return self._native_contract.held_result(self._async_held_decode_blocks[rid])
 
     def _release_decode_blocks(self):
         live = self._queued_decode_ids()
         for rid in tuple(self._async_held_decode_blocks):
-            if rid in live:
-                continue
-            blocks = self._async_held_decode_blocks[rid]
-            try:
-                if blocks:
-                    self.kv_cache_manager.block_pool.free_blocks(reversed(blocks))
-            except BaseException as error:
-                self._kv_reclaim_error = error
-                raise
-            del self._async_held_decode_blocks[rid]
-            session = self._async_held_decode_sessions.pop(rid)
-            self._native_contract.emit_reclaimed(rid, session, len(blocks))
+            if rid not in live:
+                self._reclaim_held_blocks(
+                    rid,
+                    self._async_held_decode_blocks,
+                    self._async_held_decode_sessions,
+                )

@@ -174,22 +174,61 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
             return set()
         return self._prefill_cohort.pending_ids - self.requests.keys()
 
+    def _forget_finished_request(self, request_id: str) -> None:
+        """Drop host-side scheduling state of a finished request."""
+        self._arrival_monotonic.pop(request_id, None)
+        self._prefill_first_decode_debt.discard(request_id)
+        self._decode_completed_at.pop(request_id, None)
+
+    def _detach_blocks(
+        self,
+        request: Request,
+        held_blocks: dict[str, list[Any]],
+        held_sessions: dict[str, str | None],
+    ) -> None:
+        """Remove native block ownership but keep the refcounts in ``held_blocks``.
+
+        The blocks return to the pool only through ``_reclaim_held_blocks``,
+        after the worker can no longer access them.
+        """
+        held_blocks[request.request_id] = self.kv_cache_manager.pop_blocks_for_free(
+            request
+        )
+        held_sessions[request.request_id] = getattr(request, "session_id", None)
+
+    def _reclaim_held_blocks(
+        self,
+        request_id: str,
+        held_blocks: dict[str, list[Any]],
+        held_sessions: dict[str, str | None],
+    ) -> None:
+        blocks = held_blocks[request_id]
+        if blocks:
+            try:
+                self.kv_cache_manager.block_pool.free_blocks(reversed(blocks))
+            except BaseException as error:
+                # BlockPool.free_blocks is not transactional; see the fail-closed
+                # latch check in update_from_output.
+                self._kv_reclaim_error = error
+                raise
+        # Never emit reclamation while a worker still owns the blocks.
+        # Remove ownership after successful native free, before the
+        # observational event (native EventBus isolates sink errors).
+        del held_blocks[request_id]
+        session_id = held_sessions.pop(request_id)
+        self._native_contract.emit_reclaimed(request_id, session_id, len(blocks))
+
     def _free_request_blocks(self, request: Request) -> tuple[int, bool] | None:
         if request.is_finished():
-            self._arrival_monotonic.pop(request.request_id, None)
-            self._prefill_first_decode_debt.discard(request.request_id)
-            self._decode_completed_at.pop(request.request_id, None)
+            self._forget_finished_request(request.request_id)
         cohort = self._prefill_cohort
         if cohort is not None and request.request_id in cohort.pending_ids:
             # Remove native ownership immediately, but retain the block refcounts
             # until the worker confirms the suspended forward no longer uses them.
             if request.request_id in self._held_prefill_blocks:
                 raise RuntimeError("Prefill blocks were detached more than once")
-            self._held_prefill_blocks[request.request_id] = (
-                self.kv_cache_manager.pop_blocks_for_free(request)
-            )
-            self._held_prefill_sessions[request.request_id] = getattr(
-                request, "session_id", None
+            self._detach_blocks(
+                request, self._held_prefill_blocks, self._held_prefill_sessions
             )
             return self._native_contract.held_result(
                 self._held_prefill_blocks[request.request_id]
@@ -1053,19 +1092,9 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         # longer access this member's buffers, including late-aborted completions.
         for rid in completed | cancelled:
             if rid in self._held_prefill_blocks:
-                blocks = self._held_prefill_blocks[rid]
-                if blocks:
-                    try:
-                        self.kv_cache_manager.block_pool.free_blocks(reversed(blocks))
-                    except BaseException as error:
-                        self._kv_reclaim_error = error
-                        raise
-                # Never emit reclamation while a worker still owns the blocks.
-                # Remove ownership after successful native free, before the
-                # observational event (native EventBus isolates sink errors).
-                del self._held_prefill_blocks[rid]
-                session_id = self._held_prefill_sessions.pop(rid)
-                self._native_contract.emit_reclaimed(rid, session_id, len(blocks))
+                self._reclaim_held_blocks(
+                    rid, self._held_prefill_blocks, self._held_prefill_sessions
+                )
         if cohort is not None:
             cohort.completed_layers = progress
             cohort.pending_ids.difference_update(completed | cancelled)
