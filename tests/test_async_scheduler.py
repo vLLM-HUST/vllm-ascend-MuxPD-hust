@@ -334,6 +334,47 @@ def test_skipped_waiting_also_drains_before_new_transaction(make_async_scheduler
     assert pending.num_computed_tokens == 64
 
 
+def test_waiting_without_free_slot_keeps_decode_pipelined(make_async_scheduler):
+    scheduler = make_async_scheduler(trace=False)
+    driver = QueueDriver(scheduler)
+    driver.start_decode()
+    driver.schedule()
+    scheduler.max_num_running_reqs = len(scheduler.running)
+    pending = base.request("p", tokens=64)
+    scheduler.add_request(pending)
+    second = driver.schedule()
+    assert second is not None and second.num_scheduled_tokens == {"d": 1}
+    assert pending.num_computed_tokens == 0
+    assert driver.schedule() is None
+    driver.retire()
+    driver.retire()
+    scheduler.max_num_running_reqs = 8
+    output = driver.schedule()
+    assert output.muxpd_prefill_request_ids == {"p"}
+
+
+def test_full_slots_under_kv_pressure_drain_instead_of_preempting_all(
+    make_async_scheduler,
+):
+    # Queued D outputs hold the blocks of any preempted decode, so a native
+    # preemption pass with a batch in flight cannot free capacity.
+    scheduler = make_async_scheduler(trace=False, num_blocks=5, max_num_seqs=2)
+    driver = QueueDriver(scheduler)
+    for rid in ("a", "b"):
+        scheduler.add_request(base.request(rid, tokens=31, max_tokens=64))
+    output = driver.schedule()
+    driver.retire(completed=set(output.muxpd_prefill_request_ids))
+    assert scheduler.kv_cache_manager.block_pool.get_num_free_blocks() == 0
+    scheduler.add_request(base.request("w", tokens=8))
+    first = driver.schedule()
+    assert first.num_scheduled_tokens == {"a": 1, "b": 1}
+    assert driver.schedule() is None
+    driver.retire()
+    resumed = driver.schedule()
+    assert resumed is not None and resumed.total_num_scheduled_tokens
+    assert scheduler.running
+
+
 def test_keep_pause_rejects_queued_decode_before_mutating_state(make_async_scheduler):
     scheduler = make_async_scheduler(trace=False)
     driver = QueueDriver(scheduler)
@@ -427,3 +468,35 @@ def test_native_engine_queue_retires_zero_token_control_without_sample_rpc(
     if not cancel_prefill:
         assert scheduler.requests["p"].num_output_tokens == 1
         assert scheduler.requests["p"].num_output_placeholders == 0
+
+
+def test_unsupported_request_is_flushed_through_the_async_queue(
+    make_async_scheduler,
+):
+    from vllm.v1.engine import FinishReason
+
+    scheduler = make_async_scheduler(trace=False)
+    driver = QueueDriver(scheduler)
+    bad = base.request("bad", tokens=16)
+    bad.sampling_params.logprobs = 1
+    scheduler.add_request(bad)
+    output = driver.schedule()
+    assert output is not None and not output.total_num_scheduled_tokens
+    result = driver.retire()
+    rows = [r for p in result.values() for r in p.outputs]
+    assert [(r.request_id, r.finish_reason) for r in rows] == [
+        ("bad", FinishReason.ERROR)
+    ]
+    assert not scheduler.has_requests()
+
+
+def test_rejected_request_reported_finished_to_dp_clients(make_async_scheduler):
+    scheduler = make_async_scheduler(trace=False)
+    scheduler.finished_req_ids_dict = {}
+    driver = QueueDriver(scheduler)
+    bad = base.request("bad", tokens=16)
+    bad.sampling_params.logprobs = 1
+    scheduler.add_request(bad)
+    driver.schedule()
+    result = driver.retire()
+    assert result[bad.client_index].finished_requests == {"bad"}

@@ -1136,8 +1136,7 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
                     else {}
                 ),
             )
-        self._record_effective_outputs(result)
-        return result
+        return self._finish_outputs(result)
 
     def _validate_slice_timing(self, step, model_output, source):
         """Validate optional lane timing before estimator or lifecycle mutation."""

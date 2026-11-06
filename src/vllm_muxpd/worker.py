@@ -253,7 +253,11 @@ def _merge_outputs(
 def _validate_worker_config(config: Any) -> None:
     validate_engine_config(config)
     policy = config.scheduler_config.batch_admission_policy_config or {}
-    if "compile_prefill_groups" in policy or "require_hccl_deterministic" in policy:
+    if (
+        "compile_prefill_groups" in policy
+        or "require_hccl_deterministic" in policy
+        or "decode_attention_layout" in policy
+    ):
         MuxPDConfig.from_mapping(policy)
     decode_graph = policy.get("decode_graph", False)
     errors = []
@@ -301,6 +305,14 @@ class MuxPDNPUWorker(NPUWorker):
             raise RuntimeError("MuxPD requires matching native core/Ascend contracts")
         _validate_worker_config(vllm_config)
         raw = vllm_config.scheduler_config.batch_admission_policy_config or {}
+        self._decode_attention_layout = raw.get("decode_attention_layout", "tnd")
+        if self._decode_attention_layout != "tnd":
+            from vllm_muxpd.decode_attention import install as install_decode_layout
+
+            install_decode_layout(self._decode_attention_layout)
+            logger.info(
+                "MuxPD decode attention layout: %s", self._decode_attention_layout
+            )
         self._decode_graph_enabled = raw.get("decode_graph", False)
         self._decode_graph_controller: DecodeGraphController | None = None
         self._prefill_groups_enabled = raw.get("compile_prefill_groups", False)

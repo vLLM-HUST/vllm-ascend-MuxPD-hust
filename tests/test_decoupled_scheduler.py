@@ -2030,3 +2030,40 @@ def test_decode_guard_residual_max_and_shape_matching(make_scheduler, clock):
         _, guard = scheduler._decode_budget_quota((64,), 3, 3, clock.now, clock.now)
         assert guard["decode_estimate_source"] == "solo_decode_round_trip"
         assert guard["residual_decode_samples"] == 0
+
+
+@pytest.mark.parametrize("field", ["logprobs", "prompt_logprobs"])
+def test_unsupported_sampling_fails_only_that_request(make_scheduler, field):
+    from vllm.v1.engine import FinishReason
+
+    scheduler = make_scheduler()
+    decode = start_decode(scheduler)
+    bad = request("bad", 16)
+    setattr(bad.sampling_params, field, 5)
+    scheduler.add_request(bad)
+    assert "bad" not in scheduler.requests and scheduler.has_requests()
+    output = scheduler.schedule()
+    assert set(output.num_scheduled_tokens) == {"d"}
+    result = retire(scheduler, output)
+    rows = {r.request_id: r for p in result.values() for r in p.outputs}
+    assert rows["bad"].finish_reason == FinishReason.ERROR
+    assert rows["bad"].new_token_ids == [] and rows["d"].new_token_ids
+    assert not scheduler._muxpd_rejected and decode.num_output_tokens == 2
+
+
+def test_unsupported_request_on_idle_engine_is_flushed(make_scheduler):
+    from vllm.v1.engine import FinishReason
+
+    scheduler = make_scheduler()
+    bad = request("bad", 16)
+    bad.sampling_params.logprobs = 1
+    scheduler.add_request(bad)
+    assert scheduler.has_requests()
+    output = scheduler.schedule()
+    assert not output.total_num_scheduled_tokens
+    result = retire(scheduler, output)
+    rows = [r for p in result.values() for r in p.outputs]
+    assert [(r.request_id, r.finish_reason) for r in rows] == [
+        ("bad", FinishReason.ERROR)
+    ]
+    assert not scheduler.has_requests()
