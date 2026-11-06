@@ -2127,3 +2127,29 @@ def test_unsupported_request_on_idle_engine_is_flushed(make_scheduler):
         ("bad", FinishReason.ERROR)
     ]
     assert not scheduler.has_requests()
+
+
+def test_prompt_token_score_request_fails_only_that_request(make_scheduler):
+    # Forward-compatible guard: the pinned SamplingParams has no such field,
+    # so set it on the instance as a newer vLLM would.
+    from vllm.v1.engine import FinishReason
+
+    scheduler = make_scheduler()
+    decode = start_decode(scheduler)
+    bad = request("bad", 16)
+    native = bad.sampling_params
+
+    class NewerParams:
+        prompt_logprob_token_ids = [1]
+
+        def __getattr__(self, name):
+            return getattr(native, name)
+
+    bad.sampling_params = NewerParams()
+    scheduler.add_request(bad)
+    output = scheduler.schedule()
+    assert set(output.num_scheduled_tokens) == {"d"}
+    result = retire(scheduler, output)
+    rows = {r.request_id: r for p in result.values() for r in p.outputs}
+    assert rows["bad"].finish_reason == FinishReason.ERROR
+    assert decode.num_output_tokens == 2
