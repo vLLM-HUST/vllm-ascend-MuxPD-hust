@@ -55,27 +55,17 @@ class AsyncDecoupledMuxPDScheduler(DecoupledMuxPDScheduler):
             raise ValueError("Request ID still has an in-flight decode output")
         super().add_request(request)
 
-    def _muxpd_snapshots(self):
-        snapshots = self._make_batch_request_snapshots()
-        eligible = []
-        for snapshot in snapshots:
-            request = self.requests[snapshot.request_id]
-            if self._is_blocked_waiting_status(request.status):
-                if not getattr(self, self._native_contract.blocked_method)(request):
-                    continue
-            if request.spec_token_ids:
-                raise RuntimeError("Async MuxPD does not support speculative tokens")
-            # EngineCore in_flight_tokens counts scheduled prompt tokens too.
-            # Only actual D output placeholders extend the generated context.
-            eligible.append(
-                replace(
-                    snapshot,
-                    num_output_tokens=(
-                        snapshot.num_output_tokens + request.num_output_placeholders
-                    ),
-                )
-            )
-        return tuple(eligible)
+    def _muxpd_snapshot(self, snapshot, request):
+        if request.spec_token_ids:
+            raise RuntimeError("Async MuxPD does not support speculative tokens")
+        # EngineCore in_flight_tokens counts scheduled prompt tokens too.
+        # Only actual D output placeholders extend the generated context.
+        return replace(
+            snapshot,
+            num_output_tokens=(
+                snapshot.num_output_tokens + request.num_output_placeholders
+            ),
+        )
 
     def _admissible_waiting(self) -> bool:
         """Whether a drain could let a waiting prompt start its prefill.

@@ -152,12 +152,16 @@ class MuxPDScheduler(Scheduler):
             if self._is_blocked_waiting_status(request.status):
                 if not getattr(self, self._native_contract.blocked_method)(request):
                     continue
-            if request.spec_token_ids or request.num_output_placeholders:
-                raise RuntimeError(
-                    "MuxPD encountered unsupported in-flight or speculative tokens"
-                )
-            eligible.append(snapshot)
+            eligible.append(self._muxpd_snapshot(snapshot, request))
         return tuple(eligible)
+
+    def _muxpd_snapshot(self, snapshot: BatchRequest, request: Request) -> BatchRequest:
+        """Validate one schedulable request and return the snapshot the policy sees."""
+        if request.spec_token_ids or request.num_output_placeholders:
+            raise RuntimeError(
+                "MuxPD encountered unsupported in-flight or speculative tokens"
+            )
+        return snapshot
 
     def _muxpd_native_schedule(
         self,
