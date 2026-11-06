@@ -19,7 +19,11 @@ from vllm.v1.core.sched.output import CachedRequestData, SchedulerOutput
 from vllm.v1.core.sched.scheduler import Scheduler
 from vllm.v1.request import Request
 
-from .config import PREFILL_GROUP_LAYERS, PREFILL_GROUP_MODEL_LAYERS
+from .config import (
+    ASYNC_WORKER_CLS,
+    PREFILL_GROUP_LAYERS,
+    PREFILL_GROUP_MODEL_LAYERS,
+)
 from .multiplex_scheduler import LayeredMuxPDScheduler
 from .native_compat import validate_lane_result, validate_lane_schedule
 from .policy import Decision, remaining_tokens, request_phase
@@ -126,7 +130,7 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
             "vllm_muxpd.atomic_worker.AtomicDecoupledMuxPDNPUWorker",
         )
         if self.muxpd_policy.config.async_decode_pipeline:
-            expected_workers = ("vllm_muxpd.async_worker.AsyncDecoupledMuxPDNPUWorker",)
+            expected_workers = (ASYNC_WORKER_CLS,)
         if vllm_config.parallel_config.worker_cls not in expected_workers:
             raise ValueError(
                 "DecoupledMuxPDScheduler requires a paired decoupled worker"

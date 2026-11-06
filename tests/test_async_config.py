@@ -82,3 +82,14 @@ def test_async_accepts_token_work_layer_quota():
         prefill_layer_token_budget=65536,
     )
     assert result.prefill_layer_token_budget == 65536
+
+
+def test_async_pair_accepts_scheduler_class_object():
+    # SchedulerConfig.scheduler_cls may hold the class itself; MuxPDPolicy
+    # already accepts that form, so engine validation must agree.
+    pytest.importorskip("vllm")
+    from vllm_muxpd.async_scheduler import AsyncDecoupledMuxPDScheduler
+
+    result = config()
+    result.scheduler_config.scheduler_cls = AsyncDecoupledMuxPDScheduler
+    validate_engine_config(result)

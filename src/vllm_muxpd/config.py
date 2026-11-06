@@ -11,6 +11,16 @@ from typing import Any, Mapping
 PREFILL_GROUP_LAYERS = 4
 PREFILL_GROUP_MODEL_LAYERS = 40
 
+ASYNC_SCHEDULER_CLS = "vllm_muxpd.async_scheduler.AsyncDecoupledMuxPDScheduler"
+ASYNC_WORKER_CLS = "vllm_muxpd.async_worker.AsyncDecoupledMuxPDNPUWorker"
+
+
+def qualified_name(obj: Any) -> Any:
+    """Dotted path for a class given as an object; strings and None pass through."""
+    if obj is None or isinstance(obj, str):
+        return obj
+    return f"{obj.__module__}.{obj.__qualname__}"
+
 
 @dataclass(frozen=True)
 class MuxPDConfig:
@@ -244,10 +254,9 @@ def validate_engine_config(config: Any) -> None:
         MuxPDConfig.from_mapping(raw)
         if scheduler.async_scheduling is not True:
             errors.append("async_decode_pipeline requires async_scheduling=true")
-        if scheduler.scheduler_cls != (
-            "vllm_muxpd.async_scheduler.AsyncDecoupledMuxPDScheduler"
-        ) or parallel.worker_cls != (
-            "vllm_muxpd.async_worker.AsyncDecoupledMuxPDNPUWorker"
+        if (
+            qualified_name(scheduler.scheduler_cls) != ASYNC_SCHEDULER_CLS
+            or parallel.worker_cls != ASYNC_WORKER_CLS
         ):
             errors.append(
                 "async_decode_pipeline requires its exact scheduler/worker pair"
@@ -296,12 +305,7 @@ def validate_engine_config(config: Any) -> None:
         errors.append(f"max_concurrent_batches must be {concurrency}")
     policy = getattr(scheduler, "batch_admission_policy", None)
     if policy is not None:
-        name = (
-            policy
-            if isinstance(policy, str)
-            else f"{policy.__module__}.{policy.__qualname__}"
-        )
-        if name != "vllm_muxpd.policy.MuxPDPolicy":
+        if qualified_name(policy) != "vllm_muxpd.policy.MuxPDPolicy":
             errors.append(
                 "batch_admission_policy must be vllm_muxpd.policy.MuxPDPolicy"
             )

@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal, Mapping, Sequence
 
-from .config import MuxPDConfig
+from .config import ASYNC_SCHEDULER_CLS, MuxPDConfig, qualified_name
 
 if TYPE_CHECKING:
     from vllm.v1.core.sched.batch_admission import BatchRequest
@@ -68,17 +68,12 @@ class MuxPDPolicy:
     @classmethod
     def from_config(cls, config: Mapping[str, Any], vllm_config: Any) -> "MuxPDPolicy":
         scheduler = vllm_config.scheduler_config
-        implementation = getattr(scheduler, "scheduler_cls", None)
-        name = (
-            implementation
-            if isinstance(implementation, str) or implementation is None
-            else f"{implementation.__module__}.{implementation.__qualname__}"
-        )
+        name = qualified_name(getattr(scheduler, "scheduler_cls", None))
         if name not in (
             "vllm_muxpd.scheduler.MuxPDScheduler",
             "vllm_muxpd.multiplex_scheduler.LayeredMuxPDScheduler",
             "vllm_muxpd.decoupled_scheduler.DecoupledMuxPDScheduler",
-            "vllm_muxpd.async_scheduler.AsyncDecoupledMuxPDScheduler",
+            ASYNC_SCHEDULER_CLS,
         ):
             raise ValueError(
                 "MuxPDPolicy requires a paired MuxPD scheduler_cls; "
