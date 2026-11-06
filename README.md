@@ -210,8 +210,10 @@ ASCEND_RT_VISIBLE_DEVICES=2,3 VLLM_USE_V2_MODEL_RUNNER=0 scripts/serve-qwen35.sh
 ```bash
 source /root/workspace/runtime/env.sh
 # 与 CI 相同：custody 测试需要先下载外部 collection，见 EVIDENCE.md。
-/root/workspace/.venv/bin/python scripts/fetch_mod_consumer_evidence.py   --config BENCHMARK_COLLECTION.json --destination /absolute/new/external/collection
-BENCHMARK_COLLECTION_ROOT=/absolute/new/external/collection   /root/workspace/.venv/bin/python -m pytest tests -q
+/root/workspace/.venv/bin/python scripts/fetch_mod_consumer_evidence.py \
+  --config BENCHMARK_COLLECTION.json --destination /absolute/new/external/collection
+BENCHMARK_COLLECTION_ROOT=/absolute/new/external/collection \
+  /root/workspace/.venv/bin/python -m pytest tests -q
 /root/workspace/.venv/bin/python -m ruff check .
 
 /root/workspace/.venv/bin/python scripts/smoke_serving.py \
