@@ -408,3 +408,50 @@ def test_direct_close_unwinds_every_lane_then_raises_the_first_failure():
     assert unwound == ["a", "b", "c"]
     assert all(task.done for task in interleaver.tasks.values())
     assert backend.state == "caller"
+
+
+def test_failed_caller_restore_keeps_the_unwind_error_as_its_cause():
+    class FailingRestore(FakeBackend):
+        def restore(self, state):
+            if state == "caller" and interleaver.tasks["p"].done:
+                raise RuntimeError("restore failed")
+            super().restore(state)
+
+    backend = FailingRestore()
+    interleaver = LayerInterleaver(backend)
+
+    def broken():
+        try:
+            interleaver.checkpoint()
+            interleaver.checkpoint()
+        finally:
+            raise ValueError("unwind failed")
+
+    interleaver.add("p", broken, "p")
+    interleaver.step("p")
+    with pytest.raises(RuntimeError, match="restore failed") as raised:
+        interleaver.close()
+    assert isinstance(raised.value.__cause__, ValueError)
+    assert interleaver.active is None
+
+
+def test_cleanup_failure_after_a_failed_forward_is_logged(caplog):
+    backend = FakeBackend()
+    interleaver = LayerInterleaver(backend)
+
+    def broken():
+        try:
+            interleaver.checkpoint()
+            interleaver.checkpoint()
+        finally:
+            raise RuntimeError("cleanup failed")
+
+    def failing():
+        raise ValueError("primary")
+
+    interleaver.add("p", broken, "p")
+    interleaver.add("d", failing, "d")
+    with caplog.at_level("WARNING", logger="vllm_muxpd.lanes"):
+        with pytest.raises(ValueError, match="primary"):
+            interleaver.run(("p", "d"))
+    assert any("lane unwind also failed" in r.message for r in caplog.records)
