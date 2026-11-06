@@ -15,6 +15,13 @@ from functools import wraps
 from threading import get_ident
 from typing import Any, Protocol
 
+from vllm_muxpd._instance_patch import (
+    InstalledPatch,
+    note_rollback_failure,
+    replace_method,
+    restore_methods,
+)
+
 
 class StreamRuntime(Protocol):
     def current_stream(self) -> Any: ...
@@ -47,9 +54,6 @@ class TorchNPURuntime:
         stream.wait_event(event)
 
 
-_MISSING = object()
-
-
 class CollectiveGates:
     """Serialize only collectives sharing a device process group.
 
@@ -66,7 +70,7 @@ class CollectiveGates:
     def __init__(self, runtime: StreamRuntime) -> None:
         self.runtime = runtime
         self._thread = get_ident()
-        self._installed: list[tuple[Any, str, Any, Any]] = []
+        self._installed: list[InstalledPatch] = []
         self._tails: dict[int, tuple[Any, Any]] = {}
         self._failed = False
         self.calls = 0
@@ -120,38 +124,24 @@ class CollectiveGates:
                         raise RuntimeError(
                             "A MuxPD collective gate is already installed"
                         )
-                    previous = vars(communicator).get(name, _MISSING)
-                    wrapper = self._wrap(original, id(group))
-                    setattr(communicator, name, wrapper)
-                    self._installed.append((communicator, name, previous, wrapper))
+                    replace_method(
+                        self._installed,
+                        communicator,
+                        name,
+                        self._wrap(original, id(group)),
+                    )
         except BaseException as primary:
             try:
                 self.restore()
             except BaseException as cleanup:
-                if hasattr(primary, "add_note"):
-                    primary.add_note(f"MuxPD gate rollback also failed: {cleanup!r}")
+                note_rollback_failure(primary, cleanup, "gate")
             raise
         return self
 
     def restore(self) -> None:
         """Remove our wrappers; never overwrite another actor's replacement."""
         self._check_thread()
-        errors = []
-        for index in reversed(range(len(self._installed))):
-            communicator, name, previous, wrapper = self._installed[index]
-            try:
-                if getattr(communicator, name, None) is not wrapper:
-                    raise RuntimeError(f"MuxPD gate methods changed externally: {name}")
-                if previous is _MISSING:
-                    delattr(communicator, name)
-                else:
-                    setattr(communicator, name, previous)
-            except BaseException as error:
-                errors.append(error)
-            else:
-                self._installed.pop(index)
-        if errors:
-            raise errors[0]
+        restore_methods(self._installed, "gate")
         self._tails.clear()
 
 

@@ -12,7 +12,12 @@ from functools import wraps
 from threading import get_ident
 from typing import Any
 
-_MISSING = object()
+from vllm_muxpd._instance_patch import (
+    InstalledPatch,
+    note_rollback_failure,
+    replace_method,
+    restore_methods,
+)
 
 
 class LaneCollectiveRouter:
@@ -33,7 +38,7 @@ class LaneCollectiveRouter:
     def __init__(self, backend: Any) -> None:
         self._backend = backend
         self._thread = get_ident()
-        self._installed: list[tuple[Any, str, Any, Any]] = []
+        self._installed: list[InstalledPatch] = []
         self._failed = False
         self.calls = {"caller": 0, "decode": 0, "prefill": 0}
 
@@ -130,37 +135,18 @@ class LaneCollectiveRouter:
                         raise RuntimeError(
                             "MuxPD isolated routing requires unwrapped communicators"
                         )
-                    previous = vars(native).get(name, _MISSING)
-                    wrapper = self._wrap(original, target)
-                    setattr(native, name, wrapper)
-                    self._installed.append((native, name, previous, wrapper))
+                    replace_method(
+                        self._installed, native, name, self._wrap(original, target)
+                    )
         except BaseException as primary:
             try:
                 self.restore()
             except BaseException as cleanup:
-                if hasattr(primary, "add_note"):
-                    primary.add_note(f"MuxPD router rollback also failed: {cleanup!r}")
+                note_rollback_failure(primary, cleanup, "router")
             raise
         return self
 
     def restore(self) -> None:
         """Restore only our wrappers; leave external replacements intact."""
         self._check_thread()
-        errors = []
-        for index in reversed(range(len(self._installed))):
-            native, name, previous, wrapper = self._installed[index]
-            try:
-                if getattr(native, name, None) is not wrapper:
-                    raise RuntimeError(
-                        f"MuxPD router methods changed externally: {name}"
-                    )
-                if previous is _MISSING:
-                    delattr(native, name)
-                else:
-                    setattr(native, name, previous)
-            except BaseException as error:
-                errors.append(error)
-            else:
-                self._installed.pop(index)
-        if errors:
-            raise errors[0]
+        restore_methods(self._installed, "router")
