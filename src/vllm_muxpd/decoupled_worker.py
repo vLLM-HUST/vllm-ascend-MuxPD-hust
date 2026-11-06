@@ -12,7 +12,7 @@ from vllm.v1.core.sched.output import SchedulerOutput
 from vllm.v1.outputs import ModelRunnerOutput
 
 from vllm_muxpd.config import PREFILL_GROUP_LAYERS
-from vllm_muxpd.lanes import LayerInterleaver
+from vllm_muxpd.lanes import LayerInterleaver, close_preserving
 from vllm_muxpd.slice_timing import PrefillSliceTimer
 from vllm_muxpd.worker import (
     MuxPDNPUWorker,
@@ -156,11 +156,11 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
                     sys.maxsize if layer_budget is None else layer_budget,
                     observer=observer,
                 )
-            except BaseException:
+            except BaseException as primary:
                 # A failed full forward unwinds its stack (as run() does).
                 # Partial steps keep their fail-closed engine-error semantics.
                 if layer_budget is None:
-                    interleaver.close()
+                    close_preserving(interleaver, primary)
                 raise
         finally:
             self._interleaver = None

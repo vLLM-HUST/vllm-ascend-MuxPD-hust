@@ -346,3 +346,65 @@ def test_preemption_invalidates_idle_lane_rows_without_deleting_request_state(
         assert lane._hybrid_accepted_by_req == {"running": 1}
         assert lane.requests is registry
     assert set(registry) == {"resume", "running"}
+
+
+def test_failed_unwind_still_closes_other_lanes_and_keeps_the_original_error():
+    backend = FakeBackend()
+    interleaver = LayerInterleaver(backend)
+    unwound = []
+
+    def broken_cleanup():
+        try:
+            interleaver.checkpoint()
+            interleaver.checkpoint()
+        finally:
+            unwound.append("p")
+            raise RuntimeError("cleanup failed")
+
+    def suspended():
+        try:
+            interleaver.checkpoint()
+            interleaver.checkpoint()
+        finally:
+            unwound.append("q")
+
+    def failing():
+        raise ValueError("primary")
+
+    interleaver.add("p", broken_cleanup, "p")
+    interleaver.add("q", suspended, "q")
+    interleaver.add("d", failing, "d")
+    with pytest.raises(ValueError, match="primary") as raised:
+        interleaver.run(("p", "q", "d"))
+    assert unwound == ["p", "q"]
+    assert all(task.done for task in interleaver.tasks.values())
+    if hasattr(raised.value, "add_note"):
+        assert any("cleanup failed" in note for note in raised.value.__notes__)
+    assert backend.state == "caller" and interleaver.active is None
+
+
+def test_direct_close_unwinds_every_lane_then_raises_the_first_failure():
+    backend = FakeBackend()
+    interleaver = LayerInterleaver(backend)
+    unwound = []
+
+    def lane(name, fail):
+        def forward():
+            try:
+                interleaver.checkpoint()
+                interleaver.checkpoint()
+            finally:
+                unwound.append(name)
+                if fail:
+                    raise RuntimeError(f"{name} cleanup failed")
+
+        return forward
+
+    for name, fail in (("a", True), ("b", True), ("c", False)):
+        interleaver.add(name, lane(name, fail), name)
+        interleaver.step(name)
+    with pytest.raises(RuntimeError, match="a cleanup failed"):
+        interleaver.close()
+    assert unwound == ["a", "b", "c"]
+    assert all(task.done for task in interleaver.tasks.values())
+    assert backend.state == "caller"
