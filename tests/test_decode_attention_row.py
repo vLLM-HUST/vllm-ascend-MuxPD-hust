@@ -1,4 +1,4 @@
-"""CPU tests of the opt-in 'row' decode attention layout with stub NPU modules.
+"""CPU tests of the opt-in 'row' and 'bsh' decode attention layouts (stub NPU).
 
 They check the arguments of every kernel call (one native TND M=1 call per real
 row, native causal mask/sparse/window arguments), padding handling, graph
@@ -49,8 +49,7 @@ class _Event:
         self.records += 1
 
 
-@pytest.fixture
-def env(monkeypatch):
+def _install(monkeypatch, layout):
     log, groups, updates = [], [], []
     kernel = _Kernel(log)
     torch_npu = types.ModuleType("torch_npu")
@@ -127,7 +126,7 @@ def env(monkeypatch):
             monkeypatch.setattr(parent, attr, mod, raising=False)
     monkeypatch.setattr(da, "_INSTALLED", {})
     monkeypatch.setattr(da, "STATS", dict.fromkeys(da.STATS, 0))
-    assert da.install("row") is True
+    assert da.install(layout) is True
 
     impl = Impl()
     impl.sinks = impl.sliding_window = None
@@ -139,6 +138,16 @@ def env(monkeypatch):
     return SimpleNamespace(
         impl=impl, log=log, graph=graph, extra=extra, native=native, updates=updates
     )
+
+
+@pytest.fixture
+def env(monkeypatch):
+    return _install(monkeypatch, "row")
+
+
+@pytest.fixture
+def bsh_env(monkeypatch):
+    return _install(monkeypatch, "bsh")
 
 
 def _md(qcum, seq_lens, rows=4, state="decode"):
@@ -299,3 +308,132 @@ def test_second_install_with_other_layout_is_rejected(env):
     assert da.install("row") is True
     with pytest.raises(RuntimeError, match="installed differently"):
         da.install("bsh")
+
+
+def _assert_bsh_args(kw, kv_lens):
+    total = len(kv_lens)
+    assert kw["input_layout"] == "BSH"
+    assert kw["sparse_mode"] == 0
+    assert kw["actual_seq_lengths_kv"] == kv_lens
+    assert kw["query"].shape == (total, 1, NH * HS)
+    assert kw["block_table"].shape[0] == total
+    assert kw["num_heads"] == NH and kw["num_key_value_heads"] == 1
+    assert kw["scale"] == 0.5 and kw["block_size"] == 128
+    assert "atten_mask" not in kw and "actual_seq_lengths" not in kw
+
+
+def test_bsh_eager_is_one_call_with_padded_rows_bound_to_block_zero(bsh_env):
+    md = _md([1, 2, 3, 6], [17, 9, 30])  # 3 real rows + TND padding request
+    out = torch.full((6, NH, HS), 7.0)
+    bsh_env.impl.forward_fused_infer_attention(
+        torch.randn(6, NH, HS), "k", "v", md, out
+    )
+    assert [c for c, _ in bsh_env.log] == ["eager"]
+    kw = bsh_env.log[0][1]
+    _assert_bsh_args(kw, [17, 9, 30, 1, 1, 1])
+    assert torch.equal(kw["block_table"][:3], md.block_tables[:3])
+    assert torch.all(kw["block_table"][3:] == 0)
+    assert torch.all(out == 1.0)
+    assert bsh_env.native == [] and da.STATS["eager_calls"] == 1
+
+
+def test_bsh_eager_short_block_table_is_zero_padded(bsh_env):
+    md = _md([1, 2, 5], [4, 6], rows=2)
+    out = torch.zeros(5, NH, HS)
+    bsh_env.impl.forward_fused_infer_attention(
+        torch.randn(5, NH, HS), "k", "v", md, out
+    )
+    kw = bsh_env.log[0][1]
+    _assert_bsh_args(kw, [4, 6, 1, 1, 1])
+    assert torch.equal(kw["block_table"][:2], md.block_tables)
+    assert torch.all(kw["block_table"][2:] == 0)
+
+
+def test_bsh_non_decode_and_capture_eager_calls_pass_through(bsh_env):
+    out = torch.zeros(5, NH, HS)
+    bsh_env.impl.forward_fused_infer_attention(
+        torch.randn(5, NH, HS), "k", "v", _md([5], [5], state="chunked"), out
+    )
+    bsh_env.extra.capturing = True
+    bsh_env.impl.forward_fused_infer_attention(
+        torch.randn(2, NH, HS), "k", "v", _md([1, 2], [3, 4]), out
+    )
+    assert bsh_env.native == ["fia", "fia"] and bsh_env.log == []
+
+
+def test_bsh_capture_then_replay_rebinds_metadata(bsh_env):
+    out = torch.zeros(4, NH, HS)
+    _, total = bsh_env.impl.full_graph_fia(
+        torch.randn(4, NH, HS), "k", "v", _md([1, 2, 4], [11, 12]), out
+    )
+    assert total == 4
+    (param,) = bsh_env.graph.attn_params[4]
+    assert isinstance(param, da.BSHGraphParam) and param.batch == 4
+    assert param.layer_name == "layers.3.attn"
+    (captured,) = [kw for c, kw in bsh_env.log if c == "out"]
+    _assert_bsh_args(captured, [11, 12, 1, 1])
+    assert captured["workspace"] == ("workspace", [64] * 4)
+    assert len(bsh_env.graph.handles[4]) == len(bsh_env.graph.events[4]) == 1
+
+    bsh_env.log.clear()
+    md = _md([1, 2, 3, 4], [5, 6, 7, 2])
+    type(bsh_env.impl).update_graph_params(
+        "upd", SimpleNamespace(attn_metadata={"layers.3.attn": md}), 4, None
+    )
+    (updated,) = [kw for c, kw in bsh_env.log if c == "out"]
+    _assert_bsh_args(updated, [5, 6, 7, 2])
+    assert torch.equal(updated["block_table"], md.block_tables[:4])
+    assert updated["workspace"] is param.workspace
+    assert updated["out"] == [param.output, param.softmax_lse]
+    assert bsh_env.graph.events[4][0].records == 1
+    assert da.STATS["graph_updates"] == 1
+
+
+def test_bsh_replay_rejects_wrong_metadata_and_short_tables(bsh_env):
+    bsh_env.impl.full_graph_fia(
+        torch.randn(2, NH, HS), "k", "v", _md([1, 2], [3, 4]), torch.zeros(2, NH, HS)
+    )
+    for qcum in ([1, 2, 3], [2]):
+        ctx = SimpleNamespace(attn_metadata={"layers.3.attn": _md(qcum, [3, 4, 5])})
+        with pytest.raises(RuntimeError, match="not a decode batch"):
+            type(bsh_env.impl).update_graph_params("upd", ctx, 2, None)
+    ctx = SimpleNamespace(attn_metadata={"layers.3.attn": _md([1, 2], [3, 4], rows=1)})
+    with pytest.raises(RuntimeError, match="too few rows"):
+        type(bsh_env.impl).update_graph_params("upd", ctx, 2, None)
+
+
+def test_bsh_capture_rejects_short_block_table(bsh_env):
+    with pytest.raises(RuntimeError, match="too few rows"):
+        bsh_env.impl.full_graph_fia(
+            torch.randn(4, NH, HS),
+            "k",
+            "v",
+            _md([1, 2, 4], [3, 4], rows=2),
+            torch.zeros(4, NH, HS),
+        )
+
+
+def test_bsh_sizes_without_bsh_params_and_ineligible_calls_stay_native(bsh_env):
+    type(bsh_env.impl).update_graph_params(
+        "upd", SimpleNamespace(attn_metadata={}), 8, None
+    )
+    bsh_env.impl.sliding_window = 128
+    bsh_env.impl.full_graph_fia(
+        torch.randn(2, NH, HS), "k", "v", _md([1, 2], [3, 4]), torch.zeros(2, NH, HS)
+    )
+    assert bsh_env.native == ["update", "graph"]
+    assert bsh_env.graph.attn_params == {}
+
+
+@pytest.mark.parametrize("layout", ["row", "bsh"])
+def test_layout_and_native_params_in_one_size_are_rejected(monkeypatch, layout):
+    env = _install(monkeypatch, layout)
+    env.impl.full_graph_fia(
+        torch.randn(2, NH, HS), "k", "v", _md([1, 2], [3, 4]), torch.zeros(2, NH, HS)
+    )
+    env.graph.attn_params[2].append(SimpleNamespace(layer_name="native"))
+    env.graph.handles[2].append("native-handle")
+    env.graph.events[2].append(_Event())
+    ctx = SimpleNamespace(attn_metadata={"layers.3.attn": _md([1, 2], [3, 4])})
+    with pytest.raises(RuntimeError, match="mixes"):
+        type(env.impl).update_graph_params("upd", ctx, 2, None)
