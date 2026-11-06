@@ -8,7 +8,7 @@ import time
 from collections import Counter
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from vllm.logger import init_logger
 from vllm.v1.core.sched.batch_admission import (
@@ -196,6 +196,32 @@ class MuxPDScheduler(Scheduler):
                 )
         return output
 
+    def _retry_forced_decode(
+        self,
+        first_output: SchedulerOutput,
+        now: float,
+        schedule_fn: Callable[
+            [Decision, tuple[BatchRequest, ...]], SchedulerOutput
+        ],
+    ) -> tuple[SchedulerOutput, tuple[BatchRequest, ...], Decision] | None:
+        """Progress live decodes after a complete prefill did not fit in KV.
+
+        Returns the retried output with its snapshots and decision, or None
+        when no decode can run. Lifecycle notifications from the first (empty)
+        native pass stay visible to the worker.
+        """
+        snapshots = self._muxpd_snapshots()
+        decision = self.muxpd_policy.choose(
+            snapshots, now, available_prefill_slots=0, force_decode=True
+        )
+        if not decision.request_ids:
+            return None
+        output = schedule_fn(decision, snapshots)
+        output.finished_req_ids.update(first_output.finished_req_ids)
+        output.preempted_req_ids.update(first_output.preempted_req_ids)
+        self.muxpd_stats["prefill_capacity_deferrals"] += 1
+        return output, snapshots, decision
+
     def schedule(self, throttle_prefills: bool = False) -> SchedulerOutput:
         if throttle_prefills:
             raise RuntimeError("MuxPD does not support DP prefill throttling")
@@ -223,20 +249,11 @@ class MuxPDScheduler(Scheduler):
         # they can finish and release capacity. Preserve lifecycle notifications
         # produced by the first (empty) native scheduling pass.
         if not output.total_num_scheduled_tokens and decision.phase == "prefill":
-            retry_snapshots = self._muxpd_snapshots()
-            retry_decision = self.muxpd_policy.choose(
-                retry_snapshots,
-                started,
-                available_prefill_slots=0,
-                force_decode=True,
+            retried = self._retry_forced_decode(
+                output, started, self._muxpd_native_schedule
             )
-            if retry_decision.request_ids:
-                first_output = output
-                snapshots, decision = retry_snapshots, retry_decision
-                output = self._muxpd_native_schedule(decision, snapshots)
-                output.finished_req_ids.update(first_output.finished_req_ids)
-                output.preempted_req_ids.update(first_output.preempted_req_ids)
-                self.muxpd_stats["prefill_capacity_deferrals"] += 1
+            if retried is not None:
+                output, snapshots, decision = retried
             elif not self.running and decision.request_ids:
                 raise RuntimeError(
                     "MuxPD cannot fit a complete prefill into available KV cache; "

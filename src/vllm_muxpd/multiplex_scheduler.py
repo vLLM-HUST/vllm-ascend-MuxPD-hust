@@ -95,23 +95,15 @@ class LayeredMuxPDScheduler(MuxPDScheduler):
             # Progress those decodes instead of repeatedly returning the same
             # empty P-only transaction. Keep lifecycle side effects from both
             # native scheduling passes visible to the worker.
-            retry_snapshots = self._muxpd_snapshots()
-            retry = policy.choose(
-                retry_snapshots,
+            retried = self._retry_forced_decode(
+                output,
                 now,
-                available_prefill_slots=0,
-                force_decode=True,
+                lambda retry, retry_snapshots: self._schedule_layered_selection(
+                    retry.request_ids, retry_snapshots
+                ),
             )
-            if retry.request_ids:
-                first_output = output
-                snapshots = retry_snapshots
-                output = self._schedule_layered_selection(
-                    retry.request_ids,
-                    snapshots,
-                )
-                output.finished_req_ids.update(first_output.finished_req_ids)
-                output.preempted_req_ids.update(first_output.preempted_req_ids)
-                self.muxpd_stats["prefill_capacity_deferrals"] += 1
+            if retried is not None:
+                output, snapshots, _ = retried
             if not output.total_num_scheduled_tokens and not self.running:
                 raise RuntimeError(
                     "Layered MuxPD cannot fit a complete prefill into available "
