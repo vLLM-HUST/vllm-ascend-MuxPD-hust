@@ -5,7 +5,7 @@ import os
 from types import SimpleNamespace as NS
 
 import pytest
-from test_prefill_groups import fixture
+from test_prefill_groups import make_group_state
 from test_worker_graph import (
     overlap_graph_factory as overlap_graph_factory,
 )
@@ -99,12 +99,13 @@ def test_group_close_failure_keeps_native_model_and_can_retry(
     assert state.controller.snapshot()["closed"]
 
 
+@pytest.mark.integration
 def test_real_worker_callback_advances_only_successful_groups_and_unwinds_cancel():
     if os.environ.get("VLLM_VERSION") != "0.25.1":
         pytest.skip("source runtime/env.sh for pinned HUST worker contracts")
     cls = importlib.import_module("vllm_muxpd.worker").MuxPDNPUWorker
     worker = cls.__new__(cls)
-    state = fixture()
+    state = make_group_state()
     state.owner.profile_run()
     interleaver = LayerInterleaver(state.backend)
     worker._interleaver = interleaver

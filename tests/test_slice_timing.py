@@ -5,7 +5,7 @@ import pytest
 from vllm_muxpd.slice_timing import PrefillSliceTimer
 
 
-def make_timer(*, complete=True, start_layer=0, compiled=False):
+def make_timer(*, complete=True, start_layer=0, compiled=False, stop=True):
     calls = []
 
     class Event:
@@ -30,7 +30,8 @@ def make_timer(*, complete=True, start_layer=0, compiled=False):
         clock=lambda: next(ticks),
     )
     timer.start()
-    timer.stop()
+    if stop:
+        timer.stop()
     return timer, calls
 
 
@@ -82,6 +83,6 @@ def test_timer_cannot_be_reused_or_publish_an_unfinished_interval():
         timer.start()
     with pytest.raises(RuntimeError, match="no active interval"):
         timer.stop()
-    timer._host_submit_ms = None
+    running, _ = make_timer(stop=False)
     with pytest.raises(RuntimeError, match="has not stopped"):
-        timer.receipt(1, completion_barrier=True)
+        running.receipt(1, completion_barrier=True)

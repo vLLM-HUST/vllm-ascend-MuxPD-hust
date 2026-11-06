@@ -1,6 +1,8 @@
 """Optional CPU execution of exact current-source contracts, without its binaries.
 
-Set MUXPD_CURRENT_CORE_SOURCE to an exported 62c941c native source tree.
+Set MUXPD_CURRENT_CORE_SOURCE to an exported 62c941c native source tree. No CI
+job or local runtime provides that tree (the pinned workspace core is d0f22d2
+and lacks vllm/v1/events.py), so these skips are not coverage.
 AST extraction keeps the original method bodies and schemas; it does not claim
 that importing or executing the full October 25 torch/NPU stack succeeded.
 """

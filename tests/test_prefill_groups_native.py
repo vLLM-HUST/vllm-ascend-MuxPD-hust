@@ -6,6 +6,8 @@ from types import SimpleNamespace as NS
 
 import pytest
 
+pytestmark = pytest.mark.integration
+
 
 @pytest.fixture
 def native():
