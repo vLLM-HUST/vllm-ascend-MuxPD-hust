@@ -13,8 +13,8 @@ MuxWise 的阶段分离机制。用户显式选择 MuxPD 调度器后，prefill 
 | `layered` 执行 | 双 runner 分别执行完整 P/D 批次，在层边界交错；一次 scheduler transaction 等待两个阶段均完成 | 已实现；单次完整 P 期间只产生一轮 D 结果 |
 | `decoupled` 执行 | P 的完整输入和中间状态跨引擎迭代保留；每轮 D 独立采样、输出，P 使用固定、token-work 或 deadline 层数配额 | 已实现；TP2/TP4 的设备进度、取消与 API 回执见下文链接 |
 | `stream_mode=fenced` | 每个层片段通过事件建立跨流依赖，保留阶段执行隔离 | 双 runner 默认路径；不宣称设备 kernel 同时执行 |
-| `stream_mode=overlap` | 独立流与 workspace；`shared` 通信组使用事件门控，`isolated` 为 P 新建 TP/EP 通信组 | eager 实验路径；shared 有 TP2/TP4 证据，isolated 已验证指定 TP4+EP 配置；不支持 graph |
-| `decode_graph=true` | 独立 D runner 捕获和重放原生 ACL graph；P 始终使用 graph mode `NONE` | 仅 decoupled fenced；指定 TP4+EP 配置已验证，完整 P 另有可选 FX 编译 |
+| `stream_mode=overlap` | 独立流与 workspace；`shared` 通信组使用事件门控，`isolated` 为 P 新建 TP/EP 通信组 | 实验路径；shared 有 TP2/TP4 证据，isolated 已验证指定 TP4+EP 配置；shared 不支持 graph，isolated 可配合独立 D graph（raw P，`compile_full_prefill` 关闭），见 [Goodput 实验说明](goodput-experiments.md) |
+| `decode_graph=true` | 独立 D runner 捕获和重放原生 ACL graph；P 始终使用 graph mode `NONE` | 仅 decoupled：fenced，或实验性 isolated overlap（raw P）；指定 TP4+EP fenced 配置已验证，完整 P 可选 FX 编译仅限 fenced |
 | NPU 资源分区 | 分别控制 P/D 的 Cube / Vector 资源 | 尚未接入控核；待逐算子支持与 profiler 验证 |
 | 层数自适应与资源预测 | 已有 token-work、EWMA/deadline、prefill-first，以及可选 decode budget guard | guard 使用本机片段观测；尚无论文的硬件分区预测器、在线争用修正或 SLO 保证 |
 
@@ -303,10 +303,11 @@ LoRA 和量化等不在当前支持范围内。这些限制界定已经审计的
 
 [`decode_graph.py`](../src/vllm_muxpd/decode_graph.py) 复用原生
 `ACLGraphWrapper`、capture 和 attention metadata 更新路径。`decode_graph=true`
-只允许 decoupled fenced，要求 `enforce_eager=false`、`VLLM_COMPILE` 和
+只允许 decoupled fenced，或实验性 overlap 且 `overlap_communication=isolated`、
+`compile_full_prefill=false`；要求 `enforce_eager=false`、`VLLM_COMPILE` 和
 `FULL_DECODE_ONLY`；capture sizes 必须为有序、不重复的正整数，且不超过
 `max_num_seqs`，最大 capture size 必须与列表一致。ENPU、xlite、模型 offload、
-动态权重传输及 graph + overlap 组合均拒绝。
+动态权重传输及 graph + shared overlap 组合均拒绝。
 
 P/D 共享原始权重和 KV 所有者，D 则有自己的 graph wrapper、输入静态缓冲区、
 metadata builder、workspace 和更新 stream。启动时把 owner 的 capture 临时
@@ -354,7 +355,7 @@ context 和 workspace，以事件发布共享初始化工作。默认
 `all_gather` 和 `reduce_scatter` 按主机发射顺序门控。它依赖原生同步 collective
 API 将内部 HCCL 工作连接回调用 stream，且要求所有 rank 发射顺序一致。
 
-`overlap_communication=isolated` 只允许 decoupled overlap eager。
+`overlap_communication=isolated` 只允许 decoupled overlap（eager，或配合上述独立 D graph）。
 worker 为 P 建立 rank membership 相同的 TP/EP sibling groups，D 和 caller
 继续使用原生组；[`LaneCollectiveRouter`](../src/vllm_muxpd/communicators.py)
 按 active lane 路由上述三个 device collective，不替换全局 TP/EP coordinator。

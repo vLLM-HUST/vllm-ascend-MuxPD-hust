@@ -74,7 +74,7 @@ Ascend 性能或 SLO 保证。[论文 §3](https://arxiv.org/html/2504.14489v3#S
 | split-prefill 完成与合并 | 本项目使用显式 cohort 完成/取消 ACK，再调用原生 vLLM retirement；未照搬 SGLang 的 batch merge 状态结构 |
 | GreenContext 与 SM 分区 | 尚未移植；`stream_mode=overlap` 仅为独立 NPU 流实验，不提供核数分区 |
 | 独立 TP communicator | 默认 shared overlap 由 [`overlap.py`](../src/vllm_muxpd/overlap.py) 对现有 device process group 加 collective 事件门控；可选 isolated overlap 由 [`communicators.py`](../src/vllm_muxpd/communicators.py) 把 P 的 TP/EP 调用路由到 sibling groups，D 保留原生组；指定 TP4+EP eager 配置已验证 |
-| 独立 workspace / decode graph | overlap 仍要求 eager；另一路 decoupled fenced 由 [`decode_graph.py`](../src/vllm_muxpd/decode_graph.py) 为 D 独立 capture/replay 原生 ACL graph，隔离静态输入、metadata 与 workspace；P 始终为 graph mode `NONE` |
+| 独立 workspace / decode graph | shared overlap 仍要求 eager，实验性 isolated overlap 可配合 D graph（raw P）；decoupled fenced 由 [`decode_graph.py`](../src/vllm_muxpd/decode_graph.py) 为 D 独立 capture/replay 原生 ACL graph，隔离静态输入、metadata 与 workspace；P 始终为 graph mode `NONE` |
 | 按 token 工作量决定 P 层数 | `prefill_layer_token_budget` 默认 `0`；非零时按完整 cohort token 数计算基础层配额，保留 `layers_per_slice` 下限并限制到剩余层；输入仍是完整 prompt |
 | 资源预测与争用修正 | 论文的硬件分区预测器与 contention guard 未接入；可选 `adaptive_layers` 将本机独立步骤 EWMA/deadline 配额与上述基础配额取较大值，未校准时仍可使用 token-work 配额 |
 | 完整 P 的执行开销 | 可选 `compile_full_prefill` 允许 fresh、完整层配额 P 使用原生 FX 编译，P 仍为 graph mode `NONE`；部分 P 保持逐层 raw 执行，这不是 artifact GreenContext 或 P graph 的复刻 |
@@ -106,8 +106,8 @@ Ascend 性能或 SLO 保证。[论文 §3](https://arxiv.org/html/2504.14489v3#S
 和 [GDN metadata builder](https://github.com/vLLM-HUST/vllm-ascend-hust/blob/03766ac696fde5ab1980d80ca0b8543d3580c989/vllm_ascend/ops/gdn_attn_builder.py)。
 插件复用其 D metadata 更新和 capture/replay，不重新实现 attention kernel。
 
-插件图模式要求 `VLLM_COMPILE` + `FULL_DECODE_ONLY`，仅支持 decoupled
-fenced；它不支持 graph + overlap。D 有独立 wrapper、静态缓冲、workspace
+插件图模式要求 `VLLM_COMPILE` + `FULL_DECODE_ONLY`，支持 decoupled fenced，
+以及实验性 isolated overlap（raw P）；不支持 graph + shared overlap。D 有独立 wrapper、静态缓冲、workspace
 和 capture/replay stream。P dispatcher 与 forward context 强制 graph mode
 `NONE`，包括单 token 的新 P、profile 和 dummy run。可选完整 P 编译只改变
 `skip_compiled`；启动预热先于 D capture，运行时只允许新 P 整网成功返回后
