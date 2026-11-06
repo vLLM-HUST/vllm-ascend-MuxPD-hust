@@ -52,6 +52,16 @@ def test_layout_validation():
 
 def test_row_plan_real_rows_then_padding():
     assert da.row_plan(2, 4, [17, 9, 555], 3) == [(0, 17), (1, 9), (None, 1), (None, 1)]
+
+
+def test_row_plan_native_uniform_padding_rows_have_zero_kv():
+    # FULL_DECODE_ONLY pads with single-token rows whose seq_lens are 0.
+    assert da.row_plan(4, 4, [17, 9, 0, 0], 4) == [
+        (0, 17),
+        (1, 9),
+        (None, 1),
+        (None, 1),
+    ]
     assert da.row_plan(3, 3, [5, 6, 7], 3) == [(0, 5), (1, 6), (2, 7)]
 
 

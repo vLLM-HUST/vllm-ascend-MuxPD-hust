@@ -488,3 +488,15 @@ def test_unsupported_request_is_flushed_through_the_async_queue(
         ("bad", FinishReason.ERROR)
     ]
     assert not scheduler.has_requests()
+
+
+def test_rejected_request_reported_finished_to_dp_clients(make_async_scheduler):
+    scheduler = make_async_scheduler(trace=False)
+    scheduler.finished_req_ids_dict = {}
+    driver = QueueDriver(scheduler)
+    bad = base.request("bad", tokens=16)
+    bad.sampling_params.logprobs = 1
+    scheduler.add_request(bad)
+    driver.schedule()
+    result = driver.retire()
+    assert result[bad.client_index].finished_requests == {"bad"}

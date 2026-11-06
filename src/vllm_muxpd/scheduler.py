@@ -135,9 +135,13 @@ class MuxPDScheduler(Scheduler):
             )
             packet = result.get(request.client_index)
             if packet is None:
-                result[request.client_index] = EngineCoreOutputs(outputs=[row])
+                packet = result[request.client_index] = EngineCoreOutputs(outputs=[row])
             else:
                 packet.outputs.append(row)
+            if self.finished_req_ids_dict is not None:
+                # Same lifetime signal native _free_request sends to DP clients.
+                finished = packet.finished_requests
+                packet.finished_requests = (finished or set()) | {request.request_id}
         return result
 
     def _muxpd_snapshots(self) -> tuple[BatchRequest, ...]:

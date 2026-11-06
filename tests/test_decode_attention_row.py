@@ -241,6 +241,35 @@ def test_capture_then_replay_updates_rows_and_skips_unchanged_padding(env):
         assert all(e.records == 1 + step for e in env.graph.events[4])
 
 
+def test_uniform_graph_padding_rows_are_padding_in_eager_and_replay(env):
+    # Shipped FULL_DECODE_ONLY preset: padding = extra [1..B] rows with KV length 0.
+    q = torch.randn(4, NH, HS)
+    out = torch.full((4, NH, HS), 7.0)
+    env.impl.forward_fused_infer_attention(
+        q, "k", "v", _md([1, 2, 3, 4], [5, 6, 0, 0]), out
+    )
+    assert [kw["actual_seq_lengths_kv"] for _, kw in env.log] == [[5], [6]]
+    assert torch.all(out[2:] == 0)
+
+    env.log.clear()
+    env.impl.full_graph_fia(q, "k", "v", _md([1, 2, 3, 4], [5, 6, 0, 0]), out)
+    params = env.graph.attn_params[4]
+    assert [p.padded for p in params] == [False, False, True, True]
+    captured = [kw for c, kw in env.log if c == "out"]
+    assert [kw["actual_seq_lengths_kv"] for kw in captured] == [[5], [6], [1], [1]]
+
+    env.log.clear()
+    ctx = SimpleNamespace(
+        attn_metadata={"layers.3.attn": _md([1, 2, 3, 4], [8, 0, 0, 0])}
+    )
+    type(env.impl).update_graph_params("upd", ctx, 4, None)
+    updated = [kw for c, kw in env.log if c == "out"]
+    # Row 0 real, row 1 newly padding (rebound once), rows 2-3 unchanged padding.
+    assert [kw["actual_seq_lengths_kv"] for kw in updated] == [[8], [1]]
+    assert da.STATS["row_updates_skipped"] == 2
+    assert all(e.records == 1 for e in env.graph.events[4])
+
+
 def test_replay_rejects_non_decode_or_wrong_size_metadata(env):
     out = torch.zeros(2, NH, HS)
     env.impl.full_graph_fia(torch.randn(2, NH, HS), "k", "v", _md([1, 2], [3, 4]), out)

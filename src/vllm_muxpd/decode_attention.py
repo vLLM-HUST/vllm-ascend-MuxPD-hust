@@ -18,8 +18,10 @@ Scope, fail-closed:
   call is passed through unchanged (prefill and chunked prefill keep TND);
 * graph update: a captured size whose attention params are BSH is updated here;
   mixing BSH and TND params in one size raises.
-Padding rows (graph padding or the dummy TND padding request) get KV length 1
-and block row 0, the same harmless values native padding uses.
+Padding: FULL_DECODE_ONLY graph padding arrives as extra single-token rows with
+KV length 0 (native uniform padding), FULL mode as one dummy TND request
+holding the padded tokens. ``row`` treats both as padding: no kernel call in
+eager mode, a fixed KV-length-1 / block-row-0 task in captured graphs.
 """
 
 from __future__ import annotations
@@ -111,10 +113,17 @@ class RowGraphParam:
 def row_plan(
     real: int, total: int, seq_lens: list[int], table_rows: int
 ) -> list[tuple[int | None, int]]:
-    """(block-table row, or None for padding, KV length) for each of `total` rows."""
+    """(block-table row, or None for padding, KV length) for each of `total` rows.
+
+    A single-token row with KV length 0 is native uniform graph padding.
+    """
     if table_rows < real:
         raise RuntimeError("MuxPD row decode attention block table has too few rows")
-    return [(r, int(seq_lens[r])) for r in range(real)] + [(None, 1)] * (total - real)
+    plan: list[tuple[int | None, int]] = []
+    for r in range(total):
+        kv_len = int(seq_lens[r]) if r < real and r < len(seq_lens) else 0
+        plan.append((r, kv_len) if kv_len > 0 else (None, 1))
+    return plan
 
 
 def install(layout: str) -> bool:
@@ -390,7 +399,8 @@ def install(layout: str) -> bool:
             row_plan(real, total, kv, block_table.shape[0])
         ):
             if bt_row is None:
-                break
+                output[r : r + 1].zero_()
+                continue
             attn, _ = torch_npu.npu_fused_infer_attention_score(
                 **row_kwargs(
                     self,
@@ -404,8 +414,6 @@ def install(layout: str) -> bool:
                 )
             )
             output[r : r + 1] = attn.view(1, self.num_heads, self.head_size)
-        if total > real:
-            output[real:total].zero_()
         STATS["eager_calls"] += 1
         return output
 
@@ -493,16 +501,15 @@ def install(layout: str) -> bool:
                         "MuxPD row decode replay metadata is not a decode batch"
                     )
                 real, total = rows
-                if p.row < real:
-                    if md.block_tables.shape[0] <= p.row:
-                        raise RuntimeError(
-                            "MuxPD row decode replay block table has too few rows"
-                        )
-                    bt = md.block_tables[p.row : p.row + 1]
-                    kv_len = int(md.seq_lens_list[p.row])
-                    padded = False
-                else:
-                    bt, kv_len, padded = pad_table(md.block_tables), 1, True
+                bt_row, kv_len = row_plan(
+                    real, total, md.seq_lens_list, md.block_tables.shape[0]
+                )[p.row]
+                padded = bt_row is None
+                bt = (
+                    pad_table(md.block_tables)
+                    if padded
+                    else md.block_tables[bt_row : bt_row + 1]
+                )
                 if padded and p.padded:
                     # Unchanged padding task: keep its parameters, still release it.
                     STATS["row_updates_skipped"] += 1
