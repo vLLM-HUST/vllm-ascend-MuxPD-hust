@@ -3,7 +3,7 @@
 The worker must validate its existing model/backend whitelist as well as
 ``validate_decode_graph_config``. Install P guards before KV initialization,
 attach the shared model after loading, and redirect native owner capture only
-during startup. This module intentionally does not enable the worker path.
+during startup. The worker enables this path only for ``decode_graph=true``.
 """
 
 from __future__ import annotations
@@ -158,8 +158,8 @@ class GraphFencedExecutionBackend:
         self._check_thread()
         stream = self.runtime.current_stream()
         self._tail = self.runtime.record_event(stream)
-        # Same-stream FIFO already orders that tail. Keep every newest event so
-        # the next cross-stream restore still waits for all submitted work.
+        # Only the newest event is kept: same-stream FIFO orders all earlier
+        # work before it, so a cross-stream restore still waits for everything.
         self._tail_stream = stream
 
 
@@ -373,6 +373,11 @@ class DecodeGraphController:
     def compile_full_prefill(self) -> bool:
         return self._compile_full_prefill
 
+    @property
+    def captured(self) -> bool:
+        """Whether startup capture of every decode descriptor succeeded."""
+        return self._captured
+
     @contextmanager
     def _prefill_compile_context(self, *, startup: bool):
         self._check()
@@ -404,9 +409,12 @@ class DecodeGraphController:
         with self._prefill_compile_context(startup=False):
             yield
 
-    def _check(self) -> None:
+    def _check_thread(self) -> None:
         if get_ident() != self._thread:
             raise RuntimeError("MuxPD decode graph requires one host thread")
+
+    def _check(self) -> None:
+        self._check_thread()
         if self._closed:
             raise RuntimeError("Decode graph controller is closed")
         if self._failed:
@@ -426,8 +434,7 @@ class DecodeGraphController:
         Never call the decode runner's native shutdown on the shared cache.
         Available even after partial initialization or failed graph capture.
         """
-        if get_ident() != self._thread:
-            raise RuntimeError("MuxPD decode graph requires one host thread")
+        self._check_thread()
         if self._closed:
             return
         if self._redirecting:
@@ -672,7 +679,9 @@ class DecodeGraphController:
         if self._redirecting or not self._attached or self._capture_started:
             raise RuntimeError("Invalid or repeated owner capture redirection")
         original = vars(self.owner).get("capture_model", _MISSING)
-        original_bound = self.owner.capture_model
+        # The owner must provide capture_model; a missing method raises
+        # AttributeError here, before any redirection state changes.
+        self.owner.capture_model
         replacement = self.capture_decode
         self._redirecting = True
         self.owner.capture_model = replacement
@@ -689,5 +698,3 @@ class DecodeGraphController:
             if changed:
                 self._failed = True
                 raise RuntimeError("Owner capture method changed during redirection")
-            # Keep the bound method alive throughout the scope, including errors.
-            del original_bound

@@ -608,7 +608,7 @@ class MuxPDNPUWorker(NPUWorker):
                 startup_scope=self._prefill_group_startup,
                 is_startup=lambda: (
                     self._interleaver is None
-                    and not self._decode_graph_controller._captured
+                    and not self._decode_graph_controller.captured
                 ),
             )
             self._prefill_group_executor.install()
