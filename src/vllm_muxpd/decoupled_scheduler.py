@@ -434,9 +434,8 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
             cohort.completed_layers if cohort else 0
         )
         output.muxpd_prefill_layers_total = self._decoder_layer_count if cohort else 0
-        fully_cancelled = bool(
-            cohort
-            and set(output.muxpd_cancel_prefill_request_ids) == cohort.pending_ids
+        fully_cancelled = bool(cohort) and self._cancels_whole_cohort(
+            output, cohort.pending_ids
         )
         expected_layers = 0
         if cohort:
@@ -609,7 +608,7 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         )
         guard["control_step"] = bool(
             output.muxpd_pause_prefill
-            or set(output.muxpd_cancel_prefill_request_ids) == cohort.pending_ids
+            or self._cancels_whole_cohort(output, cohort.pending_ids)
         )
         info["decode_budget"] = guard
         info["reason"] = "decode_budget_quota"
@@ -618,6 +617,13 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         # the entire token admission budget while existing D waits for one turn.
         output.muxpd_finish_prefill = quota == remaining and not guard["control_step"]
         return info
+
+    @staticmethod
+    def _cancels_whole_cohort(output, pending_ids) -> bool:
+        """Whether this step asks the worker to cancel every pending P member."""
+        return bool(pending_ids) and (
+            set(output.muxpd_cancel_prefill_request_ids) == pending_ids
+        )
 
     @staticmethod
     def _decode_shape(contexts: list[int]) -> tuple[int, int, int] | None:
@@ -768,6 +774,11 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         cache[key] = value
         cache.move_to_end(key)
 
+    def _guard_cache_record_max(self, cache, key, value, phase):
+        """Keep the largest observation per key together with its sample count."""
+        old, count = self._guard_cache_read(cache, key) or (0.0, 0)
+        self._guard_cache_store(cache, key, (max(old, value), count + 1), phase)
+
     def _guard_cache_stats(self):
         return {
             "entry_limit_per_mapping": _GUARD_ESTIMATE_CACHE_LIMIT,
@@ -813,8 +824,9 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         )
         info["work_quota"] = work_quota
         remaining = self._decoder_layer_count - cohort.completed_layers
-        cancelled = set(output.muxpd_cancel_prefill_request_ids)
-        control_step = output.muxpd_pause_prefill or cancelled == cohort.pending_ids
+        control_step = output.muxpd_pause_prefill or self._cancels_whole_cohort(
+            output, cohort.pending_ids
+        )
         if config.prefill_layer_token_budget:
             output.muxpd_layers_per_slice = min(remaining, base_quota)
             if not control_step and output.muxpd_layers_per_slice == remaining:
@@ -950,7 +962,7 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
             raise RuntimeError("Worker did not finish an unopposed prefill")
         if step.output.muxpd_pause_prefill and completed & alive:
             raise RuntimeError("Worker advanced a paused prefill")
-        if pending and set(step.output.muxpd_cancel_prefill_request_ids) == pending:
+        if self._cancels_whole_cohort(step.output, pending):
             if completed | cancelled != pending:
                 raise RuntimeError(
                     "Worker did not acknowledge full cohort cancellation"
@@ -1244,14 +1256,8 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         ):
             return {"phase": None, "reason": "invalid_cancelled_or_paused_sample"}
         if cohort is None and step.guard_decode_shape:
-            old, count = self._guard_cache_read(
-                self._guard_decode_cost, step.guard_decode_shape
-            ) or (0.0, 0)
-            self._guard_cache_store(
-                self._guard_decode_cost,
-                step.guard_decode_shape,
-                (max(old, duration), count + 1),
-                "decode",
+            self._guard_cache_record_max(
+                self._guard_decode_cost, step.guard_decode_shape, duration, "decode"
             )
             return {"phase": "decode", "shape": list(step.guard_decode_shape)}
         if cohort:
@@ -1320,13 +1326,10 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
                         "residual_ms": residual,
                     }
                     if accepted:
-                        old, count = self._guard_cache_read(
-                            self._guard_decode_residual, step.guard_decode_shape
-                        ) or (0.0, 0)
-                        self._guard_cache_store(
+                        self._guard_cache_record_max(
                             self._guard_decode_residual,
                             step.guard_decode_shape,
-                            (max(old, residual), count + 1),
+                            residual,
                             "decode_residual",
                         )
                 return {
