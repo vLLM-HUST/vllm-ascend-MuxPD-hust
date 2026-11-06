@@ -37,8 +37,19 @@ class MuxPDConfig:
     decode_budget_guard: bool = False
     require_hccl_deterministic: bool = False
     async_decode_pipeline: bool = False
+    decode_attention_layout: str = "tnd"
 
     def __post_init__(self) -> None:
+        if self.decode_attention_layout not in ("tnd", "bsh", "row"):
+            raise ValueError(
+                "MuxPD decode_attention_layout must be 'tnd', 'bsh' or 'row'"
+            )
+        if self.decode_attention_layout != "tnd" and self.execution != "decoupled":
+            # Only decoupled execution guarantees pure-decode attention batches.
+            raise ValueError(
+                f"MuxPD decode_attention_layout={self.decode_attention_layout!r} "
+                "requires execution='decoupled'"
+            )
         if type(self.async_decode_pipeline) is not bool:
             raise ValueError("MuxPD async_decode_pipeline must be a boolean")
         if self.async_decode_pipeline and (

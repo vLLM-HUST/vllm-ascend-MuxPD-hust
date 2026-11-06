@@ -247,6 +247,7 @@ CPU 测试覆盖策略与协程；原生 Scheduler 测试覆盖 KV 容量、抢�
 | `compile_full_prefill` | false | decode graph 模式中，新 P 可一次完成时复用原生编译路径；需启动预热 |
 | `compile_prefill_groups` | false | 默认关闭的四层 FX P 分组；仅支持专门的固定 q4/fusion 配方，见 [group-FX 说明](docs/experimental-prefill-group-fx.md) |
 | `async_decode_pipeline` | false | 纯 D 使用原生异步队列，P 前排空；须显式异步 scheduler/worker 配对，见 [启动说明](docs/experimental-async-decode.md) |
+| `decode_attention_layout` | tnd | 仅 decoupled。`bsh`：纯 D 注意力改用 BSH（对批大小不变，但与原生 TND 数值不同）；`row`：每个 D 行单独调用原生 TND M=1，与同一请求单独运行逐位一致，开销很大。仅 TP2 已验证，见 [说明](docs/decode-attention-layout.md) |
 | `require_hccl_deterministic` | false | 要求启动前的 HCCL 环境匹配显式确定性通信配置；不是任意输出确定性保证 |
 | `overlap_communication` | shared | 实验 `isolated` 为 overlap 的 P 创建独立 TP/EP 通信组 |
 | `trace_path` | null | 可选 JSONL 文件；支持 `{pid}`，不记录 prompt 内容 |
