@@ -11,6 +11,7 @@ import torch
 from vllm.v1.core.sched.output import SchedulerOutput
 from vllm.v1.outputs import ModelRunnerOutput
 
+from vllm_muxpd.config import PREFILL_GROUP_LAYERS
 from vllm_muxpd.lanes import LayerInterleaver
 from vllm_muxpd.slice_timing import PrefillSliceTimer
 from vllm_muxpd.worker import (
@@ -349,7 +350,7 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
                 budget = None
             if getattr(self, "_prefill_groups_enabled", False) and budget not in (
                 None,
-                4,
+                PREFILL_GROUP_LAYERS,
             ):
                 raise ValueError("Prefill FX groups require an atomic four-layer quota")
 

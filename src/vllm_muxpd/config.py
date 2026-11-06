@@ -6,6 +6,11 @@ import math
 from dataclasses import dataclass, fields
 from typing import Any, Mapping
 
+# The experimental group-FX prefill recipe compiles the 40-layer Qwen3.5 backbone
+# as ten atomic four-layer groups; see docs/experimental-prefill-group-fx.md.
+PREFILL_GROUP_LAYERS = 4
+PREFILL_GROUP_MODEL_LAYERS = 40
+
 
 @dataclass(frozen=True)
 class MuxPDConfig:
@@ -185,7 +190,7 @@ class MuxPDConfig:
             and self.decode_graph
             and self.stream_mode == "overlap"
             and self.overlap_communication == "isolated"
-            and self.layers_per_slice == 4
+            and self.layers_per_slice == PREFILL_GROUP_LAYERS
             and self.prefill_layer_token_budget == 0
             and not self.adaptive_layers
             and not self.prefill_first

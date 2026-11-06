@@ -15,6 +15,8 @@ from threading import get_ident
 from types import SimpleNamespace
 from typing import Any
 
+from vllm_muxpd.config import PREFILL_GROUP_LAYERS, PREFILL_GROUP_MODEL_LAYERS
+
 _MISSING = object()
 
 
@@ -108,9 +110,9 @@ class PrefillGroupExecutor:
         self.calls = [0] * 10
         self.max_tokens = owner.vllm_config.scheduler_config.max_num_batched_tokens
         if (
-            len(backbone.layers) != 40
+            len(backbone.layers) != PREFILL_GROUP_MODEL_LAYERS
             or backbone.start_layer != 0
-            or backbone.end_layer != 40
+            or backbone.end_layer != PREFILL_GROUP_MODEL_LAYERS
         ):
             raise ValueError("Prefill groups require the complete 40-layer PP1 model")
         if getattr(backbone, "aux_hidden_state_layers", ()):
@@ -129,7 +131,10 @@ class PrefillGroupExecutor:
             with self.runtime.config_context(config):
                 self.groups.append(
                     cls(
-                        layers=self.layers[index * 4 : index * 4 + 4],
+                        layers=self.layers[
+                            index * PREFILL_GROUP_LAYERS : (index + 1)
+                            * PREFILL_GROUP_LAYERS
+                        ],
                         vllm_config=config,
                     )
                 )
@@ -276,7 +281,7 @@ class PrefillGroupExecutor:
             "ready": self.ready,
             "failed": self.failed,
             "closed": self.closed,
-            "group_size": 4,
+            "group_size": PREFILL_GROUP_LAYERS,
             "groups": len(self.groups),
             "calls": list(self.calls),
             "entry_qualnames": [

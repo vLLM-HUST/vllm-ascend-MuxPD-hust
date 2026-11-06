@@ -19,6 +19,7 @@ from vllm.v1.core.sched.output import CachedRequestData, SchedulerOutput
 from vllm.v1.core.sched.scheduler import Scheduler
 from vllm.v1.request import Request
 
+from .config import PREFILL_GROUP_LAYERS, PREFILL_GROUP_MODEL_LAYERS
 from .multiplex_scheduler import LayeredMuxPDScheduler
 from .native_compat import validate_lane_result, validate_lane_schedule
 from .policy import Decision, remaining_tokens, request_phase
@@ -1017,7 +1018,9 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         grouped = self.muxpd_policy.config.compile_prefill_groups
         if cohort and (grouped != (source == "group_forward_return")):
             raise RuntimeError("Prefill group progress source/config mismatch")
-        if source == "group_forward_return" and (total != 40 or progress % 4):
+        if source == "group_forward_return" and (
+            total != PREFILL_GROUP_MODEL_LAYERS or progress % PREFILL_GROUP_LAYERS
+        ):
             raise RuntimeError(
                 "Prefill group progress must end at an actual four-layer boundary"
             )

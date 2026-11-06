@@ -21,7 +21,11 @@ from vllm_ascend.ascend_config import get_ascend_config
 from vllm_ascend.worker.worker import NPUModelRunner, NPUWorker
 
 from vllm_muxpd.communicators import LaneCollectiveRouter
-from vllm_muxpd.config import MuxPDConfig, validate_engine_config
+from vllm_muxpd.config import (
+    PREFILL_GROUP_LAYERS,
+    MuxPDConfig,
+    validate_engine_config,
+)
 from vllm_muxpd.decode_graph import (
     DecodeGraphController,
     GraphFencedExecutionBackend,
@@ -642,7 +646,11 @@ class MuxPDNPUWorker(NPUWorker):
         if interleaver is None:
             return  # Native startup dummy forward after prepared group profiling.
         task = interleaver.active
-        if task is None or task.name != "prefill" or task.completed_layers != index * 4:
+        if (
+            task is None
+            or task.name != "prefill"
+            or task.completed_layers != index * PREFILL_GROUP_LAYERS
+        ):
             raise RuntimeError("Prefill group returned out of order")
         self.muxpd_stats["slices"] += 1
         if self.vllm_config.scheduler_config.batch_admission_policy_config.get(
@@ -654,10 +662,10 @@ class MuxPDNPUWorker(NPUWorker):
                 self.rank,
                 self._prefill_cohort_id,
                 index,
-                (index + 1) * 4,
+                (index + 1) * PREFILL_GROUP_LAYERS,
                 self._prefill_num_tokens,
             )
-        interleaver.checkpoint_group(4, final=final)
+        interleaver.checkpoint_group(PREFILL_GROUP_LAYERS, final=final)
 
     @contextmanager
     def _prefill_group_startup(self):
