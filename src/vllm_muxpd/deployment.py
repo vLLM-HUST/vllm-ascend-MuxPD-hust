@@ -287,6 +287,25 @@ def managed_runtime_preflight() -> dict | None:
     return result
 
 
+def _args_configuration(args) -> dict:
+    return configuration(
+        args.trace_path,
+        experimental_prefill_groups=args.experimental_prefill_groups,
+        deterministic_collectives=args.deterministic_collectives,
+    )
+
+
+def _args_host_command(args) -> list[str]:
+    return host_command(
+        args.model,
+        tensor_parallel_size=args.tensor_parallel_size,
+        host=args.host,
+        port=args.port,
+        served_model_name=args.served_model_name,
+        experimental_prefill_groups=args.experimental_prefill_groups,
+    )
+
+
 def serve(args) -> int:
     from packaging.specifiers import SpecifierSet
 
@@ -300,11 +319,7 @@ def serve(args) -> int:
     saved = load_config().extension(EXTENSION_ID)
     if not saved.enabled:
         raise ValueError(f"explicitly configure and enable {EXTENSION_ID} first")
-    if saved.configuration != configuration(
-        args.trace_path,
-        experimental_prefill_groups=args.experimental_prefill_groups,
-        deterministic_collectives=args.deterministic_collectives,
-    ):
+    if saved.configuration != _args_configuration(args):
         raise ValueError(
             "saved Manager configuration differs from this streaming profile"
         )
@@ -315,14 +330,7 @@ def serve(args) -> int:
         raise ValueError(
             "select this container's devices with ASCEND_RT_VISIBLE_DEVICES"
         )
-    command = host_command(
-        args.model,
-        tensor_parallel_size=args.tensor_parallel_size,
-        host=args.host,
-        port=args.port,
-        served_model_name=args.served_model_name,
-        experimental_prefill_groups=args.experimental_prefill_groups,
-    )
+    command = _args_host_command(args)
     with launch_environment(args.deterministic_collectives):
         return manager.main(
             ["run", *(["--dry-run"] if args.dry_run else []), "--", *command]
@@ -383,19 +391,11 @@ def main(argv=None) -> int:
         elif args.action == "doctor":
             value = doctor()
         elif args.action == "configuration":
-            value = configuration(
-                args.trace_path,
-                experimental_prefill_groups=args.experimental_prefill_groups,
-                deterministic_collectives=args.deterministic_collectives,
-            )
+            value = _args_configuration(args)
         else:
             value = {
                 "extension_id": EXTENSION_ID,
-                "configuration": configuration(
-                    args.trace_path,
-                    experimental_prefill_groups=args.experimental_prefill_groups,
-                    deterministic_collectives=args.deterministic_collectives,
-                ),
+                "configuration": _args_configuration(args),
                 "requested_environment": requested_environment(
                     args.deterministic_collectives
                 ),
@@ -404,14 +404,7 @@ def main(argv=None) -> int:
                     if args.deterministic_collectives
                     else "not requested"
                 ),
-                "host_command": host_command(
-                    args.model,
-                    tensor_parallel_size=args.tensor_parallel_size,
-                    host=args.host,
-                    port=args.port,
-                    served_model_name=args.served_model_name,
-                    experimental_prefill_groups=args.experimental_prefill_groups,
-                ),
+                "host_command": _args_host_command(args),
                 "scope": "recipe only; Manager supplies all three component selectors",
             }
         output = json.dumps(value, indent=2) + "\n"
