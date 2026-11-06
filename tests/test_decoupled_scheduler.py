@@ -73,6 +73,7 @@ def make_scheduler(tmp_path):
         decode_budget_guard=False,
         tpot_slo_ms=0.001,
         trace=True,
+        worker_cls="vllm_muxpd.decoupled_worker.DecoupledMuxPDNPUWorker",
     ):
         config = VllmConfig(
             model_config=ModelConfig(
@@ -113,9 +114,7 @@ def make_scheduler(tmp_path):
                 enable_prefix_caching=False,
                 mamba_cache_mode="none",
             ),
-            parallel_config=ParallelConfig(
-                worker_cls="vllm_muxpd.decoupled_worker.DecoupledMuxPDNPUWorker",
-            ),
+            parallel_config=ParallelConfig(worker_cls=worker_cls),
         )
         config.cache_config.num_gpu_blocks = num_blocks
         kv_config = KVCacheConfig(
@@ -2081,6 +2080,26 @@ def test_rejected_request_leaves_no_arrival_bookkeeping(make_scheduler):
     retire(scheduler, scheduler.schedule())
     assert not scheduler.has_requests()
     assert "bad" not in scheduler._arrival_monotonic
+
+
+def test_rejected_construction_closes_the_trace_file(make_scheduler, monkeypatch):
+    import builtins
+    import io
+
+    opened = []
+    real_open = io.open
+
+    def tracking_open(path, *args, **kwargs):
+        handle = real_open(path, *args, **kwargs)
+        if str(path).endswith("trace.jsonl"):
+            opened.append(handle)
+        return handle
+
+    monkeypatch.setattr(builtins, "open", tracking_open)
+    monkeypatch.setattr(io, "open", tracking_open)
+    with pytest.raises(ValueError, match="paired decoupled worker"):
+        make_scheduler(worker_cls="vllm_muxpd.worker.MuxPDNPUWorker")
+    assert opened and all(handle.closed for handle in opened)
 
 
 def test_unsupported_request_on_idle_engine_is_flushed(make_scheduler):

@@ -117,6 +117,13 @@ class DecoupledMuxPDScheduler(LayeredMuxPDScheduler):
         # Reuse the common validated allocator setup, without the layered-only
         # execution/worker checks in LayeredMuxPDScheduler.__init__.
         MuxPDScheduler.__init__(self, vllm_config, *args, **kwargs)
+        try:
+            self._validate_decoupled_setup(vllm_config)
+        except BaseException:
+            self._close_muxpd_trace()
+            raise
+
+    def _validate_decoupled_setup(self, vllm_config: Any) -> None:
         self._decoder_layer_count = getattr(
             vllm_config.model_config.hf_text_config, "num_hidden_layers", None
         )

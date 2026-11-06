@@ -377,10 +377,13 @@ class MuxPDScheduler(Scheduler):
     def export_muxpd_stats(self) -> dict[str, int]:
         return dict(self.muxpd_stats)
 
+    def _close_muxpd_trace(self) -> None:
+        if self._muxpd_trace is not None:
+            self._muxpd_trace.close()
+            self._muxpd_trace = None
+
     def shutdown(self) -> None:
         try:
             super().shutdown()
         finally:
-            if self._muxpd_trace is not None:
-                self._muxpd_trace.close()
-                self._muxpd_trace = None
+            self._close_muxpd_trace()

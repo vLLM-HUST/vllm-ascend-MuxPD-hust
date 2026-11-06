@@ -25,11 +25,17 @@ class LayeredMuxPDScheduler(MuxPDScheduler):
 
     def __init__(self, vllm_config: Any, *args: Any, **kwargs: Any) -> None:
         super().__init__(vllm_config, *args, **kwargs)
-        if self.muxpd_policy.config.execution != "layered":
-            raise ValueError("LayeredMuxPDScheduler requires execution='layered'")
-        worker = vllm_config.parallel_config.worker_cls
-        if worker != "vllm_muxpd.worker.MuxPDNPUWorker":
-            raise ValueError("LayeredMuxPDScheduler requires MuxPDNPUWorker")
+        try:
+            if self.muxpd_policy.config.execution != "layered":
+                raise ValueError(
+                    "LayeredMuxPDScheduler requires execution='layered'"
+                )
+            worker = vllm_config.parallel_config.worker_cls
+            if worker != "vllm_muxpd.worker.MuxPDNPUWorker":
+                raise ValueError("LayeredMuxPDScheduler requires MuxPDNPUWorker")
+        except BaseException:
+            self._close_muxpd_trace()
+            raise
         self._layered_pending = None
 
     def schedule(self, throttle_prefills: bool = False):
