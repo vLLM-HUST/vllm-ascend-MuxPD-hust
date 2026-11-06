@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import string
 from dataclasses import dataclass, fields
 from typing import Any, Mapping
 
@@ -219,17 +220,19 @@ class MuxPDConfig:
             if not isinstance(self.trace_path, str) or not self.trace_path.strip():
                 raise ValueError("MuxPD trace_path must be a nonempty string or null")
             try:
-                self.trace_path.format(pid=0)
-            except (
-                KeyError,
-                ValueError,
-                IndexError,
-                TypeError,
-                AttributeError,
-            ) as exc:
+                fields = [
+                    (name, spec, conversion)
+                    for _, name, spec, conversion in string.Formatter().parse(
+                        self.trace_path
+                    )
+                    if name is not None
+                ]
+            except ValueError as exc:
                 raise ValueError(
                     "MuxPD trace_path supports only the {pid} placeholder"
                 ) from exc
+            if any(field != ("pid", "", None) for field in fields):
+                raise ValueError("MuxPD trace_path supports only the {pid} placeholder")
 
     @classmethod
     def from_mapping(cls, raw: Mapping[str, Any] | None) -> "MuxPDConfig":
