@@ -74,6 +74,8 @@ def make_scheduler(tmp_path):
         tpot_slo_ms=0.001,
         trace=True,
         worker_cls="vllm_muxpd.decoupled_worker.DecoupledMuxPDNPUWorker",
+        scheduler_cls=None,
+        configure=None,
     ):
         config = VllmConfig(
             model_config=ModelConfig(
@@ -134,7 +136,9 @@ def make_scheduler(tmp_path):
         )
         init_none_hash(sha256)
         register_all_kvcache_specs(config)
-        scheduler = DecoupledMuxPDScheduler(
+        if configure is not None:
+            configure(config)
+        scheduler = (scheduler_cls or DecoupledMuxPDScheduler)(
             vllm_config=config,
             kv_cache_config=kv_config,
             block_size=16,
@@ -203,6 +207,12 @@ def start_decode(scheduler, tokens=8, max_tokens=32, client=0):
     assert output.muxpd_finish_prefill
     retire(scheduler, output, completed={"d"})
     return req
+
+
+def trace_rows(scheduler, event=None):
+    lines = Path(scheduler.muxpd_policy.config.trace_path).read_text().splitlines()
+    rows = [json.loads(line) for line in lines]
+    return [row for row in rows if event is None or row["event"] == event]
 
 
 def output_ids(outputs):
@@ -753,7 +763,7 @@ def test_adaptive_requires_both_pure_phase_samples(make_scheduler, clock):
     output = scheduler.schedule()
     assert output.muxpd_layers_per_slice == 1
     assert not output.muxpd_finish_prefill
-    rows = [json.loads(x) for x in open(scheduler.muxpd_policy.config.trace_path)]
+    rows = trace_rows(scheduler)
     assert rows[-1]["quota"]["reason"] == "uncalibrated"
     assert rows[-1]["quota"]["latency_samples"] == {"prefill": 1, "decode": 0}
     clock.now += 0.280
@@ -782,7 +792,7 @@ def test_adaptive_deadline_quota_uses_measured_cost_and_retains_decode(
     clock.now += 0.410
     assert output_ids(retire(scheduler, output, completed={"p"})) == {"d", "p"}
     assert scheduler._latency_samples == {"prefill": 1, "decode": 1}
-    rows = [json.loads(x) for x in open(scheduler.muxpd_policy.config.trace_path)]
+    rows = trace_rows(scheduler)
     quota = [x["quota"] for x in rows if x["event"] == "decoupled_schedule"][-1]
     assert quota["reason"] == "deadline_finish"
     assert quota["decode_slo_feasible_without_prefill"] is False
@@ -1416,8 +1426,7 @@ def calibrate_guard_decode(scheduler, clock, tokens=64):
 
 
 def last_quota(scheduler):
-    rows = [json.loads(line) for line in open(scheduler.muxpd_policy.config.trace_path)]
-    return [row["quota"] for row in rows if row["event"] == "decoupled_schedule"][-1]
+    return [row["quota"] for row in trace_rows(scheduler, "decoupled_schedule")][-1]
 
 
 def seed_raw_slice(scheduler, shape=(64,), cost=1):

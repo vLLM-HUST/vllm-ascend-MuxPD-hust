@@ -20,8 +20,7 @@ def make_async_scheduler(make_scheduler, monkeypatch):
 
     monkeypatch.setenv("VLLM_USE_V2_MODEL_RUNNER", "0")
 
-    def construct(**kwargs):
-        config = kwargs["vllm_config"]
+    def configure(config):
         config.scheduler_config.async_scheduling = True
         config.scheduler_config.scheduler_cls = (
             "vllm_muxpd.async_scheduler.AsyncDecoupledMuxPDScheduler"
@@ -32,10 +31,13 @@ def make_async_scheduler(make_scheduler, monkeypatch):
         config.parallel_config.worker_cls = (
             "vllm_muxpd.async_worker.AsyncDecoupledMuxPDNPUWorker"
         )
-        return AsyncDecoupledMuxPDScheduler(**kwargs)
 
-    monkeypatch.setattr(base, "DecoupledMuxPDScheduler", construct)
-    return make_scheduler
+    def make(**kwargs):
+        return make_scheduler(
+            scheduler_cls=AsyncDecoupledMuxPDScheduler, configure=configure, **kwargs
+        )
+
+    return make
 
 
 class QueueDriver:

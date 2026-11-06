@@ -6,6 +6,8 @@ import pytest
 from test_decoupled_worker import schedule
 from test_decoupled_worker import simulation as simulation
 
+pytestmark = pytest.mark.integration
+
 
 @pytest.fixture
 def async_worker(simulation):

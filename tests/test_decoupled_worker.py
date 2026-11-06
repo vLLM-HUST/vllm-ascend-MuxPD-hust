@@ -558,8 +558,8 @@ def test_invalid_pin_protocol_is_rejected_without_losing_prefill(simulation):
     worker.sample_tokens(None)
     with pytest.raises(RuntimeError, match="pinned prefills"):
         worker.execute_model(schedule())
+    worker.execute_model(schedule(pending=("p",), pause=True))
     with pytest.raises(RuntimeError, match="sampler ACK"):
-        worker.execute_model(schedule(pending=("p",), pause=True))
         worker.execute_model(schedule(pending=("p",), pause=True))
     worker.sample_tokens(None)
     worker.execute_model(schedule(pending=("p",), cancel=("p",)))
