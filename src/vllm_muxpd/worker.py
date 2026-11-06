@@ -845,6 +845,14 @@ class MuxPDNPUWorker(NPUWorker):
 
     @torch.inference_mode()
     def sample_tokens(self, grammar_output: Any) -> ModelRunnerOutput:
+        merged = self._sample_pending_lanes(grammar_output)
+        self._record_effective_output(merged)
+        return merged
+
+    def _sample_pending_lanes(
+        self, grammar_output: Any, *, passthrough: bool = False
+    ) -> ModelRunnerOutput:
+        """Sample every executed lane on its own stream and merge the rows."""
         if grammar_output is not None:
             raise ValueError("MuxPD cooperative worker does not support grammar output")
         outputs = []
@@ -865,9 +873,7 @@ class MuxPDNPUWorker(NPUWorker):
                 outputs.append(output)
                 backend.fence()
             merged = _merge_outputs(
-                outputs,
-                self._pending_order,
-                passthrough=getattr(self, "_decode_only_fast_path", False),
+                outputs, self._pending_order, passthrough=passthrough
             )
             self._pending_lanes = []
             self._pending_order = []
@@ -877,8 +883,6 @@ class MuxPDNPUWorker(NPUWorker):
                 # Decode ACK must not wait for a still-suspended prefill. A
                 # completed prefill is joined only when it was sampled here.
                 backend.join(sampled_lanes)
-        if self.execution_mode == "layered":
-            self._record_effective_output(merged)
         return merged
 
     def _materialize_lane_output(self, output: Any) -> ModelRunnerOutput:

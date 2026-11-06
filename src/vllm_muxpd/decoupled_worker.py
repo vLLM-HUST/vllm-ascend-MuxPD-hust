@@ -430,7 +430,9 @@ class DecoupledMuxPDNPUWorker(MuxPDNPUWorker):
         if prefill_completed:
             cancelled.update(self._prefill_cancelled)
             completed.update(set(self._prefill_order) - cancelled)
-        output = super().sample_tokens(grammar_output)
+        output = self._sample_pending_lanes(
+            grammar_output, passthrough=self._decode_only_fast_path
+        )
         if cancelled:
             keep = [req_id for req_id in output.req_ids if req_id not in cancelled]
             filtered = ModelRunnerOutput(
