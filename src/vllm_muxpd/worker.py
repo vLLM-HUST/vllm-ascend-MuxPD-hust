@@ -93,7 +93,7 @@ class _SharedCacheRunner(NPUModelRunner):
     """Independent buffers/builders, with no second model/cache allocation."""
 
     def __init__(self, config: Any, device: Any, owner: NPUModelRunner):
-        self._native_cache_contract = runner_contract(NPUModelRunner)
+        runner_contract(NPUModelRunner)  # Reject unsupported runners before init.
         super().__init__(config, device)
         self._owner = owner
         self.requests = owner.requests
@@ -760,6 +760,16 @@ class MuxPDNPUWorker(NPUWorker):
                     "pooling or structured outputs"
                 )
 
+    def _apply_request_lifecycle(self, output: SchedulerOutput) -> None:
+        """Validate the batch, then retire/invalidate rows on both runners."""
+        self._validate_requests(output)
+        self._retire_finished(output.finished_req_ids)
+        self._invalidate_batch_rows(
+            set(output.preempted_req_ids or ())
+            | output.scheduled_cached_reqs.resumed_req_ids
+            | {req.req_id for req in output.scheduled_new_reqs}
+        )
+
     def _step_profiler(self) -> None:
         if getattr(self, "profiler", None) is not None:
             self.profiler.step()
@@ -783,13 +793,7 @@ class MuxPDNPUWorker(NPUWorker):
         if self._pending_lanes:
             raise RuntimeError("MuxPD requires sample_tokens before the next execute")
         self._step_profiler()
-        self._validate_requests(scheduler_output)
-        self._retire_finished(scheduler_output.finished_req_ids)
-        self._invalidate_batch_rows(
-            set(scheduler_output.preempted_req_ids or ())
-            | scheduler_output.scheduled_cached_reqs.resumed_req_ids
-            | {req.req_id for req in scheduler_output.scheduled_new_reqs}
-        )
+        self._apply_request_lifecycle(scheduler_output)
         scheduled = set(scheduler_output.num_scheduled_tokens)
         if not scheduled:
             return ModelRunnerOutput(req_ids=[], req_id_to_index={})
