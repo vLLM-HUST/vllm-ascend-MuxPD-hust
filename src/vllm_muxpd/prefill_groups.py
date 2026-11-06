@@ -17,6 +17,8 @@ from typing import Any
 
 from vllm_muxpd.config import PREFILL_GROUP_LAYERS, PREFILL_GROUP_MODEL_LAYERS
 
+PREFILL_GROUP_COUNT = PREFILL_GROUP_MODEL_LAYERS // PREFILL_GROUP_LAYERS  # ten
+
 _MISSING = object()
 
 
@@ -107,7 +109,7 @@ class PrefillGroupExecutor:
         self.ready = self.failed = self.closed = self.preparing = False
         self.active = False
         self.groups, self.handles, self.patches = [], (), []
-        self.calls = [0] * 10
+        self.calls = [0] * PREFILL_GROUP_COUNT
         self.max_tokens = owner.vllm_config.scheduler_config.max_num_batched_tokens
         if (
             len(backbone.layers) != PREFILL_GROUP_MODEL_LAYERS
@@ -118,11 +120,14 @@ class PrefillGroupExecutor:
         if getattr(backbone, "aux_hidden_state_layers", ()):
             raise ValueError("Prefill groups do not support auxiliary hidden states")
         self.layers = tuple(backbone.layers)
-        if len(self.runtime.classes) != 10:
+        if len(self.runtime.classes) != PREFILL_GROUP_COUNT:
             raise ValueError("Ten distinct group entry points are required")
         codes = [cls.forward.__code__ for cls in self.runtime.classes]
         names = [cls.forward.__qualname__ for cls in self.runtime.classes]
-        if len(set(codes)) != 10 or len(set(names)) != 10:
+        if (
+            len(set(codes)) != PREFILL_GROUP_COUNT
+            or len(set(names)) != PREFILL_GROUP_COUNT
+        ):
             raise ValueError("Prefill group code identities are not isolated")
         for index, cls in enumerate(self.runtime.classes):
             config = clone_group_config(
@@ -272,7 +277,7 @@ class PrefillGroupExecutor:
                         hidden, residual = handle(group, positions, hidden, residual)
             self.calls[index] += 1
             if not self.preparing:
-                self.checkpoint(index, final=index == 9)
+                self.checkpoint(index, final=index == PREFILL_GROUP_COUNT - 1)
         hidden, _ = self.backbone.norm(hidden, residual)
         return hidden
 
