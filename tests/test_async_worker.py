@@ -170,3 +170,31 @@ def test_recomputed_prefill_rejects_missing_history_before_mutation(async_worker
     with pytest.raises(RuntimeError, match="complete prefill history"):
         worker._restore_prefill_history(output)
     assert state.output_token_ids == [-1]
+
+
+@pytest.mark.parametrize("failure", ["execute", "sample"])
+def test_async_decode_failures_restore_caller_and_block_reuse(
+    async_worker, monkeypatch, failure
+):
+    worker, _ = async_worker
+    caller = worker._execution_backend.capture()
+
+    def fail(*args):
+        raise ValueError("native failure")
+
+    if failure == "execute":
+        monkeypatch.setattr(worker.decode_runner, "execute_model", fail)
+        with pytest.raises(ValueError, match="native failure"):
+            worker.execute_model(schedule(decode=("d",)))
+        assert not worker._awaiting_sample and worker._pending_lanes == []
+    else:
+        worker.execute_model(schedule(decode=("d",)))
+        monkeypatch.setattr(worker.decode_runner, "sample_tokens", fail)
+        with pytest.raises(ValueError, match="native failure"):
+            worker.sample_tokens(None)
+        # No receipt was produced, so the transaction must not be reusable.
+        assert worker._awaiting_sample and worker._pending_lanes == ["decode"]
+        with pytest.raises(RuntimeError, match="sampler ACK"):
+            worker.execute_model(schedule(decode=("d",)))
+    assert worker._interleaver is None
+    assert worker._execution_backend.capture() == caller

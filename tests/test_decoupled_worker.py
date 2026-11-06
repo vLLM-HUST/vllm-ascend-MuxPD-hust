@@ -1153,3 +1153,63 @@ def test_compiled_prefill_failure_never_fabricates_progress_receipt(
     assert worker._iteration_prefill_layers_completed == 0
     with pytest.raises(RuntimeError, match="executed iteration"):
         worker.sample_tokens(None)
+
+
+def _new_request(**overrides):
+    params = SimpleNamespace(
+        logprobs=None, prompt_logprobs=None, structured_outputs=None
+    )
+    fields = dict(req_id="d", mm_features=[], prompt_embeds=None)
+    fields.update(overrides.pop("request", {}))
+    for name, value in overrides.items():
+        setattr(params, name, value)
+    return SimpleNamespace(sampling_params=params, **fields)
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize(
+    "mutate, error, message",
+    [
+        (
+            lambda out: setattr(out, "scheduled_new_reqs", [_new_request(logprobs=1)]),
+            ValueError,
+            "does not support logprobs",
+        ),
+        (
+            lambda out: setattr(
+                out, "scheduled_new_reqs", [_new_request(structured_outputs=object())]
+            ),
+            ValueError,
+            "structured outputs",
+        ),
+        (
+            lambda out: setattr(
+                out,
+                "scheduled_new_reqs",
+                [_new_request(request={"prompt_embeds": object()})],
+            ),
+            ValueError,
+            "requires text token IDs",
+        ),
+        (
+            # The native field contract rejects speculative tokens first.
+            lambda out: setattr(out, "scheduled_spec_decode_tokens", {"d": [1]}),
+            RuntimeError,
+            "scheduled_spec_decode_tokens",
+        ),
+    ],
+)
+def test_worker_rejects_unsupported_requests_before_touching_lanes(
+    simulation, mutate, error, message
+):
+    worker, events = simulation
+    caller = worker._execution_backend.capture()
+    output = schedule(decode=("d",))
+    mutate(output)
+    before = len(events)
+    with pytest.raises(error, match=message):
+        worker.execute_model(output)
+    # Only the profiler step precedes validation; no runner or lane work ran.
+    assert events[before:] in ([], [("profiler",)])
+    assert not worker._awaiting_sample and worker._interleaver is None
+    assert worker._execution_backend.capture() == caller
