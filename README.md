@@ -4,6 +4,15 @@
 vLLM-HUST 提供仓库与发布基础设施。缺陷、兼容性和发布问题请提交到
 [本仓库 Issues](https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/issues)。
 
+## 当前证据入口（2026-11-14）
+
+本轮成果补证、当前兼容范围与发布说明见 [证据与适用边界](docs/evidence-scope-20261114.md)。
+新增性能实验与复算原件统一归档在 benchmark 仓库；当前默认模式、历史 TP8 guard 与 ROW 质量对照分别引用。
+[#23](https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/issues/23) 已按重新定义的
+ROW 对 native 单请求一致性条件关闭，旧质量门的 FAIL 记录保留。下列历史版本段落按原配置阅读。
+
+## 历史安装包与证据范围
+
 `0.2.0a1` 提供可安装的 ECPA 0.3 Bundle，包含成对的 scheduler、admission policy
 和 worker。安装不自动启用；Manager 显式配置后统一投影三个入口，并根据实际输出
 记录运行状态。安装、启用、停止和恢复原生服务见 [ECPA 部署说明](docs/ecpa-deployment.md)。
@@ -29,7 +38,7 @@ source98 的普通 worker 和 Manager 服务桥接、后续性能与生命周期
 [当前结果与适用范围](https://github.com/vLLM-HUST/vllm-hust-benchmark/tree/ebddb585390c333ac1f8c6ea40cfeead3c4321af/reports/muxpd-followup-20261025/quality-reference-v5)。
 f7 raw-P 与 group-P 在固定题集的完整输出一致，但两者均未通过预先冻结的
 答案不退化门槛；总正确数增加不能抵消原生控制均答对题目上的新增错误。
-该已知质量问题继续由 [#23](https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/issues/23) 跟踪。
+该历史质量限制及后续验收变更记录于 [#23](https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/issues/23)；关闭依据见上方当前入口。
 上一轮同步接入的价值是长 prefill 插入时较短的最坏出词停顿；相对实用原版参考，吞吐、
 首字延迟和常规出词间隔的尾部表现均更差。
 因此 [PR #10](https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/pull/10)
@@ -58,7 +67,7 @@ Manager 的实机包、最终发行包及运行时字节关联分别见上表发
 source98 的普通 worker / Manager 桥接仍只有其原有功能范围，不能替代 f7
 质量实测、新安装包或异步候选验收。
 
-#24 的调度修复关闭不改变 #23 的质量失败。关闭 #23 必须回到预先冻结的质量门：
+#24 的调度修复关闭不改变 #23 的历史质量失败。当时使用的冻结质量门要求：
 使用完整固定题集、两次独立原生对照及原评分、截断规则验证实际修复；原生双对照
 均正确题上的新增错误不能被总正确数抵消。严格门与补充门分别报告，历史失败保留。
 丢失题目的数值与终止差异追踪见
