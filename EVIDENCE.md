@@ -1,3 +1,10 @@
+# 本轮成果补证（2026-11-14）
+
+[证据与适用边界](docs/evidence-scope-20261114.md)提供本轮 benchmark 固定报告入口、
+TP2/TP4 默认模式、历史 TP8 guard、ROW 质量条件和发布范围的对应关系。
+本仓库保留实现与兼容说明；原始实验和复算结果统一保存在 benchmark 仓库。
+以下历史清单继续保留原始身份，质量 issue 的当前关闭依据以上方入口为准。
+
 # Canonical historical data
 
 Current follow-up navigation: [bounded numerical investigation and source98
@@ -9,8 +16,10 @@ this code repository maintains implementation, usage and limitations. The
 historical manifests and download instructions below retain their original
 identities. The [complete quality/reference/profile follow-up](https://github.com/vLLM-HUST/vllm-hust-benchmark/tree/ebddb585390c333ac1f8c6ea40cfeead3c4321af/reports/muxpd-followup-20261025/quality-reference-v5)
 retains the failed native-relative quality gates and practical performance costs.
-Closing the bounded numerical investigation does not resolve the open quality
+Closing the bounded numerical investigation did not resolve the historical quality
 limitation in [#23](https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/issues/23).
+Its later closure used the separately documented ROW consistency acceptance above;
+the original failed gates remain part of the evidence.
 
 This migration batch is stored only in [vllm-hust-benchmark](https://github.com/vLLM-HUST/vllm-hust-benchmark/tree/2144d58de108cddaff3800fdcbf12dc9d3ab1d18/archive/mod-consumers-20261023/muxpd).
 `BENCHMARK_EVIDENCE.json` pins the manifest and its SHA256. The manifest preserves original
