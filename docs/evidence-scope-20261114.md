@@ -1,14 +1,14 @@
 # 证据导航、兼容与发布范围
 
 本次处理 [#38](https://github.com/vLLM-HUST/vllm-ascend-MuxPD-hust/issues/38)。
-[benchmark 固定报告](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/ae8666e4c3178dbece5f7a32ba3712ccec5e4e17/reports/tech-outcomes-20261117/muxpd/README.md)
+[benchmark 固定报告](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/ca7ded1a8ff5f604daa49d52316f67784316fb0b/reports/tech-outcomes-20261117/muxpd/README.md)
 是本轮实验、计算方法、收益与代价的唯一归档入口；原件不复制到本仓库。
 本页只说明使用边界、责任及发布范围。
 
 ## 使用和兼容边界
 
 - 默认模式使用 `scripts/serve-qwen35-muxwise.sh`。服务器、插件、模型、设备及工作负载的完整身份与重放条件见
-  [中央环境说明](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/ae8666e4c3178dbece5f7a32ba3712ccec5e4e17/reports/tech-outcomes-20261117/muxpd/ENVIRONMENT.md)。
+  [中央环境说明](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/ca7ded1a8ff5f604daa49d52316f67784316fb0b/reports/tech-outcomes-20261117/muxpd/ENVIRONMENT.md)。
   当前源码、其他模型、其他并行度或不同运行时不会自动继承该记录的资格。
 - `decode_budget_guard` 是需要显式配置的历史可选能力；其 fenced 路径与当前默认模式分别引用。
   使用说明见 [guard 文档入口](performance-tp8-contention.md)，所有实验与适用边界见该入口指向的中央报告。
